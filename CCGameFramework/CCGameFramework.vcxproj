@@ -88,6 +88,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>$(ProjectDir)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -142,29 +143,50 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <Text Include="ReadMe.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="CCGameFramework.h" />
-    <ClInclude Include="Resource.h" />
+    <ClInclude Include="base\defines.h" />
+    <ClInclude Include="render\Direct2DAllocator.h" />
+    <ClInclude Include="render\Direct2DRender.h" />
+    <ClInclude Include="render\Direct2DRenderTarget.h" />
+    <ClInclude Include="ui\gdi\Gdi.h" />
+    <ClInclude Include="render\Direct2D.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="ui\window\Window.h" />
+    <ClInclude Include="ui\window\WindowClass.h" />
+    <ClInclude Include="ui\window\WindowMsgLoop.h" />
+    <ClInclude Include="WTF\Compiler.h" />
+    <ClInclude Include="WTF\Noncopyable.h" />
+    <ClInclude Include="WTF\PassOwnPtr.h" />
+    <ClInclude Include="WTF\PassRef.h" />
+    <ClInclude Include="WTF\PassRefPtr.h" />
+    <ClInclude Include="WTF\Platform.h" />
+    <ClInclude Include="WTF\RawPointer.h" />
+    <ClInclude Include="WTF\refcounted.h" />
+    <ClInclude Include="WTF\RefCountedArray.h" />
+    <ClInclude Include="WTF\RefCountedLeakCounter.h" />
+    <ClInclude Include="WTF\RefPtr.h" />
+    <ClInclude Include="WTF\RefPtrHashMap.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="CCGameFramework.cpp" />
+    <ClCompile Include="render\Direct2DAllocator.cpp" />
+    <ClCompile Include="render\Direct2DRender.cpp" />
+    <ClCompile Include="render\Direct2DRenderTarget.cpp" />
+    <ClCompile Include="WinMain.cpp" />
+    <ClCompile Include="ui\gdi\Color.cpp" />
+    <ClCompile Include="ui\gdi\Font.cpp" />
+    <ClCompile Include="ui\gdi\Rect.cpp" />
+    <ClCompile Include="ui\gdi\Size.cpp" />
+    <ClCompile Include="ui\gdi\Point.cpp" />
+    <ClCompile Include="render\Direct2D.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="CCGameFramework.rc" />
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="CCGameFramework.ico" />
-    <Image Include="small.ico" />
+    <ClCompile Include="ui\window\Window.cpp" />
+    <ClCompile Include="ui\window\WindowClass.cpp" />
+    <ClCompile Include="ui\window\WindowMsgLoop.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
