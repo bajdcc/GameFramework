@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Window.h"
 #include "WindowMsgLoop.h"
+#include <lua_ext/ext.h>
 
 static bool IsKeyPressing(cint code)
 {
@@ -12,7 +13,170 @@ static bool IsKeyToggled(cint code)
     return (GetKeyState((int)code) & 0x0F) != 0;
 }
 
+static CString GetLastErrorStr() // Error Notification
+{
+    LPSTR format_string = NULL; // format string
+
+    DWORD dwRet = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+        NULL,
+        GetLastError(),
+        MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED),
+        (LPSTR)&format_string,
+        0,
+        NULL);
+
+    CString buf(format_string);
+
+    if (dwRet)
+    {
+        LocalFree(format_string);
+    }
+
+    return buf;
+}
+
 Window *window;
+
+extern int ui_clear_scene(lua_State *L)
+{
+    window->layers.clear();
+    return 0;
+}
+
+extern int ui_add_obj(lua_State *L)
+{
+    luaL_checktype(L, 1, LUA_TTABLE);
+    lua_getfield(L, -1, "type");
+    auto type = ElementId(cint(luaL_checknumber(L, -1)));
+    lua_pop(L, 1);
+    switch (type)
+    {
+    case SolidBackground:
+    {
+        RefPtr<SolidBackgroundElement> obj = SolidBackgroundElement::Create();
+        window->layers.push_back(obj);
+        lua_pushnumber(L, window->layers.size());
+    }
+    break;
+    case SolidLabel:
+    {
+        RefPtr<SolidLabelElement> obj = SolidLabelElement::Create();
+        window->layers.push_back(obj);
+        lua_pushnumber(L, window->layers.size());
+    }
+    break;
+    case GradientBackground:
+    {
+        RefPtr<GradientBackgroundElement> obj = GradientBackgroundElement::Create();
+        window->layers.push_back(obj);
+        lua_pushnumber(L, window->layers.size());
+    }
+    break;
+    default:
+        return luaL_argerror(L, 1, "Invalid obj id");
+    }
+    return 1;
+}
+
+extern int ui_update_obj(lua_State *L)
+{
+    luaL_checktype(L, 1, LUA_TTABLE);
+    lua_getfield(L, -1, "type");
+    auto type = ElementId(cint(luaL_checknumber(L, -1))); lua_pop(L, 1);
+    lua_getfield(L, -1, "handle");
+    auto handle = cint(luaL_checknumber(L, -1)); lua_pop(L, 1);
+    if (handle <= 0 || handle > cint(window->layers.size()))
+        return luaL_argerror(L, 1, "Invalid obj id");
+    auto o = window->layers[handle - 1];
+    if (o->GetTypeId() != type)
+        return luaL_argerror(L, 1, "Invalid obj type");
+    {
+        CRect rt;
+        lua_getfield(L, -1, "left");
+        rt.left = LONG(luaL_checknumber(L, -1)); lua_pop(L, 1);
+        lua_getfield(L, -1, "top");
+        rt.top = LONG(luaL_checknumber(L, -1)); lua_pop(L, 1);
+        lua_getfield(L, -1, "right");
+        rt.right = LONG(luaL_checknumber(L, -1)); lua_pop(L, 1);
+        lua_getfield(L, -1, "bottom");
+        rt.bottom = LONG(luaL_checknumber(L, -1)); lua_pop(L, 1);
+        o->SetRenderRect(rt);
+    }
+    switch (type)
+    {
+    case SolidBackground:
+    {
+        auto obj = static_cast<SolidBackgroundElement*>(o.get());
+        {
+            lua_getfield(L, -1, "color");
+            auto color = luaL_checklstring(L, -1, NULL); lua_pop(L, 1);
+            obj->SetColor(CColor::Parse(CString(color)));
+        }
+    }
+    break;
+    case SolidLabel:
+    {
+        auto obj = static_cast<SolidLabelElement*>(o.get());
+        {
+            lua_getfield(L, -1, "color");
+            auto color = luaL_checklstring(L, -1, NULL); lua_pop(L, 1);
+            obj->SetColor(CColor::Parse(CString(color)));
+        }
+        {
+            Font font;
+            lua_getfield(L, -1, "size");
+            font.size = cint(luaL_checknumber(L, -1)); lua_pop(L, 1);
+            lua_getfield(L, -1, "family");
+            font.fontFamily = CString(luaL_checklstring(L, -1, NULL)); lua_pop(L, 1);
+            obj->SetFont(font);
+        }
+        {
+            lua_getfield(L, -1, "text");
+            obj->SetText(CString(luaL_checklstring(L, -1, NULL))); lua_pop(L, 1);
+        }
+        {
+            lua_getfield(L, -1, "align");
+            obj->SetHorizontalAlignment(Alignment(cint(luaL_checknumber(L, -1)))); lua_pop(L, 1);
+            lua_getfield(L, -1, "valign");
+            obj->SetVerticalAlignment(Alignment(cint(luaL_checknumber(L, -1)))); lua_pop(L, 1);
+        }
+    }
+    break;
+    case GradientBackground:
+    {
+        auto obj = static_cast<GradientBackgroundElement*>(o.get());
+        {
+            lua_getfield(L, -1, "color1");
+            auto color1 = luaL_checklstring(L, -1, NULL); lua_pop(L, 1);
+            obj->SetColor1(CColor::Parse(CString(color1)));
+            lua_getfield(L, -1, "color2");
+            auto color2 = luaL_checklstring(L, -1, NULL); lua_pop(L, 1);
+            obj->SetColor2(CColor::Parse(CString(color2)));
+        }
+        {
+            lua_getfield(L, -1, "direction");
+            obj->SetDirection(GradientBackgroundElement::Direction(cint(luaL_checknumber(L, -1)))); lua_pop(L, 1);
+        }
+    }
+    break;
+    default:
+        break;
+    }
+    return 0;
+}
+
+extern int ui_info(lua_State *L)
+{
+    lua_newtable(L);
+    auto size = window->GetClientWindowSize();
+    lua_pushstring(L, "width");
+    lua_pushnumber(L, size.cx);
+    lua_settable(L, -3);
+    lua_pushstring(L, "height");
+    lua_pushnumber(L, size.cy);
+    lua_settable(L, -3);
+    return 1;
+}
 
 static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -27,11 +191,12 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 Window::Window(HWND parent, CString className, CString windowTitle, HINSTANCE hInstance)
     : wndClass(className, false, false, WndProc, hInstance)
     , d2dRenderTarget(adoptRef(new Direct2DRenderTarget(this)))
+    , L(luaL_newstate())
 {
     window = this;
     DWORD exStyle = WS_EX_APPWINDOW | WS_EX_CONTROLPARENT;
     DWORD style = WS_VISIBLE | WS_BORDER | WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
-    handle = CreateWindowEx(exStyle, className, windowTitle, style,
+    CreateWindowEx(exStyle, className, windowTitle, style,
         CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
         parent, NULL, hInstance, NULL);
 }
@@ -41,6 +206,7 @@ Window::~Window()
 {
     Destroyed();
     DestroyWindow(handle);
+    lua_close(L);
 }
 
 void Window::Run()
@@ -127,6 +293,13 @@ CRect Window::GetClientBoundsInScreen()
     AdjustWindowRect(&required, (DWORD)GetWindowLongPtr(handle, GWL_STYLE), FALSE);
     return CRect(bounds.TopLeft() + (-required.TopLeft()),
         bounds.Size() - required.Size());
+}
+
+CSize Window::GetClientWindowSize()
+{
+    CRect rect;
+    GetClientRect(handle, &rect);
+    return rect.Size();
 }
 
 CString Window::GetTitle()
@@ -549,6 +722,9 @@ bool Window::HandleMessageInternal(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM l
         }
     }
     break;
+    case WM_NCCREATE:
+        handle = hwnd;
+        break;
     case WM_CREATE:
         Created();
         break;
@@ -870,10 +1046,14 @@ void Window::Render()
 
 void Window::RenderInternal()
 {
-    background->GetRenderer()->SetRenderTarget(d2dRenderTarget);
-    background->GetRenderer()->Render(CRect(CPoint(), GetClientSize()));
-    text->GetRenderer()->SetRenderTarget(d2dRenderTarget);
-    text->GetRenderer()->Render(CRect(CPoint(), GetClientSize()));
+    auto bounds = CRect(CPoint(), GetClientSize());
+    for (auto& e : layers)
+    {
+        e->GetRenderer()->SetRenderTarget(d2dRenderTarget);
+        auto b = bounds;
+        b.DeflateRect(e->GetRenderRect());
+        e->GetRenderer()->Render(b);
+    }
 }
 
 Window::HitTestResult Window::HitTest(CPoint location)
@@ -883,16 +1063,15 @@ Window::HitTestResult Window::HitTest(CPoint location)
 
 void Window::Created()
 {
-    background = SolidBackgroundElement::Create();
-    background->SetColor(CColor(Gdiplus::Color::Black));
-    text = SolidLabelElement::Create();
-    text->SetColor(CColor(Gdiplus::Color::White));
-    text->SetAlignments(Alignment::StringAlignmentCenter, Alignment::StringAlignmentCenter);
-    text->SetText(_T("Hello world!"));
-    Font font;
-    font.size = 48;
-    font.fontFamily = _T("ËÎÌו");
-    text->SetFont(font);
+    luaL_openlibs(L);
+    lua_ext_register_all(L);
+    luaL_loadstring(L, "require 'script.main'");
+    int ret;
+    if ((ret = lua_pcall(L, 0, 0, 0)) != LUA_OK)
+    {
+        ATLTRACE(atlTraceLua, 0, "Error#%d %s\n", ret, lua_tostring(L, -1));
+        ATLASSERT(!"Lua failed!");
+    }
 }
 
 void Window::Moving(CRect& bounds, bool fixSizeOnly)

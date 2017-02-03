@@ -2,7 +2,6 @@
 #include "Direct2DRender.h"
 #include "Direct2D.h"
 
-
 #pragma region SolidBackground
 SolidBackgroundElement::SolidBackgroundElement()
 {
@@ -17,6 +16,11 @@ SolidBackgroundElement::~SolidBackgroundElement()
 CString SolidBackgroundElement::GetElementTypeName()
 {
     return _T("SolidBackground");
+}
+
+cint SolidBackgroundElement::GetTypeId()
+{
+    return SolidBackground;
 }
 
 CColor SolidBackgroundElement::GetColor()
@@ -61,6 +65,11 @@ GradientBackgroundElement::~GradientBackgroundElement()
 CString GradientBackgroundElement::GetElementTypeName()
 {
     return _T("GradientBackground");
+}
+
+cint GradientBackgroundElement::GetTypeId()
+{
+    return GradientBackground;
 }
 
 CColor GradientBackgroundElement::GetColor1()
@@ -190,6 +199,11 @@ SolidLabelElement::~SolidLabelElement()
 CString SolidLabelElement::GetElementTypeName()
 {
     return _T("SolidLabel");
+}
+
+cint SolidLabelElement::GetTypeId()
+{
+    return SolidLabel;
 }
 
 CColor SolidLabelElement::GetColor()

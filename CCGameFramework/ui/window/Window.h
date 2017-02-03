@@ -85,6 +85,7 @@ public:
     CSize GetClientSize();
     void SetClientSize(CSize size);
     CRect GetClientBoundsInScreen();
+    CSize GetClientWindowSize();
     CString GetTitle();
     void SetTitle(CString _title);
     WindowSizeState GetSizeState();
@@ -183,6 +184,10 @@ protected:
     void SysKeyUp(const KeyInfo& info);
     void Char(const CharInfo& info);
 
+    friend int ui_clear_scene(lua_State *L);
+    friend int ui_add_obj(lua_State *L);
+    friend int ui_update_obj(lua_State *L);
+
 protected:
     HWND handle;
     CString title;
@@ -193,8 +198,8 @@ protected:
     RefPtr<Direct2DRenderTarget> d2dRenderTarget;
 
 private:
-    RefPtr<SolidBackgroundElement> background;
-    RefPtr<SolidLabelElement> text;
+    std::vector<RefPtr<IGraphicsElement>> layers;
+    lua_State *L;
 };
 
 #endif

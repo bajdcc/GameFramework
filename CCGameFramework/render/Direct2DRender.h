@@ -8,6 +8,13 @@
 
 #pragma region Base
 
+enum ElementId
+{
+    SolidBackground = 1001,
+    SolidLabel,
+    GradientBackground,
+};
+
 using Alignment = Gdiplus::StringAlignment;
 
 class IGraphicsElement;
@@ -18,28 +25,31 @@ class IGraphicsRendererFactory;
 class IGraphicsElement : public RefCounted<IGraphicsElement>
 {
 public:
-    virtual PassRefPtr<IGraphicsElementFactory>		GetFactory() = 0;
-    virtual PassRefPtr<IGraphicsRenderer>			GetRenderer() = 0;
+    virtual cint GetTypeId() = 0;
+    virtual PassRefPtr<IGraphicsElementFactory> GetFactory() = 0;
+    virtual PassRefPtr<IGraphicsRenderer> GetRenderer() = 0;
+    virtual void SetRenderRect(CRect bounds) = 0;
+    virtual CRect GetRenderRect() = 0;
 };
 
 class IGraphicsElementFactory : public RefCounted<IGraphicsElementFactory>
 {
 public:
-    virtual CString									GetElementTypeName() = 0;
-    virtual PassRefPtr<IGraphicsElement>			Create() = 0;
+    virtual CString GetElementTypeName() = 0;
+    virtual PassRefPtr<IGraphicsElement> Create() = 0;
 };
 
 class IGraphicsRenderer : public RefCounted<IGraphicsRenderer>
 {
 public:
-    virtual PassRefPtr<IGraphicsRendererFactory>	GetFactory() = 0;
+    virtual PassRefPtr<IGraphicsRendererFactory> GetFactory() = 0;
 
-    virtual void	Initialize(PassRefPtr<IGraphicsElement> element) = 0;
-    virtual void	Finalize() = 0;
-    virtual void	SetRenderTarget(PassRefPtr<Direct2DRenderTarget> renderTarget) = 0;
-    virtual void	Render(CRect bounds) = 0;
-    virtual void	OnElementStateChanged() = 0;
-    virtual CSize	GetMinSize() = 0;
+    virtual void Initialize(PassRefPtr<IGraphicsElement> element) = 0;
+    virtual void Finalize() = 0;
+    virtual void SetRenderTarget(PassRefPtr<Direct2DRenderTarget> renderTarget) = 0;
+    virtual void Render(CRect bounds) = 0;
+    virtual void OnElementStateChanged() = 0;
+    virtual CSize GetMinSize() = 0;
 };
 
 class IGraphicsRendererFactory : public RefCounted<IGraphicsRendererFactory>
@@ -59,11 +69,11 @@ public:
         {
 
         }
-        CString GetElementTypeName()
+        CString GetElementTypeName()override
         {
             return TElement::GetElementTypeName();
         }
-        PassRefPtr<IGraphicsElement> Create()
+        PassRefPtr<IGraphicsElement> Create()override
         {
             RefPtr<TElement> element = adoptRef(new TElement);
             element->factory = this;
@@ -81,17 +91,26 @@ public:
     {
         return Direct2D::Singleton().GetElementFactory(TElement::GetElementTypeName())->Create();
     }
-    PassRefPtr<IGraphicsElementFactory> GetFactory()
+    PassRefPtr<IGraphicsElementFactory> GetFactory()override
     {
         return factory;
     }
-    PassRefPtr<IGraphicsRenderer> GetRenderer()
+    PassRefPtr<IGraphicsRenderer> GetRenderer()override
     {
         return renderer;
+    }
+    void SetRenderRect(CRect bounds)override
+    {
+        this->bounds = bounds;
+    }
+    CRect GetRenderRect()override
+    {
+        return bounds;
     }
 protected:
     RawPtr<IGraphicsElementFactory>			factory;
     RefPtr<IGraphicsRenderer>				renderer;
+    CRect                                   bounds;
 };
 
 template <class TElement, class TRenderer, class TTarget>
@@ -105,7 +124,7 @@ public:
         {
 
         }
-        PassRefPtr<IGraphicsRenderer> Create()
+        PassRefPtr<IGraphicsRenderer> Create()override
         {
             RefPtr<TRenderer> renderer = adoptRef(new TRenderer);
             renderer->factory = this;
@@ -262,19 +281,21 @@ public:
     SolidBackgroundElement();
     ~SolidBackgroundElement();
 
-    static CString						GetElementTypeName();
+    static CString GetElementTypeName();
 
-    CColor								GetColor();
-    void								SetColor(CColor value);
+    cint GetTypeId()override;
+
+    CColor GetColor();
+    void SetColor(CColor value);
 
 protected:
-    CColor								color;
+    CColor color;
 };
 
 class SolidBackgroundElementRenderer : public GraphicsSolidBrushRenderer<SolidBackgroundElement, SolidBackgroundElementRenderer, ID2D1SolidColorBrush, CColor>
 {
 public:
-    void								Render(CRect bounds)override;
+    void Render(CRect bounds)override;
 };
 #pragma endregion SolidBackground
 
@@ -293,27 +314,29 @@ public:
         Backslash,
     };
 
-    static CString						GetElementTypeName();
+    static CString GetElementTypeName();
 
-    CColor								GetColor1();
-    void								SetColor1(CColor value);
-    CColor								GetColor2();
-    void								SetColor2(CColor value);
-    void								SetColors(CColor value1, CColor value2);
-    Direction							GetDirection();
-    void								SetDirection(Direction value);
+    cint GetTypeId()override;
+
+    CColor GetColor1();
+    void SetColor1(CColor value);
+    CColor GetColor2();
+    void SetColor2(CColor value);
+    void SetColors(CColor value1, CColor value2);
+    Direction GetDirection();
+    void SetDirection(Direction value);
 
 protected:
-    CColor								color1;
-    CColor								color2;
-    Direction							direction;
+    CColor color1;
+    CColor color2;
+    Direction direction;
 };
 
 class GradientBackgroundElementRenderer : public GraphicsGradientBrushRenderer<GradientBackgroundElement,
     GradientBackgroundElementRenderer, ID2D1LinearGradientBrush, std::pair<CColor, CColor>>
 {
 public:
-    void								Render(CRect bounds)override;
+    void Render(CRect bounds)override;
 };
 #pragma endregion GradientBackground
 
@@ -324,38 +347,40 @@ public:
     SolidLabelElement();
     ~SolidLabelElement();
 
-    static CString						GetElementTypeName();
+    static CString GetElementTypeName();
 
-    CColor								GetColor();
-    void								SetColor(CColor value);
-    const Font&							GetFont();
-    void								SetFont(const Font& value);
-    const CString&						GetText();
-    void								SetText(const CString& value);
+    cint GetTypeId()override;
 
-    Alignment							GetHorizontalAlignment();
-    Alignment							GetVerticalAlignment();
-    void								SetHorizontalAlignment(Alignment value);
-    void								SetVerticalAlignment(Alignment value);
-    void								SetAlignments(Alignment horizontal, Alignment vertical);
+    CColor GetColor();
+    void SetColor(CColor value);
+    const Font& GetFont();
+    void SetFont(const Font& value);
+    const CString& GetText();
+    void SetText(const CString& value);
 
-    bool								GetWrapLine();
-    void								SetWrapLine(bool value);
-    bool								GetMultiline();
-    void								SetMultiline(bool value);
-    bool								GetWrapLineHeightCalculation();
-    void								SetWrapLineHeightCalculation(bool value);
+    Alignment GetHorizontalAlignment();
+    Alignment GetVerticalAlignment();
+    void SetHorizontalAlignment(Alignment value);
+    void SetVerticalAlignment(Alignment value);
+    void SetAlignments(Alignment horizontal, Alignment vertical);
+
+    bool GetWrapLine();
+    void SetWrapLine(bool value);
+    bool GetMultiline();
+    void SetMultiline(bool value);
+    bool GetWrapLineHeightCalculation();
+    void SetWrapLineHeightCalculation(bool value);
 
 protected:
-    CColor								color;
-    Font								fontProperties;
-    CString								text;
-    Alignment							hAlignment;
-    Alignment							vAlignment;
-    bool								wrapLine;
-    bool								ellipse;
-    bool								multiline;
-    bool								wrapLineHeightCalculation;
+    CColor color;
+    Font fontProperties;
+    CString text;
+    Alignment hAlignment;
+    Alignment vAlignment;
+    bool wrapLine;
+    bool ellipse;
+    bool multiline;
+    bool wrapLineHeightCalculation;
 };
 
 class SolidLabelElementRenderer : public GraphicsRenderer<SolidLabelElement, SolidLabelElementRenderer, Direct2DRenderTarget>
@@ -363,29 +388,29 @@ class SolidLabelElementRenderer : public GraphicsRenderer<SolidLabelElement, Sol
 public:
     SolidLabelElementRenderer();
 
-    void								Render(CRect bounds);
-    void								OnElementStateChanged();
+    void Render(CRect bounds)override;
+    void OnElementStateChanged()override;
 
 protected:
-    void								CreateBrush(PassRefPtr<Direct2DRenderTarget> _renderTarget);
-    void								DestroyBrush(PassRefPtr<Direct2DRenderTarget> _renderTarget);
-    void								CreateTextFormat(PassRefPtr<Direct2DRenderTarget> _renderTarget);
-    void								DestroyTextFormat(PassRefPtr<Direct2DRenderTarget> _renderTarget);
-    void								CreateTextLayout();
-    void								DestroyTextLayout();
-    void								UpdateMinSize();
+    void CreateBrush(PassRefPtr<Direct2DRenderTarget> _renderTarget);
+    void DestroyBrush(PassRefPtr<Direct2DRenderTarget> _renderTarget);
+    void CreateTextFormat(PassRefPtr<Direct2DRenderTarget> _renderTarget);
+    void DestroyTextFormat(PassRefPtr<Direct2DRenderTarget> _renderTarget);
+    void CreateTextLayout();
+    void DestroyTextLayout();
+    void UpdateMinSize();
 
-    void								InitializeInternal();
-    void								FinalizeInternal();
-    void								RenderTargetChangedInternal(PassRefPtr<Direct2DRenderTarget> oldRenderTarget, PassRefPtr<Direct2DRenderTarget> newRenderTarget);
+    void InitializeInternal()override;
+    void FinalizeInternal()override;
+    void RenderTargetChangedInternal(PassRefPtr<Direct2DRenderTarget> oldRenderTarget, PassRefPtr<Direct2DRenderTarget> newRenderTarget)override;
 
-    CColor								oldColor;
-    Font								oldFont;
-    CString								oldText;
-    CComPtr<ID2D1SolidColorBrush>		brush;
-    RefPtr<D2DTextFormatPackage>		textFormat;
-    CComPtr<IDWriteTextLayout>			textLayout;
-    cint								oldMaxWidth;
+    CColor oldColor;
+    Font oldFont;
+    CString oldText;
+    CComPtr<ID2D1SolidColorBrush> brush;
+    RefPtr<D2DTextFormatPackage> textFormat;
+    CComPtr<IDWriteTextLayout> textLayout;
+    cint oldMaxWidth;
 };
 #pragma endregion SolidLabel
 

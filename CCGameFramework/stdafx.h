@@ -29,6 +29,7 @@
 #include "WTF/Platform.h"
 
 #include "base/defines.h"
+#include "lua/lua.hpp"
 
 #include <intrin.h>
 
