@@ -1,6 +1,6 @@
 local Scene = require('script.lib.core.scene')
 local Gradient = require('script.lib.ui.gradient')
-local Block = require('script.lib.ui.block')
+local AbsoluteLayout = require('script.lib.ui.layout.abs')
 local Text = require('script.lib.ui.text')
 
 local modname = 'WelcomeScene'
@@ -8,28 +8,31 @@ local M = Scene:new()
 _G[modname] = M
 package.loaded[modname] = M
 
+M.name = 'Welcome Scene'
+
 function M:init()
 	UIExt.trace('Scene [Welcome page] init')
 	-- INFO
 	local info = UIExt.info()
 	-- BG
-	local bg = Block:new({
+	local bg = AbsoluteLayout:new({
 		color = '#111111',
 		right = info.width,
-		bottom = (info.height / 2) + 100
+		bottom = info.height
 	})
-	self.layers.bg = M:add(bg)
+	self.layers.bg = self:add(bg)
 	UIExt.trace('Scene [Welcome page]: create background #' .. self.layers.bg.handle)
 	-- BG2
 	local bg2 = Gradient:new({
 		color1 = '#111111',
 		color2 = '#AAAAAA',
 		direction = 1,
-		top = info.height - bg.bottom,
-		right = info.width,
-		bottom = info.height
+		resize = function(this, left, top, right, bottom)
+			this.left, this.top, this.right, this.bottom = left, ((bottom - top) / 2) - 100, right, bottom
+			UIExt.update(this)
+		end
 	})
-	self.layers.bg2 = M:add(bg2)
+	self.layers.bg2 = bg:add(bg2)
 	UIExt.trace('Scene [Welcome page]: create background2 #' .. self.layers.bg2.handle)
 	-- TEXT
 	local text = Text:new({
@@ -38,14 +41,17 @@ function M:init()
 		right = info.width,
 		bottom = info.height
 	})
-	self.layers.text = M:add(text)
+	self.layers.text = self:add(text)
 	UIExt.trace('Scene [Welcome page]: create text #' .. self.layers.text.handle)
 
 	-- EVENT
-	M:init_event()
+	self:init_event()
 
 	-- TIMER
 	UIExt.set_timer(1, 3000)
+
+	self.resize(self)
+	UIExt.paint()
 end
 
 function M:destroy()
@@ -64,7 +70,8 @@ function M:init_event()
 		[self.win_event.leftbuttondown] = function(this, x, y, flags, wheel)
 		end,
 		[self.win_event.char] = function(this, code, flags)
-		end
+		end,
+		[self.win_event.moved] = self.resize
 	}
 end
 

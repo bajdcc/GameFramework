@@ -7,8 +7,10 @@ int ui_clear_scene(lua_State *L)
     {
         ::KillTimer(window->handle, timer);
     }
+    window->ptrEle = 0;
+    window->mapEle.clear();
     window->setTimer.clear();
-    window->layers.clear();
+    window->root->GetChildren().clear();
     return 0;
 }
 
@@ -16,34 +18,52 @@ int ui_add_obj(lua_State *L)
 {
     luaL_checktype(L, 1, LUA_TTABLE);
     lua_getfield(L, -1, "type");
-    auto type = ElementId(cint(luaL_checknumber(L, -1)));
+    auto type = ElementId(cint(luaL_checkinteger(L, -1)));
     lua_pop(L, 1);
+    window->ptrEle++;
+    auto ptr = window->ptrEle;
+    while (window->mapEle.find(ptr) != window->mapEle.end())
+    {
+        ptr++;
+        if (ptr > 0x10000000)
+            ptr = 0;
+    }
+    window->ptrEle = ptr;
+    lua_getfield(L, -1, "parent");
+    auto parent = ElementId(cint(luaL_checkinteger(L, -1)));
+    decltype(window->root) p;
+    if (parent == -1)
+        p = window->root;
+    else if (window->mapEle.find(parent) != window->mapEle.end())
+        p = window->mapEle[parent].get();
+    else
+        p = window->root;
+    RefPtr<IGraphicsElement> obj;
     switch (type)
     {
     case SolidBackground:
     {
-        RefPtr<SolidBackgroundElement> obj = SolidBackgroundElement::Create();
-        window->layers.push_back(obj);
-        lua_pushnumber(L, window->layers.size());
+        obj = SolidBackgroundElement::Create();
+        
     }
     break;
     case SolidLabel:
     {
-        RefPtr<SolidLabelElement> obj = SolidLabelElement::Create();
-        window->layers.push_back(obj);
-        lua_pushnumber(L, window->layers.size());
+        obj = SolidLabelElement::Create();
     }
     break;
     case GradientBackground:
     {
-        RefPtr<GradientBackgroundElement> obj = GradientBackgroundElement::Create();
-        window->layers.push_back(obj);
-        lua_pushnumber(L, window->layers.size());
+        obj = GradientBackgroundElement::Create();
     }
     break;
     default:
         return luaL_argerror(L, 1, "Invalid obj id");
     }
+    obj->GetFlags().parent = p;
+    p->GetChildren().push_back(obj);
+    window->mapEle.insert(std::pair<decltype(ptr), decltype(obj)>(ptr, obj.get()));
+    lua_pushinteger(L, ptr);
     return 1;
 }
 
@@ -51,12 +71,12 @@ int ui_update_obj(lua_State *L)
 {
     luaL_checktype(L, 1, LUA_TTABLE);
     lua_getfield(L, -1, "type");
-    auto type = ElementId(cint(luaL_checknumber(L, -1))); lua_pop(L, 1);
+    auto type = ElementId(cint(luaL_checkinteger(L, -1))); lua_pop(L, 1);
     lua_getfield(L, -1, "handle");
-    auto handle = cint(luaL_checknumber(L, -1)); lua_pop(L, 1);
-    if (handle <= 0 || handle > cint(window->layers.size()))
+    auto handle = cint(luaL_checkinteger(L, -1)); lua_pop(L, 1);
+    if (window->mapEle.find(handle) == window->mapEle.end())
         return luaL_argerror(L, 1, "Invalid obj id");
-    auto o = window->layers[handle - 1];
+    auto o = window->mapEle[handle];
     if (o->GetTypeId() != type)
         return luaL_argerror(L, 1, "Invalid obj type");
     {
@@ -70,6 +90,12 @@ int ui_update_obj(lua_State *L)
         lua_getfield(L, -1, "bottom");
         rt.bottom = LONG(luaL_checknumber(L, -1)); lua_pop(L, 1);
         o->SetRenderRect(rt);
+    }
+    {
+        lua_getfield(L, -1, "show_self");
+        o->GetFlags().self_visible = lua_toboolean(L, -1) == 1; lua_pop(L, 1);
+        lua_getfield(L, -1, "show_children");
+        o->GetFlags().children_visible = lua_toboolean(L, -1) == 1; lua_pop(L, 1);
     }
     switch (type)
     {
@@ -94,7 +120,7 @@ int ui_update_obj(lua_State *L)
         {
             Font font;
             lua_getfield(L, -1, "size");
-            font.size = cint(luaL_checknumber(L, -1)); lua_pop(L, 1);
+            font.size = cint(luaL_checkinteger(L, -1)); lua_pop(L, 1);
             lua_getfield(L, -1, "family");
             font.fontFamily = CString(luaL_checklstring(L, -1, NULL)); lua_pop(L, 1);
             obj->SetFont(font);
@@ -105,9 +131,9 @@ int ui_update_obj(lua_State *L)
         }
         {
             lua_getfield(L, -1, "align");
-            obj->SetHorizontalAlignment(Alignment(cint(luaL_checknumber(L, -1)))); lua_pop(L, 1);
+            obj->SetHorizontalAlignment(Alignment(cint(luaL_checkinteger(L, -1)))); lua_pop(L, 1);
             lua_getfield(L, -1, "valign");
-            obj->SetVerticalAlignment(Alignment(cint(luaL_checknumber(L, -1)))); lua_pop(L, 1);
+            obj->SetVerticalAlignment(Alignment(cint(luaL_checkinteger(L, -1)))); lua_pop(L, 1);
         }
     }
     break;
@@ -124,7 +150,7 @@ int ui_update_obj(lua_State *L)
         }
         {
             lua_getfield(L, -1, "direction");
-            obj->SetDirection(GradientBackgroundElement::Direction(cint(luaL_checknumber(L, -1)))); lua_pop(L, 1);
+            obj->SetDirection(GradientBackgroundElement::Direction(cint(luaL_checkinteger(L, -1)))); lua_pop(L, 1);
         }
     }
     break;
@@ -139,10 +165,10 @@ int ui_info(lua_State *L)
     lua_newtable(L);
     auto size = window->GetClientWindowSize();
     lua_pushstring(L, "width");
-    lua_pushnumber(L, size.cx);
+    lua_pushinteger(L, size.cx);
     lua_settable(L, -3);
     lua_pushstring(L, "height");
-    lua_pushnumber(L, size.cy);
+    lua_pushinteger(L, size.cy);
     lua_settable(L, -3);
     return 1;
 }
@@ -155,15 +181,15 @@ int ui_paint(lua_State *L)
 
 int ui_set_timer(lua_State *L)
 {
-    auto id = cint(luaL_checknumber(L, 1));
-    auto elapse = cint(luaL_checknumber(L, 2));
+    auto id = cint(luaL_checkinteger(L, 1));
+    auto elapse = cint(luaL_checkinteger(L, 2));
     window->SetTimer(id, elapse);
     return 0;
 }
 
 int ui_kill_timer(lua_State *L)
 {
-    auto id = cint(luaL_checknumber(L, 1));
+    auto id = cint(luaL_checkinteger(L, 1));
     window->KillTimer(id);
     return 0;
 }

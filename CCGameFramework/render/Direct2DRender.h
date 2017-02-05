@@ -30,6 +30,15 @@ public:
     virtual PassRefPtr<IGraphicsRenderer> GetRenderer() = 0;
     virtual void SetRenderRect(CRect bounds) = 0;
     virtual CRect GetRenderRect() = 0;
+    virtual std::vector<RefPtr<IGraphicsElement>>& GetChildren() = 0;
+
+    struct GraphicsElementFlag
+    {
+        bool self_visible{ true };
+        bool children_visible{ true };
+        RawPtr<IGraphicsElement> parent;
+    };
+    virtual GraphicsElementFlag& GetFlags() = 0;
 };
 
 class IGraphicsElementFactory : public RefCounted<IGraphicsElementFactory>
@@ -107,10 +116,20 @@ public:
     {
         return bounds;
     }
+    std::vector<RefPtr<IGraphicsElement>>& GetChildren()override
+    {
+        return children;
+    }
+    GraphicsElementFlag& GetFlags()override
+    {
+        return flags;
+    }
+    GraphicsElementFlag flags;
 protected:
     RawPtr<IGraphicsElementFactory>			factory;
     RefPtr<IGraphicsRenderer>				renderer;
     CRect                                   bounds;
+    std::vector<RefPtr<IGraphicsElement>>   children;
 };
 
 template <class TElement, class TRenderer, class TTarget>
@@ -160,10 +179,24 @@ public:
         RefPtr<TTarget> oldRenderTarget = renderTarget;
         renderTarget = dynamic_cast<Direct2DRenderTarget*>(_renderTarget.get());
         RenderTargetChangedInternal(oldRenderTarget, renderTarget);
+        for (RefPtr<IGraphicsElement>& child : element->GetChildren())
+        {
+            child->GetRenderer()->SetRenderTarget(_renderTarget.get());
+        }
     }
     CSize GetMinSize()override
     {
         return minSize;
+    }
+    void Render(CRect bounds)override
+    {
+        if (element->flags.children_visible)
+        {
+            for (RefPtr<IGraphicsElement>& child : element->GetChildren())
+            {
+                child->GetRenderer()->Render(child->GetRenderRect());
+            }
+        }
     }
     virtual void InitializeInternal() = 0;
     virtual void FinalizeInternal() = 0;

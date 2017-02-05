@@ -919,12 +919,8 @@ void Window::Render()
 
 void Window::RenderInternal()
 {
-    auto bounds = CRect(CPoint(), GetClientSize());
-    for (auto& e : layers)
-    {
-        e->GetRenderer()->SetRenderTarget(d2dRenderTarget);
-        e->GetRenderer()->Render(e->GetRenderRect());
-    }
+    root->GetRenderer()->SetRenderTarget(d2dRenderTarget);
+    root->GetRenderer()->Render(root->GetRenderRect());
 }
 
 Window::HitTestResult Window::HitTest(CPoint location)
@@ -935,7 +931,7 @@ Window::HitTestResult Window::HitTest(CPoint location)
 static void PostNoArgLuaMsg(lua_State *L, WindowEvent evt)
 {
     lua_getglobal(L, "PassEventToScene");
-    lua_pushnumber(L, evt);
+    lua_pushinteger(L, evt);
     lua_call(L, 1, 0);
 }
 
@@ -948,13 +944,15 @@ static int LuaPanicHandler(lua_State *L)
 
 void Window::Created()
 {
+    root = SolidBackgroundElement::Create();
+    root->SetRenderRect(CRect(CPoint(), GetClientSize()));
     lua_atpanic(L, LuaPanicHandler);
     luaL_openlibs(L);
     lua_ext_register_all(L);
     luaL_loadstring(L, "require 'script.main'");
     lua_call(L, 0, 0);
     lua_getglobal(L, "PassEventToScene");
-    lua_pushnumber(L, WE_Null);
+    lua_pushinteger(L, WE_Null);
     lua_call(L, 1, 0);
     PostNoArgLuaMsg(L, WE_Created);
 }
@@ -1005,6 +1003,7 @@ void Window::Moving(CRect& bounds, bool fixSizeOnly)
 
 void Window::Moved()
 {
+    root->SetRenderRect(CRect(CPoint(), GetClientSize()));
     if (d2dRenderTarget->RecreateRenderTarget(window->GetClientSize()))
         Render();
     PostNoArgLuaMsg(L, WE_Moved);
@@ -1067,6 +1066,7 @@ void Window::Destroying()
 
 void Window::Destroyed()
 {
+    root = nullptr;
     for (auto& timer : setTimer)
     {
         ::KillTimer(handle, timer);
@@ -1078,9 +1078,9 @@ void Window::Destroyed()
 static void PostMouseLuaMsg(lua_State *L, WindowEvent evt, const MouseInfo& info)
 {
     lua_getglobal(L, "PassEventToScene");
-    lua_pushnumber(L, evt);
-    lua_pushnumber(L, info.pt.x);
-    lua_pushnumber(L, info.pt.y);
+    lua_pushinteger(L, evt);
+    lua_pushinteger(L, info.pt.x);
+    lua_pushinteger(L, info.pt.y);
     lua_newtable(L);
 #define LUA_MOUSE_FLAG(name) lua_pushstring(L, #name); lua_pushboolean(L, info.name); lua_settable(L, -3);
     LUA_MOUSE_FLAG(ctrl);
@@ -1090,7 +1090,7 @@ static void PostMouseLuaMsg(lua_State *L, WindowEvent evt, const MouseInfo& info
     LUA_MOUSE_FLAG(right);
     LUA_MOUSE_FLAG(nonClient);
 #undef LUA_MOUSE_FLAG
-    lua_pushnumber(L, info.wheel);
+    lua_pushinteger(L, info.wheel);
     lua_call(L, 5, 0);
 }
 
@@ -1167,8 +1167,8 @@ void Window::MouseLeaved()
 static void PostKeyLuaMsg(lua_State *L, WindowEvent evt, const KeyInfo& info)
 {
     lua_getglobal(L, "PassEventToScene");
-    lua_pushnumber(L, evt);
-    lua_pushnumber(L, info.code);
+    lua_pushinteger(L, evt);
+    lua_pushinteger(L, info.code);
     lua_newtable(L);
 #define LUA_MOUSE_FLAG(name) lua_pushstring(L, #name); lua_pushboolean(L, info.name); lua_settable(L, -3);
     LUA_MOUSE_FLAG(ctrl);
@@ -1207,7 +1207,7 @@ void Window::Char(const KeyInfo& info)
 void Window::Timer(cint id)
 {
     lua_getglobal(L, "PassEventToScene");
-    lua_pushnumber(L, WE_Timer);
-    lua_pushnumber(L, id);
+    lua_pushinteger(L, WE_Timer);
+    lua_pushinteger(L, id);
     lua_call(L, 2, 0);
 }

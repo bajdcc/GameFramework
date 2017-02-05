@@ -42,11 +42,15 @@ void SolidBackgroundElement::SetColor(CColor value)
 
 void SolidBackgroundElementRenderer::Render(CRect bounds)
 {
-    CComPtr<ID2D1RenderTarget> d2dRenderTarget = renderTarget->GetDirect2DRenderTarget();
-    d2dRenderTarget->FillRectangle(
-        D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
-        brush
-    );
+    if (element->flags.self_visible)
+    {
+        CComPtr<ID2D1RenderTarget> d2dRenderTarget = renderTarget->GetDirect2DRenderTarget();
+        d2dRenderTarget->FillRectangle(
+            D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
+            brush
+        );
+    }
+    GraphicsRenderer::Render(bounds);
 }
 #pragma endregion SolidBackground
 
@@ -131,51 +135,55 @@ void GradientBackgroundElement::SetDirection(Direction value)
 
 void GradientBackgroundElementRenderer::Render(CRect bounds)
 {
-    D2D1_POINT_2F points[2];
-    switch (element->GetDirection())
+    if (element->flags.self_visible)
     {
-    case GradientBackgroundElement::Horizontal:
-    {
-        points[0].x = (FLOAT)bounds.left;
-        points[0].y = (FLOAT)bounds.top;
-        points[1].x = (FLOAT)bounds.right;
-        points[1].y = (FLOAT)bounds.top;
-    }
-    break;
-    case GradientBackgroundElement::Vertical:
-    {
-        points[0].x = (FLOAT)bounds.left;
-        points[0].y = (FLOAT)bounds.top;
-        points[1].x = (FLOAT)bounds.left;
-        points[1].y = (FLOAT)bounds.bottom;
-    }
-    break;
-    case GradientBackgroundElement::Slash:
-    {
-        points[0].x = (FLOAT)bounds.right;
-        points[0].y = (FLOAT)bounds.top;
-        points[1].x = (FLOAT)bounds.left;
-        points[1].y = (FLOAT)bounds.bottom;
-    }
-    break;
-    case GradientBackgroundElement::Backslash:
-    {
-        points[0].x = (FLOAT)bounds.left;
-        points[0].y = (FLOAT)bounds.top;
-        points[1].x = (FLOAT)bounds.right;
-        points[1].y = (FLOAT)bounds.bottom;
-    }
-    break;
-    }
+        D2D1_POINT_2F points[2];
+        switch (element->GetDirection())
+        {
+        case GradientBackgroundElement::Horizontal:
+        {
+            points[0].x = (FLOAT)bounds.left;
+            points[0].y = (FLOAT)bounds.top;
+            points[1].x = (FLOAT)bounds.right;
+            points[1].y = (FLOAT)bounds.top;
+        }
+        break;
+        case GradientBackgroundElement::Vertical:
+        {
+            points[0].x = (FLOAT)bounds.left;
+            points[0].y = (FLOAT)bounds.top;
+            points[1].x = (FLOAT)bounds.left;
+            points[1].y = (FLOAT)bounds.bottom;
+        }
+        break;
+        case GradientBackgroundElement::Slash:
+        {
+            points[0].x = (FLOAT)bounds.right;
+            points[0].y = (FLOAT)bounds.top;
+            points[1].x = (FLOAT)bounds.left;
+            points[1].y = (FLOAT)bounds.bottom;
+        }
+        break;
+        case GradientBackgroundElement::Backslash:
+        {
+            points[0].x = (FLOAT)bounds.left;
+            points[0].y = (FLOAT)bounds.top;
+            points[1].x = (FLOAT)bounds.right;
+            points[1].y = (FLOAT)bounds.bottom;
+        }
+        break;
+        }
 
-    brush->SetStartPoint(points[0]);
-    brush->SetEndPoint(points[1]);
+        brush->SetStartPoint(points[0]);
+        brush->SetEndPoint(points[1]);
 
-    CComPtr<ID2D1RenderTarget> d2dRenderTarget = renderTarget->GetDirect2DRenderTarget();
-    d2dRenderTarget->FillRectangle(
-        D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
-        brush
-    );
+        CComPtr<ID2D1RenderTarget> d2dRenderTarget = renderTarget->GetDirect2DRenderTarget();
+        d2dRenderTarget->FillRectangle(
+            D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
+            brush
+        );
+    }
+    GraphicsRenderer::Render(bounds);
 }
 #pragma endregion GradientBackground
 
@@ -349,104 +357,108 @@ SolidLabelElementRenderer::SolidLabelElementRenderer()
 
 void SolidLabelElementRenderer::Render(CRect bounds)
 {
-    if (!textLayout)
+    if (element->flags.self_visible)
     {
-        CreateTextLayout();
-    }
+        if (!textLayout)
+        {
+            CreateTextLayout();
+        }
 
-    cint x = 0;
-    cint y = 0;
-    switch (element->GetHorizontalAlignment())
-    {
-    case Alignment::StringAlignmentNear:
-        x = bounds.left;
-        break;
-    case Alignment::StringAlignmentCenter:
-        x = bounds.left + (bounds.Width() - minSize.cx) / 2;
-        break;
-    case Alignment::StringAlignmentFar:
-        x = bounds.right - minSize.cx;
-        break;
-    }
-    switch (element->GetVerticalAlignment())
-    {
-    case Alignment::StringAlignmentNear:
-        y = bounds.top;
-        break;
-    case Alignment::StringAlignmentCenter:
-        y = bounds.top + (bounds.Height() - minSize.cy) / 2;
-        break;
-    case Alignment::StringAlignmentFar:
-        y = bounds.bottom - minSize.cy;
-        break;
-    }
-
-    renderTarget->SetTextAntialias(oldFont.antialias, oldFont.verticalAntialias);
-
-    if (!element->GetMultiline() && !element->GetWrapLine())
-    {
-        CComPtr<ID2D1RenderTarget> d2dRenderTarget = renderTarget->GetDirect2DRenderTarget();
-        d2dRenderTarget->DrawTextLayout(
-            D2D1::Point2F((FLOAT)x, (FLOAT)y),
-            textLayout,
-            brush,
-            D2D1_DRAW_TEXT_OPTIONS_NO_SNAP
-        );
-    }
-    else
-    {
-        CComPtr<IDWriteFactory> dwriteFactory = Direct2D::Singleton().GetDirectWriteFactory();
-        DWRITE_TRIMMING trimming;
-        CComPtr<IDWriteInlineObject> inlineObject;
-        textLayout->GetTrimming(&trimming, &inlineObject);
-        textLayout->SetWordWrapping(element->GetWrapLine() ? DWRITE_WORD_WRAPPING_WRAP : DWRITE_WORD_WRAPPING_NO_WRAP);
+        cint x = 0;
+        cint y = 0;
         switch (element->GetHorizontalAlignment())
         {
         case Alignment::StringAlignmentNear:
-            textLayout->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
+            x = bounds.left;
             break;
         case Alignment::StringAlignmentCenter:
-            textLayout->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+            x = bounds.left + (bounds.Width() - minSize.cx) / 2;
             break;
         case Alignment::StringAlignmentFar:
-            textLayout->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
+            x = bounds.right - minSize.cx;
             break;
         }
+        switch (element->GetVerticalAlignment())
+        {
+        case Alignment::StringAlignmentNear:
+            y = bounds.top;
+            break;
+        case Alignment::StringAlignmentCenter:
+            y = bounds.top + (bounds.Height() - minSize.cy) / 2;
+            break;
+        case Alignment::StringAlignmentFar:
+            y = bounds.bottom - minSize.cy;
+            break;
+        }
+
+        renderTarget->SetTextAntialias(oldFont.antialias, oldFont.verticalAntialias);
+
         if (!element->GetMultiline() && !element->GetWrapLine())
         {
-            switch (element->GetVerticalAlignment())
+            CComPtr<ID2D1RenderTarget> d2dRenderTarget = renderTarget->GetDirect2DRenderTarget();
+            d2dRenderTarget->DrawTextLayout(
+                D2D1::Point2F((FLOAT)x, (FLOAT)y),
+                textLayout,
+                brush,
+                D2D1_DRAW_TEXT_OPTIONS_NO_SNAP
+            );
+        }
+        else
+        {
+            CComPtr<IDWriteFactory> dwriteFactory = Direct2D::Singleton().GetDirectWriteFactory();
+            DWRITE_TRIMMING trimming;
+            CComPtr<IDWriteInlineObject> inlineObject;
+            textLayout->GetTrimming(&trimming, &inlineObject);
+            textLayout->SetWordWrapping(element->GetWrapLine() ? DWRITE_WORD_WRAPPING_WRAP : DWRITE_WORD_WRAPPING_NO_WRAP);
+            switch (element->GetHorizontalAlignment())
             {
             case Alignment::StringAlignmentNear:
-                textLayout->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
+                textLayout->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
                 break;
             case Alignment::StringAlignmentCenter:
-                textLayout->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+                textLayout->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
                 break;
             case Alignment::StringAlignmentFar:
-                textLayout->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_FAR);
+                textLayout->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
                 break;
             }
-        }
+            if (!element->GetMultiline() && !element->GetWrapLine())
+            {
+                switch (element->GetVerticalAlignment())
+                {
+                case Alignment::StringAlignmentNear:
+                    textLayout->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
+                    break;
+                case Alignment::StringAlignmentCenter:
+                    textLayout->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+                    break;
+                case Alignment::StringAlignmentFar:
+                    textLayout->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_FAR);
+                    break;
+                }
+            }
 
-        CRect textBounds = bounds;
-        textLayout->SetMaxWidth((FLOAT)textBounds.Width());
-        textLayout->SetMaxHeight((FLOAT)textBounds.Height());
+            CRect textBounds = bounds;
+            textLayout->SetMaxWidth((FLOAT)textBounds.Width());
+            textLayout->SetMaxHeight((FLOAT)textBounds.Height());
 
-        CComPtr<ID2D1RenderTarget> d2dRenderTarget = renderTarget->GetDirect2DRenderTarget();
-        d2dRenderTarget->DrawTextLayout(
-            D2D1::Point2F((FLOAT)textBounds.left, (FLOAT)textBounds.top),
-            textLayout,
-            brush,
-            D2D1_DRAW_TEXT_OPTIONS_NO_SNAP
-        );
+            CComPtr<ID2D1RenderTarget> d2dRenderTarget = renderTarget->GetDirect2DRenderTarget();
+            d2dRenderTarget->DrawTextLayout(
+                D2D1::Point2F((FLOAT)textBounds.left, (FLOAT)textBounds.top),
+                textLayout,
+                brush,
+                D2D1_DRAW_TEXT_OPTIONS_NO_SNAP
+            );
 
-        textLayout->SetTrimming(&trimming, inlineObject);
-        if (oldMaxWidth != textBounds.Width())
-        {
-            oldMaxWidth = textBounds.Width();
-            UpdateMinSize();
+            textLayout->SetTrimming(&trimming, inlineObject);
+            if (oldMaxWidth != textBounds.Width())
+            {
+                oldMaxWidth = textBounds.Width();
+                UpdateMinSize();
+            }
         }
     }
+    GraphicsRenderer::Render(bounds);
 }
 
 void SolidLabelElementRenderer::OnElementStateChanged()

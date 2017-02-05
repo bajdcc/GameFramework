@@ -3,7 +3,7 @@ UIExt.trace('Loading script...')
 CurrentScene = nil
 
 function PassEventToScene(id, ...)
-	UIExt.trace('[!] Event: ' .. id)
+	UIExt.trace('[' .. CurrentScene.name .. '] Event: ' .. id)
 	CurrentScene:event(id, ...)
 end
 

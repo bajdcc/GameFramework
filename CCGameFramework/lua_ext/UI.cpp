@@ -57,9 +57,9 @@ static int hue2rgb(short n1, short n2, short hue)
 
 int ui_helper_hsl2rgb(lua_State* L)
 {
-    auto h = short(luaL_checknumber(L, 1));
-    auto s = short(luaL_checknumber(L, 2));
-    auto l = short(luaL_checknumber(L, 3));
+    auto h = short(luaL_checkinteger(L, 1));
+    auto s = short(luaL_checkinteger(L, 2));
+    auto l = short(luaL_checkinteger(L, 3));
     
     byte r, g, b;
     short Magic1, Magic2;
@@ -91,9 +91,9 @@ int ui_helper_hsl2rgb(lua_State* L)
 
 int ui_helper_rgb2hsl(lua_State* L)
 {
-    auto r = byte(luaL_checknumber(L, 1));
-    auto g = byte(luaL_checknumber(L, 2));
-    auto b = byte(luaL_checknumber(L, 3));
+    auto r = byte(luaL_checkinteger(L, 1));
+    auto g = byte(luaL_checkinteger(L, 2));
+    auto b = byte(luaL_checkinteger(L, 3));
     auto cMax = __max(r, __max(g, b));
     auto cMin = __min(r, __min(g, b));
 

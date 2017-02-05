@@ -40,13 +40,14 @@ M.win_event = {
 }
 
 function M:new(o)
-	o = o or {layers={}}
+	o = o or {layers={}, roots={}}
 	setmetatable(o, self)
 	self.__index = self
 	return o
 end
 
 function M:add(o)
+	self.roots[#self.roots + 1] = o
 	o.handle = UIExt.add_obj(o)
 	o:update()
 	return o
@@ -57,6 +58,14 @@ function M:event(id, ...)
 	if f then 
 		f(self, ...)
 	end
+end
+
+M.resize = function(this)
+	local info = UIExt.info()
+	for k, v in pairs(this.roots) do
+		v.resize(v, 0, 0, info.width, info.height)
+	end
+	UIExt.paint()
 end
 
 return M

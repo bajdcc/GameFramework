@@ -8,6 +8,8 @@ local M = Scene:new()
 _G[modname] = M
 package.loaded[modname] = M
 
+M.name = 'Time Scene'
+
 function M:init()
 	UIExt.trace('Scene [Time page] init')
 	-- INFO
@@ -20,7 +22,7 @@ function M:init()
 		right = info.width,
 		bottom = info.height
 	})
-	self.layers.bg = M:add(bg)
+	self.layers.bg = self:add(bg)
 	UIExt.trace('Scene [Time page]: create background #' .. self.layers.bg.handle)
 	-- TEXT
 	local text = Text:new({
@@ -29,16 +31,31 @@ function M:init()
 		right = info.width,
 		bottom = info.height
 	})
-	self.layers.text = M:add(text)
+	self.layers.text = self:add(text)
 	UIExt.trace('Scene [Time page]: create text #' .. self.layers.text.handle)
+	-- TEXT
+	local cc = Text:new({
+		color = '#EEEEEE',
+		text = 'Made by bajdcc',
+		size = 24,
+		resize = function(this, left, top, right, bottom)
+			this.left, this.top, this.right, this.bottom = right - 200, bottom - 50, right, bottom
+			UIExt.update(this)
+		end
+	})
+	self.layers.cc = self:add(cc)
+	UIExt.trace('Scene [Time page]: create text #' .. self.layers.cc.handle)
 
 	-- EVENT
-	M:init_event()
+	self:init_event()
 
 	-- TIMER
 	UIExt.set_timer(1, 1000)
 	UIExt.set_timer(2, 60000)
 	UIExt.set_timer(5, 100)
+
+	self.resize(self)
+	UIExt.paint()
 end
 
 function M:destroy()
@@ -70,7 +87,8 @@ function M:init_event()
 		[self.win_event.leftbuttondown] = function(this, x, y, flags, wheel)
 		end,
 		[self.win_event.char] = function(this, code, flags)
-		end
+		end,
+		[self.win_event.moved] = self.resize
 	}
 end
 

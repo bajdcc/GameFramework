@@ -234,7 +234,9 @@ protected:
     std::set<cint> setTimer;
 
 private:
-    std::vector<RefPtr<IGraphicsElement>> layers;
+    RefPtr<IGraphicsElement> root;
+    std::map<cint, RawPtr<IGraphicsElement>> mapEle;
+    cint ptrEle{ 0 };
     lua_State *L;
 };
 
