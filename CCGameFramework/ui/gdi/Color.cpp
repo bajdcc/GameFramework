@@ -22,18 +22,18 @@ cint CColor::Compare(CColor color) const
     return value - color.value;
 }
 
-CColor&& CColor::Parse(const CString& value)
+CColor CColor::Parse(const CStringA& value)
 {
-    LPCTSTR code = _T("0123456789ABCDEF");
+    auto code = "0123456789ABCDEF";
     if ((value.GetLength() == 7 || value.GetLength() == 9) && value[0] == _T('#'))
     {
         cint index[8] = { 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF };
         for (cint i = 0; i < value.GetLength() - 1; i++)
         {
-            index[i] = _tcschr(code, value[i + 1]) - code;
+            index[i] = strchr(code, value[i + 1]) - code;
             if (index[i] < 0 || index[i] > 0xF)
             {
-                return std::move(CColor());
+                return CColor();
             }
         }
 
@@ -42,9 +42,9 @@ CColor&& CColor::Parse(const CString& value)
         c.g = (unsigned char)(index[2] * 16 + index[3]);
         c.b = (unsigned char)(index[4] * 16 + index[5]);
         c.a = (unsigned char)(index[6] * 16 + index[7]);
-        return std::move(c);
+        return c;
     }
-    return std::move(CColor());
+    return CColor();
 }
 
 bool CColor::operator==(CColor color) const

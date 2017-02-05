@@ -37,147 +37,6 @@ static CString GetLastErrorStr() // Error Notification
 
 Window *window;
 
-extern int ui_clear_scene(lua_State *L)
-{
-    window->layers.clear();
-    return 0;
-}
-
-extern int ui_add_obj(lua_State *L)
-{
-    luaL_checktype(L, 1, LUA_TTABLE);
-    lua_getfield(L, -1, "type");
-    auto type = ElementId(cint(luaL_checknumber(L, -1)));
-    lua_pop(L, 1);
-    switch (type)
-    {
-    case SolidBackground:
-    {
-        RefPtr<SolidBackgroundElement> obj = SolidBackgroundElement::Create();
-        window->layers.push_back(obj);
-        lua_pushnumber(L, window->layers.size());
-    }
-    break;
-    case SolidLabel:
-    {
-        RefPtr<SolidLabelElement> obj = SolidLabelElement::Create();
-        window->layers.push_back(obj);
-        lua_pushnumber(L, window->layers.size());
-    }
-    break;
-    case GradientBackground:
-    {
-        RefPtr<GradientBackgroundElement> obj = GradientBackgroundElement::Create();
-        window->layers.push_back(obj);
-        lua_pushnumber(L, window->layers.size());
-    }
-    break;
-    default:
-        return luaL_argerror(L, 1, "Invalid obj id");
-    }
-    return 1;
-}
-
-extern int ui_update_obj(lua_State *L)
-{
-    luaL_checktype(L, 1, LUA_TTABLE);
-    lua_getfield(L, -1, "type");
-    auto type = ElementId(cint(luaL_checknumber(L, -1))); lua_pop(L, 1);
-    lua_getfield(L, -1, "handle");
-    auto handle = cint(luaL_checknumber(L, -1)); lua_pop(L, 1);
-    if (handle <= 0 || handle > cint(window->layers.size()))
-        return luaL_argerror(L, 1, "Invalid obj id");
-    auto o = window->layers[handle - 1];
-    if (o->GetTypeId() != type)
-        return luaL_argerror(L, 1, "Invalid obj type");
-    {
-        CRect rt;
-        lua_getfield(L, -1, "left");
-        rt.left = LONG(luaL_checknumber(L, -1)); lua_pop(L, 1);
-        lua_getfield(L, -1, "top");
-        rt.top = LONG(luaL_checknumber(L, -1)); lua_pop(L, 1);
-        lua_getfield(L, -1, "right");
-        rt.right = LONG(luaL_checknumber(L, -1)); lua_pop(L, 1);
-        lua_getfield(L, -1, "bottom");
-        rt.bottom = LONG(luaL_checknumber(L, -1)); lua_pop(L, 1);
-        o->SetRenderRect(rt);
-    }
-    switch (type)
-    {
-    case SolidBackground:
-    {
-        auto obj = static_cast<SolidBackgroundElement*>(o.get());
-        {
-            lua_getfield(L, -1, "color");
-            auto color = luaL_checklstring(L, -1, NULL); lua_pop(L, 1);
-            obj->SetColor(CColor::Parse(CString(color)));
-        }
-    }
-    break;
-    case SolidLabel:
-    {
-        auto obj = static_cast<SolidLabelElement*>(o.get());
-        {
-            lua_getfield(L, -1, "color");
-            auto color = luaL_checklstring(L, -1, NULL); lua_pop(L, 1);
-            obj->SetColor(CColor::Parse(CString(color)));
-        }
-        {
-            Font font;
-            lua_getfield(L, -1, "size");
-            font.size = cint(luaL_checknumber(L, -1)); lua_pop(L, 1);
-            lua_getfield(L, -1, "family");
-            font.fontFamily = CString(luaL_checklstring(L, -1, NULL)); lua_pop(L, 1);
-            obj->SetFont(font);
-        }
-        {
-            lua_getfield(L, -1, "text");
-            obj->SetText(CString(luaL_checklstring(L, -1, NULL))); lua_pop(L, 1);
-        }
-        {
-            lua_getfield(L, -1, "align");
-            obj->SetHorizontalAlignment(Alignment(cint(luaL_checknumber(L, -1)))); lua_pop(L, 1);
-            lua_getfield(L, -1, "valign");
-            obj->SetVerticalAlignment(Alignment(cint(luaL_checknumber(L, -1)))); lua_pop(L, 1);
-        }
-    }
-    break;
-    case GradientBackground:
-    {
-        auto obj = static_cast<GradientBackgroundElement*>(o.get());
-        {
-            lua_getfield(L, -1, "color1");
-            auto color1 = luaL_checklstring(L, -1, NULL); lua_pop(L, 1);
-            obj->SetColor1(CColor::Parse(CString(color1)));
-            lua_getfield(L, -1, "color2");
-            auto color2 = luaL_checklstring(L, -1, NULL); lua_pop(L, 1);
-            obj->SetColor2(CColor::Parse(CString(color2)));
-        }
-        {
-            lua_getfield(L, -1, "direction");
-            obj->SetDirection(GradientBackgroundElement::Direction(cint(luaL_checknumber(L, -1)))); lua_pop(L, 1);
-        }
-    }
-    break;
-    default:
-        break;
-    }
-    return 0;
-}
-
-extern int ui_info(lua_State *L)
-{
-    lua_newtable(L);
-    auto size = window->GetClientWindowSize();
-    lua_pushstring(L, "width");
-    lua_pushnumber(L, size.cx);
-    lua_settable(L, -3);
-    lua_pushstring(L, "height");
-    lua_pushnumber(L, size.cy);
-    lua_settable(L, -3);
-    return 1;
-}
-
 static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     LRESULT result = 0;
@@ -589,6 +448,27 @@ void Window::SetClassStyle(DWORD style, bool available)
     SetClassLong(handle, GCL_STYLE, Long);
 }
 
+void Window::SetTimer(cint id, cint elapse)
+{
+    if (setTimer.find(id) != setTimer.end())
+        return;
+    setTimer.insert(id);
+    ::SetTimer(handle, id, elapse, NULL);
+}
+
+void Window::KillTimer(cint id)
+{
+    if (setTimer.find(id) == setTimer.end())
+        return;
+    setTimer.erase(id);
+    ::KillTimer(handle, id);
+}
+
+void Window::Redraw()
+{
+    Render();
+}
+
 MouseInfo Window::ConvertMouse(WPARAM wParam, LPARAM lParam, bool wheelMessage, bool nonClient)
 {
     MouseInfo info;
@@ -667,17 +547,6 @@ KeyInfo Window::ConvertKey(WPARAM wParam, LPARAM lParam)
     return info;
 }
 
-CharInfo Window::ConvertChar(WPARAM wParam)
-{
-    CharInfo info;
-    info.code = (wchar_t)wParam;
-    info.ctrl = IsKeyPressing(VK_CONTROL);
-    info.shift = IsKeyPressing(VK_SHIFT);
-    info.alt = IsKeyPressing(VK_MENU);
-    info.capslock = IsKeyToggled(VK_CAPITAL);
-    return info;
-}
-
 void Window::TrackMouse(bool enable)
 {
     TRACKMOUSEEVENT trackMouseEvent;
@@ -708,7 +577,11 @@ bool Window::HandleMessageInternal(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM l
     }
     switch (uMsg)
     {
-        // ************************************** moving and sizing
+    // ************************************** timer
+    case WM_TIMER:
+        Timer(wParam);
+        break;
+    // ************************************** moving and sizing
     case WM_MOVING:
     case WM_SIZING:
     {
@@ -901,7 +774,7 @@ bool Window::HandleMessageInternal(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM l
     break;
     case WM_CHAR:
     {
-        CharInfo info = ConvertChar(wParam);
+        KeyInfo info = ConvertKey(wParam, lParam);
         Char(info);
     }
     break;
@@ -1028,7 +901,7 @@ void Window::Render()
 
         RenderInternal();
         HRESULT result = d2dRenderTarget->StopRendering();
-        window->RedrawContent();
+        //window->RedrawContent();
 
         if (FAILED(result))
         {
@@ -1050,9 +923,7 @@ void Window::RenderInternal()
     for (auto& e : layers)
     {
         e->GetRenderer()->SetRenderTarget(d2dRenderTarget);
-        auto b = bounds;
-        b.DeflateRect(e->GetRenderRect());
-        e->GetRenderer()->Render(b);
+        e->GetRenderer()->Render(e->GetRenderRect());
     }
 }
 
@@ -1061,17 +932,31 @@ Window::HitTestResult Window::HitTest(CPoint location)
     return NoDecision;
 }
 
+static void PostNoArgLuaMsg(lua_State *L, WindowEvent evt)
+{
+    lua_getglobal(L, "PassEventToScene");
+    lua_pushnumber(L, evt);
+    lua_call(L, 1, 0);
+}
+
+static int LuaPanicHandler(lua_State *L)
+{
+    ATLTRACE(atlTraceLua, 0, "Error %s\n", lua_tostring(L, -1));
+    ATLASSERT(!"Lua failed!");
+    return 0;
+}
+
 void Window::Created()
 {
+    lua_atpanic(L, LuaPanicHandler);
     luaL_openlibs(L);
     lua_ext_register_all(L);
     luaL_loadstring(L, "require 'script.main'");
-    int ret;
-    if ((ret = lua_pcall(L, 0, 0, 0)) != LUA_OK)
-    {
-        ATLTRACE(atlTraceLua, 0, "Error#%d %s\n", ret, lua_tostring(L, -1));
-        ATLASSERT(!"Lua failed!");
-    }
+    lua_call(L, 0, 0);
+    lua_getglobal(L, "PassEventToScene");
+    lua_pushnumber(L, WE_Null);
+    lua_call(L, 1, 0);
+    PostNoArgLuaMsg(L, WE_Created);
 }
 
 void Window::Moving(CRect& bounds, bool fixSizeOnly)
@@ -1115,165 +1000,214 @@ void Window::Moving(CRect& bounds, bool fixSizeOnly)
             bounds.bottom = oldBounds.top + minWindowSize.cy;
         }
     }
+    PostNoArgLuaMsg(L, WE_Moving);
 }
 
 void Window::Moved()
 {
     if (d2dRenderTarget->RecreateRenderTarget(window->GetClientSize()))
         Render();
+    PostNoArgLuaMsg(L, WE_Moved);
 }
 
 void Window::Enabled()
 {
-
+    PostNoArgLuaMsg(L, WE_Enabled);
 }
 
 void Window::Disabled()
 {
-
+    PostNoArgLuaMsg(L, WE_Disabled);
 }
 
 void Window::GotFocus()
 {
-
+    PostNoArgLuaMsg(L, WE_GotFocus);
 }
 
 void Window::LostFocus()
 {
-
+    PostNoArgLuaMsg(L, WE_LostFocus);
 }
 
 void Window::Activated()
 {
-
+    PostNoArgLuaMsg(L, WE_Activated);
 }
 
 void Window::Deactivated()
 {
-
+    PostNoArgLuaMsg(L, WE_Deactivated);
 }
 
 void Window::Opened()
 {
-
+    PostNoArgLuaMsg(L, WE_Opened);
 }
 
 void Window::Closing(bool& cancel)
 {
-
+    PostNoArgLuaMsg(L, WE_Closing);
 }
 
 void Window::Closed()
 {
-
+    PostNoArgLuaMsg(L, WE_Closed);
 }
 
 void Window::Paint()
 {
-
+    PostNoArgLuaMsg(L, WE_Paint);
 }
 
 void Window::Destroying()
 {
-
+    PostNoArgLuaMsg(L, WE_Destroying);
 }
 
 void Window::Destroyed()
 {
+    for (auto& timer : setTimer)
+    {
+        ::KillTimer(handle, timer);
+    }
+    setTimer.clear();
+    PostNoArgLuaMsg(L, WE_Destroyed);
+}
 
+static void PostMouseLuaMsg(lua_State *L, WindowEvent evt, const MouseInfo& info)
+{
+    lua_getglobal(L, "PassEventToScene");
+    lua_pushnumber(L, evt);
+    lua_pushnumber(L, info.pt.x);
+    lua_pushnumber(L, info.pt.y);
+    lua_newtable(L);
+#define LUA_MOUSE_FLAG(name) lua_pushstring(L, #name); lua_pushboolean(L, info.name); lua_settable(L, -3);
+    LUA_MOUSE_FLAG(ctrl);
+    LUA_MOUSE_FLAG(shift);
+    LUA_MOUSE_FLAG(left);
+    LUA_MOUSE_FLAG(middle);
+    LUA_MOUSE_FLAG(right);
+    LUA_MOUSE_FLAG(nonClient);
+#undef LUA_MOUSE_FLAG
+    lua_pushnumber(L, info.wheel);
+    lua_call(L, 5, 0);
 }
 
 void Window::LeftButtonDown(const MouseInfo& info)
 {
-
+    PostMouseLuaMsg(L, WE_LeftButtonDown, info);
 }
 
 void Window::LeftButtonUp(const MouseInfo& info)
 {
-
+    PostMouseLuaMsg(L, WE_LeftButtonUp, info);
 }
 
 void Window::LeftButtonDoubleClick(const MouseInfo& info)
 {
-
+    PostMouseLuaMsg(L, WE_LeftButtonDoubleClick, info);
 }
 
 void Window::RightButtonDown(const MouseInfo& info)
 {
-
+    PostMouseLuaMsg(L, WE_RightButtonDown, info);
 }
 
 void Window::RightButtonUp(const MouseInfo& info)
 {
-
+    PostMouseLuaMsg(L, WE_RightButtonUp, info);
 }
 
 void Window::RightButtonDoubleClick(const MouseInfo& info)
 {
-
+    PostMouseLuaMsg(L, WE_RightButtonDoubleClick, info);
 }
 
 void Window::MiddleButtonDown(const MouseInfo& info)
 {
-
+    PostMouseLuaMsg(L, WE_MiddleButtonDown, info);
 }
 
 void Window::MiddleButtonUp(const MouseInfo& info)
 {
-
+    PostMouseLuaMsg(L, WE_MiddleButtonUp, info);
 }
 
 void Window::MiddleButtonDoubleClick(const MouseInfo& info)
 {
-
+    PostMouseLuaMsg(L, WE_MiddleButtonDoubleClick, info);
 }
 
 void Window::HorizontalWheel(const MouseInfo& info)
 {
-
+    PostMouseLuaMsg(L, WE_HorizontalWheel, info);
 }
 
 void Window::VerticalWheel(const MouseInfo& info)
 {
-
+    PostMouseLuaMsg(L, WE_VerticalWheel, info);
 }
 
 void Window::MouseMoving(const MouseInfo& info)
 {
-
+    PostMouseLuaMsg(L, WE_MouseMoving, info);
 }
 
 void Window::MouseEntered()
 {
-
+    PostNoArgLuaMsg(L, WE_MouseEntered);
 }
 
 void Window::MouseLeaved()
 {
+    PostNoArgLuaMsg(L, WE_MouseLeaved);
+}
 
+static void PostKeyLuaMsg(lua_State *L, WindowEvent evt, const KeyInfo& info)
+{
+    lua_getglobal(L, "PassEventToScene");
+    lua_pushnumber(L, evt);
+    lua_pushnumber(L, info.code);
+    lua_newtable(L);
+#define LUA_MOUSE_FLAG(name) lua_pushstring(L, #name); lua_pushboolean(L, info.name); lua_settable(L, -3);
+    LUA_MOUSE_FLAG(ctrl);
+    LUA_MOUSE_FLAG(shift);
+    LUA_MOUSE_FLAG(alt);
+    LUA_MOUSE_FLAG(capslock);
+#undef LUA_MOUSE_FLAG
+    lua_call(L, 3, 0);
 }
 
 void Window::KeyDown(const KeyInfo& info)
 {
-
+    PostKeyLuaMsg(L, WE_KeyDown, info);
 }
 
 void Window::KeyUp(const KeyInfo& info)
 {
-
+    PostKeyLuaMsg(L, WE_KeyDown, info);
 }
 
 void Window::SysKeyDown(const KeyInfo& info)
 {
-
+    PostKeyLuaMsg(L, WE_SysKeyDown, info);
 }
 
 void Window::SysKeyUp(const KeyInfo& info)
 {
-
+    PostKeyLuaMsg(L, WE_SysKeyUp, info);
 }
 
-void Window::Char(const CharInfo& info)
+void Window::Char(const KeyInfo& info)
 {
+    PostKeyLuaMsg(L, WE_Char, info);
+}
 
+void Window::Timer(cint id)
+{
+    lua_getglobal(L, "PassEventToScene");
+    lua_pushnumber(L, WE_Timer);
+    lua_pushnumber(L, id);
+    lua_call(L, 2, 0);
 }

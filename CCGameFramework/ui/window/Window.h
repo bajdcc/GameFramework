@@ -32,13 +32,44 @@ struct KeyInfo
     bool capslock;
 };
 
-struct CharInfo
+enum WindowEvent
 {
-    TCHAR code;
-    bool ctrl;
-    bool shift;
-    bool alt;
-    bool capslock;
+    WE_Null = 0,
+    WE_Created = 1,
+    WE_Moving,
+    WE_Moved,
+    WE_Enabled,
+    WE_Disabled,
+    WE_GotFocus,
+    WE_LostFocus,
+    WE_Activated,
+    WE_Deactivated,
+    WE_Opened,
+    WE_Closing,
+    WE_Closed,
+    WE_Paint,
+    WE_Destroying,
+    WE_Destroyed,
+    WE_Timer = 100,
+    WE_LeftButtonDown = 200,
+    WE_LeftButtonUp,
+    WE_LeftButtonDoubleClick,
+    WE_RightButtonDown,
+    WE_RightButtonUp,
+    WE_RightButtonDoubleClick,
+    WE_MiddleButtonDown,
+    WE_MiddleButtonUp,
+    WE_MiddleButtonDoubleClick,
+    WE_HorizontalWheel,
+    WE_VerticalWheel,
+    WE_MouseMoving,
+    WE_MouseEntered,
+    WE_MouseLeaved,
+    WE_KeyDown = 300,
+    WE_KeyUp,
+    WE_SysKeyDown,
+    WE_SysKeyUp,
+    WE_Char,
 };
 
 class Window : public RefCounted<Window>
@@ -134,13 +165,15 @@ public:
     void SetStyle(DWORD style, bool available);
     bool GetClassStyle(DWORD style);
     void SetClassStyle(DWORD style, bool available);
+    void SetTimer(cint id, cint elapse);
+    void KillTimer(cint id);
+    void Redraw();
 
 protected:
     DWORD InternalGetExStyle();
     void InternalSetExStyle(DWORD exStyle);
     MouseInfo ConvertMouse(WPARAM wParam, LPARAM lParam, bool wheelMessage, bool nonClient);
     KeyInfo ConvertKey(WPARAM wParam, LPARAM lParam);
-    CharInfo ConvertChar(WPARAM wParam);
     void TrackMouse(bool enable);
     bool HandleMessageInternal(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT& result);
     void Render();
@@ -182,7 +215,9 @@ protected:
     void KeyUp(const KeyInfo& info);
     void SysKeyDown(const KeyInfo& info);
     void SysKeyUp(const KeyInfo& info);
-    void Char(const CharInfo& info);
+    void Char(const KeyInfo& info);
+
+    void Timer(cint id);
 
     friend int ui_clear_scene(lua_State *L);
     friend int ui_add_obj(lua_State *L);
@@ -196,10 +231,13 @@ protected:
     WindowMsgLoop winMsgLoop;
     cint mouseHoving;
     RefPtr<Direct2DRenderTarget> d2dRenderTarget;
+    std::set<cint> setTimer;
 
 private:
     std::vector<RefPtr<IGraphicsElement>> layers;
     lua_State *L;
 };
+
+extern Window *window;
 
 #endif

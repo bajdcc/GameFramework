@@ -68,7 +68,6 @@ bool Direct2DRenderTarget::StartRendering()
 HRESULT Direct2DRenderTarget::StopRendering()
 {
     HRESULT result = d2dRenderTarget->EndDraw();
-    d2dRenderTarget = nullptr;
     return result;
 }
 

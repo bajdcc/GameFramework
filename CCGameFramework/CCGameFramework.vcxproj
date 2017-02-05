@@ -323,6 +323,7 @@ xcopy /r /y /e "$(ProjectDir)script" "$(TargetDir)script"</Command>
     <ClCompile Include="render\Direct2DRender.cpp" />
     <ClCompile Include="render\Direct2DRenderTarget.cpp" />
     <ClCompile Include="lua_ext\UI.cpp" />
+    <ClCompile Include="ui\window\WindowLua.cpp" />
     <ClCompile Include="WinMain.cpp" />
     <ClCompile Include="ui\gdi\Color.cpp" />
     <ClCompile Include="ui\gdi\Font.cpp" />
@@ -341,15 +342,32 @@ xcopy /r /y /e "$(ProjectDir)script" "$(TargetDir)script"</Command>
     <ClCompile Include="ui\window\WindowMsgLoop.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="script\lib\core\scene.lua" />
-    <None Include="script\lib\ui\block.lua" />
-    <None Include="script\lib\ui\gdibase.lua" />
-    <None Include="script\lib\ui\gradient.lua" />
-    <None Include="script\lib\ui\text.lua" />
-    <None Include="script\main.lua">
+    <Text Include="script\lib\core\scene.lua">
       <FileType>Text</FileType>
-    </None>
-    <None Include="script\scene\welcome.lua" />
+    </Text>
+    <Text Include="script\lib\ui\block.lua">
+      <FileType>Text</FileType>
+    </Text>
+    <Text Include="script\lib\ui\gdibase.lua">
+      <FileType>Text</FileType>
+    </Text>
+    <Text Include="script\lib\ui\gradient.lua">
+      <FileType>Text</FileType>
+    </Text>
+    <Text Include="script\lib\ui\text.lua">
+      <FileType>Text</FileType>
+    </Text>
+    <Text Include="script\main.lua">
+      <FileType>Text</FileType>
+    </Text>
+    <Text Include="script\scene\welcome.lua">
+      <FileType>Text</FileType>
+    </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="script\scene\time.lua">
+      <FileType>Document</FileType>
+    </Text>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

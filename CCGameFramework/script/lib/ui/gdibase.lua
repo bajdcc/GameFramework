@@ -16,4 +16,8 @@ function M:new(o)
 	return o;
 end
 
+function M:update()
+	UIExt.update(self)
+end
+
 return M

@@ -3,63 +3,69 @@ local Gradient = require('script.lib.ui.gradient')
 local Block = require('script.lib.ui.block')
 local Text = require('script.lib.ui.text')
 
-local modname = 'WelcomeScene'
+local modname = 'TimeScene'
 local M = Scene:new()
 _G[modname] = M
 package.loaded[modname] = M
 
 function M:init()
-	UIExt.trace('Scene [Welcome page] init')
+	UIExt.trace('Scene [Time page] init')
 	-- INFO
 	local info = UIExt.info()
+	-- VAR
+	self.hue = 0
 	-- BG
 	local bg = Block:new({
-		color = '#111111',
-		right = info.width,
-		bottom = (info.height / 2) + 100
-	})
-	self.layers.bg = M:add(bg)
-	UIExt.trace('Scene [Welcome page]: create background #' .. self.layers.bg.handle)
-	-- BG2
-	local bg2 = Gradient:new({
-		color1 = '#111111',
-		color2 = '#AAAAAA',
-		direction = 1,
-		top = info.height - bg.bottom,
+		color = UIExt.hsb2rgb(self.hue, 128, 128),
 		right = info.width,
 		bottom = info.height
 	})
-	self.layers.bg2 = M:add(bg2)
-	UIExt.trace('Scene [Welcome page]: create background2 #' .. self.layers.bg2.handle)
+	self.layers.bg = M:add(bg)
+	UIExt.trace('Scene [Time page]: create background #' .. self.layers.bg.handle)
 	-- TEXT
 	local text = Text:new({
 		color = '#EEEEEE',
-		text = 'Hello world!',
+		text = 'Time!',
 		right = info.width,
 		bottom = info.height
 	})
 	self.layers.text = M:add(text)
-	UIExt.trace('Scene [Welcome page]: create text #' .. self.layers.text.handle)
+	UIExt.trace('Scene [Time page]: create text #' .. self.layers.text.handle)
 
 	-- EVENT
 	M:init_event()
 
 	-- TIMER
-	UIExt.set_timer(1, 3000)
+	UIExt.set_timer(1, 1000)
+	UIExt.set_timer(2, 60000)
+	UIExt.set_timer(5, 100)
 end
 
 function M:destroy()
-	UIExt.trace('Scene [Welcome page] destroy')
+	UIExt.trace('Scene [Time page] destroy')
 	UIExt.clear_scene()
 end
 
 function M:init_event()
 	self.handler = {
 		[self.win_event.created] = function(this)
-			UIExt.trace('Scene [Welcome page] Test created message!')
+			UIExt.trace('Scene [Time page] Test created message!');
 		end,
 		[self.win_event.timer] = function(this, id)
-			FlipScene('Time')
+			if id == 5 then
+				if this.hue > 240 then
+					this.hue = 0
+				end
+				this.hue = this.hue + 1
+				this.layers.bg.color = UIExt.hsb2rgb(this.hue, 128, 128)
+				this.layers.bg:update()
+				UIExt.paint()
+			elseif id == 1 then
+				this.layers.text.text = os.date("%Y-%m-%d %H:%M:%S")
+				this.layers.text:update()
+			elseif id == 2 then
+				FlipScene('Welcome')
+			end
 		end,
 		[self.win_event.leftbuttondown] = function(this, x, y, flags, wheel)
 		end,

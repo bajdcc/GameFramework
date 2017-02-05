@@ -252,7 +252,7 @@ public:
 
     cint Compare(CColor color)const;
 
-    static CColor&& Parse(const CString& value);
+    static CColor Parse(const CStringA& value);
 
     bool operator==(CColor color) const;
     bool operator!=(CColor color) const;

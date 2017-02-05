@@ -326,18 +326,34 @@
     <ClCompile Include="lua_ext\ext.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="ui\window\WindowLua.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="script\main.lua">
       <Filter>脚本</Filter>
     </None>
-    <None Include="script\scene\welcome.lua">
+    <None Include="script\lib\ui\block.lua">
       <Filter>脚本</Filter>
     </None>
-    <None Include="script\lib\ui\gdibase.lua" />
-    <None Include="script\lib\ui\block.lua" />
-    <None Include="script\lib\core\scene.lua" />
-    <None Include="script\lib\ui\text.lua" />
-    <None Include="script\lib\ui\gradient.lua" />
+    <None Include="script\lib\ui\gdibase.lua">
+      <Filter>脚本</Filter>
+    </None>
+    <None Include="script\lib\ui\gradient.lua">
+      <Filter>脚本</Filter>
+    </None>
+    <None Include="script\lib\core\scene.lua">
+      <Filter>脚本</Filter>
+    </None>
+    <None Include="script\lib\ui\text.lua">
+      <Filter>脚本</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="script\scene\welcome.lua">
+      <Filter>脚本</Filter>
+    </Text>
+    <Text Include="script\scene\time.lua" />
   </ItemGroup>
 </Project>
