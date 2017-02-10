@@ -114,7 +114,6 @@ int ui_update_obj(lua_State *L)
     case SolidLabel:
     {
         auto obj = static_cast<SolidLabelElement*>(o.get());
-        RefPtr<Direct2DRenderTarget> rt = obj->GetRenderer()->SetRenderTarget(nullptr);
         {
             lua_getfield(L, -1, "color");
             auto color = luaL_checklstring(L, -1, NULL); lua_pop(L, 1);
@@ -138,13 +137,11 @@ int ui_update_obj(lua_State *L)
             lua_getfield(L, -1, "valign");
             obj->SetVerticalAlignment(Alignment(cint(luaL_checkinteger(L, -1)))); lua_pop(L, 1);
         }
-        obj->GetRenderer()->SetRenderTarget(rt);
     }
     break;
     case GradientBackground:
     {
         auto obj = static_cast<GradientBackgroundElement*>(o.get());
-        RefPtr<Direct2DRenderTarget> rt = obj->GetRenderer()->SetRenderTarget(nullptr);
         {
             lua_getfield(L, -1, "color1");
             auto color1 = luaL_checklstring(L, -1, NULL); lua_pop(L, 1);
@@ -157,13 +154,11 @@ int ui_update_obj(lua_State *L)
             lua_getfield(L, -1, "direction");
             obj->SetDirection(GradientBackgroundElement::Direction(cint(luaL_checkinteger(L, -1)))); lua_pop(L, 1);
         }
-        obj->GetRenderer()->SetRenderTarget(rt);
     }
     break;
     case QRImage:
     {
         auto obj = static_cast<QRImageElement*>(o.get());
-        RefPtr<Direct2DRenderTarget> rt = obj->GetRenderer()->SetRenderTarget(nullptr);
         {
             lua_getfield(L, -1, "color");
             auto color = luaL_checklstring(L, -1, NULL); lua_pop(L, 1);
@@ -175,7 +170,6 @@ int ui_update_obj(lua_State *L)
             auto opacity = (FLOAT)luaL_checknumber(L, -1); lua_pop(L, 1);
             obj->SetOpacity(opacity);
         }
-        obj->GetRenderer()->SetRenderTarget(rt);
     }
     break;
     default:
