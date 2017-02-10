@@ -673,12 +673,4 @@ void SolidLabelElementRenderer::FinalizeInternal()
     DestroyTextFormat(renderTarget);
 }
 
-void SolidLabelElementRenderer::RenderTargetChangedInternal(PassRefPtr<Direct2DRenderTarget> oldRenderTarget, PassRefPtr<Direct2DRenderTarget> newRenderTarget)
-{
-    DestroyBrush(oldRenderTarget.get());
-    DestroyTextFormat(oldRenderTarget.get());
-    CreateBrush(newRenderTarget.get());
-    CreateTextFormat(newRenderTarget.get());
-    UpdateMinSize();
-}
 #pragma endregion SolidLabel

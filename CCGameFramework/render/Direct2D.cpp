@@ -14,26 +14,40 @@ static void InitRenderer()
     SolidBackgroundElementRenderer::Register();
     GradientBackgroundElementRenderer::Register();
     SolidLabelElementRenderer::Register();
+    QRImageElementRenderer::Register();
 }
 
 Direct2D::Direct2D()
 {
+    ::CoInitializeEx(NULL, COINIT_MULTITHREADED);
     HRESULT hr;
     ID2D1Factory* d2d1;
     hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &d2d1);
     if (SUCCEEDED(hr))
         D2D1Factory.Attach(d2d1);
+    else
+        ATLASSERT(!"D2D1CreateFactory failed");
     IDWriteFactory* dwrite;
     hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_ISOLATED, __uuidof(IDWriteFactory), reinterpret_cast<IUnknown**>(&dwrite));
     if (SUCCEEDED(hr))
         DWriteFactory.Attach(dwrite);
+    else
+        ATLASSERT(!"DWriteCreateFactory failed");
+    hr = WICImagingFactory.CoCreateInstance(
+        CLSID_WICImagingFactory,
+        NULL,
+        CLSCTX_INPROC_SERVER);
+    if (FAILED(hr))
+        ATLASSERT(!"WICImagingFactory failed");
 }
 
 Direct2D::~Direct2D()
 {
+    WICImagingFactory = nullptr;
     DWriteFactory = nullptr;
     D2D1Factory = nullptr;
     ReportLiveObjects();
+    ::CoUninitialize();
 }
 
 void Direct2D::ReportLiveObjects()
@@ -59,6 +73,11 @@ CComPtr<ID2D1Factory> Direct2D::GetDirect2DFactory()
 CComPtr<IDWriteFactory> Direct2D::GetDirectWriteFactory()
 {
     return DWriteFactory;
+}
+
+CComPtr<IWICImagingFactory> Direct2D::GetWICImagingFactory()
+{
+    return WICImagingFactory;
 }
 
 bool Direct2D::RegisterFactories(PassRefPtr<IGraphicsElementFactory> elementFactory, PassRefPtr<IGraphicsRendererFactory> rendererFactory)

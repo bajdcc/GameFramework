@@ -321,6 +321,7 @@ xcopy /r /y /e "$(ProjectDir)script" "$(TargetDir)script"</Command>
     <ClCompile Include="lua_ext\ext.cpp" />
     <ClCompile Include="render\Direct2DAllocator.cpp" />
     <ClCompile Include="render\Direct2DRender.cpp" />
+    <ClCompile Include="render\Direct2DRenderImage.cpp" />
     <ClCompile Include="render\Direct2DRenderTarget.cpp" />
     <ClCompile Include="lua_ext\UI.cpp" />
     <ClCompile Include="ui\window\WindowLua.cpp" />
@@ -342,6 +343,9 @@ xcopy /r /y /e "$(ProjectDir)script" "$(TargetDir)script"</Command>
     <ClCompile Include="ui\window\WindowMsgLoop.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <Text Include="script\lib\ui\qr.lua">
+      <FileType>Text</FileType>
+    </Text>
     <Text Include="script\lib\core\scene.lua">
       <FileType>Text</FileType>
     </Text>
@@ -363,18 +367,18 @@ xcopy /r /y /e "$(ProjectDir)script" "$(TargetDir)script"</Command>
     <Text Include="script\scene\welcome.lua">
       <FileType>Text</FileType>
     </Text>
-	<Text Include="script\scene\time.lua">
+    <Text Include="script\scene\time.lua">
       <FileType>Text</FileType>
     </Text>
-	<Text Include="script\lib\ui\layout\layoutbase.lua">
+    <Text Include="script\lib\ui\layout\layoutbase.lua">
       <FileType>Text</FileType>
     </Text>
-	<Text Include="script\lib\ui\layout\abs.lua">
+    <Text Include="script\lib\ui\layout\abs.lua">
       <FileType>Text</FileType>
     </Text>
-	<None Include="script\lib\ui\empty.lua">
+    <Text Include="script\lib\ui\empty.lua">
       <FileType>Text</FileType>
-    </None>
+    </Text>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -329,6 +329,9 @@
     <ClCompile Include="ui\window\WindowLua.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="render\Direct2DRenderImage.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="script\scene\welcome.lua">
@@ -361,7 +364,10 @@
     <Text Include="script\scene\time.lua">
       <Filter>脚本</Filter>
     </Text>
-	<Text Include="script\lib\ui\empty.lua">
+	<Text Include="script\lib\ui\qr.lua">
+      <Filter>脚本</Filter>
+    </Text>
+    <Text Include="script\lib\ui\empty.lua">
       <Filter>脚本</Filter>
     </Text>
   </ItemGroup>

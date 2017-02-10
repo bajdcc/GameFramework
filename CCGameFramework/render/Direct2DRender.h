@@ -14,6 +14,7 @@ enum ElementId
     SolidBackground,
     SolidLabel,
     GradientBackground,
+    QRImage = 1100,
 };
 
 using Alignment = Gdiplus::StringAlignment;
@@ -56,7 +57,7 @@ public:
 
     virtual void Initialize(PassRefPtr<IGraphicsElement> element) = 0;
     virtual void Finalize() = 0;
-    virtual void SetRenderTarget(PassRefPtr<Direct2DRenderTarget> renderTarget) = 0;
+    virtual PassRefPtr<Direct2DRenderTarget> SetRenderTarget(PassRefPtr<Direct2DRenderTarget> renderTarget) = 0;
     virtual void Render(CRect bounds) = 0;
     virtual void OnElementStateChanged() = 0;
     virtual CSize GetMinSize() = 0;
@@ -175,7 +176,7 @@ public:
     {
         FinalizeInternal();
     }
-    void SetRenderTarget(PassRefPtr<Direct2DRenderTarget> _renderTarget)override
+    PassRefPtr<Direct2DRenderTarget> SetRenderTarget(PassRefPtr<Direct2DRenderTarget> _renderTarget)override
     {
         RefPtr<TTarget> oldRenderTarget = renderTarget;
         renderTarget = dynamic_cast<Direct2DRenderTarget*>(_renderTarget.get());
@@ -184,6 +185,7 @@ public:
         {
             child->GetRenderer()->SetRenderTarget(_renderTarget.get());
         }
+        return oldRenderTarget;
     }
     CSize GetMinSize()override
     {
@@ -469,5 +471,70 @@ protected:
     cint oldMaxWidth;
 };
 #pragma endregion SolidLabel
+
+#pragma region Image
+template <class TElement, class TRenderer>
+class GraphicsImageRenderer : public GraphicsRenderer<TElement, TRenderer, Direct2DRenderTarget>
+{
+protected:
+    void InitializeInternal()override
+    {
+
+    }
+    void FinalizeInternal()override
+    {
+        DestroyImage(renderTarget);
+    }
+    void RenderTargetChangedInternal(PassRefPtr<Direct2DRenderTarget> oldRenderTarget, PassRefPtr<Direct2DRenderTarget> newRenderTarget)override
+    {
+        DestroyImage(oldRenderTarget);
+        CreateImage(newRenderTarget);
+    }
+    virtual void CreateImage(PassRefPtr<Direct2DRenderTarget> renderTarget) = 0;
+    virtual void DestroyImage(PassRefPtr<Direct2DRenderTarget> renderTarget)
+    {
+        bitmap = nullptr;
+    }
+    void OnElementStateChanged()override
+    {
+        DestroyImage(renderTarget);
+        CreateImage(renderTarget);
+    }
+
+    CComPtr<ID2D1Bitmap> bitmap;
+};
+
+class QRImageElement : public GraphicsElement<QRImageElement>
+{
+public:
+    QRImageElement();
+    ~QRImageElement();
+
+    static CString GetElementTypeName();
+
+    cint GetTypeId()override;
+
+    CColor GetColor()const;
+    void SetColor(CColor value);
+    CStringA GetText()const;
+    void SetText(CStringA value);
+    FLOAT GetOpacity()const;
+    void SetOpacity(FLOAT value);
+
+protected:
+    CColor color;
+    CStringA text;
+    FLOAT opacity;
+};
+
+class QRImageElementRenderer : public GraphicsImageRenderer<QRImageElement, QRImageElementRenderer>
+{
+protected:
+    void CreateImage(PassRefPtr<Direct2DRenderTarget> renderTarget)override;
+public:
+    void Render(CRect bounds)override;
+};
+
+#pragma endregion Image
 
 #endif

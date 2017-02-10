@@ -19,6 +19,7 @@ class Direct2D
 
     CComPtr<ID2D1Factory> D2D1Factory;
     CComPtr<IDWriteFactory> DWriteFactory;
+    CComPtr<IWICImagingFactory> WICImagingFactory;
 
     typedef std::map<CString, RefPtr<IGraphicsElementFactory>> elementFactoryMap;
     typedef std::map<CString, RefPtr<IGraphicsRendererFactory>> rendererFactoryMap;
@@ -32,6 +33,7 @@ class Direct2D
 public:
     CComPtr<ID2D1Factory> GetDirect2DFactory();
     CComPtr<IDWriteFactory> GetDirectWriteFactory();
+    CComPtr<IWICImagingFactory> GetWICImagingFactory();
     bool RegisterFactories(PassRefPtr<IGraphicsElementFactory> elementFactory, PassRefPtr<IGraphicsRendererFactory> rendererFactory);
     PassRefPtr<IGraphicsElementFactory> GetElementFactory(const CString& elementTypeName);
     PassRefPtr<IGraphicsRendererFactory> GetRendererFactory(const CString& elementTypeName);

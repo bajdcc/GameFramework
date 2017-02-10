@@ -14,6 +14,7 @@ Direct2DRenderTarget::Direct2DRenderTarget(PassRefPtr<Window> _window)
 {
     solidBrushes.SetRenderTarget(this);
     linearBrushes.SetRenderTarget(this);
+    imagingFactory = Direct2D::Singleton().GetWICImagingFactory();
     CComPtr<IDWriteFactory> dwriteFactory = Direct2D::Singleton().GetDirectWriteFactory();
     CComPtr<IDWriteRenderingParams> defaultParams;
     HRESULT hr = dwriteFactory->CreateRenderingParams(&defaultParams);
@@ -140,6 +141,42 @@ CComPtr<IDWriteRenderingParams> Direct2DRenderTarget::CreateRenderingParams(DWRI
     }
 }
 
+CComPtr<IWICBitmap> Direct2DRenderTarget::GetBitmap(CComPtr<IWICBitmapDecoder> source, int index)
+{
+    CComPtr<IWICBitmapFrameDecode> frameDecode;
+    HRESULT hr = source->GetFrame(index, &frameDecode);
+    if (FAILED(hr))
+        ATLASSERT(!"GetFrame failed");
+    CComPtr<IWICFormatConverter> converter;
+    hr = imagingFactory->CreateFormatConverter(&converter);
+    if (SUCCEEDED(hr))
+    {
+        converter->Initialize(
+            frameDecode,
+            GUID_WICPixelFormat32bppPBGRA,
+            WICBitmapDitherTypeNone,
+            NULL,
+            0.0f,
+            WICBitmapPaletteTypeCustom);
+    }
+
+    CComPtr<IWICBitmap> bitmap;
+    CComPtr<IWICBitmapSource> convertedBitmapSource;
+    if (converter)
+    {
+        convertedBitmapSource = converter;
+    }
+    else
+    {
+        convertedBitmapSource = frameDecode;
+    }
+    hr = imagingFactory->CreateBitmapFromSource(convertedBitmapSource, WICBitmapCacheOnLoad, &bitmap);
+    if (FAILED(hr))
+        ATLASSERT(!"CreateBitmapFromSource failed");
+
+    return bitmap;
+}
+
 CComPtr<ID2D1SolidColorBrush> Direct2DRenderTarget::CreateDirect2DBrush(CColor color)
 {
     return solidBrushes.Create(color);
@@ -163,6 +200,78 @@ void Direct2DRenderTarget::DestroyDirect2DLinearBrush(CColor c1, CColor c2)
 PassRefPtr<D2DTextFormatPackage> Direct2DRenderTarget::CreateDirect2DTextFormat(const Font& font)
 {
     return textFormats.Create(font);
+}
+
+CComPtr<IWICBitmap> Direct2DRenderTarget::CreateBitmap(UINT width, UINT height)
+{
+    CComPtr<IWICBitmap> bitmap;
+    HRESULT hr = imagingFactory->CreateBitmap(
+        width,
+        height,
+        GUID_WICPixelFormat32bppPBGRA,
+        WICBitmapCacheOnDemand,
+        &bitmap);
+    if (FAILED(hr))
+        ATLASSERT(!"CreateBitmap failed");
+    return bitmap;
+}
+
+CComPtr<IWICBitmap> Direct2DRenderTarget::CreateImageFromFile(const CStringA& path, int index)
+{
+    CComPtr<IWICBitmapDecoder> bitmapDecoder;
+    HRESULT hr = imagingFactory->CreateDecoderFromFilename(
+        CString(path),
+        NULL,
+        GENERIC_READ,
+        WICDecodeMetadataCacheOnDemand,
+        &bitmapDecoder);
+    if (FAILED(hr))
+        ATLASSERT(!"CreateDecoderFromFilename failed");
+    return GetBitmap(bitmapDecoder, index);
+}
+
+CComPtr<IWICBitmap> Direct2DRenderTarget::CreateImageFromMemory(LPVOID buffer, int length, int index)
+{
+    CComPtr<IStream> stream = SHCreateMemStream((const BYTE*)buffer, length);
+    if (!stream)
+    {
+        ATLASSERT(!"SHCreateMemStream failed");
+    }
+    CComPtr<IWICBitmapDecoder> bitmapDecoder;
+    HRESULT hr = imagingFactory->CreateDecoderFromStream(stream, NULL, WICDecodeMetadataCacheOnDemand, &bitmapDecoder);
+    if (FAILED(hr))
+        ATLASSERT(!"CreateDecoderFromStream failed");
+    return GetBitmap(bitmapDecoder, index);
+}
+
+CComPtr<IWICBitmap> Direct2DRenderTarget::CreateImageFromBitmap(HBITMAP handle, int index)
+{
+    CComPtr<IWICBitmap> bitmap;
+    HRESULT hr = imagingFactory->CreateBitmapFromHBITMAP(handle, NULL, WICBitmapUseAlpha, &bitmap);
+    if (FAILED(hr))
+        ATLASSERT(!"CreateBitmapFromHBITMAP failed");
+    return bitmap;
+}
+
+CComPtr<IWICBitmap> Direct2DRenderTarget::CreateImageFromIcon(HICON handle, int index)
+{
+    CComPtr<IWICBitmap> bitmap;
+    HRESULT hr = imagingFactory->CreateBitmapFromHICON(handle, &bitmap);
+    if (FAILED(hr))
+        ATLASSERT(!"CreateBitmapFromHICON failed");
+    return bitmap;
+}
+
+CComPtr<ID2D1Bitmap> Direct2DRenderTarget::GetBitmapFromWIC(CComPtr<IWICBitmap> bitmap)
+{
+    CComPtr<ID2D1Bitmap> d2dBitmap;
+    HRESULT hr = d2dRenderTarget->CreateBitmapFromWicBitmap(
+        bitmap,
+        &d2dBitmap
+    );
+    if (FAILED(hr))
+        ATLASSERT(!"CreateBitmapFromWicBitmap failed");
+    return d2dBitmap;
 }
 
 void Direct2DRenderTarget::DestroyDirect2DTextFormat(const Font& font)

@@ -43,25 +43,20 @@ int ui_add_obj(lua_State *L)
     switch (type)
     {
     case Empty:
-    {
         obj = EmptyElement::Create();
-    }
         break;
     case SolidBackground:
-    {
         obj = SolidBackgroundElement::Create();
-    }
-    break;
+        break;
     case SolidLabel:
-    {
         obj = SolidLabelElement::Create();
-    }
-    break;
+        break;
     case GradientBackground:
-    {
         obj = GradientBackgroundElement::Create();
-    }
-    break;
+        break;
+    case QRImage:
+        obj = QRImageElement::Create();
+        break;
     default:
         return luaL_argerror(L, 1, "Invalid obj id");
     }
@@ -119,6 +114,7 @@ int ui_update_obj(lua_State *L)
     case SolidLabel:
     {
         auto obj = static_cast<SolidLabelElement*>(o.get());
+        RefPtr<Direct2DRenderTarget> rt = obj->GetRenderer()->SetRenderTarget(nullptr);
         {
             lua_getfield(L, -1, "color");
             auto color = luaL_checklstring(L, -1, NULL); lua_pop(L, 1);
@@ -142,11 +138,13 @@ int ui_update_obj(lua_State *L)
             lua_getfield(L, -1, "valign");
             obj->SetVerticalAlignment(Alignment(cint(luaL_checkinteger(L, -1)))); lua_pop(L, 1);
         }
+        obj->GetRenderer()->SetRenderTarget(rt);
     }
     break;
     case GradientBackground:
     {
         auto obj = static_cast<GradientBackgroundElement*>(o.get());
+        RefPtr<Direct2DRenderTarget> rt = obj->GetRenderer()->SetRenderTarget(nullptr);
         {
             lua_getfield(L, -1, "color1");
             auto color1 = luaL_checklstring(L, -1, NULL); lua_pop(L, 1);
@@ -159,6 +157,25 @@ int ui_update_obj(lua_State *L)
             lua_getfield(L, -1, "direction");
             obj->SetDirection(GradientBackgroundElement::Direction(cint(luaL_checkinteger(L, -1)))); lua_pop(L, 1);
         }
+        obj->GetRenderer()->SetRenderTarget(rt);
+    }
+    break;
+    case QRImage:
+    {
+        auto obj = static_cast<QRImageElement*>(o.get());
+        RefPtr<Direct2DRenderTarget> rt = obj->GetRenderer()->SetRenderTarget(nullptr);
+        {
+            lua_getfield(L, -1, "color");
+            auto color = luaL_checklstring(L, -1, NULL); lua_pop(L, 1);
+            obj->SetColor(CColor::Parse(color));
+            lua_getfield(L, -1, "text");
+            auto text = luaL_checklstring(L, -1, NULL); lua_pop(L, 1);
+            obj->SetText(text);
+            lua_getfield(L, -1, "opacity");
+            auto opacity = (FLOAT)luaL_checknumber(L, -1); lua_pop(L, 1);
+            obj->SetOpacity(opacity);
+        }
+        obj->GetRenderer()->SetRenderTarget(rt);
     }
     break;
     default:
