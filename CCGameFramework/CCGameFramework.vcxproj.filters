@@ -171,6 +171,36 @@
     <ClInclude Include="lua_ext\ext.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="base\libqrencode\bitstream.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\libqrencode\mask.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\libqrencode\mmask.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\libqrencode\mqrspec.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\libqrencode\qrencode.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\libqrencode\qrinput.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\libqrencode\qrspec.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\libqrencode\rscode.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\libqrencode\split.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\libqrencode\config.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -332,6 +362,33 @@
     <ClCompile Include="render\Direct2DRenderImage.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="base\libqrencode\bitstream.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\libqrencode\mask.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\libqrencode\mmask.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\libqrencode\mqrspec.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\libqrencode\qrencode.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\libqrencode\qrinput.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\libqrencode\qrspec.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\libqrencode\rscode.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\libqrencode\split.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="script\scene\welcome.lua">
@@ -364,7 +421,7 @@
     <Text Include="script\scene\time.lua">
       <Filter>脚本</Filter>
     </Text>
-	<Text Include="script\lib\ui\qr.lua">
+    <Text Include="script\lib\ui\qr.lua">
       <Filter>脚本</Filter>
     </Text>
     <Text Include="script\lib\ui\empty.lua">

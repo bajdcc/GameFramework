@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Direct2DRender.h"
+#include <base/libqrencode/qrencode.h>
 
 #pragma region Image
 
@@ -80,7 +81,14 @@ void QRImageElementRenderer::CreateImage(PassRefPtr<Direct2DRenderTarget> render
 {
     if (renderTarget)
     {
-        auto WICBitmap = renderTarget->CreateBitmap(200, 200);
+        auto qrcode = QRcode_encodeString(
+            element->GetText(),
+            0,
+            QR_ECLEVEL_H,
+            QR_MODE_8,
+            1
+        );
+        auto WICBitmap = renderTarget->CreateBitmap(qrcode->width, qrcode->width);
         bitmap = renderTarget->GetBitmapFromWIC(WICBitmap);
         WICRect rect;
         rect.X = 0;
@@ -93,14 +101,23 @@ void QRImageElementRenderer::CreateImage(PassRefPtr<Direct2DRenderTarget> render
             ATLASSERT(!"CopyPixels failed");
         auto count = rect.Width * rect.Height;
         BYTE* read = buffer;
+        auto color = element->GetColor();
         for (auto i = 0; i < count; i++)
         {
-            read[0] = 128;//B
-            read[1] = 128;//G
-            read[2] = 128;//R
-            read[3] = 255;//APLHA
+            if ((qrcode->data[i] & 1) == 0)
+            {
+                *reinterpret_cast<int*>(read) = -1;
+            }
+            else
+            {
+                read[0] = color.b;//B
+                read[1] = color.g;//G
+                read[2] = color.r;//R
+                read[3] = color.a;//A
+            }
             read += 4;
         }
+        QRcode_free(qrcode);
         D2D1_RECT_U d2dRect = D2D1::RectU(0, 0, rect.Width, rect.Height);
         bitmap->CopyFromMemory(&d2dRect, buffer, rect.Width * 4);
         delete[] buffer;
@@ -115,7 +132,8 @@ void QRImageElementRenderer::Render(CRect bounds)
         d2dRenderTarget->DrawBitmap(
             bitmap,
             D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
-            element->GetOpacity()
+            element->GetOpacity(),
+            D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR
         );
     }
     GraphicsImageRenderer::Render(bounds);

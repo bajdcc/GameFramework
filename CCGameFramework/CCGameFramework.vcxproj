@@ -161,6 +161,16 @@ xcopy /r /y /e "$(ProjectDir)script" "$(TargetDir)script"</Command>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="base\defines.h" />
+    <ClInclude Include="base\libqrencode\bitstream.h" />
+    <ClInclude Include="base\libqrencode\config.h" />
+    <ClInclude Include="base\libqrencode\mask.h" />
+    <ClInclude Include="base\libqrencode\mmask.h" />
+    <ClInclude Include="base\libqrencode\mqrspec.h" />
+    <ClInclude Include="base\libqrencode\qrencode.h" />
+    <ClInclude Include="base\libqrencode\qrinput.h" />
+    <ClInclude Include="base\libqrencode\qrspec.h" />
+    <ClInclude Include="base\libqrencode\rscode.h" />
+    <ClInclude Include="base\libqrencode\split.h" />
     <ClInclude Include="lua\lapi.h" />
     <ClInclude Include="lua\lauxlib.h" />
     <ClInclude Include="lua\lcode.h" />
@@ -213,6 +223,33 @@ xcopy /r /y /e "$(ProjectDir)script" "$(TargetDir)script"</Command>
     <ClInclude Include="WTF\RefPtrHashMap.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="base\libqrencode\bitstream.c">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="base\libqrencode\mask.c">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="base\libqrencode\mmask.c">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="base\libqrencode\mqrspec.c">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="base\libqrencode\qrencode.c">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="base\libqrencode\qrinput.c">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="base\libqrencode\qrspec.c">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="base\libqrencode\rscode.c">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="base\libqrencode\split.c">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="lua\lapi.c">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
