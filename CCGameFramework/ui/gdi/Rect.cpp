@@ -282,9 +282,9 @@ BOOL CRect::RestrictRect(const RECT& srcRect)
     return bFitness == 0x00FF ? TRUE : FALSE;
 }
 
-CString CRect::ToString() const
+CStringA CRect::ToString() const
 {
-    CString str;
-    str.Format(_T("Rect(%d, %d, %d, %d)"), left, top, right, bottom);
+    CStringA str;
+    str.Format("Rect(%d, %d, %d, %d)", left, top, right, bottom);
     return str;
 }

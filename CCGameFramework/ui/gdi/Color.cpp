@@ -25,7 +25,7 @@ cint CColor::Compare(CColor color) const
 CColor CColor::Parse(const CStringA& value)
 {
     auto code = "0123456789ABCDEF";
-    if ((value.GetLength() == 7 || value.GetLength() == 9) && value[0] == _T('#'))
+    if ((value.GetLength() == 7 || value.GetLength() == 9) && value[0] == '#')
     {
         cint index[8] = { 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF };
         for (cint i = 0; i < value.GetLength() - 1; i++)
@@ -38,10 +38,10 @@ CColor CColor::Parse(const CStringA& value)
         }
 
         CColor c;
-        c.r = (unsigned char)(index[0] * 16 + index[1]);
-        c.g = (unsigned char)(index[2] * 16 + index[3]);
-        c.b = (unsigned char)(index[4] * 16 + index[5]);
-        c.a = (unsigned char)(index[6] * 16 + index[7]);
+        c.r = (BYTE)(index[0] * 16 + index[1]);
+        c.g = (BYTE)(index[2] * 16 + index[3]);
+        c.b = (BYTE)(index[4] * 16 + index[5]);
+        c.a = (BYTE)(index[6] * 16 + index[7]);
         return c;
     }
     return CColor();
@@ -77,10 +77,10 @@ bool CColor::operator>=(CColor color) const
     return Compare(color) >= 0;
 }
 
-CString CColor::ToString() const
+CStringA CColor::ToString() const
 {
-    LPCTSTR code = _T("0123456789ABCDEF");
-    TCHAR result[] = _T("#00000000");
+    LPCSTR code = "0123456789ABCDEF";
+    char result[] = "#00000000";
     result[1] = code[r / 0x10];
     result[2] = code[r % 0x10];
     result[3] = code[g / 0x10];
@@ -89,7 +89,7 @@ CString CColor::ToString() const
     result[6] = code[b % 0x10];
     if (a == 0xFF)
     {
-        result[7] = _T('\0');
+        result[7] = '\0';
     }
     else
     {

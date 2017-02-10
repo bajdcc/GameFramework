@@ -80,9 +80,9 @@ CRect CSize::operator-(const RECT* lpRect) const
     return CRect(lpRect) - *this;
 }
 
-CString CSize::ToString() const
+CStringA CSize::ToString() const
 {
-    CString str;
-    str.Format(_T("Size(%d, %d)"), cx, cy);
+    CStringA str;
+    str.Format("Size(%d, %d)", cx, cy);
     return str;
 }

@@ -1,13 +1,14 @@
 ﻿#include "stdafx.h"
 #include "Gdi.h"
 
-Font::Font() : size(0)
-, bold(false)
-, italic(false)
-, underline(false)
-, strikeline(false)
-, antialias(true)
-, verticalAntialias(true)
+Font::Font()
+    : size(0)
+    , bold(false)
+    , italic(false)
+    , underline(false)
+    , strikeline(false)
+    , antialias(true)
+    , verticalAntialias(true)
 {
 
 }

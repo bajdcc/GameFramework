@@ -91,9 +91,9 @@ CRect CPoint::operator-(const RECT* lpRect) const
     return CRect(lpRect) - *this;
 }
 
-CString CPoint::ToString()
+CStringA CPoint::ToString()
 {
-    CString str;
-    str.Format(_T("Point(%d, %d)"), x, y);
+    CStringA str;
+    str.Format("Point(%d, %d)", x, y);
     return str;
 }

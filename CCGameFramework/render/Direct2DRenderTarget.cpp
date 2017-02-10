@@ -93,13 +93,13 @@ bool Direct2DRenderTarget::RecreateRenderTarget(CSize size)
         {
             d2dRenderTarget.Attach(renderTarget);
             d2dRenderTarget->SetTextAntialiasMode(D2D1_TEXT_ANTIALIAS_MODE_CLEARTYPE);
-            ATLTRACE(atlTraceWindowing, 0, "D2D::Create %S\n", (LPCTSTR)size.ToString());
+            ATLTRACE(atlTraceWindowing, 0, "D2D::Create %s\n", (LPCSTR)size.ToString());
         }
     }
     else if (previousSize != size)
     {
         HRESULT hr = d2dRenderTarget->Resize(D2D1::SizeU((int)size.cx, (int)size.cy));
-        ATLTRACE(atlTraceWindowing, 0, "D2D::Resize %S\n", (LPCTSTR)size.ToString());
+        ATLTRACE(atlTraceWindowing, 0, "D2D::Resize %s\n", (LPCSTR)size.ToString());
     }
     else
     {

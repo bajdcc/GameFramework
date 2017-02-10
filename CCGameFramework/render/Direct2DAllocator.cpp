@@ -9,7 +9,7 @@ CComPtr<IDWriteTextFormat> CachedTextFormatAllocator::CreateDirect2DFont(const F
     CComPtr<IDWriteFactory> dwriteFactory = Direct2D::Singleton().GetDirectWriteFactory();
     CComPtr<IDWriteTextFormat> format;
     HRESULT hr = dwriteFactory->CreateTextFormat(
-        font.fontFamily,
+        CString(font.fontFamily),
         NULL,
         (font.bold ? DWRITE_FONT_WEIGHT_BOLD : DWRITE_FONT_WEIGHT_NORMAL),
         (font.italic ? DWRITE_FONT_STYLE_ITALIC : DWRITE_FONT_STYLE_NORMAL),

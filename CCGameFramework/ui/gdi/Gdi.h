@@ -51,7 +51,7 @@ public:
     CRect operator+(const RECT* lpRect) const;
     CRect operator-(const RECT* lpRect) const;
 
-    CString ToString();
+    CStringA ToString();
 };
 
 
@@ -95,7 +95,7 @@ public:
     CRect operator+(const RECT* lpRect) const;
     CRect operator-(const RECT* lpRect) const;
 
-    CString ToString() const;
+    CStringA ToString() const;
 };
 
 
@@ -224,7 +224,7 @@ public:
     CRect operator|(const RECT& rect2) const;
     CRect MulDiv(int nMultiplier, int nDivisor) const;
 
-    CString ToString() const;
+    CStringA ToString() const;
 };
 
 
@@ -261,20 +261,20 @@ public:
     bool operator> (CColor color) const;
     bool operator>=(CColor color) const;
 
-    CString ToString() const;
+    CStringA ToString() const;
 };
 
 
 struct Font
 {
-    CString				fontFamily;
-    cint				size;
-    bool				bold;
-    bool				italic;
-    bool				underline;
-    bool				strikeline;
-    bool				antialias;
-    bool				verticalAntialias;
+    CStringA fontFamily;
+    cint size;
+    bool bold;
+    bool italic;
+    bool underline;
+    bool strikeline;
+    bool antialias;
+    bool verticalAntialias;
 
     Font();
 
@@ -287,7 +287,7 @@ struct Font
     bool operator>(const Font& value)const;
     bool operator>=(const Font& value)const;
 
-    CString ToString() const;
+    CStringA ToString() const;
 };
 
 #endif
