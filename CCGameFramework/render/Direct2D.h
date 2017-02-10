@@ -13,6 +13,10 @@ class IGraphicsRendererFactory;
 class Direct2D
 {
     Direct2D();
+    ~Direct2D();
+
+    static void ReportLiveObjects();
+
     CComPtr<ID2D1Factory> D2D1Factory;
     CComPtr<IDWriteFactory> DWriteFactory;
 

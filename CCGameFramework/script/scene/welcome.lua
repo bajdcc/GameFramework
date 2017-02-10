@@ -1,6 +1,7 @@
 local Scene = require('script.lib.core.scene')
 local Gradient = require('script.lib.ui.gradient')
 local AbsoluteLayout = require('script.lib.ui.layout.abs')
+local Block = require('script.lib.ui.block')
 local Text = require('script.lib.ui.text')
 
 local modname = 'WelcomeScene'
@@ -16,11 +17,15 @@ function M:init()
 	local info = UIExt.info()
 	-- BG
 	local bg = AbsoluteLayout:new({
-		color = '#111111',
 		right = info.width,
 		bottom = info.height
 	})
 	self.layers.bg = self:add(bg)
+	bg:add(Block:new({
+		color = '#111111',
+		right = info.width,
+		bottom = info.height
+	}))
 	UIExt.trace('Scene [Welcome page]: create background #' .. self.layers.bg.handle)
 	-- BG2
 	local bg2 = Gradient:new({

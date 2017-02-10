@@ -334,14 +334,35 @@
     <Text Include="script\scene\welcome.lua">
       <Filter>脚本</Filter>
     </Text>
-    <Text Include="script\scene\time.lua" />
-    <Text Include="script\lib\core\scene.lua" />
-    <Text Include="script\lib\ui\block.lua" />
-    <Text Include="script\lib\ui\gdibase.lua" />
-    <Text Include="script\lib\ui\gradient.lua" />
-    <Text Include="script\lib\ui\text.lua" />
-    <Text Include="script\main.lua" />
-    <Text Include="script\lib\ui\layout\layoutbase.lua" />
-    <Text Include="script\lib\ui\layout\abs.lua" />
+    <Text Include="script\lib\ui\layout\abs.lua">
+      <Filter>脚本</Filter>
+    </Text>
+    <Text Include="script\lib\ui\block.lua">
+      <Filter>脚本</Filter>
+    </Text>
+    <Text Include="script\lib\ui\gdibase.lua">
+      <Filter>脚本</Filter>
+    </Text>
+    <Text Include="script\lib\ui\gradient.lua">
+      <Filter>脚本</Filter>
+    </Text>
+    <Text Include="script\lib\ui\layout\layoutbase.lua">
+      <Filter>脚本</Filter>
+    </Text>
+    <Text Include="script\main.lua">
+      <Filter>脚本</Filter>
+    </Text>
+    <Text Include="script\lib\core\scene.lua">
+      <Filter>脚本</Filter>
+    </Text>
+    <Text Include="script\lib\ui\text.lua">
+      <Filter>脚本</Filter>
+    </Text>
+    <Text Include="script\scene\time.lua">
+      <Filter>脚本</Filter>
+    </Text>
+	<Text Include="script\lib\ui\empty.lua">
+      <Filter>脚本</Filter>
+    </Text>
   </ItemGroup>
 </Project>

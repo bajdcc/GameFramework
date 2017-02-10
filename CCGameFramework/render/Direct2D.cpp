@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Direct2D.h"
 #include "Direct2DRender.h"
-
+#include <DXGIDebug.h>
 
 D2D1::ColorF GetD2DColor(CColor color)
 {
@@ -10,6 +10,7 @@ D2D1::ColorF GetD2DColor(CColor color)
 
 static void InitRenderer()
 {
+    EmptyElementRenderer::Register();
     SolidBackgroundElementRenderer::Register();
     GradientBackgroundElementRenderer::Register();
     SolidLabelElementRenderer::Register();
@@ -26,6 +27,28 @@ Direct2D::Direct2D()
     hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_ISOLATED, __uuidof(IDWriteFactory), reinterpret_cast<IUnknown**>(&dwrite));
     if (SUCCEEDED(hr))
         DWriteFactory.Attach(dwrite);
+}
+
+Direct2D::~Direct2D()
+{
+    DWriteFactory = nullptr;
+    D2D1Factory = nullptr;
+    ReportLiveObjects();
+}
+
+void Direct2D::ReportLiveObjects()
+{
+    HRESULT hr;
+    HMODULE hDxgiDebug = GetModuleHandle(_T("Dxgidebug.dll"));
+    if (!hDxgiDebug) return;
+    typedef HRESULT(WINAPI *pfnDXGIGetDebugInterface)(REFIID riid, void **ppDebug);
+    pfnDXGIGetDebugInterface _DXGIGetDebugInterface = (pfnDXGIGetDebugInterface)GetProcAddress(hDxgiDebug, "DXGIGetDebugInterface");
+    if (!_DXGIGetDebugInterface) return;
+    CComPtr<IDXGIDebug1> dxgiDebug;
+    hr = _DXGIGetDebugInterface(__uuidof(IDXGIDebug1), (void**)&dxgiDebug);
+    if (FAILED(hr))	return;
+    hr = dxgiDebug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_ALL);
+    if (FAILED(hr))	return;
 }
 
 CComPtr<ID2D1Factory> Direct2D::GetDirect2DFactory()

@@ -10,6 +10,7 @@ int ui_clear_scene(lua_State *L)
     window->ptrEle = 0;
     window->mapEle.clear();
     window->setTimer.clear();
+    window->root->GetRenderer()->SetRenderTarget(nullptr);
     window->root->GetChildren().clear();
     return 0;
 }
@@ -41,10 +42,14 @@ int ui_add_obj(lua_State *L)
     RefPtr<IGraphicsElement> obj;
     switch (type)
     {
+    case Empty:
+    {
+        obj = EmptyElement::Create();
+    }
+        break;
     case SolidBackground:
     {
         obj = SolidBackgroundElement::Create();
-        
     }
     break;
     case SolidLabel:
@@ -99,6 +104,8 @@ int ui_update_obj(lua_State *L)
     }
     switch (type)
     {
+    case Empty:
+        break;
     case SolidBackground:
     {
         auto obj = static_cast<SolidBackgroundElement*>(o.get());

@@ -2,6 +2,7 @@
 #include "Window.h"
 #include "WindowMsgLoop.h"
 #include <lua_ext/ext.h>
+#include "render/Direct2D.h"
 
 static bool IsKeyPressing(cint code)
 {
@@ -1066,6 +1067,7 @@ void Window::Destroying()
 
 void Window::Destroyed()
 {
+    root->GetRenderer()->SetRenderTarget(nullptr);
     root = nullptr;
     for (auto& timer : setTimer)
     {

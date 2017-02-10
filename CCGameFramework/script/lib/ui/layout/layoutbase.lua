@@ -1,4 +1,4 @@
-local GdiBase = require('script.lib.ui.block')
+local GdiBase = require('script.lib.ui.empty')
 
 local modname = 'GdiLayout'
 local M = GdiBase:new()

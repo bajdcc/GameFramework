@@ -2,6 +2,48 @@
 #include "Direct2DRender.h"
 #include "Direct2D.h"
 
+#pragma region Empty
+EmptyElement::EmptyElement()
+{
+
+}
+
+EmptyElement::~EmptyElement()
+{
+    renderer->Finalize();
+}
+
+CString EmptyElement::GetElementTypeName()
+{
+    return _T("Empty");
+}
+
+cint EmptyElement::GetTypeId()
+{
+    return Empty;
+}
+
+void EmptyElementRenderer::InitializeInternal()
+{
+
+}
+
+void EmptyElementRenderer::FinalizeInternal()
+{
+
+}
+
+void EmptyElementRenderer::RenderTargetChangedInternal(PassRefPtr<Direct2DRenderTarget> oldRenderTarget, PassRefPtr<Direct2DRenderTarget> newRenderTarget)
+{
+
+}
+
+void EmptyElementRenderer::OnElementStateChanged()
+{
+
+}
+#pragma endregion Empty
+
 #pragma region SolidBackground
 SolidBackgroundElement::SolidBackgroundElement()
 {

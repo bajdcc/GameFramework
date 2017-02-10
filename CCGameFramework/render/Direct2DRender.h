@@ -10,7 +10,8 @@
 
 enum ElementId
 {
-    SolidBackground = 1001,
+    Empty = 1000,
+    SolidBackground,
     SolidLabel,
     GradientBackground,
 };
@@ -306,6 +307,28 @@ protected:
 };
 
 #pragma endregion Base
+
+#pragma region Empty
+class EmptyElement : public GraphicsElement<EmptyElement>
+{
+public:
+    EmptyElement();
+    ~EmptyElement();
+
+    static CString GetElementTypeName();
+
+    cint GetTypeId()override;
+};
+
+class EmptyElementRenderer : public GraphicsRenderer<EmptyElement, EmptyElementRenderer, Direct2DRenderTarget>
+{
+public:
+    void InitializeInternal()override;
+    void FinalizeInternal()override;
+    void RenderTargetChangedInternal(PassRefPtr<Direct2DRenderTarget> oldRenderTarget, PassRefPtr<Direct2DRenderTarget> newRenderTarget)override;
+    void OnElementStateChanged()override;
+};
+#pragma endregion Empty
 
 #pragma region SolidBackground
 class SolidBackgroundElement : public GraphicsElement<SolidBackgroundElement>
