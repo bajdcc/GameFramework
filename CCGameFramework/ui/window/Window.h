@@ -65,6 +65,7 @@ enum WindowEvent
     WE_MouseMoving,
     WE_MouseEntered,
     WE_MouseLeaved,
+    WE_MouseHover,
     WE_KeyDown = 300,
     WE_KeyUp,
     WE_SysKeyDown,
@@ -210,6 +211,7 @@ protected:
     void MouseMoving(const MouseInfo& info);
     void MouseEntered();
     void MouseLeaved();
+    void MouseHover();
 
     void KeyDown(const KeyInfo& info);
     void KeyUp(const KeyInfo& info);
@@ -229,7 +231,7 @@ protected:
     CPoint mouseLast;
     WindowClass wndClass;
     WindowMsgLoop winMsgLoop;
-    cint mouseHoving;
+    bool mouseHoving{ false };
     RefPtr<Direct2DRenderTarget> d2dRenderTarget;
     std::set<cint> setTimer;
 

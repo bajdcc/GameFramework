@@ -52,6 +52,21 @@ function M:init()
 		resize = function(this, left, top, right, bottom)
 			this.left, this.top, this.right, this.bottom = right - 170, bottom - 190, right - 30, bottom - 50
 			UIExt.update(this)
+		end,
+		hit = function(this, evt)
+			if evt == M.win_event.gotfocus then
+				this.color = '#005098'
+				UIExt.update(this)
+			elseif evt == M.win_event.lostfocus then
+				this.color = '#111111'
+				UIExt.update(this)
+			elseif evt == M.win_event.mouseenter then
+				this.opacity = 0.7
+				UIExt.update(this)
+			elseif evt == M.win_event.mouseleave then
+				this.opacity = 1.0
+				UIExt.update(this)
+			end
 		end
 	})
 	self.layers.qr = self:add(qr)
@@ -75,32 +90,25 @@ function M:destroy()
 end
 
 function M:init_event()
-	self.handler = {
-		[self.win_event.created] = function(this)
-			UIExt.trace('Scene [Time page] Test created message!');
-		end,
-		[self.win_event.timer] = function(this, id)
-			if id == 5 then
-				if this.hue > 240 then
-					this.hue = 0
-				end
-				this.hue = this.hue + 1
-				this.layers.bg.color = UIExt.hsb2rgb(this.hue, 128, 128)
-				this.layers.bg:update()
-				UIExt.paint()
-			elseif id == 1 then
-				this.layers.text.text = os.date("%Y-%m-%d %H:%M:%S")
-				this.layers.text:update()
-			elseif id == 2 then
-				FlipScene('Welcome')
+	self.handler[self.win_event.created] = function(this)
+		UIExt.trace('Scene [Time page] Test created message!')
+	end
+	self.handler[self.win_event.timer] = function(this, id)
+		if id == 5 then
+			if this.hue > 240 then
+				this.hue = 0
 			end
-		end,
-		[self.win_event.leftbuttondown] = function(this, x, y, flags, wheel)
-		end,
-		[self.win_event.char] = function(this, code, flags)
-		end,
-		[self.win_event.moved] = self.resize
-	}
+			this.hue = this.hue + 1
+			this.layers.bg.color = UIExt.hsb2rgb(this.hue, 128, 128)
+			this.layers.bg:update()
+			UIExt.paint()
+		elseif id == 1 then
+			this.layers.text.text = os.date("%Y-%m-%d %H:%M:%S")
+			this.layers.text:update()
+		elseif id == 2 then
+			FlipScene('Welcome')
+		end
+	end
 end
 
 return M

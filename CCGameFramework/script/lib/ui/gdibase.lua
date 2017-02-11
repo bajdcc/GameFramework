@@ -24,6 +24,22 @@ function M:update()
 	UIExt.update(self)
 end
 
+function M:hittest(x, y)
+	if x >= self.left and x <= self.right and y >= self.top and y <= self.bottom then
+		if self.hit then
+			return self
+		end
+		local obj = nil
+		for k, v in pairs(self.children) do
+			obj = v:hittest(x, y)
+			if obj then
+				return obj
+			end
+		end
+	end
+	return nil
+end
+
 M.resize = M.resize or function(self, left, top, right, bottom)
 	self.left, self.top, self.right, self.bottom = left, top, right, bottom
 	UIExt.update(self)

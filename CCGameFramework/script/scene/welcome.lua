@@ -65,19 +65,12 @@ function M:destroy()
 end
 
 function M:init_event()
-	self.handler = {
-		[self.win_event.created] = function(this)
-			UIExt.trace('Scene [Welcome page] Test created message!')
-		end,
-		[self.win_event.timer] = function(this, id)
-			FlipScene('Time')
-		end,
-		[self.win_event.leftbuttondown] = function(this, x, y, flags, wheel)
-		end,
-		[self.win_event.char] = function(this, code, flags)
-		end,
-		[self.win_event.moved] = self.resize
-	}
+	self.handler[self.win_event.created] = function(this)
+		UIExt.trace('Scene [Welcome page] Test created message!')
+	end
+	self.handler[self.win_event.timer] = function(this, id)
+		FlipScene('Time')
+	end
 end
 
 return M

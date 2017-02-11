@@ -92,6 +92,7 @@ bool Window::HandleMessage(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, L
         uMsg != WM_SETCURSOR &&
         uMsg != WM_NCHITTEST &&
         uMsg != WM_MOUSEMOVE &&
+        uMsg != WM_TIMER &&
         uMsg != WM_NCMOUSEMOVE)
     {
         ATLTRACE(atlTraceHosting, 0, "hwnd: 0x%08x message: %-30S[0x%04x] {W:0x%08X,L:0x%08X}\n", hwnd,
@@ -709,12 +710,12 @@ bool Window::HandleMessageInternal(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM l
         MouseInfo info = ConvertMouse(wParam, lParam, false, nonClient);
         if (info.pt != mouseLast)
         {
+            MouseMoving(info);
             if (!mouseHoving)
             {
                 mouseHoving = true;
                 MouseEntered();
                 TrackMouse(true);
-                MouseMoving(info);
             }
         }
     }
@@ -746,6 +747,7 @@ bool Window::HandleMessageInternal(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM l
         break;
     case WM_NCMOUSEHOVER:
     case WM_MOUSEHOVER:
+        MouseHover();
         TrackMouse(true);
     break;
     // ************************************** key
@@ -1162,6 +1164,11 @@ void Window::MouseEntered()
 }
 
 void Window::MouseLeaved()
+{
+    PostNoArgLuaMsg(L, WE_MouseLeaved);
+}
+
+void Window::MouseHover()
 {
     PostNoArgLuaMsg(L, WE_MouseLeaved);
 }
