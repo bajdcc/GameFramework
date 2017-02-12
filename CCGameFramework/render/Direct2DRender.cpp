@@ -33,7 +33,7 @@ void EmptyElementRenderer::FinalizeInternal()
 
 }
 
-void EmptyElementRenderer::RenderTargetChangedInternal(PassRefPtr<Direct2DRenderTarget> oldRenderTarget, PassRefPtr<Direct2DRenderTarget> newRenderTarget)
+void EmptyElementRenderer::RenderTargetChangedInternal(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget, std::shared_ptr<Direct2DRenderTarget> newRenderTarget)
 {
 
 }
@@ -84,9 +84,11 @@ void SolidBackgroundElement::SetColor(CColor value)
 
 void SolidBackgroundElementRenderer::Render(CRect bounds)
 {
-    if (element->flags.self_visible)
+    auto e = element.lock();
+    auto rt = renderTarget.lock();
+    if (e->flags.self_visible)
     {
-        CComPtr<ID2D1RenderTarget> d2dRenderTarget = renderTarget->GetDirect2DRenderTarget();
+        CComPtr<ID2D1RenderTarget> d2dRenderTarget = rt->GetDirect2DRenderTarget();
         d2dRenderTarget->FillRectangle(
             D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
             brush
@@ -177,10 +179,12 @@ void GradientBackgroundElement::SetDirection(Direction value)
 
 void GradientBackgroundElementRenderer::Render(CRect bounds)
 {
-    if (element->flags.self_visible)
+    auto e = element.lock();
+    auto rt = renderTarget.lock();
+    if (e->flags.self_visible)
     {
         D2D1_POINT_2F points[2];
-        switch (element->GetDirection())
+        switch (e->GetDirection())
         {
         case GradientBackgroundElement::Horizontal:
         {
@@ -219,7 +223,7 @@ void GradientBackgroundElementRenderer::Render(CRect bounds)
         brush->SetStartPoint(points[0]);
         brush->SetEndPoint(points[1]);
 
-        CComPtr<ID2D1RenderTarget> d2dRenderTarget = renderTarget->GetDirect2DRenderTarget();
+        CComPtr<ID2D1RenderTarget> d2dRenderTarget = rt->GetDirect2DRenderTarget();
         d2dRenderTarget->FillRectangle(
             D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
             brush
@@ -399,7 +403,8 @@ SolidLabelElementRenderer::SolidLabelElementRenderer()
 
 void SolidLabelElementRenderer::Render(CRect bounds)
 {
-    if (element->flags.self_visible)
+    auto e = element.lock();
+    if (e->flags.self_visible)
     {
         if (!textLayout)
         {
@@ -408,7 +413,7 @@ void SolidLabelElementRenderer::Render(CRect bounds)
 
         cint x = 0;
         cint y = 0;
-        switch (element->GetHorizontalAlignment())
+        switch (e->GetHorizontalAlignment())
         {
         case Alignment::StringAlignmentNear:
             x = bounds.left;
@@ -420,7 +425,7 @@ void SolidLabelElementRenderer::Render(CRect bounds)
             x = bounds.right - minSize.cx;
             break;
         }
-        switch (element->GetVerticalAlignment())
+        switch (e->GetVerticalAlignment())
         {
         case Alignment::StringAlignmentNear:
             y = bounds.top;
@@ -433,11 +438,12 @@ void SolidLabelElementRenderer::Render(CRect bounds)
             break;
         }
 
-        renderTarget->SetTextAntialias(oldFont.antialias, oldFont.verticalAntialias);
+        auto rt = renderTarget.lock();
+        rt->SetTextAntialias(oldFont.antialias, oldFont.verticalAntialias);
 
-        if (!element->GetMultiline() && !element->GetWrapLine())
+        if (!e->GetMultiline() && !e->GetWrapLine())
         {
-            CComPtr<ID2D1RenderTarget> d2dRenderTarget = renderTarget->GetDirect2DRenderTarget();
+            CComPtr<ID2D1RenderTarget> d2dRenderTarget = rt->GetDirect2DRenderTarget();
             d2dRenderTarget->DrawTextLayout(
                 D2D1::Point2F((FLOAT)x, (FLOAT)y),
                 textLayout,
@@ -451,8 +457,8 @@ void SolidLabelElementRenderer::Render(CRect bounds)
             DWRITE_TRIMMING trimming;
             CComPtr<IDWriteInlineObject> inlineObject;
             textLayout->GetTrimming(&trimming, &inlineObject);
-            textLayout->SetWordWrapping(element->GetWrapLine() ? DWRITE_WORD_WRAPPING_WRAP : DWRITE_WORD_WRAPPING_NO_WRAP);
-            switch (element->GetHorizontalAlignment())
+            textLayout->SetWordWrapping(e->GetWrapLine() ? DWRITE_WORD_WRAPPING_WRAP : DWRITE_WORD_WRAPPING_NO_WRAP);
+            switch (e->GetHorizontalAlignment())
             {
             case Alignment::StringAlignmentNear:
                 textLayout->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
@@ -464,9 +470,9 @@ void SolidLabelElementRenderer::Render(CRect bounds)
                 textLayout->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
                 break;
             }
-            if (!element->GetMultiline() && !element->GetWrapLine())
+            if (!e->GetMultiline() && !e->GetWrapLine())
             {
-                switch (element->GetVerticalAlignment())
+                switch (e->GetVerticalAlignment())
                 {
                 case Alignment::StringAlignmentNear:
                     textLayout->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
@@ -484,7 +490,7 @@ void SolidLabelElementRenderer::Render(CRect bounds)
             textLayout->SetMaxWidth((FLOAT)textBounds.Width());
             textLayout->SetMaxHeight((FLOAT)textBounds.Height());
 
-            CComPtr<ID2D1RenderTarget> d2dRenderTarget = renderTarget->GetDirect2DRenderTarget();
+            CComPtr<ID2D1RenderTarget> d2dRenderTarget = rt->GetDirect2DRenderTarget();
             d2dRenderTarget->DrawTextLayout(
                 D2D1::Point2F((FLOAT)textBounds.left, (FLOAT)textBounds.top),
                 textLayout,
@@ -505,36 +511,38 @@ void SolidLabelElementRenderer::Render(CRect bounds)
 
 void SolidLabelElementRenderer::OnElementStateChanged()
 {
-    if (renderTarget)
+    auto e = element.lock();
+    auto rt = renderTarget.lock();
+    if (rt)
     {
-        CColor color = element->GetColor();
+        CColor color = e->GetColor();
         if (oldColor != color)
         {
-            DestroyBrush(renderTarget);
-            CreateBrush(renderTarget);
+            DestroyBrush(rt);
+            CreateBrush(rt);
         }
 
-        Font font = element->GetFont();
+        Font font = e->GetFont();
         if (oldFont != font)
         {
-            DestroyTextFormat(renderTarget);
-            CreateTextFormat(renderTarget);
+            DestroyTextFormat(rt);
+            CreateTextFormat(rt);
         }
     }
-    oldText = element->GetText();
+    oldText = e->GetText();
     UpdateMinSize();
 }
 
-void SolidLabelElementRenderer::CreateBrush(PassRefPtr<Direct2DRenderTarget> _renderTarget)
+void SolidLabelElementRenderer::CreateBrush(std::shared_ptr<Direct2DRenderTarget> _renderTarget)
 {
     if (_renderTarget)
     {
-        oldColor = element->GetColor();
+        oldColor = element.lock()->GetColor();
         brush = _renderTarget->CreateDirect2DBrush(oldColor);
     }
 }
 
-void SolidLabelElementRenderer::DestroyBrush(PassRefPtr<Direct2DRenderTarget> _renderTarget)
+void SolidLabelElementRenderer::DestroyBrush(std::shared_ptr<Direct2DRenderTarget> _renderTarget)
 {
     if (_renderTarget && brush)
     {
@@ -543,16 +551,16 @@ void SolidLabelElementRenderer::DestroyBrush(PassRefPtr<Direct2DRenderTarget> _r
     }
 }
 
-void SolidLabelElementRenderer::CreateTextFormat(PassRefPtr<Direct2DRenderTarget> _renderTarget)
+void SolidLabelElementRenderer::CreateTextFormat(std::shared_ptr<Direct2DRenderTarget> _renderTarget)
 {
     if (_renderTarget)
     {
-        oldFont = element->GetFont();
+        oldFont = element.lock()->GetFont();
         textFormat = _renderTarget->CreateDirect2DTextFormat(oldFont);
     }
 }
 
-void SolidLabelElementRenderer::DestroyTextFormat(PassRefPtr<Direct2DRenderTarget> _renderTarget)
+void SolidLabelElementRenderer::DestroyTextFormat(std::shared_ptr<Direct2DRenderTarget> _renderTarget)
 {
     if (_renderTarget && textFormat)
     {
@@ -611,11 +619,13 @@ void SolidLabelElementRenderer::UpdateMinSize()
     float maxWidth = 0;
     DestroyTextLayout();
     bool calculateSizeFromTextLayout = false;
-    if (renderTarget)
+    auto e = element.lock();
+    auto rt = renderTarget.lock();
+    if (rt)
     {
-        if (element->GetWrapLine())
+        if (e->GetWrapLine())
         {
-            if (element->GetWrapLineHeightCalculation())
+            if (e->GetWrapLineHeightCalculation())
             {
                 CreateTextLayout();
                 if (textLayout)
@@ -647,7 +657,7 @@ void SolidLabelElementRenderer::UpdateMinSize()
         if (SUCCEEDED(hr))
         {
             cint width = 0;
-            if (!element->GetWrapLine() && !element->GetMultiline())
+            if (!e->GetWrapLine() && !e->GetMultiline())
             {
                 width = (cint)ceil(metrics.widthIncludingTrailingWhitespace);
             }
@@ -669,8 +679,9 @@ void SolidLabelElementRenderer::InitializeInternal()
 void SolidLabelElementRenderer::FinalizeInternal()
 {
     DestroyTextLayout();
-    DestroyBrush(renderTarget);
-    DestroyTextFormat(renderTarget);
+    auto rt = renderTarget.lock();
+    DestroyBrush(rt);
+    DestroyTextFormat(rt);
 }
 
 #pragma endregion SolidLabel

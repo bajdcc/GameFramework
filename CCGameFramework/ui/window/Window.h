@@ -3,8 +3,6 @@
 
 #include "WindowClass.h"
 #include "WindowMsgLoop.h"
-#include <WTF/RefPtr.h>
-#include <WTF/refcounted.h>
 #include <render/Direct2DRenderTarget.h>
 #include <render/Direct2DRender.h>
 
@@ -73,12 +71,13 @@ enum WindowEvent
     WE_Char,
 };
 
-class Window : public RefCounted<Window>
+class Window : public std::enable_shared_from_this<Window>
 {
 public:
     Window(HWND parent, CString className, CString windowTitle, HINSTANCE hInstance);
     ~Window();
 
+    void Init();
     void Run();
     void Center();
 
@@ -111,7 +110,7 @@ public:
 
     bool HandleMessage(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT& result);
     HWND GetWindowHandle() const;
-    PassRefPtr<Direct2DRenderTarget> GetD2DRenderTarget();
+    std::shared_ptr<Direct2DRenderTarget> GetD2DRenderTarget();
     CRect GetBounds();
     void SetBounds(const CRect& bounds);
     CSize GetClientSize();
@@ -232,12 +231,12 @@ protected:
     WindowClass wndClass;
     WindowMsgLoop winMsgLoop;
     bool mouseHoving{ false };
-    RefPtr<Direct2DRenderTarget> d2dRenderTarget;
+    std::shared_ptr<Direct2DRenderTarget> d2dRenderTarget;
     std::set<cint> setTimer;
 
 private:
-    RefPtr<IGraphicsElement> root;
-    std::map<cint, RawPtr<IGraphicsElement>> mapEle;
+    std::shared_ptr<IGraphicsElement> root;
+    std::map<cint, std::weak_ptr<IGraphicsElement>> mapEle;
     cint ptrEle{ 0 };
     lua_State *L;
 };

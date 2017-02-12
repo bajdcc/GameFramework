@@ -28,9 +28,9 @@ CComPtr<IDWriteTextFormat> CachedTextFormatAllocator::CreateDirect2DFont(const F
     }
 }
 
-PassRefPtr<D2DTextFormatPackage> CachedTextFormatAllocator::CreateInternal(const Font& font)
+std::shared_ptr<D2DTextFormatPackage> CachedTextFormatAllocator::CreateInternal(const Font& font)
 {
-    RefPtr<D2DTextFormatPackage> textFormat = adoptRef(new D2DTextFormatPackage);
+    auto textFormat = std::make_shared<D2DTextFormatPackage>();
     textFormat->textFormat = CreateDirect2DFont(font);
     textFormat->trimming.granularity = DWRITE_TRIMMING_GRANULARITY_CHARACTER;
     textFormat->trimming.delimiter = 0;

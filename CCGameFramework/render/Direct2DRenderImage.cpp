@@ -68,21 +68,22 @@ cint QRImageElement::GetTypeId()
     return QRImage;
 }
 
-void SolidLabelElementRenderer::RenderTargetChangedInternal(PassRefPtr<Direct2DRenderTarget> oldRenderTarget, PassRefPtr<Direct2DRenderTarget> newRenderTarget)
+void SolidLabelElementRenderer::RenderTargetChangedInternal(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget, std::shared_ptr<Direct2DRenderTarget> newRenderTarget)
 {
-    DestroyBrush(oldRenderTarget.get());
-    DestroyTextFormat(oldRenderTarget.get());
-    CreateBrush(newRenderTarget.get());
-    CreateTextFormat(newRenderTarget.get());
+    DestroyBrush(oldRenderTarget);
+    DestroyTextFormat(oldRenderTarget);
+    CreateBrush(newRenderTarget);
+    CreateTextFormat(newRenderTarget);
     UpdateMinSize();
 }
 
-void QRImageElementRenderer::CreateImage(PassRefPtr<Direct2DRenderTarget> renderTarget)
+void QRImageElementRenderer::CreateImage(std::shared_ptr<Direct2DRenderTarget> renderTarget)
 {
     if (renderTarget)
     {
+        auto e = element.lock();
         auto qrcode = QRcode_encodeString(
-            element->GetText(),
+            e->GetText(),
             0,
             QR_ECLEVEL_H,
             QR_MODE_8,
@@ -101,7 +102,7 @@ void QRImageElementRenderer::CreateImage(PassRefPtr<Direct2DRenderTarget> render
             ATLASSERT(!"CopyPixels failed");
         auto count = rect.Width * rect.Height;
         BYTE* read = buffer;
-        auto color = element->GetColor();
+        auto color = e->GetColor();
         for (auto i = 0; i < count; i++)
         {
             if ((qrcode->data[i] & 1) == 0)
@@ -126,13 +127,14 @@ void QRImageElementRenderer::CreateImage(PassRefPtr<Direct2DRenderTarget> render
 
 void QRImageElementRenderer::Render(CRect bounds)
 {
-    if (element->flags.self_visible)
+    auto e = element.lock();
+    if (e->flags.self_visible)
     {
-        CComPtr<ID2D1RenderTarget> d2dRenderTarget = renderTarget->GetDirect2DRenderTarget();
+        CComPtr<ID2D1RenderTarget> d2dRenderTarget = renderTarget.lock()->GetDirect2DRenderTarget();
         d2dRenderTarget->DrawBitmap(
             bitmap,
             D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
-            element->GetOpacity(),
+            e->GetOpacity(),
             D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR
         );
     }

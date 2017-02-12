@@ -3,17 +3,15 @@
 #include "Direct2D.h"
 #include <ui/window/Window.h>
 
-static HWND GetHWNDFromWindow(PassRefPtr<Window> window)
+static HWND GetHWNDFromWindow(std::shared_ptr<Window> window)
 {
     if (!window) return NULL;
     return window->GetWindowHandle();
 }
 
-Direct2DRenderTarget::Direct2DRenderTarget(PassRefPtr<Window> _window)
+Direct2DRenderTarget::Direct2DRenderTarget(std::weak_ptr<Window> _window)
     : window(_window)
 {
-    solidBrushes.SetRenderTarget(this);
-    linearBrushes.SetRenderTarget(this);
     imagingFactory = Direct2D::Singleton().GetWICImagingFactory();
     CComPtr<IDWriteFactory> dwriteFactory = Direct2D::Singleton().GetDirectWriteFactory();
     CComPtr<IDWriteRenderingParams> defaultParams;
@@ -29,6 +27,12 @@ Direct2DRenderTarget::Direct2DRenderTarget(PassRefPtr<Window> _window)
 Direct2DRenderTarget::~Direct2DRenderTarget()
 {
 
+}
+
+void Direct2DRenderTarget::Init()
+{
+    solidBrushes.SetRenderTarget(shared_from_this());
+    linearBrushes.SetRenderTarget(shared_from_this());
 }
 
 CComPtr<ID2D1RenderTarget> Direct2DRenderTarget::GetDirect2DRenderTarget()
@@ -85,7 +89,7 @@ bool Direct2DRenderTarget::RecreateRenderTarget(CSize size)
         HRESULT hr = Direct2D::Singleton().GetDirect2DFactory()->CreateHwndRenderTarget(
             tp,
             D2D1::HwndRenderTargetProperties(
-                GetHWNDFromWindow(window),
+                GetHWNDFromWindow(window.lock()),
                 D2D1::SizeU((int)size.cx, (int)size.cy)
             ),
             &renderTarget
@@ -197,7 +201,7 @@ void Direct2DRenderTarget::DestroyDirect2DLinearBrush(CColor c1, CColor c2)
     linearBrushes.Destroy(std::pair<CColor, CColor>(c1, c2));
 }
 
-PassRefPtr<D2DTextFormatPackage> Direct2DRenderTarget::CreateDirect2DTextFormat(const Font& font)
+std::shared_ptr<D2DTextFormatPackage> Direct2DRenderTarget::CreateDirect2DTextFormat(const Font& font)
 {
     return textFormats.Create(font);
 }

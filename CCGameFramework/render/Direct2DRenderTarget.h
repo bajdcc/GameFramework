@@ -1,18 +1,18 @@
 ﻿#ifndef RENDER_D2D_RENDERTARGET_H
 #define RENDER_D2D_RENDERTARGET_H
 
-#include <WTF/PassRefPtr.h>
-#include <WTF/refcounted.h>
 #include <ui/gdi/Gdi.h>
 #include "Direct2DAllocator.h"
 
 class Window;
 
-class Direct2DRenderTarget : public RefCounted<Direct2DRenderTarget>
+class Direct2DRenderTarget : public std::enable_shared_from_this<Direct2DRenderTarget>
 {
 public:
-    Direct2DRenderTarget(PassRefPtr<Window> _window);
+    Direct2DRenderTarget(std::weak_ptr<Window> _window);
     ~Direct2DRenderTarget();
+
+    void Init();
 
     CComPtr<ID2D1RenderTarget> GetDirect2DRenderTarget();
     void SetTextAntialias(bool antialias, bool verticalAntialias);
@@ -26,7 +26,7 @@ public:
     void DestroyDirect2DBrush(CColor color);
     CComPtr<ID2D1LinearGradientBrush> CreateDirect2DLinearBrush(CColor c1, CColor c2);
     void DestroyDirect2DLinearBrush(CColor c1, CColor c2);
-    PassRefPtr<D2DTextFormatPackage> CreateDirect2DTextFormat(const Font& font);
+    std::shared_ptr<D2DTextFormatPackage> CreateDirect2DTextFormat(const Font& font);
     void DestroyDirect2DTextFormat(const Font& font);
 
     CComPtr<IWICBitmap> CreateBitmap(UINT width, UINT height);
@@ -41,7 +41,7 @@ protected:
     CComPtr<IDWriteRenderingParams> CreateRenderingParams(DWRITE_RENDERING_MODE renderingMode, CComPtr<IDWriteRenderingParams> defaultParams, CComPtr<IDWriteFactory> dwriteFactory);
     CComPtr<IWICBitmap> GetBitmap(CComPtr<IWICBitmapDecoder> source, int index);
 
-    RawPtr<Window> window;
+    std::weak_ptr<Window> window;
     CComPtr<ID2D1HwndRenderTarget> d2dRenderTarget;
     CSize previousSize;
 

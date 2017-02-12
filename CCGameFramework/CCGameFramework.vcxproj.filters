@@ -39,42 +39,6 @@
     <ClInclude Include="base\defines.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="WTF\Compiler.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="WTF\Noncopyable.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="WTF\PassOwnPtr.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="WTF\PassRef.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="WTF\PassRefPtr.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="WTF\Platform.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="WTF\RawPointer.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="WTF\refcounted.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="WTF\RefCountedArray.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="WTF\RefCountedLeakCounter.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="WTF\RefPtr.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="WTF\RefPtrHashMap.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="render\Direct2DRenderTarget.h">
       <Filter>头文件</Filter>
     </ClInclude>

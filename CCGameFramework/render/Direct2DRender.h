@@ -1,7 +1,6 @@
 #ifndef RENDER_D2D_RENDER_H
 #define RENDER_D2D_RENDER_H
 
-#include <WTF/RefPtr.h>
 #include <ui/gdi/Gdi.h>
 #include "Direct2D.h"
 #include "Direct2DRenderTarget.h"
@@ -24,49 +23,52 @@ class IGraphicsElementFactory;
 class IGraphicsRenderer;
 class IGraphicsRendererFactory;
 
-class IGraphicsElement : public RefCounted<IGraphicsElement>
+class IGraphicsElement : public std::enable_shared_from_this<IGraphicsElement>
 {
 public:
+    virtual ~IGraphicsElement(){}
     virtual cint GetTypeId() = 0;
-    virtual PassRefPtr<IGraphicsElementFactory> GetFactory() = 0;
-    virtual PassRefPtr<IGraphicsRenderer> GetRenderer() = 0;
+    virtual std::shared_ptr<IGraphicsElementFactory> GetFactory() = 0;
+    virtual std::shared_ptr<IGraphicsRenderer> GetRenderer() = 0;
     virtual void SetRenderRect(CRect bounds) = 0;
     virtual CRect GetRenderRect() = 0;
-    virtual std::vector<RefPtr<IGraphicsElement>>& GetChildren() = 0;
+    virtual std::vector<std::shared_ptr<IGraphicsElement>>& GetChildren() = 0;
 
     struct GraphicsElementFlag
     {
         bool self_visible{ true };
         bool children_visible{ true };
-        RawPtr<IGraphicsElement> parent;
+        std::weak_ptr<IGraphicsElement> parent;
     };
     virtual GraphicsElementFlag& GetFlags() = 0;
 };
 
-class IGraphicsElementFactory : public RefCounted<IGraphicsElementFactory>
+class IGraphicsElementFactory : public std::enable_shared_from_this<IGraphicsElementFactory>
 {
 public:
+    virtual ~IGraphicsElementFactory() {}
     virtual CString GetElementTypeName() = 0;
-    virtual PassRefPtr<IGraphicsElement> Create() = 0;
+    virtual std::shared_ptr<IGraphicsElement> Create() = 0;
 };
 
-class IGraphicsRenderer : public RefCounted<IGraphicsRenderer>
+class IGraphicsRenderer : public std::enable_shared_from_this<IGraphicsRenderer>
 {
 public:
-    virtual PassRefPtr<IGraphicsRendererFactory> GetFactory() = 0;
-
-    virtual void Initialize(PassRefPtr<IGraphicsElement> element) = 0;
+    virtual ~IGraphicsRenderer() {}
+    virtual std::shared_ptr<IGraphicsRendererFactory> GetFactory() = 0;
+    virtual void Initialize(std::shared_ptr<IGraphicsElement> element) = 0;
     virtual void Finalize() = 0;
-    virtual PassRefPtr<Direct2DRenderTarget> SetRenderTarget(PassRefPtr<Direct2DRenderTarget> renderTarget) = 0;
+    virtual std::shared_ptr<Direct2DRenderTarget> SetRenderTarget(std::shared_ptr<Direct2DRenderTarget> renderTarget) = 0;
     virtual void Render(CRect bounds) = 0;
     virtual void OnElementStateChanged() = 0;
     virtual CSize GetMinSize() = 0;
 };
 
-class IGraphicsRendererFactory : public RefCounted<IGraphicsRendererFactory>
+class IGraphicsRendererFactory : public std::enable_shared_from_this<IGraphicsRendererFactory>
 {
 public:
-    virtual PassRefPtr<IGraphicsRenderer> Create() = 0;
+    virtual ~IGraphicsRendererFactory() {}
+    virtual std::shared_ptr<IGraphicsRenderer> Create() = 0;
 };
 
 template <class TElement>
@@ -84,11 +86,11 @@ public:
         {
             return TElement::GetElementTypeName();
         }
-        PassRefPtr<IGraphicsElement> Create()override
+        std::shared_ptr<IGraphicsElement> Create()override
         {
-            RefPtr<TElement> element = adoptRef(new TElement);
-            element->factory = this;
-            RefPtr<IGraphicsRendererFactory> rendererFactory = Direct2D::Singleton().GetRendererFactory(GetElementTypeName());
+            auto element = std::make_shared<TElement>();
+            element->factory = shared_from_this();
+            auto rendererFactory = Direct2D::Singleton().GetRendererFactory(GetElementTypeName());
             if (rendererFactory)
             {
                 element->renderer = rendererFactory->Create();
@@ -98,15 +100,17 @@ public:
         }
     };
 public:
-    static PassRefPtr<TElement> Create()
+    static std::shared_ptr<TElement> Create()
     {
-        return Direct2D::Singleton().GetElementFactory(TElement::GetElementTypeName())->Create();
+        return std::dynamic_pointer_cast<TElement, IGraphicsElement>(
+            Direct2D::Singleton().GetElementFactory(
+                TElement::GetElementTypeName())->Create());
     }
-    PassRefPtr<IGraphicsElementFactory> GetFactory()override
+    std::shared_ptr<IGraphicsElementFactory> GetFactory()override
     {
-        return factory;
+        return factory.lock();
     }
-    PassRefPtr<IGraphicsRenderer> GetRenderer()override
+    std::shared_ptr<IGraphicsRenderer> GetRenderer()override
     {
         return renderer;
     }
@@ -118,7 +122,7 @@ public:
     {
         return bounds;
     }
-    std::vector<RefPtr<IGraphicsElement>>& GetChildren()override
+    std::vector<std::shared_ptr<IGraphicsElement>>& GetChildren()override
     {
         return children;
     }
@@ -128,10 +132,10 @@ public:
     }
     GraphicsElementFlag flags;
 protected:
-    RawPtr<IGraphicsElementFactory>			factory;
-    RefPtr<IGraphicsRenderer>				renderer;
-    CRect                                   bounds;
-    std::vector<RefPtr<IGraphicsElement>>   children;
+    std::weak_ptr<IGraphicsElementFactory> factory;
+    std::shared_ptr<IGraphicsRenderer> renderer;
+    CRect bounds;
+    std::vector<std::shared_ptr<IGraphicsElement>> children;
 };
 
 template <class TElement, class TRenderer, class TTarget>
@@ -145,12 +149,10 @@ public:
         {
 
         }
-        PassRefPtr<IGraphicsRenderer> Create()override
+        std::shared_ptr<IGraphicsRenderer> Create()override
         {
-            RefPtr<TRenderer> renderer = adoptRef(new TRenderer);
-            renderer->factory = this;
-            renderer->element = nullptr;
-            renderer->renderTarget = nullptr;
+            auto renderer = std::make_shared<TRenderer>();
+            renderer->factory = shared_from_this();
             return renderer;
         }
     };
@@ -161,29 +163,32 @@ public:
     }
     static void Register()
     {
-        Direct2D::Singleton().RegisterFactories(adoptRef(new TElement::Factory), adoptRef(new TRenderer::Factory));
+        Direct2D::Singleton().RegisterFactories(
+            std::dynamic_pointer_cast<IGraphicsElementFactory>(std::make_shared<typename TElement::Factory>()),
+            std::dynamic_pointer_cast<IGraphicsRendererFactory>(std::make_shared<typename TRenderer::Factory>()));
     }
-    PassRefPtr<IGraphicsRendererFactory> GetFactory()override
+    std::shared_ptr<IGraphicsRendererFactory> GetFactory()override
     {
-        return factory;
+        return factory.lock();
     }
-    void Initialize(PassRefPtr<IGraphicsElement> _element)override
+    void Initialize(std::shared_ptr<IGraphicsElement> _element)override
     {
-        element = dynamic_cast<TElement*>(_element.get());
+        element = std::dynamic_pointer_cast<TElement, IGraphicsElement>(_element);
         InitializeInternal();
     }
     void Finalize()override
     {
         FinalizeInternal();
     }
-    PassRefPtr<Direct2DRenderTarget> SetRenderTarget(PassRefPtr<Direct2DRenderTarget> _renderTarget)override
+    std::shared_ptr<Direct2DRenderTarget> SetRenderTarget(std::shared_ptr<Direct2DRenderTarget> _renderTarget)override
     {
-        RefPtr<TTarget> oldRenderTarget = renderTarget;
-        renderTarget = dynamic_cast<Direct2DRenderTarget*>(_renderTarget.get());
-        RenderTargetChangedInternal(oldRenderTarget, renderTarget);
-        for (RefPtr<IGraphicsElement>& child : element->GetChildren())
+        auto oldRenderTarget = renderTarget.lock();
+        renderTarget = _renderTarget;
+        RenderTargetChangedInternal(oldRenderTarget, renderTarget.lock());
+        auto e = element.lock();
+        for (std::shared_ptr<IGraphicsElement>& child : e->GetChildren())
         {
-            child->GetRenderer()->SetRenderTarget(_renderTarget.get());
+            child->GetRenderer()->SetRenderTarget(_renderTarget);
         }
         return oldRenderTarget;
     }
@@ -193,9 +198,10 @@ public:
     }
     void Render(CRect bounds)override
     {
-        if (element->flags.children_visible)
+        auto e = element.lock();
+        if (e->flags.children_visible)
         {
-            for (RefPtr<IGraphicsElement>& child : element->GetChildren())
+            for (std::shared_ptr<IGraphicsElement>& child : e->GetChildren())
             {
                 child->GetRenderer()->Render(child->GetRenderRect());
             }
@@ -203,18 +209,19 @@ public:
     }
     virtual void InitializeInternal() = 0;
     virtual void FinalizeInternal() = 0;
-    virtual void RenderTargetChangedInternal(PassRefPtr<Direct2DRenderTarget> oldRenderTarget, PassRefPtr<Direct2DRenderTarget> newRenderTarget) = 0;
+    virtual void RenderTargetChangedInternal(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget, std::shared_ptr<Direct2DRenderTarget> newRenderTarget) = 0;
 
 protected:
-    RawPtr<IGraphicsRendererFactory>	factory;
-    RawPtr<TElement>					element;
-    RawPtr<TTarget>						renderTarget;
-    CSize								minSize;
+    std::weak_ptr<IGraphicsRendererFactory>	factory;
+    std::weak_ptr<TElement> element;
+    std::weak_ptr<TTarget> renderTarget;
+    CSize minSize;
 };
 
 template <class TElement, class TRenderer, class TBrush, class TBrushProperty>
 class GraphicsBrushRenderer : public GraphicsRenderer<TElement, TRenderer, Direct2DRenderTarget>
 {
+    using base = GraphicsRenderer<TElement, TRenderer, Direct2DRenderTarget>;
 protected:
     void InitializeInternal()override
     {
@@ -222,15 +229,15 @@ protected:
     }
     void FinalizeInternal()override
     {
-        DestroyBrush(renderTarget);
+        DestroyBrush(base::renderTarget.lock());
     }
-    void RenderTargetChangedInternal(PassRefPtr<Direct2DRenderTarget> oldRenderTarget, PassRefPtr<Direct2DRenderTarget> newRenderTarget)override
+    void RenderTargetChangedInternal(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget, std::shared_ptr<Direct2DRenderTarget> newRenderTarget)override
     {
         DestroyBrush(oldRenderTarget);
         CreateBrush(newRenderTarget);
     }
-    virtual void CreateBrush(PassRefPtr<Direct2DRenderTarget> renderTarget) = 0;
-    virtual void DestroyBrush(PassRefPtr<Direct2DRenderTarget> renderTarget) = 0;
+    virtual void CreateBrush(std::shared_ptr<Direct2DRenderTarget> renderTarget) = 0;
+    virtual void DestroyBrush(std::shared_ptr<Direct2DRenderTarget> renderTarget) = 0;
 
     TBrushProperty			oldColor;
     CComPtr<TBrush>			brush;
@@ -239,35 +246,38 @@ protected:
 template <class TElement, class TRenderer, class TBrush, class TBrushProperty>
 class GraphicsSolidBrushRenderer : public GraphicsBrushRenderer<TElement, TRenderer, TBrush, TBrushProperty>
 {
+    using base = GraphicsBrushRenderer<TElement, TRenderer, TBrush, TBrushProperty>;
 public:
     void OnElementStateChanged()override
     {
-        if (renderTarget)
+        auto e = base::element.lock();
+        auto rt = base::renderTarget.lock();
+        if (rt)
         {
-            TBrushProperty color = element->GetColor();
-            if (oldColor != color)
+            TBrushProperty color = e->GetColor();
+            if (base::oldColor != color)
             {
-                DestroyBrush(renderTarget);
-                CreateBrush(renderTarget);
+                DestroyBrush(rt);
+                CreateBrush(rt);
             }
         }
     }
 
 protected:
-    void CreateBrush(PassRefPtr<Direct2DRenderTarget> _renderTarget)override
+    void CreateBrush(std::shared_ptr<Direct2DRenderTarget> _renderTarget)override
     {
         if (_renderTarget)
         {
-            oldColor = element->GetColor();
-            brush = _renderTarget->CreateDirect2DBrush(oldColor);
+            base::oldColor = base::element.lock()->GetColor();
+            base::brush = _renderTarget->CreateDirect2DBrush(base::oldColor);
         }
     }
-    void DestroyBrush(PassRefPtr<Direct2DRenderTarget> _renderTarget)override
+    void DestroyBrush(std::shared_ptr<Direct2DRenderTarget> _renderTarget)override
     {
-        if (_renderTarget && brush)
+        if (_renderTarget && base::brush)
         {
-            _renderTarget->DestroyDirect2DBrush(oldColor);
-            brush = nullptr;
+            _renderTarget->DestroyDirect2DBrush(base::oldColor);
+            base::brush = nullptr;
         }
     }
 };
@@ -275,35 +285,39 @@ protected:
 template <class TElement, class TRenderer, class TBrush, class TBrushProperty>
 class GraphicsGradientBrushRenderer : public GraphicsBrushRenderer<TElement, TRenderer, TBrush, TBrushProperty>
 {
+    using base = GraphicsBrushRenderer<TElement, TRenderer, TBrush, TBrushProperty>;
 public:
     void OnElementStateChanged()override
     {
-        if (renderTarget)
+        auto e = base::element.lock();
+        auto rt = base::renderTarget.lock();
+        if (rt)
         {
-            TBrushProperty color = TBrushProperty(element->GetColor1(), element->GetColor2());
-            if (oldColor != color)
+            TBrushProperty color = TBrushProperty(e->GetColor1(), e->GetColor2());
+            if (base::oldColor != color)
             {
-                DestroyBrush(renderTarget);
-                CreateBrush(renderTarget);
+                DestroyBrush(rt);
+                CreateBrush(rt);
             }
         }
     }
 
 protected:
-    void CreateBrush(PassRefPtr<Direct2DRenderTarget> _renderTarget)override
+    void CreateBrush(std::shared_ptr<Direct2DRenderTarget> _renderTarget)override
     {
         if (_renderTarget)
         {
-            oldColor = std::pair<CColor, CColor>(element->GetColor1(), element->GetColor2());
-            brush = _renderTarget->CreateDirect2DLinearBrush(oldColor.first, oldColor.second);
+            auto e = base::element.lock();
+            base::oldColor = std::pair<CColor, CColor>(e->GetColor1(), e->GetColor2());
+            base::brush = _renderTarget->CreateDirect2DLinearBrush(base::oldColor.first, base::oldColor.second);
         }
     }
-    void DestroyBrush(PassRefPtr<Direct2DRenderTarget> _renderTarget)override
+    void DestroyBrush(std::shared_ptr<Direct2DRenderTarget> _renderTarget)override
     {
-        if (_renderTarget && brush)
+        if (_renderTarget && base::brush)
         {
-            _renderTarget->DestroyDirect2DLinearBrush(oldColor.first, oldColor.second);
-            brush = nullptr;
+            _renderTarget->DestroyDirect2DLinearBrush(base::oldColor.first, base::oldColor.second);
+            base::brush = nullptr;
         }
     }
 };
@@ -327,7 +341,7 @@ class EmptyElementRenderer : public GraphicsRenderer<EmptyElement, EmptyElementR
 public:
     void InitializeInternal()override;
     void FinalizeInternal()override;
-    void RenderTargetChangedInternal(PassRefPtr<Direct2DRenderTarget> oldRenderTarget, PassRefPtr<Direct2DRenderTarget> newRenderTarget)override;
+    void RenderTargetChangedInternal(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget, std::shared_ptr<Direct2DRenderTarget> newRenderTarget)override;
     void OnElementStateChanged()override;
 };
 #pragma endregion Empty
@@ -450,23 +464,23 @@ public:
     void OnElementStateChanged()override;
 
 protected:
-    void CreateBrush(PassRefPtr<Direct2DRenderTarget> _renderTarget);
-    void DestroyBrush(PassRefPtr<Direct2DRenderTarget> _renderTarget);
-    void CreateTextFormat(PassRefPtr<Direct2DRenderTarget> _renderTarget);
-    void DestroyTextFormat(PassRefPtr<Direct2DRenderTarget> _renderTarget);
+    void CreateBrush(std::shared_ptr<Direct2DRenderTarget> _renderTarget);
+    void DestroyBrush(std::shared_ptr<Direct2DRenderTarget> _renderTarget);
+    void CreateTextFormat(std::shared_ptr<Direct2DRenderTarget> _renderTarget);
+    void DestroyTextFormat(std::shared_ptr<Direct2DRenderTarget> _renderTarget);
     void CreateTextLayout();
     void DestroyTextLayout();
     void UpdateMinSize();
 
     void InitializeInternal()override;
     void FinalizeInternal()override;
-    void RenderTargetChangedInternal(PassRefPtr<Direct2DRenderTarget> oldRenderTarget, PassRefPtr<Direct2DRenderTarget> newRenderTarget)override;
+    void RenderTargetChangedInternal(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget, std::shared_ptr<Direct2DRenderTarget> newRenderTarget)override;
 
     CColor oldColor;
     Font oldFont;
     CString oldText;
     CComPtr<ID2D1SolidColorBrush> brush;
-    RefPtr<D2DTextFormatPackage> textFormat;
+    std::shared_ptr<D2DTextFormatPackage> textFormat;
     CComPtr<IDWriteTextLayout> textLayout;
     cint oldMaxWidth;
 };
@@ -476,6 +490,7 @@ protected:
 template <class TElement, class TRenderer>
 class GraphicsImageRenderer : public GraphicsRenderer<TElement, TRenderer, Direct2DRenderTarget>
 {
+    using base = GraphicsRenderer<TElement, TRenderer, Direct2DRenderTarget>;
 protected:
     void InitializeInternal()override
     {
@@ -483,22 +498,22 @@ protected:
     }
     void FinalizeInternal()override
     {
-        DestroyImage(renderTarget);
+        DestroyImage(base::renderTarget.lock());
     }
-    void RenderTargetChangedInternal(PassRefPtr<Direct2DRenderTarget> oldRenderTarget, PassRefPtr<Direct2DRenderTarget> newRenderTarget)override
+    void RenderTargetChangedInternal(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget, std::shared_ptr<Direct2DRenderTarget> newRenderTarget)override
     {
         DestroyImage(oldRenderTarget);
         CreateImage(newRenderTarget);
     }
-    virtual void CreateImage(PassRefPtr<Direct2DRenderTarget> renderTarget) = 0;
-    virtual void DestroyImage(PassRefPtr<Direct2DRenderTarget> renderTarget)
+    virtual void CreateImage(std::shared_ptr<Direct2DRenderTarget> renderTarget) = 0;
+    virtual void DestroyImage(std::shared_ptr<Direct2DRenderTarget> renderTarget)
     {
         bitmap = nullptr;
     }
     void OnElementStateChanged()override
     {
-        DestroyImage(renderTarget);
-        CreateImage(renderTarget);
+        DestroyImage(base::renderTarget.lock());
+        CreateImage(base::renderTarget.lock());
     }
 
     CComPtr<ID2D1Bitmap> bitmap;
@@ -530,7 +545,7 @@ protected:
 class QRImageElementRenderer : public GraphicsImageRenderer<QRImageElement, QRImageElementRenderer>
 {
 protected:
-    void CreateImage(PassRefPtr<Direct2DRenderTarget> renderTarget)override;
+    void CreateImage(std::shared_ptr<Direct2DRenderTarget> renderTarget)override;
 public:
     void Render(CRect bounds)override;
 };

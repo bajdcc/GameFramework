@@ -59,7 +59,7 @@ BOOL WindowMsgLoop::PumpMessage()
     if (m_nDisablePumpCount != 0)
     {
         ATLTRACE("Error: PumpMessage called when not permitted.");
-        ASSERT(FALSE);
+        ATLASSERT(FALSE);
     }
 
     // process this message

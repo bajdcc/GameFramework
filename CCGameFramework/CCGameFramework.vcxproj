@@ -209,18 +209,6 @@ xcopy /r /y /e "$(ProjectDir)script" "$(TargetDir)script"</Command>
     <ClInclude Include="ui\window\Window.h" />
     <ClInclude Include="ui\window\WindowClass.h" />
     <ClInclude Include="ui\window\WindowMsgLoop.h" />
-    <ClInclude Include="WTF\Compiler.h" />
-    <ClInclude Include="WTF\Noncopyable.h" />
-    <ClInclude Include="WTF\PassOwnPtr.h" />
-    <ClInclude Include="WTF\PassRef.h" />
-    <ClInclude Include="WTF\PassRefPtr.h" />
-    <ClInclude Include="WTF\Platform.h" />
-    <ClInclude Include="WTF\RawPointer.h" />
-    <ClInclude Include="WTF\refcounted.h" />
-    <ClInclude Include="WTF\RefCountedArray.h" />
-    <ClInclude Include="WTF\RefCountedLeakCounter.h" />
-    <ClInclude Include="WTF\RefPtr.h" />
-    <ClInclude Include="WTF\RefPtrHashMap.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="base\libqrencode\bitstream.c">

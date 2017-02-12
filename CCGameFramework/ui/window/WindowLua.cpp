@@ -36,10 +36,10 @@ int ui_add_obj(lua_State *L)
     if (parent == -1)
         p = window->root;
     else if (window->mapEle.find(parent) != window->mapEle.end())
-        p = window->mapEle[parent].get();
+        p = window->mapEle[parent].lock();
     else
         p = window->root;
-    RefPtr<IGraphicsElement> obj;
+    std::shared_ptr<IGraphicsElement> obj;
     switch (type)
     {
     case Empty:
@@ -62,7 +62,7 @@ int ui_add_obj(lua_State *L)
     }
     obj->GetFlags().parent = p;
     p->GetChildren().push_back(obj);
-    window->mapEle.insert(std::pair<decltype(ptr), decltype(obj)>(ptr, obj.get()));
+    window->mapEle.insert(std::pair<decltype(ptr), decltype(obj)>(ptr, obj));
     lua_pushinteger(L, ptr);
     return 1;
 }
@@ -76,7 +76,7 @@ int ui_update_obj(lua_State *L)
     auto handle = cint(luaL_checkinteger(L, -1)); lua_pop(L, 1);
     if (window->mapEle.find(handle) == window->mapEle.end())
         return luaL_argerror(L, 1, "Invalid obj id");
-    auto o = window->mapEle[handle];
+    auto o = window->mapEle[handle].lock();
     if (o->GetTypeId() != type)
         return luaL_argerror(L, 1, "Invalid obj type");
     {

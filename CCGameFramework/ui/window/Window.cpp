@@ -2,7 +2,6 @@
 #include "Window.h"
 #include "WindowMsgLoop.h"
 #include <lua_ext/ext.h>
-#include "render/Direct2D.h"
 
 static bool IsKeyPressing(cint code)
 {
@@ -50,7 +49,6 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 
 Window::Window(HWND parent, CString className, CString windowTitle, HINSTANCE hInstance)
     : wndClass(className, false, false, WndProc, hInstance)
-    , d2dRenderTarget(adoptRef(new Direct2DRenderTarget(this)))
     , L(luaL_newstate())
 {
     window = this;
@@ -69,8 +67,15 @@ Window::~Window()
     lua_close(L);
 }
 
+void Window::Init()
+{
+    d2dRenderTarget = std::make_shared<Direct2DRenderTarget>(shared_from_this());
+    d2dRenderTarget->Init();
+}
+
 void Window::Run()
 {
+    Init();
     Center();
     Show();
     winMsgLoop.Run();
@@ -114,7 +119,7 @@ HWND Window::GetWindowHandle() const
     return handle;
 }
 
-PassRefPtr<Direct2DRenderTarget> Window::GetD2DRenderTarget()
+std::shared_ptr<Direct2DRenderTarget> Window::GetD2DRenderTarget()
 {
     return d2dRenderTarget;
 }
@@ -914,7 +919,7 @@ void Window::Render()
             }
             else
             {
-                ASSERT(!"D2DERR");
+                ATLASSERT(!"D2DERR");
             }
         }
     }
@@ -1007,7 +1012,7 @@ void Window::Moving(CRect& bounds, bool fixSizeOnly)
 void Window::Moved()
 {
     root->SetRenderRect(CRect(CPoint(), GetClientSize()));
-    if (d2dRenderTarget->RecreateRenderTarget(window->GetClientSize()))
+    if (d2dRenderTarget && d2dRenderTarget->RecreateRenderTarget(window->GetClientSize()))
         Render();
     PostNoArgLuaMsg(L, WE_Moved);
 }

@@ -19,6 +19,7 @@ static void InitRenderer()
 
 Direct2D::Direct2D()
 {
+    
     ::CoInitializeEx(NULL, COINIT_MULTITHREADED);
     HRESULT hr;
     ID2D1Factory* d2d1;
@@ -47,6 +48,8 @@ Direct2D::~Direct2D()
     DWriteFactory = nullptr;
     D2D1Factory = nullptr;
     ReportLiveObjects();
+    elementFactories.clear();
+    rendererFactories.clear();
     ::CoUninitialize();
 }
 
@@ -80,10 +83,10 @@ CComPtr<IWICImagingFactory> Direct2D::GetWICImagingFactory()
     return WICImagingFactory;
 }
 
-bool Direct2D::RegisterFactories(PassRefPtr<IGraphicsElementFactory> elementFactory, PassRefPtr<IGraphicsRendererFactory> rendererFactory)
+bool Direct2D::RegisterFactories(std::shared_ptr<IGraphicsElementFactory> elementFactory, std::shared_ptr<IGraphicsRendererFactory> rendererFactory)
 {
-    RefPtr<IGraphicsElementFactory> _elementFactory = elementFactory;
-    RefPtr<IGraphicsRendererFactory> _rendererFactory = rendererFactory;
+    std::shared_ptr<IGraphicsElementFactory> _elementFactory = elementFactory;
+    std::shared_ptr<IGraphicsRendererFactory> _rendererFactory = rendererFactory;
     if (_elementFactory && _rendererFactory)
     {
         if (RegisterElementFactory(_elementFactory))
@@ -97,12 +100,12 @@ bool Direct2D::RegisterFactories(PassRefPtr<IGraphicsElementFactory> elementFact
     return false;
 }
 
-bool Direct2D::RegisterElementFactory(PassRefPtr<IGraphicsElementFactory> factory)
+bool Direct2D::RegisterElementFactory(std::shared_ptr<IGraphicsElementFactory> factory)
 {
     return elementFactories.insert(std::make_pair(factory->GetElementTypeName(), factory)).second;
 }
 
-bool Direct2D::RegisterRendererFactory(const CString& elementTypeName, PassRefPtr<IGraphicsRendererFactory> factory)
+bool Direct2D::RegisterRendererFactory(const CString& elementTypeName, std::shared_ptr<IGraphicsRendererFactory> factory)
 {
     return rendererFactories.insert(std::make_pair(elementTypeName, factory)).second;
 }
@@ -113,7 +116,7 @@ Direct2D& Direct2D::Singleton()
     return d2d;
 }
 
-PassRefPtr<IGraphicsElementFactory> Direct2D::GetElementFactory(const CString& elementTypeName)
+std::shared_ptr<IGraphicsElementFactory> Direct2D::GetElementFactory(const CString& elementTypeName)
 {
     if (elementFactories.empty())
         InitRenderer();
@@ -121,7 +124,7 @@ PassRefPtr<IGraphicsElementFactory> Direct2D::GetElementFactory(const CString& e
     return found == elementFactories.end() ? nullptr : found->second;
 }
 
-PassRefPtr<IGraphicsRendererFactory> Direct2D::GetRendererFactory(const CString& elementTypeName)
+std::shared_ptr<IGraphicsRendererFactory> Direct2D::GetRendererFactory(const CString& elementTypeName)
 {
     if (rendererFactories.empty())
         InitRenderer();

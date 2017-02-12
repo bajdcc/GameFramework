@@ -1,7 +1,5 @@
 #ifndef RENDER_D2D_ALLOCATOR_H
 #define RENDER_D2D_ALLOCATOR_H
-#include <WTF/RefPtr.h>
-#include <WTF/refcounted.h>
 #include <ui/gdi/Gdi.h>
 
 class Direct2DRenderTarget;
@@ -18,8 +16,8 @@ public:
     template<>
     struct CachedType<true>
     {
-        typedef RefPtr<TValue> ValueType;
-        typedef PassRefPtr<TValue> ReturnType;
+        typedef std::shared_ptr<TValue> ValueType;
+        typedef std::shared_ptr<TValue> ReturnType;
     };
 
     template<>
@@ -85,7 +83,7 @@ class CachedObjectAllocatorBase : public CachedResourceAllocator<TKey, TValue, t
 {
 };
 
-struct D2DTextFormatPackage : RefCounted<D2DTextFormatPackage>
+struct D2DTextFormatPackage : std::enable_shared_from_this<D2DTextFormatPackage>
 {
     CComPtr<IDWriteTextFormat>		textFormat;
     DWRITE_TRIMMING					trimming;
@@ -97,7 +95,7 @@ class CachedTextFormatAllocator : public CachedObjectAllocatorBase<Font, D2DText
 public:
     static CComPtr<IDWriteTextFormat> CreateDirect2DFont(const Font& font);
 protected:
-    PassRefPtr<D2DTextFormatPackage> CreateInternal(const Font& font)override;
+    std::shared_ptr<D2DTextFormatPackage> CreateInternal(const Font& font)override;
 };
 
 template <class TKey, class TValue>
@@ -106,7 +104,7 @@ class CachedCOMAllocatorBase : public CachedResourceAllocator<TKey, CComPtr<TVal
 public:
     CachedCOMAllocatorBase(){}
     ~CachedCOMAllocatorBase(){}
-    void SetRenderTarget(PassRefPtr<Direct2DRenderTarget> _guiRenderTarget)
+    void SetRenderTarget(std::shared_ptr<Direct2DRenderTarget> _guiRenderTarget)
     {
         guiRenderTarget = _guiRenderTarget.get();
     }

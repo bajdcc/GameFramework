@@ -11,6 +11,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_ LPWSTR    lpCmdLine,
                      _In_ int       nCmdShow)
 {
-    RefPtr<Window> window(adoptRef(new Window(nullptr, _T("CC_GameFramework_CLS"), _T("CC GameFramework Window"), hInstance)));
+    auto window = std::make_shared<Window>(nullptr, _T("CC_GameFramework_CLS"), _T("CC GameFramework Window"), hInstance);
     window->Run();
 }
