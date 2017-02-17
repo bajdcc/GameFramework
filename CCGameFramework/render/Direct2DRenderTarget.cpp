@@ -117,6 +117,7 @@ bool Direct2DRenderTarget::RecreateRenderTarget(CSize size)
 void Direct2DRenderTarget::ClearRenderTarget()
 {
     d2dRenderTarget = nullptr;
+    RecreateRenderTarget(previousSize);
 }
 
 CComPtr<IDWriteRenderingParams> Direct2DRenderTarget::CreateRenderingParams(DWRITE_RENDERING_MODE renderingMode, CComPtr<IDWriteRenderingParams> defaultParams, CComPtr<IDWriteFactory> dwriteFactory)
