@@ -15,6 +15,7 @@ function M:new(o)
 	o.show_self = o.show_self or true
 	o.show_children = o.show_children or true
 	o.ht = HitTest.nodecision
+	o.cur = SysCursor.arrow
 	setmetatable(o, self)
 	self.__index = self
 	return o;

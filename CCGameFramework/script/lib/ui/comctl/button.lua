@@ -21,8 +21,9 @@ function M:new(o)
 	o.padright = o.padright or 10
 	o.padbottom = o.padbottom or 10
 	o.layers = {}
+	o.cur = SysCursor.hand
 	o.hit = function(this, evt)
-		if evt == WinEvent.leftbuttondown then
+		if evt == WinEvent.leftbuttonup then
 			if o.click then o.click() end
 		elseif evt == WinEvent.gotfocus then
 			this.layers.bg.color = this.bgcolor_focus

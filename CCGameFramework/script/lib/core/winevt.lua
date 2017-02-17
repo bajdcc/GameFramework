@@ -62,4 +62,12 @@ local N = {
 _G["HitTest"] = N
 package.loaded["HitTest"] = N
 
+local S = {
+	arrow = 1,
+	hand = 2
+}
+
+_G["SysCursor"] = S
+package.loaded["SysCursor"] = S
+
 return M

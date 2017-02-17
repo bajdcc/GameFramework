@@ -12,6 +12,7 @@ package.loaded[modname] = M
 function M:new(o)
 	o = o or {}
 	o.name = 'Time Scene'
+	o.state = {focused=nil, hover=nil}
 	setmetatable(o, self)
 	self.__index = self
 	return o;

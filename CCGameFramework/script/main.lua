@@ -4,6 +4,7 @@ require("script.lib.core.winevt")
 
 CurrentScene = nil
 CurrentHitTest = HitTest.nodecision
+CurrentCursor = SysCursor.arrow
 
 local DebugSkipMsg = {
 	[WinEvent.mousemove] = true,

@@ -882,7 +882,26 @@ bool Window::HandleMessageInternal(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM l
         DWORD hitTestResult = LOWORD(lParam);
         if (hitTestResult == HTCLIENT)
         {
-            HCURSOR cursorHandle = LoadCursor(NULL, IDC_ARROW);
+            CursorType cur = arrow;
+            decltype(IDC_ARROW) idc = IDC_ARROW;
+            lua_getglobal(L, "CurrentCursor");
+            if (lua_isnil(L, 1))
+            {
+                lua_pop(L, 1);
+            }
+            else
+            {
+                auto c = CursorType((cint)luaL_checkinteger(L, -1));
+                switch (c)
+                {
+                case Window::hand:
+                    idc = IDC_HAND;
+                    break;
+                default:
+                    break;
+                }
+            }
+            HCURSOR cursorHandle = LoadCursor(NULL, idc);
             if (::GetCursor() != cursorHandle)
             {
                 ::SetCursor(cursorHandle);

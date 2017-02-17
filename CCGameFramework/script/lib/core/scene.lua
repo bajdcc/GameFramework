@@ -53,9 +53,12 @@ function M:hittest(x, y)
 		obj = v:hittest(x, y)
 		if obj then
 			CurrentHitTest = obj.ht
+			CurrentCursor = obj.cur
 			return obj
 		end
 	end
+	CurrentHitTest = HitTest.nodecision
+	CurrentCursor = SysCursor.arrow
 	return nil
 end
 

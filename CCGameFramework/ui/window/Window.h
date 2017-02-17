@@ -108,6 +108,12 @@ public:
         NoDecision,
     };
 
+    enum CursorType
+    {
+        arrow = 1,
+        hand
+    };
+
     bool HandleMessage(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT& result);
     HWND GetWindowHandle() const;
     std::shared_ptr<Direct2DRenderTarget> GetD2DRenderTarget();
