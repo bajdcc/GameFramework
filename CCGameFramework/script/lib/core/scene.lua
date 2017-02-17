@@ -52,6 +52,7 @@ function M:hittest(x, y)
 	for k, v in pairs(self.roots) do
 		obj = v:hittest(x, y)
 		if obj then
+			CurrentHitTest = obj.ht
 			return obj
 		end
 	end

@@ -1,5 +1,3 @@
-local modname = 'WinEvent'
-
 local M = {
 	created = 1,
     moving = 2,
@@ -39,7 +37,29 @@ local M = {
     char = 304,
 }
 
-_G[modname] = M
-package.loaded[modname] = M
+_G["WinEvent"] = M
+package.loaded["WinEvent"] = M
+
+local N = {
+	bordernosizing = 0,
+    borderleft = 1,
+    borderright = 2,
+    bordertop = 3,
+    borderbottom = 4,
+    borderlefttop = 5,
+    borderrighttop = 6,
+    borderleftbottom = 7,
+    borderrightbottom = 8,
+    title = 9,
+    buttonminimum = 10,
+    buttonmaximum = 11,
+    buttonclose = 12,
+    client = 13,
+    icon = 14,
+    nodecision = 15,
+}
+
+_G["HitTest"] = N
+package.loaded["HitTest"] = N
 
 return M

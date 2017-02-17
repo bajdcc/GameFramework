@@ -945,7 +945,13 @@ void Window::RenderInternal()
 
 Window::HitTestResult Window::HitTest(CPoint location)
 {
-    return NoDecision;
+    lua_getglobal(L, "CurrentHitTest");
+    if (lua_isnil(L, 1))
+    {
+        lua_pop(L, 1);
+        return NoDecision;
+    }
+    return HitTestResult((cint)luaL_checkinteger(L, -1));
 }
 
 static void PostNoArgLuaMsg(lua_State *L, WindowEvent evt)

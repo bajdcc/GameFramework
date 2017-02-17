@@ -1,8 +1,10 @@
 UIExt.trace('Loading script...')
 
-CurrentScene = nil
-
 require("script.lib.core.winevt")
+
+CurrentScene = nil
+CurrentHitTest = HitTest.nodecision
+
 local DebugSkipMsg = {
 	[WinEvent.mousemove] = true,
 	[WinEvent.mousehover] = true
