@@ -17,9 +17,11 @@ static const luaL_Reg ui_lib[] = {
     { "add_obj", ui_add_obj },
     { "update", ui_update_obj },
     { "info", ui_info },
+    { "set_minw", ui_win_set_minsize },
     { "paint", ui_paint },
     { "set_timer", ui_set_timer },
     { "kill_timer", ui_kill_timer },
+    { "quit", ui_quit },
     { "hsb2rgb", ui_helper_hsl2rgb },
     { "rgb2hsb", ui_helper_rgb2hsl },
     { nullptr, nullptr }

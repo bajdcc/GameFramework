@@ -66,9 +66,14 @@ BOOL WindowMsgLoop::PumpMessage()
     TranslateMessage(&m_msg);
 
 #ifdef _DEBUG
-    if (m_msg.message != WM_TIMER &&
-        m_msg.message != WM_PAINT &&
+    if (m_msg.message != WM_PAINT &&
+        m_msg.message != WM_SETCURSOR &&
+        m_msg.message != WM_NCHITTEST &&
         m_msg.message != WM_MOUSEMOVE &&
+        m_msg.message != WM_MOUSEHOVER &&
+        m_msg.message != WM_NCMOUSELEAVE &&
+        m_msg.message != WM_SYSTIMER &&
+        m_msg.message != WM_TIMER &&
         m_msg.message != WM_NCMOUSEMOVE)
     {
         ATLTRACE(atlTraceWindowing, 0, "hwnd: 0x%08x message: %-30S[0x%04x] {W:0x%08X,L:0x%08X}\n", m_msg.hwnd,
@@ -389,6 +394,8 @@ static const X_MAP_MESSAGE allMessages[] =
     DEFINE_MESSAGE(WM_IME_KEYDOWN),
     DEFINE_MESSAGE(WM_IME_KEYUP),
 #endif /* WINVER >= 0x0400 */
+
+    DEFINE_MESSAGE(WM_SYSTIMER),
 
     { 0, NULL, }    // end of message list
 };

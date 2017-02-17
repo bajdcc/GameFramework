@@ -13,6 +13,7 @@ enum ElementId
     SolidBackground,
     SolidLabel,
     GradientBackground,
+    RoundBorder,
     QRImage = 1100,
 };
 
@@ -401,7 +402,7 @@ public:
 protected:
     CColor color1;
     CColor color2;
-    Direction direction;
+    Direction direction{ Horizontal };
 };
 
 class GradientBackgroundElementRenderer : public GraphicsGradientBrushRenderer<GradientBackgroundElement,
@@ -447,12 +448,12 @@ protected:
     CColor color;
     Font fontProperties;
     CString text;
-    Alignment hAlignment;
-    Alignment vAlignment;
-    bool wrapLine;
-    bool ellipse;
-    bool multiline;
-    bool wrapLineHeightCalculation;
+    Alignment hAlignment{ Alignment::StringAlignmentNear };
+    Alignment vAlignment{ Alignment::StringAlignmentNear };
+    bool wrapLine{ false };
+    bool ellipse{ false };
+    bool multiline{ false };
+    bool wrapLineHeightCalculation{ false };
 };
 
 class SolidLabelElementRenderer : public GraphicsRenderer<SolidLabelElement, SolidLabelElementRenderer, Direct2DRenderTarget>
@@ -482,9 +483,37 @@ protected:
     CComPtr<ID2D1SolidColorBrush> brush;
     std::shared_ptr<D2DTextFormatPackage> textFormat;
     CComPtr<IDWriteTextLayout> textLayout;
-    cint oldMaxWidth;
+    cint oldMaxWidth{ -1 };
 };
 #pragma endregion SolidLabel
+
+#pragma region RoundBorder
+class RoundBorderElement : public GraphicsElement<RoundBorderElement>
+{
+public:
+    RoundBorderElement();
+    ~RoundBorderElement();
+
+    static CString GetElementTypeName();
+
+    cint GetTypeId()override;
+
+    CColor GetColor();
+    void SetColor(CColor value);
+    FLOAT GetRadius();
+    void SetRadius(FLOAT value);
+
+protected:
+    CColor color;
+    FLOAT radius{ 1.0f };
+};
+
+class RoundBorderElementRenderer : public GraphicsSolidBrushRenderer<RoundBorderElement, RoundBorderElementRenderer, ID2D1SolidColorBrush, CColor>
+{
+public:
+    void Render(CRect bounds)override;
+};
+#pragma endregion SolidBackground
 
 #pragma region Image
 template <class TElement, class TRenderer>

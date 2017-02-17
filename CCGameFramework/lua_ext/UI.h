@@ -8,10 +8,12 @@ extern int ui_add_obj(lua_State *L);
 extern int ui_update_obj(lua_State *L);
 extern int ui_info(lua_State *L);
 
+extern int ui_win_set_minsize(lua_State *L);
 extern int ui_paint(lua_State *L);
 
 extern int ui_set_timer(lua_State *L);
 extern int ui_kill_timer(lua_State *L);
+extern int ui_quit(lua_State *L);
 
 extern int ui_helper_hsl2rgb(lua_State *L);
 extern int ui_helper_rgb2hsl(lua_State *L);

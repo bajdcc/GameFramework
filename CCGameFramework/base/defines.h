@@ -21,4 +21,8 @@ using uint = uint64;
 using byte = uint8;
 using size_t = uint;
 
+#ifndef WM_SYSTIMER
+#define WM_SYSTIMER 0x0118 //(caret blink)
+#endif
+
 #endif

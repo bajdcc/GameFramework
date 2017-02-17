@@ -54,6 +54,9 @@ int ui_add_obj(lua_State *L)
     case GradientBackground:
         obj = GradientBackgroundElement::Create();
         break;
+    case RoundBorder:
+        obj = RoundBorderElement::Create();
+        break;
     case QRImage:
         obj = QRImageElement::Create();
         break;
@@ -156,6 +159,19 @@ int ui_update_obj(lua_State *L)
         }
     }
     break;
+    case RoundBorder:
+    {
+        auto obj = static_cast<RoundBorderElement*>(o.get());
+        {
+            lua_getfield(L, -1, "color");
+            auto color = luaL_checklstring(L, -1, NULL); lua_pop(L, 1);
+            obj->SetColor(CColor::Parse(color));
+            lua_getfield(L, -1, "radius");
+            auto radius = luaL_checknumber(L, -1); lua_pop(L, 1);
+            obj->SetRadius((FLOAT)radius);
+        }
+    }
+    break;
     case QRImage:
     {
         auto obj = static_cast<QRImageElement*>(o.get());
@@ -191,6 +207,14 @@ int ui_info(lua_State *L)
     return 1;
 }
 
+int ui_win_set_minsize(lua_State* L)
+{
+    auto w = cint(luaL_checkinteger(L, 1));
+    auto h = cint(luaL_checkinteger(L, 2));
+    window->SetMinSize(CSize(w, h));
+    return 0;
+}
+
 int ui_paint(lua_State *L)
 {
     window->Redraw();
@@ -209,5 +233,12 @@ int ui_kill_timer(lua_State *L)
 {
     auto id = cint(luaL_checkinteger(L, 1));
     window->KillTimer(id);
+    return 0;
+}
+
+int ui_quit(lua_State* L)
+{
+    auto code = cint(luaL_checkinteger(L, 1));
+    PostQuitMessage(code);
     return 0;
 }

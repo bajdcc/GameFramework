@@ -120,6 +120,7 @@ public:
     CString GetTitle();
     void SetTitle(CString _title);
     WindowSizeState GetSizeState();
+    void SetMinSize(CSize size);
     void Show();
     void Show(int nCmdShow);
     void ShowDeactivated();
@@ -239,6 +240,7 @@ private:
     std::map<cint, std::weak_ptr<IGraphicsElement>> mapEle;
     cint ptrEle{ 0 };
     lua_State *L;
+    CSize minSize{ 200, 200 };
 };
 
 extern Window *window;

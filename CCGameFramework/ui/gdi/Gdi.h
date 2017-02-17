@@ -95,6 +95,8 @@ public:
     CRect operator+(const RECT* lpRect) const;
     CRect operator-(const RECT* lpRect) const;
 
+    CSize Max(CSize size);
+
     CStringA ToString() const;
 };
 

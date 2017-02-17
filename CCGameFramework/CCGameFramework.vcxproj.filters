@@ -15,6 +15,7 @@
     </Filter>
     <Filter Include="脚本">
       <UniqueIdentifier>{221f26cd-134b-40fb-b57c-dc069a79fbe0}</UniqueIdentifier>
+      <Extensions>lua</Extensions>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -355,13 +356,13 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="script\scene\welcome.lua">
-      <Filter>脚本</Filter>
-    </Text>
-    <Text Include="script\lib\ui\layout\abs.lua">
+    <Text Include="script\lib\core\scene.lua">
       <Filter>脚本</Filter>
     </Text>
     <Text Include="script\lib\ui\block.lua">
+      <Filter>脚本</Filter>
+    </Text>
+    <Text Include="script\lib\ui\empty.lua">
       <Filter>脚本</Filter>
     </Text>
     <Text Include="script\lib\ui\gdibase.lua">
@@ -370,25 +371,37 @@
     <Text Include="script\lib\ui\gradient.lua">
       <Filter>脚本</Filter>
     </Text>
+    <Text Include="script\lib\ui\layout\abs.lua">
+      <Filter>脚本</Filter>
+    </Text>
     <Text Include="script\lib\ui\layout\layoutbase.lua">
       <Filter>脚本</Filter>
     </Text>
-    <Text Include="script\main.lua">
-      <Filter>脚本</Filter>
-    </Text>
-    <Text Include="script\lib\core\scene.lua">
-      <Filter>脚本</Filter>
-    </Text>
-    <Text Include="script\lib\ui\text.lua">
-      <Filter>脚本</Filter>
-    </Text>
-    <Text Include="script\scene\time.lua">
+    <Text Include="script\lib\ui\layout\linear.lua">
       <Filter>脚本</Filter>
     </Text>
     <Text Include="script\lib\ui\qr.lua">
       <Filter>脚本</Filter>
     </Text>
-    <Text Include="script\lib\ui\empty.lua">
+    <Text Include="script\lib\ui\radius.lua">
+      <Filter>脚本</Filter>
+    </Text>
+    <Text Include="script\lib\ui\text.lua">
+      <Filter>脚本</Filter>
+    </Text>
+    <Text Include="script\main.lua">
+      <Filter>脚本</Filter>
+    </Text>
+    <Text Include="script\scene\time.lua">
+      <Filter>脚本</Filter>
+    </Text>
+    <Text Include="script\scene\welcome.lua">
+      <Filter>脚本</Filter>
+    </Text>
+    <Text Include="script\lib\ui\comctl\button.lua">
+      <Filter>脚本</Filter>
+    </Text>
+    <Text Include="script\lib\core\winevt.lua">
       <Filter>脚本</Filter>
     </Text>
   </ItemGroup>

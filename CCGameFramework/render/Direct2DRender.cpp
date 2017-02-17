@@ -88,7 +88,7 @@ void SolidBackgroundElementRenderer::Render(CRect bounds)
     auto rt = renderTarget.lock();
     if (e->flags.self_visible)
     {
-        CComPtr<ID2D1RenderTarget> d2dRenderTarget = rt->GetDirect2DRenderTarget();
+        auto d2dRenderTarget = rt->GetDirect2DRenderTarget();
         d2dRenderTarget->FillRectangle(
             D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
             brush
@@ -100,7 +100,6 @@ void SolidBackgroundElementRenderer::Render(CRect bounds)
 
 #pragma region GradientBackground
 GradientBackgroundElement::GradientBackgroundElement()
-    : direction(Horizontal)
 {
 
 }
@@ -223,7 +222,7 @@ void GradientBackgroundElementRenderer::Render(CRect bounds)
         brush->SetStartPoint(points[0]);
         brush->SetEndPoint(points[1]);
 
-        CComPtr<ID2D1RenderTarget> d2dRenderTarget = rt->GetDirect2DRenderTarget();
+        auto d2dRenderTarget = rt->GetDirect2DRenderTarget();
         d2dRenderTarget->FillRectangle(
             D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
             brush
@@ -235,11 +234,6 @@ void GradientBackgroundElementRenderer::Render(CRect bounds)
 
 #pragma region SolidLabel
 SolidLabelElement::SolidLabelElement()
-    : hAlignment(Alignment::StringAlignmentNear)
-    , vAlignment(Alignment::StringAlignmentNear)
-    , wrapLine(false)
-    , multiline(false)
-    , wrapLineHeightCalculation(false)
 {
     fontProperties.fontFamily = _T("Microsoft Yahei");
     fontProperties.size = 12;
@@ -396,7 +390,6 @@ void SolidLabelElement::SetWrapLineHeightCalculation(bool value)
 }
 
 SolidLabelElementRenderer::SolidLabelElementRenderer()
-    : oldMaxWidth(-1)
 {
 
 }
@@ -443,7 +436,7 @@ void SolidLabelElementRenderer::Render(CRect bounds)
 
         if (!e->GetMultiline() && !e->GetWrapLine())
         {
-            CComPtr<ID2D1RenderTarget> d2dRenderTarget = rt->GetDirect2DRenderTarget();
+            auto d2dRenderTarget = rt->GetDirect2DRenderTarget();
             d2dRenderTarget->DrawTextLayout(
                 D2D1::Point2F((FLOAT)x, (FLOAT)y),
                 textLayout,
@@ -453,7 +446,7 @@ void SolidLabelElementRenderer::Render(CRect bounds)
         }
         else
         {
-            CComPtr<IDWriteFactory> dwriteFactory = Direct2D::Singleton().GetDirectWriteFactory();
+            auto dwriteFactory = Direct2D::Singleton().GetDirectWriteFactory();
             DWRITE_TRIMMING trimming;
             CComPtr<IDWriteInlineObject> inlineObject;
             textLayout->GetTrimming(&trimming, &inlineObject);
@@ -490,7 +483,7 @@ void SolidLabelElementRenderer::Render(CRect bounds)
             textLayout->SetMaxWidth((FLOAT)textBounds.Width());
             textLayout->SetMaxHeight((FLOAT)textBounds.Height());
 
-            CComPtr<ID2D1RenderTarget> d2dRenderTarget = rt->GetDirect2DRenderTarget();
+            auto d2dRenderTarget = rt->GetDirect2DRenderTarget();
             d2dRenderTarget->DrawTextLayout(
                 D2D1::Point2F((FLOAT)textBounds.left, (FLOAT)textBounds.top),
                 textLayout,
@@ -685,3 +678,80 @@ void SolidLabelElementRenderer::FinalizeInternal()
 }
 
 #pragma endregion SolidLabel
+
+#pragma region RoundBorder
+
+RoundBorderElement::RoundBorderElement()
+{
+
+}
+
+RoundBorderElement::~RoundBorderElement()
+{
+    renderer->Finalize();
+}
+
+CString RoundBorderElement::GetElementTypeName()
+{
+    return _T("RoundBorder");
+}
+
+cint RoundBorderElement::GetTypeId()
+{
+    return RoundBorder;
+}
+
+CColor RoundBorderElement::GetColor()
+{
+    return color;
+}
+
+void RoundBorderElement::SetColor(CColor value)
+{
+    if (color != value)
+    {
+        color = value;
+        if (renderer)
+        {
+            renderer->OnElementStateChanged();
+        }
+    }
+}
+
+FLOAT RoundBorderElement::GetRadius()
+{
+    return radius;
+}
+
+void RoundBorderElement::SetRadius(FLOAT value)
+{
+    if (radius != value)
+    {
+        radius = value;
+        if (renderer)
+        {
+            renderer->OnElementStateChanged();
+        }
+    }
+}
+
+void RoundBorderElementRenderer::Render(CRect bounds)
+{
+    auto e = element.lock();
+    auto rt = renderTarget.lock();
+    if (e->flags.self_visible)
+    {
+        auto d2dRenderTarget = rt->GetDirect2DRenderTarget();
+        d2dRenderTarget->FillRoundedRectangle(
+            D2D1::RoundedRect(
+                D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
+                e->GetRadius(),
+                e->GetRadius()
+            ),
+            brush
+        );
+    }
+    GraphicsRenderer::Render(bounds);
+}
+
+#pragma endregion RoundBorder

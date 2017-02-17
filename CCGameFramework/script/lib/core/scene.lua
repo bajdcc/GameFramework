@@ -3,47 +3,16 @@ local M = {}
 _G[modname] = M
 package.loaded[modname] = M
 
-M.win_event = {
-	created = 1,
-    moving = 2,
-    moved = 3,
-    enabled = 4,
-    disabled = 5,
-    gotfocus = 6,
-    lostfocus = 7,
-    activated = 8,
-    deactivated = 9,
-    opened = 10,
-    closing = 11,
-    closed = 12,
-    paint = 13,
-    destroying = 14,
-    destroyed = 15,
-	timer = 100,
-	leftbuttondown = 200,
-	leftbuttonup = 201,
-    leftbuttondoubleclick = 202,
-    rightbuttondown = 203,
-    rightbuttonup = 204,
-    rightbuttondoubleclick = 205,
-    middlebuttondown = 206,
-    middlebuttonup = 207,
-    middlebuttondoubleclick = 208,
-    horizontalwheel = 209,
-    verticalwheel = 210,
-    mousemove = 211,
-	mouseenter = 212,
-	mouseleave = 213,
-	mousehover = 214,
-	keydown = 300,
-    keyup = 301,
-    syskeydown = 302,
-    syskeyup = 303,
-    char = 304,
-}
+M.win_event = WinEvent
+
+M.minw = 480
+M.minh = 320
 
 function M:new(o)
-	o = o or {layers={}, roots={}}
+	o = o or {}
+	o.layers = {}
+	o.roots = {}
+	o.state = {focused=nil, hover=nil}
 	setmetatable(o, self)
 	self.__index = self
 	self:initevt()
@@ -64,10 +33,16 @@ function M:event(id, ...)
 	end
 end
 
-M.resize = function(this)
+function M:resize()
 	local info = UIExt.info()
-	for k, v in pairs(this.roots) do
-		v.resize(v, 0, 0, info.width, info.height)
+	if info.width < self.minw then
+		info.width = self.minw
+	end
+	if info.height < self.minh then
+		info.height = self.minh
+	end
+	for k, v in pairs(self.roots) do
+		v:resize(0, 0, info.width, info.height)
 	end
 	UIExt.paint()
 end
@@ -84,7 +59,6 @@ function M:hittest(x, y)
 end
 
 function M:initevt()
-	self.state = {focused=nil, hover=nil}
 	self.handler = {
 		[self.win_event.mousemove] = function(this, x, y, flags, wheel)
 			local obj = this:hittest(x, y)

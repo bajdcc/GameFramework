@@ -368,41 +368,53 @@ xcopy /r /y /e "$(ProjectDir)script" "$(TargetDir)script"</Command>
     <ClCompile Include="ui\window\WindowMsgLoop.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="script\lib\ui\qr.lua">
-      <FileType>Text</FileType>
-    </Text>
     <Text Include="script\lib\core\scene.lua">
-      <FileType>Text</FileType>
+      <FileType>Document</FileType>
     </Text>
     <Text Include="script\lib\ui\block.lua">
-      <FileType>Text</FileType>
-    </Text>
-    <Text Include="script\lib\ui\gdibase.lua">
-      <FileType>Text</FileType>
-    </Text>
-    <Text Include="script\lib\ui\gradient.lua">
-      <FileType>Text</FileType>
-    </Text>
-    <Text Include="script\lib\ui\text.lua">
-      <FileType>Text</FileType>
-    </Text>
-    <Text Include="script\main.lua">
-      <FileType>Text</FileType>
-    </Text>
-    <Text Include="script\scene\welcome.lua">
-      <FileType>Text</FileType>
-    </Text>
-    <Text Include="script\scene\time.lua">
-      <FileType>Text</FileType>
-    </Text>
-    <Text Include="script\lib\ui\layout\layoutbase.lua">
-      <FileType>Text</FileType>
-    </Text>
-    <Text Include="script\lib\ui\layout\abs.lua">
-      <FileType>Text</FileType>
+      <FileType>Document</FileType>
     </Text>
     <Text Include="script\lib\ui\empty.lua">
-      <FileType>Text</FileType>
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="script\lib\ui\gdibase.lua">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="script\lib\ui\gradient.lua">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="script\lib\ui\layout\abs.lua">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="script\lib\ui\layout\layoutbase.lua">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="script\lib\ui\layout\linear.lua">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="script\lib\ui\qr.lua">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="script\lib\ui\radius.lua">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="script\lib\ui\text.lua">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="script\main.lua">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="script\scene\time.lua">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="script\scene\welcome.lua">
+      <FileType>Document</FileType>
+    </Text>
+	<Text Include="script\lib\ui\comctl\button.lua">
+      <FileType>Document</FileType>
+    </Text>
+	<Text Include="script\lib\core\winevt.lua">
+      <FileType>Document</FileType>
     </Text>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

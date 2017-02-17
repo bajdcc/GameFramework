@@ -2,8 +2,16 @@ UIExt.trace('Loading script...')
 
 CurrentScene = nil
 
+require("script.lib.core.winevt")
+local DebugSkipMsg = {
+	[WinEvent.mousemove] = true,
+	[WinEvent.mousehover] = true
+}
+
 function PassEventToScene(id, ...)
-	UIExt.trace('[' .. CurrentScene.name .. '] Event: ' .. id)
+	if DebugSkipMsg[id] == nil then
+		UIExt.trace('[' .. CurrentScene.name .. '] Event: ' .. id)
+	end
 	CurrentScene:event(id, ...)
 end
 

@@ -80,6 +80,11 @@ CRect CSize::operator-(const RECT* lpRect) const
     return CRect(lpRect) - *this;
 }
 
+CSize CSize::Max(CSize size)
+{
+    return CSize(__max(cx, size.cx), __max(cy, size.cy));
+}
+
 CStringA CSize::ToString() const
 {
     CStringA str;

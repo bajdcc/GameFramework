@@ -14,6 +14,7 @@ static void InitRenderer()
     SolidBackgroundElementRenderer::Register();
     GradientBackgroundElementRenderer::Register();
     SolidLabelElementRenderer::Register();
+    RoundBorderElementRenderer::Register();
     QRImageElementRenderer::Register();
 }
 

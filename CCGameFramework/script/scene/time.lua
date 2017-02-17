@@ -9,7 +9,13 @@ local M = Scene:new()
 _G[modname] = M
 package.loaded[modname] = M
 
-M.name = 'Time Scene'
+function M:new(o)
+	o = o or {}
+	o.name = 'Time Scene'
+	setmetatable(o, self)
+	self.__index = self
+	return o;
+end
 
 function M:init()
 	UIExt.trace('Scene [Time page] init')
@@ -39,33 +45,37 @@ function M:init()
 		color = '#EEEEEE',
 		text = 'Made by bajdcc',
 		size = 24,
-		resize = function(this, left, top, right, bottom)
-			this.left, this.top, this.right, this.bottom = right - 200, bottom - 50, right, bottom
-			UIExt.update(this)
+		pre_resize = function(this, left, top, right, bottom)
+			return right - 200, bottom - 50, right, bottom
+		end,
+		hit = function(this, evt)
+			if evt == WinEvent.leftbuttondown then
+				FlipScene('Welcome')
+			end
 		end
 	})
 	self.layers.cc = self:add(cc)
 	UIExt.trace('Scene [Time page]: create text #' .. self.layers.cc.handle)
 	-- QR
 	local qr = QR:new({
+		text = 'https://github.com/bajdcc/GameFramework',
 		color = '#111111',
-		resize = function(this, left, top, right, bottom)
-			this.left, this.top, this.right, this.bottom = right - 170, bottom - 190, right - 30, bottom - 50
-			UIExt.update(this)
+		pre_resize = function(this, left, top, right, bottom)
+			return right - 170, bottom - 190, right - 30, bottom - 50
 		end,
 		hit = function(this, evt)
-			if evt == M.win_event.gotfocus then
+			if evt == WinEvent.gotfocus then
 				this.color = '#005098'
-				UIExt.update(this)
-			elseif evt == M.win_event.lostfocus then
+				this:update()
+			elseif evt == WinEvent.lostfocus then
 				this.color = '#111111'
-				UIExt.update(this)
-			elseif evt == M.win_event.mouseenter then
+				this:update()
+			elseif evt == WinEvent.mouseenter then
 				this.opacity = 0.7
-				UIExt.update(this)
-			elseif evt == M.win_event.mouseleave then
+				this:update()
+			elseif evt == WinEvent.mouseleave then
 				this.opacity = 1.0
-				UIExt.update(this)
+				this:update()
 			end
 		end
 	})

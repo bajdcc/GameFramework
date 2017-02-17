@@ -5,7 +5,13 @@ local M = GdiBase:new()
 _G[modname] = M
 package.loaded[modname] = M
 
-M.type = 1001
-M.color = M.color or '#FFFFFF'
+function M:new(o)
+	o = o or GdiBase:new(o)
+	o.type = 1001
+	o.color = o.color or '#FFFFFF'
+	setmetatable(o, self)
+	self.__index = self
+	return o;
+end
 
 return M

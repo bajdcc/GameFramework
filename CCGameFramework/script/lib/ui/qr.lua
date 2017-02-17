@@ -5,9 +5,22 @@ local M = GdiBase:new()
 _G[modname] = M
 package.loaded[modname] = M
 
-M.type = 1100
-M.color = M.color or '#FFFFFF'
-M.text = M.text or 'https://github.com/bajdcc/GameFramework'
-M.opacity = M.opacity or 1.0
+function M:new(o)
+	o = o or GdiBase:new(o)
+	o.Direction = {
+		Horizontal = 0,
+		Vertical = 1,
+		Slash = 2,
+		Backslash = 3,
+	}
+	o.type = 1100
+	o.color = o.color or '#FFFFFF'
+	o.text = o.text or 'https://github.com/bajdcc/GameFramework'
+	o.opacity = o.opacity or 1.0
+
+	setmetatable(o, self)
+	self.__index = self
+	return o;
+end
 
 return M

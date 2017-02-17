@@ -85,8 +85,12 @@ void Window::Center()
 {
     CSize screenSize(GetSystemMetrics(SM_CXFULLSCREEN), GetSystemMetrics(SM_CYFULLSCREEN));
     CRect windowBounds = GetBounds();
-    CPoint topLeft = (screenSize - windowBounds.Size()) / 2;
-    SetWindowPos(handle, HWND_TOPMOST, topLeft.x, topLeft.y, -1, -1, SWP_NOSIZE | SWP_NOZORDER);
+    windowBounds = CRect(windowBounds.TopLeft(), windowBounds.Size().Max(minSize));
+    CSize size = windowBounds.Size();
+    size.cx += GetSystemMetrics(SM_CXBORDER) * 2;
+    size.cy += GetSystemMetrics(SM_CYBORDER) * 2 + GetSystemMetrics(SM_CYCAPTION) * 2;
+    CPoint topLeft = (screenSize - size) / 2;
+    SetWindowPos(handle, HWND_TOPMOST, topLeft.x, topLeft.y, size.cx, size.cy, SWP_NOZORDER);
     SetWindowPos(handle, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
 }
 
@@ -97,6 +101,9 @@ bool Window::HandleMessage(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, L
         uMsg != WM_SETCURSOR &&
         uMsg != WM_NCHITTEST &&
         uMsg != WM_MOUSEMOVE &&
+        uMsg != WM_MOUSEHOVER &&
+        uMsg != WM_NCMOUSELEAVE &&
+        uMsg != WM_SYSTIMER &&
         uMsg != WM_TIMER &&
         uMsg != WM_NCMOUSEMOVE)
     {
@@ -183,6 +190,11 @@ Window::WindowSizeState Window::GetSizeState()
 {
     return IsIconic(handle) ? Minimized :
         IsZoomed(handle) ? Maximized : Restored;
+}
+
+void Window::SetMinSize(CSize size)
+{
+    minSize = size;
 }
 
 void Window::Show()
@@ -968,7 +980,6 @@ void Window::Created()
 void Window::Moving(CRect& bounds, bool fixSizeOnly)
 {
     CRect oldBounds = window->GetBounds();
-    const CSize minSize(200, 200);
     CSize minWindowSize = minSize + (oldBounds.Size() - window->GetClientSize());
     if (bounds.Width() < minWindowSize.cx)
     {
@@ -1175,7 +1186,7 @@ void Window::MouseLeaved()
 
 void Window::MouseHover()
 {
-    PostNoArgLuaMsg(L, WE_MouseLeaved);
+    PostNoArgLuaMsg(L, WE_MouseHover);
 }
 
 static void PostKeyLuaMsg(lua_State *L, WindowEvent evt, const KeyInfo& info)
