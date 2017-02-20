@@ -15,6 +15,7 @@ enum ElementId
     GradientBackground,
     RoundBorder,
     QRImage = 1100,
+    Edit = 1200
 };
 
 using Alignment = Gdiplus::StringAlignment;
@@ -580,5 +581,40 @@ public:
 };
 
 #pragma endregion Image
+
+#pragma region Edit
+class EditElement : public GraphicsElement<EditElement>
+{
+public:
+    EditElement();
+    ~EditElement();
+
+    static CString GetElementTypeName();
+
+    cint GetTypeId()override;
+
+    CColor GetColor()const;
+    void SetColor(CColor value);
+    const Font& GetFont()const;
+    void SetFont(const Font& value);
+    CStringA GetText()const;
+    void SetText(CStringA value);
+
+protected:
+    CColor color;
+    Font font;
+    CStringA text;
+};
+
+class EditElementRenderer : public GraphicsRenderer<EditElement, EditElementRenderer, Direct2DRenderTarget>
+{
+public:
+    void InitializeInternal()override;
+    void FinalizeInternal()override;
+    void RenderTargetChangedInternal(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget, std::shared_ptr<Direct2DRenderTarget> newRenderTarget)override;
+    void OnElementStateChanged()override;
+    void Render(CRect bounds)override;
+};
+#pragma endregion Edit
 
 #endif

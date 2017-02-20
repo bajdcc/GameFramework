@@ -32,7 +32,9 @@ end
 Window = {
 	Scene = {
 		Welcome = require("script.scene.welcome"),
-		Time = require("script.scene.time")
+		Time = require("script.scene.time"),
+		ComCtl = require("script.scene.comctl"),
+		Edit = require("script.scene.edit")
 	}
 }
 

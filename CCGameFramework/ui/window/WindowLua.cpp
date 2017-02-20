@@ -60,6 +60,9 @@ int ui_add_obj(lua_State *L)
     case QRImage:
         obj = QRImageElement::Create();
         break;
+    case Edit:
+        obj = EditElement::Create();
+        break;
     default:
         return luaL_argerror(L, 1, "Invalid obj id");
     }
@@ -188,6 +191,28 @@ int ui_update_obj(lua_State *L)
         }
     }
     break;
+    case Edit:
+    {
+        auto obj = static_cast<EditElement*>(o.get());
+        lua_getfield(L, -1, "text");
+        auto text = luaL_checklstring(L, -1, NULL); lua_pop(L, 1);
+        obj->SetText(text);
+        {
+            Font font;
+            lua_getfield(L, -1, "size");
+            font.size = cint(luaL_checkinteger(L, -1)); lua_pop(L, 1);
+            lua_getfield(L, -1, "family");
+            font.fontFamily = CString(luaL_checklstring(L, -1, NULL)); lua_pop(L, 1);
+            lua_getfield(L, -1, "bold");
+            font.bold = luaL_checkinteger(L, -1) != 0; lua_pop(L, 1);
+            lua_getfield(L, -1, "italic");
+            font.italic = luaL_checkinteger(L, -1) != 0; lua_pop(L, 1);
+            lua_getfield(L, -1, "underline");
+            font.underline = luaL_checkinteger(L, -1) != 0; lua_pop(L, 1);
+            obj->SetFont(font);
+        }
+    }
+        break;
     default:
         break;
     }

@@ -16,6 +16,7 @@ static void InitRenderer()
     SolidLabelElementRenderer::Register();
     RoundBorderElementRenderer::Register();
     QRImageElementRenderer::Register();
+    EditElementRenderer::Register();
 }
 
 Direct2D::Direct2D()

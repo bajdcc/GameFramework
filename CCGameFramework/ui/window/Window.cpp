@@ -1127,14 +1127,12 @@ static void PostMouseLuaMsg(lua_State *L, WindowEvent evt, const MouseInfo& info
     lua_pushinteger(L, info.pt.x);
     lua_pushinteger(L, info.pt.y);
     lua_newtable(L);
-#define LUA_MOUSE_FLAG(name) lua_pushstring(L, #name); lua_pushboolean(L, info.name); lua_settable(L, -3);
-    LUA_MOUSE_FLAG(ctrl);
-    LUA_MOUSE_FLAG(shift);
-    LUA_MOUSE_FLAG(left);
-    LUA_MOUSE_FLAG(middle);
-    LUA_MOUSE_FLAG(right);
-    LUA_MOUSE_FLAG(nonClient);
-#undef LUA_MOUSE_FLAG
+    lua_pushstring(L, "ctrl"); lua_pushboolean(L, info.ctrl); lua_settable(L, -3);
+    lua_pushstring(L, "shift"); lua_pushboolean(L, info.shift); lua_settable(L, -3);
+    lua_pushstring(L, "left"); lua_pushboolean(L, info.left); lua_settable(L, -3);
+    lua_pushstring(L, "middle"); lua_pushboolean(L, info.middle); lua_settable(L, -3);
+    lua_pushstring(L, "right"); lua_pushboolean(L, info.right); lua_settable(L, -3);
+    lua_pushstring(L, "nonClient"); lua_pushboolean(L, info.nonClient); lua_settable(L, -3);
     lua_pushinteger(L, info.wheel);
     lua_call(L, 5, 0);
 }

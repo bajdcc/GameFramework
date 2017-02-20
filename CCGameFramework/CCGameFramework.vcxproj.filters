@@ -404,5 +404,14 @@
     <Text Include="script\lib\core\winevt.lua">
       <Filter>脚本</Filter>
     </Text>
+    <Text Include="script\scene\comctl.lua">
+      <Filter>脚本</Filter>
+    </Text>
+    <Text Include="script\scene\edit.lua">
+      <Filter>脚本</Filter>
+    </Text>
+    <Text Include="script\lib\ui\edit.lua">
+      <Filter>脚本</Filter>
+    </Text>
   </ItemGroup>
 </Project>

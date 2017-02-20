@@ -2,18 +2,20 @@ local Scene = require('script.lib.core.scene')
 local Gradient = require('script.lib.ui.gradient')
 local AbsoluteLayout = require('script.lib.ui.layout.abs')
 local LinearLayout = require('script.lib.ui.layout.linear')
+local Empty = require('script.lib.ui.empty')
 local Block = require('script.lib.ui.block')
+local Edit = require('script.lib.ui.edit')
 local Text = require('script.lib.ui.text')
 local Button = require('script.lib.ui.comctl.button')
 
-local modname = 'WelcomeScene'
+local modname = 'EditComctlScene'
 local M = Scene:new()
 _G[modname] = M
 package.loaded[modname] = M
 
 function M:new(o)
 	o = o or {}
-	o.name = 'Welcome Scene'
+	o.name = 'Edit Common Control Scene'
 	o.state = {focused=nil, hover=nil}
 	setmetatable(o, self)
 	self.__index = self
@@ -25,7 +27,7 @@ function M:init()
 	self.minh = 600
 	UIExt.set_minw(self.minw, self.minh)
 
-	UIExt.trace('Scene [Welcome page] init')
+	UIExt.trace('Scene [Edit page] init')
 	-- INFO
 	local info = UIExt.info()
 	-- BG
@@ -39,7 +41,7 @@ function M:init()
 		right = info.width,
 		bottom = info.height
 	}))
-	UIExt.trace('Scene [Welcome page]: create background #' .. self.layers.bg.handle)
+	UIExt.trace('Scene [Edit page]: create background #' .. self.layers.bg.handle)
 	-- BG2
 	local bg2 = Gradient:new({
 		color1 = '#111111',
@@ -50,7 +52,7 @@ function M:init()
 		end
 	})
 	self.layers.bg2 = bg:add(bg2)
-	UIExt.trace('Scene [Welcome page]: create background2 #' .. self.layers.bg2.handle)
+	UIExt.trace('Scene [Edit page]: create background2 #' .. self.layers.bg2.handle)
 	-- TEXT
 	local cc = Text:new({
 		color = '#EEEEEE',
@@ -66,17 +68,17 @@ function M:init()
 		end
 	})
 	self.layers.cc = self:add(cc)
-	UIExt.trace('Scene [Time page]: create text #' .. self.layers.cc.handle)
+	UIExt.trace('Scene [Edit page]: create text #' .. self.layers.cc.handle)
 	-- TEXT
 	local text = Text:new({
 		color = '#EEEEEE',
-		text = '【自制简易游戏框架】',
+		text = '【文本框】',
 		pre_resize = function(this, left, top, right, bottom)
 			return left, top, right, bottom / 2
 		end
 	})
 	self.layers.text = self:add(text)
-	UIExt.trace('Scene [Welcome page]: create text #' .. self.layers.text.handle)
+	UIExt.trace('Scene [Edit page]: create text #' .. self.layers.text.handle)
 	-- MENU
 	self:init_menu(info)
 
@@ -88,13 +90,13 @@ function M:init()
 end
 
 function M:destroy()
-	UIExt.trace('Scene [Welcome page] destroy')
+	UIExt.trace('Scene [Edit page] destroy')
 	UIExt.clear_scene()
 end
 
 function M:init_event()
 	self.handler[self.win_event.created] = function(this)
-		UIExt.trace('Scene [Welcome page] Test created message!')
+		UIExt.trace('Scene [Edit page] Test created message!')
 	end
 	self.handler[self.win_event.timer] = function(this, id)
 	end
@@ -113,24 +115,16 @@ function M:init_menu(info)
 	self.layers.menu = self:add(menu)
 	
 	-- MENU BUTTON
+	Edit:new({
+		text = 'Text'
+	}):attach(menu)
+
+	Empty:new():attach(menu)
+
 	Button:new({
-		text = '控件',
+		text = '返回',
 		click = function()
 			FlipScene('ComCtl')
-		end
-	}):attach(menu)
-
-	Button:new({
-		text = '动画',
-		click = function()
-			FlipScene('Time')
-		end
-	}):attach(menu)
-
-	Button:new({
-		text = '退出',
-		click = function()
-			UIExt.quit(0)
 		end
 	}):attach(menu)
 end

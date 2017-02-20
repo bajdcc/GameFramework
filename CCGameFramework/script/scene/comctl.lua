@@ -6,14 +6,14 @@ local Block = require('script.lib.ui.block')
 local Text = require('script.lib.ui.text')
 local Button = require('script.lib.ui.comctl.button')
 
-local modname = 'WelcomeScene'
+local modname = 'CommonControlScene'
 local M = Scene:new()
 _G[modname] = M
 package.loaded[modname] = M
 
 function M:new(o)
 	o = o or {}
-	o.name = 'Welcome Scene'
+	o.name = 'Common Control Scene'
 	o.state = {focused=nil, hover=nil}
 	setmetatable(o, self)
 	self.__index = self
@@ -25,7 +25,7 @@ function M:init()
 	self.minh = 600
 	UIExt.set_minw(self.minw, self.minh)
 
-	UIExt.trace('Scene [Welcome page] init')
+	UIExt.trace('Scene [ComCtl page] init')
 	-- INFO
 	local info = UIExt.info()
 	-- BG
@@ -39,7 +39,7 @@ function M:init()
 		right = info.width,
 		bottom = info.height
 	}))
-	UIExt.trace('Scene [Welcome page]: create background #' .. self.layers.bg.handle)
+	UIExt.trace('Scene [ComCtl page]: create background #' .. self.layers.bg.handle)
 	-- BG2
 	local bg2 = Gradient:new({
 		color1 = '#111111',
@@ -50,7 +50,7 @@ function M:init()
 		end
 	})
 	self.layers.bg2 = bg:add(bg2)
-	UIExt.trace('Scene [Welcome page]: create background2 #' .. self.layers.bg2.handle)
+	UIExt.trace('Scene [ComCtl page]: create background2 #' .. self.layers.bg2.handle)
 	-- TEXT
 	local cc = Text:new({
 		color = '#EEEEEE',
@@ -70,13 +70,13 @@ function M:init()
 	-- TEXT
 	local text = Text:new({
 		color = '#EEEEEE',
-		text = '【自制简易游戏框架】',
+		text = '【通用控件】',
 		pre_resize = function(this, left, top, right, bottom)
 			return left, top, right, bottom / 2
 		end
 	})
 	self.layers.text = self:add(text)
-	UIExt.trace('Scene [Welcome page]: create text #' .. self.layers.text.handle)
+	UIExt.trace('Scene [ComCtl page]: create text #' .. self.layers.text.handle)
 	-- MENU
 	self:init_menu(info)
 
@@ -88,13 +88,13 @@ function M:init()
 end
 
 function M:destroy()
-	UIExt.trace('Scene [Welcome page] destroy')
+	UIExt.trace('Scene [ComCtl page] destroy')
 	UIExt.clear_scene()
 end
 
 function M:init_event()
 	self.handler[self.win_event.created] = function(this)
-		UIExt.trace('Scene [Welcome page] Test created message!')
+		UIExt.trace('Scene [ComCtl page] Test created message!')
 	end
 	self.handler[self.win_event.timer] = function(this, id)
 	end
@@ -114,23 +114,22 @@ function M:init_menu(info)
 	
 	-- MENU BUTTON
 	Button:new({
-		text = '控件',
+		text = '按钮',
 		click = function()
-			FlipScene('ComCtl')
 		end
 	}):attach(menu)
 
 	Button:new({
-		text = '动画',
+		text = '文本',
 		click = function()
-			FlipScene('Time')
+			FlipScene('Edit')
 		end
 	}):attach(menu)
 
 	Button:new({
-		text = '退出',
+		text = '返回',
 		click = function()
-			UIExt.quit(0)
+			FlipScene('Welcome')
 		end
 	}):attach(menu)
 end

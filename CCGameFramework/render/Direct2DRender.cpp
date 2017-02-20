@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Direct2DRender.h"
 #include "Direct2D.h"
+#include <ui/window/Window.h>
 
 #pragma region Empty
 EmptyElement::EmptyElement()
@@ -755,3 +756,107 @@ void RoundBorderElementRenderer::Render(CRect bounds)
 }
 
 #pragma endregion RoundBorder
+
+#pragma region Edit
+EditElement::EditElement()
+{
+
+}
+
+EditElement::~EditElement()
+{
+    renderer->Finalize();
+}
+
+CString EditElement::GetElementTypeName()
+{
+    return _T("Edit");
+}
+
+cint EditElement::GetTypeId()
+{
+    return Edit;
+}
+
+CColor EditElement::GetColor() const
+{
+    return color;
+}
+
+void EditElement::SetColor(CColor value)
+{
+    if (color != value)
+    {
+        color = value;
+        if (renderer)
+        {
+            renderer->OnElementStateChanged();
+        }
+    }
+}
+
+const Font& EditElement::GetFont() const
+{
+    return font;
+}
+
+void EditElement::SetFont(const Font& value)
+{
+    if (font != value)
+    {
+        font = value;
+        if (renderer)
+        {
+            renderer->OnElementStateChanged();
+        }
+    }
+}
+
+CStringA EditElement::GetText() const
+{
+    return text;
+}
+
+void EditElement::SetText(CStringA value)
+{
+    if (text != value)
+    {
+        text = value;
+        if (renderer)
+        {
+            renderer->OnElementStateChanged();
+        }
+    }
+}
+
+void EditElementRenderer::InitializeInternal()
+{
+
+}
+
+void EditElementRenderer::FinalizeInternal()
+{
+
+}
+
+void EditElementRenderer::RenderTargetChangedInternal(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget, std::shared_ptr<Direct2DRenderTarget> newRenderTarget)
+{
+
+}
+
+void EditElementRenderer::OnElementStateChanged()
+{
+
+}
+
+void EditElementRenderer::Render(CRect bounds)
+{
+    auto e = element.lock();
+    auto rt = renderTarget.lock();
+    if (e->flags.self_visible)
+    {
+
+    }
+    GraphicsRenderer::Render(bounds);
+}
+#pragma endregion Edit

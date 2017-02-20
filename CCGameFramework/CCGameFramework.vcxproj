@@ -410,10 +410,19 @@ xcopy /r /y /e "$(ProjectDir)script" "$(TargetDir)script"</Command>
     <Text Include="script\scene\welcome.lua">
       <FileType>Document</FileType>
     </Text>
-	<Text Include="script\lib\ui\comctl\button.lua">
+    <Text Include="script\lib\ui\comctl\button.lua">
       <FileType>Document</FileType>
     </Text>
-	<Text Include="script\lib\core\winevt.lua">
+    <Text Include="script\lib\core\winevt.lua">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="script\scene\comctl.lua">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="script\scene\edit.lua">
+      <FileType>Document</FileType>
+    </Text>
+	<Text Include="script\lib\ui\edit.lua">
       <FileType>Document</FileType>
     </Text>
   </ItemGroup>
