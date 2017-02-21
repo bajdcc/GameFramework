@@ -24,6 +24,7 @@ static const luaL_Reg ui_lib[] = {
     { "quit", ui_quit },
     { "hsb2rgb", ui_helper_hsl2rgb },
     { "rgb2hsb", ui_helper_rgb2hsl },
+    { "isprintable", ui_isprintchar },
     { nullptr, nullptr }
 };
 
@@ -138,4 +139,11 @@ int ui_helper_rgb2hsl(lua_State* L)
     lua_pushnumber(L, l);
 
     return 3;
+}
+
+int ui_isprintchar(lua_State *L)
+{
+    auto c = (cint)luaL_checkinteger(L, 1);
+    lua_pushboolean(L, !iscntrl(c));
+    return 1;
 }

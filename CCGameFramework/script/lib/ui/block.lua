@@ -9,6 +9,7 @@ function M:new(o)
 	o = o or GdiBase:new(o)
 	o.type = 1001
 	o.color = o.color or '#FFFFFF'
+	o.fill = o.fill or 1
 	setmetatable(o, self)
 	self.__index = self
 	return o;

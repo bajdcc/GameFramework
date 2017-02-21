@@ -68,15 +68,6 @@ cint QRImageElement::GetTypeId()
     return QRImage;
 }
 
-void SolidLabelElementRenderer::RenderTargetChangedInternal(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget, std::shared_ptr<Direct2DRenderTarget> newRenderTarget)
-{
-    DestroyBrush(oldRenderTarget);
-    DestroyTextFormat(oldRenderTarget);
-    CreateBrush(newRenderTarget);
-    CreateTextFormat(newRenderTarget);
-    UpdateMinSize();
-}
-
 void QRImageElementRenderer::CreateImage(std::shared_ptr<Direct2DRenderTarget> renderTarget)
 {
     if (renderTarget)

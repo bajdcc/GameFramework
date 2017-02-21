@@ -111,7 +111,8 @@ public:
     enum CursorType
     {
         arrow = 1,
-        hand
+        hand,
+        ibeam
     };
 
     bool HandleMessage(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT& result);

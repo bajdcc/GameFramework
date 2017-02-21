@@ -15,6 +15,7 @@ public:
     void Init();
 
     CComPtr<ID2D1RenderTarget> GetDirect2DRenderTarget();
+    D2D1_WINDOW_STATE CheckWindowState();
     void SetTextAntialias(bool antialias, bool verticalAntialias);
     bool StartRendering();
     HRESULT StopRendering();

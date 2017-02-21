@@ -15,6 +15,7 @@ function M:new(o)
 	o.bold = o.bold or 0
 	o.italic = o.italic or 0
 	o.underline = o.underline or 0
+	o.multiline = o.multiline or 0
 	setmetatable(o, self)
 	self.__index = self
 	return o;

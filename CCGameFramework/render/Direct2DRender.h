@@ -361,9 +361,12 @@ public:
 
     CColor GetColor();
     void SetColor(CColor value);
+    bool IsFill();
+    void SetFill(bool value);
 
 protected:
     CColor color;
+    bool fill{ true };
 };
 
 class SolidBackgroundElementRenderer : public GraphicsSolidBrushRenderer<SolidBackgroundElement, SolidBackgroundElementRenderer, ID2D1SolidColorBrush, CColor>
@@ -438,23 +441,12 @@ public:
     void SetVerticalAlignment(Alignment value);
     void SetAlignments(Alignment horizontal, Alignment vertical);
 
-    bool GetWrapLine();
-    void SetWrapLine(bool value);
-    bool GetMultiline();
-    void SetMultiline(bool value);
-    bool GetWrapLineHeightCalculation();
-    void SetWrapLineHeightCalculation(bool value);
-
 protected:
     CColor color;
     Font fontProperties;
     CString text;
     Alignment hAlignment{ Alignment::StringAlignmentNear };
     Alignment vAlignment{ Alignment::StringAlignmentNear };
-    bool wrapLine{ false };
-    bool ellipse{ false };
-    bool multiline{ false };
-    bool wrapLineHeightCalculation{ false };
 };
 
 class SolidLabelElementRenderer : public GraphicsRenderer<SolidLabelElement, SolidLabelElementRenderer, Direct2DRenderTarget>
@@ -503,10 +495,13 @@ public:
     void SetColor(CColor value);
     FLOAT GetRadius();
     void SetRadius(FLOAT value);
+    bool IsFill();
+    void SetFill(bool value);
 
 protected:
     CColor color;
     FLOAT radius{ 1.0f };
+    bool fill{ true };
 };
 
 class RoundBorderElementRenderer : public GraphicsSolidBrushRenderer<RoundBorderElement, RoundBorderElementRenderer, ID2D1SolidColorBrush, CColor>
@@ -593,27 +588,48 @@ public:
 
     cint GetTypeId()override;
 
-    CColor GetColor()const;
+    CColor GetColor();
     void SetColor(CColor value);
-    const Font& GetFont()const;
+    const Font& GetFont();
     void SetFont(const Font& value);
-    CStringA GetText()const;
-    void SetText(CStringA value);
+    const CString& GetText();
+    void SetText(const CString& value);
+    const bool IsMultiline();
+    void SetMultiline(const bool& value);
 
 protected:
     CColor color;
-    Font font;
-    CStringA text;
+    Font fontProperties;
+    CString text;
+    bool multiline{ false };
 };
 
 class EditElementRenderer : public GraphicsRenderer<EditElement, EditElementRenderer, Direct2DRenderTarget>
 {
 public:
+    void Render(CRect bounds)override;
+    void OnElementStateChanged()override;
+
+protected:
+    void CreateBrush(std::shared_ptr<Direct2DRenderTarget> _renderTarget);
+    void DestroyBrush(std::shared_ptr<Direct2DRenderTarget> _renderTarget);
+    void CreateTextFormat(std::shared_ptr<Direct2DRenderTarget> _renderTarget);
+    void DestroyTextFormat(std::shared_ptr<Direct2DRenderTarget> _renderTarget);
+    void CreateTextLayout();
+    void DestroyTextLayout();
+    void UpdateMinSize();
+
     void InitializeInternal()override;
     void FinalizeInternal()override;
     void RenderTargetChangedInternal(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget, std::shared_ptr<Direct2DRenderTarget> newRenderTarget)override;
-    void OnElementStateChanged()override;
-    void Render(CRect bounds)override;
+
+    CColor oldColor;
+    Font oldFont;
+    CString oldText;
+    CComPtr<ID2D1SolidColorBrush> brush;
+    std::shared_ptr<D2DTextFormatPackage> textFormat;
+    CComPtr<IDWriteTextLayout> textLayout;
+    cint oldMaxWidth{ -1 };
 };
 #pragma endregion Edit
 

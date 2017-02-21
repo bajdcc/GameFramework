@@ -4,9 +4,9 @@ local AbsoluteLayout = require('script.lib.ui.layout.abs')
 local LinearLayout = require('script.lib.ui.layout.linear')
 local Empty = require('script.lib.ui.empty')
 local Block = require('script.lib.ui.block')
-local Edit = require('script.lib.ui.edit')
 local Text = require('script.lib.ui.text')
 local Button = require('script.lib.ui.comctl.button')
+local Edit = require('script.lib.ui.comctl.edit')
 
 local modname = 'EditComctlScene'
 local M = Scene:new()
@@ -37,15 +37,15 @@ function M:init()
 	})
 	self.layers.bg = self:add(bg)
 	bg:add(Block:new({
-		color = '#111111',
+		color = '#9C9F3C',
 		right = info.width,
 		bottom = info.height
 	}))
 	UIExt.trace('Scene [Edit page]: create background #' .. self.layers.bg.handle)
 	-- BG2
 	local bg2 = Gradient:new({
-		color1 = '#111111',
-		color2 = '#AAAAAA',
+		color1 = '#9C9F3C',
+		color2 = '#65662A',
 		direction = 1,
 		pre_resize = function(this, left, top, right, bottom)
 			return left, ((bottom - top) / 2) - 100, right, bottom
@@ -116,7 +116,15 @@ function M:init_menu(info)
 	
 	-- MENU BUTTON
 	Edit:new({
-		text = 'Text'
+		text = 'Text',
+		char_return = function (text)
+			CurrentScene.layers.text.text = text
+			CurrentScene.layers.text:update_and_paint()
+		end,
+		char_input = function (text)
+			CurrentScene.layers.text.text = text
+			CurrentScene.layers.text:update_and_paint()
+		end
 	}):attach(menu)
 
 	Empty:new():attach(menu)

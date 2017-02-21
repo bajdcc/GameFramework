@@ -346,6 +346,7 @@ xcopy /r /y /e "$(ProjectDir)script" "$(TargetDir)script"</Command>
     <ClCompile Include="lua_ext\ext.cpp" />
     <ClCompile Include="render\Direct2DAllocator.cpp" />
     <ClCompile Include="render\Direct2DRender.cpp" />
+    <ClCompile Include="render\Direct2DRenderEdit.cpp" />
     <ClCompile Include="render\Direct2DRenderImage.cpp" />
     <ClCompile Include="render\Direct2DRenderTarget.cpp" />
     <ClCompile Include="lua_ext\UI.cpp" />
@@ -422,7 +423,10 @@ xcopy /r /y /e "$(ProjectDir)script" "$(TargetDir)script"</Command>
     <Text Include="script\scene\edit.lua">
       <FileType>Document</FileType>
     </Text>
-	<Text Include="script\lib\ui\edit.lua">
+    <Text Include="script\lib\ui\edit.lua">
+      <FileType>Document</FileType>
+    </Text>
+	<Text Include="script\lib\ui\comctl\edit.lua">
       <FileType>Document</FileType>
     </Text>
   </ItemGroup>

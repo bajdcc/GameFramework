@@ -10,6 +10,7 @@ function M:new(o)
 	o.type = 1004
 	o.color = o.color or '#FFFFFF'
 	o.radius = o.radius or 1.0
+	o.fill = o.fill or 1
 	setmetatable(o, self)
 	self.__index = self
 	return o;

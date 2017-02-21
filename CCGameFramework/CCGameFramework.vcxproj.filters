@@ -354,6 +354,9 @@
     <ClCompile Include="base\libqrencode\split.c">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="render\Direct2DRenderEdit.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="script\lib\core\scene.lua">
@@ -411,6 +414,9 @@
       <Filter>脚本</Filter>
     </Text>
     <Text Include="script\lib\ui\edit.lua">
+      <Filter>脚本</Filter>
+    </Text>
+    <Text Include="script\lib\ui\comctl\edit.lua">
       <Filter>脚本</Filter>
     </Text>
   </ItemGroup>

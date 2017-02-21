@@ -40,6 +40,11 @@ CComPtr<ID2D1RenderTarget> Direct2DRenderTarget::GetDirect2DRenderTarget()
     return dynamic_cast<ID2D1RenderTarget*>(d2dRenderTarget.p);
 }
 
+D2D1_WINDOW_STATE Direct2DRenderTarget::CheckWindowState()
+{
+    return d2dRenderTarget->CheckWindowState();
+}
+
 void Direct2DRenderTarget::SetTextAntialias(bool antialias, bool verticalAntialias)
 {
     CComPtr<IDWriteRenderingParams> params;

@@ -18,4 +18,6 @@ extern int ui_quit(lua_State *L);
 extern int ui_helper_hsl2rgb(lua_State *L);
 extern int ui_helper_rgb2hsl(lua_State *L);
 
+extern int ui_isprintchar(lua_State *L);
+
 #endif

@@ -897,6 +897,8 @@ bool Window::HandleMessageInternal(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM l
                 case Window::hand:
                     idc = IDC_HAND;
                     break;
+                case Window::ibeam:
+                    idc = IDC_IBEAM;
                 default:
                     break;
                 }
@@ -932,7 +934,7 @@ bool Window::HandleMessageInternal(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM l
 
 void Window::Render()
 {
-    if (window && window->IsVisible() && d2dRenderTarget)
+    if (window && window->IsVisible() && d2dRenderTarget && !(d2dRenderTarget->CheckWindowState() & D2D1_WINDOW_STATE_OCCLUDED))
     {
         bool success = d2dRenderTarget->StartRendering();
         if (!success)

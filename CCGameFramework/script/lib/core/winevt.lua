@@ -64,10 +64,19 @@ package.loaded["HitTest"] = N
 
 local S = {
 	arrow = 1,
-	hand = 2
+	hand = 2,
+	ibeam = 3
 }
 
 _G["SysCursor"] = S
 package.loaded["SysCursor"] = S
+
+local K = {
+	backspace = 8,
+	enter = 13
+}
+
+_G["SysKey"] = K
+package.loaded["SysKey"] = K
 
 return M

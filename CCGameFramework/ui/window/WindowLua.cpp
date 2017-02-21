@@ -114,6 +114,9 @@ int ui_update_obj(lua_State *L)
             lua_getfield(L, -1, "color");
             auto color = luaL_checklstring(L, -1, NULL); lua_pop(L, 1);
             obj->SetColor(CColor::Parse(color));
+            lua_getfield(L, -1, "fill");
+            auto fill = luaL_checknumber(L, -1) != 0; lua_pop(L, 1);
+            obj->SetFill(fill);
         }
     }
     break;
@@ -172,6 +175,9 @@ int ui_update_obj(lua_State *L)
             lua_getfield(L, -1, "radius");
             auto radius = luaL_checknumber(L, -1); lua_pop(L, 1);
             obj->SetRadius((FLOAT)radius);
+            lua_getfield(L, -1, "fill");
+            auto fill = luaL_checknumber(L, -1) != 0; lua_pop(L, 1);
+            obj->SetFill(fill);
         }
     }
     break;
@@ -196,7 +202,10 @@ int ui_update_obj(lua_State *L)
         auto obj = static_cast<EditElement*>(o.get());
         lua_getfield(L, -1, "text");
         auto text = luaL_checklstring(L, -1, NULL); lua_pop(L, 1);
-        obj->SetText(text);
+        obj->SetText(CString(text));
+        lua_getfield(L, -1, "multiline");
+        auto multiline = (cint)luaL_checkinteger(L, -1) == 0; lua_pop(L, 1);
+        obj->SetMultiline(multiline);
         {
             Font font;
             lua_getfield(L, -1, "size");

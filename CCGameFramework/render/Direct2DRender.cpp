@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "Direct2DRender.h"
 #include "Direct2D.h"
-#include <ui/window/Window.h>
 
 #pragma region Empty
 EmptyElement::EmptyElement()
@@ -83,6 +82,23 @@ void SolidBackgroundElement::SetColor(CColor value)
     }
 }
 
+bool SolidBackgroundElement::IsFill()
+{
+    return fill;
+}
+
+void SolidBackgroundElement::SetFill(bool value)
+{
+    if (fill != value)
+    {
+        fill = value;
+        if (renderer)
+        {
+            renderer->OnElementStateChanged();
+        }
+    }
+}
+
 void SolidBackgroundElementRenderer::Render(CRect bounds)
 {
     auto e = element.lock();
@@ -90,10 +106,20 @@ void SolidBackgroundElementRenderer::Render(CRect bounds)
     if (e->flags.self_visible)
     {
         auto d2dRenderTarget = rt->GetDirect2DRenderTarget();
-        d2dRenderTarget->FillRectangle(
-            D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
-            brush
-        );
+        if (e->IsFill())
+        {
+            d2dRenderTarget->FillRectangle(
+                D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
+                brush
+            );
+        }
+        else
+        {
+            d2dRenderTarget->DrawRectangle(
+                D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
+                brush
+            );
+        }
     }
     GraphicsRenderer::Render(bounds);
 }
@@ -339,57 +365,6 @@ void SolidLabelElement::SetAlignments(Alignment horizontal, Alignment vertical)
     }
 }
 
-bool SolidLabelElement::GetWrapLine()
-{
-    return wrapLine;
-}
-
-void SolidLabelElement::SetWrapLine(bool value)
-{
-    if (wrapLine != value)
-    {
-        wrapLine = value;
-        if (renderer)
-        {
-            renderer->OnElementStateChanged();
-        }
-    }
-}
-
-bool SolidLabelElement::GetMultiline()
-{
-    return multiline;
-}
-
-void SolidLabelElement::SetMultiline(bool value)
-{
-    if (multiline != value)
-    {
-        multiline = value;
-        if (renderer)
-        {
-            renderer->OnElementStateChanged();
-        }
-    }
-}
-
-bool SolidLabelElement::GetWrapLineHeightCalculation()
-{
-    return wrapLineHeightCalculation;
-}
-
-void SolidLabelElement::SetWrapLineHeightCalculation(bool value)
-{
-    if (wrapLineHeightCalculation != value)
-    {
-        wrapLineHeightCalculation = value;
-        if (renderer)
-        {
-            renderer->OnElementStateChanged();
-        }
-    }
-}
-
 SolidLabelElementRenderer::SolidLabelElementRenderer()
 {
 
@@ -435,69 +410,53 @@ void SolidLabelElementRenderer::Render(CRect bounds)
         auto rt = renderTarget.lock();
         rt->SetTextAntialias(oldFont.antialias, oldFont.verticalAntialias);
 
-        if (!e->GetMultiline() && !e->GetWrapLine())
+        DWRITE_TRIMMING trimming;
+        CComPtr<IDWriteInlineObject> inlineObject;
+        textLayout->GetTrimming(&trimming, &inlineObject);
+        textLayout->SetWordWrapping(DWRITE_WORD_WRAPPING_WRAP);
+        switch (e->GetHorizontalAlignment())
         {
-            auto d2dRenderTarget = rt->GetDirect2DRenderTarget();
-            d2dRenderTarget->DrawTextLayout(
-                D2D1::Point2F((FLOAT)x, (FLOAT)y),
-                textLayout,
-                brush,
-                D2D1_DRAW_TEXT_OPTIONS_NO_SNAP
-            );
+        case Alignment::StringAlignmentNear:
+            textLayout->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
+            break;
+        case Alignment::StringAlignmentCenter:
+            textLayout->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+            break;
+        case Alignment::StringAlignmentFar:
+            textLayout->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
+            break;
         }
-        else
+
+        switch (e->GetVerticalAlignment())
         {
-            auto dwriteFactory = Direct2D::Singleton().GetDirectWriteFactory();
-            DWRITE_TRIMMING trimming;
-            CComPtr<IDWriteInlineObject> inlineObject;
-            textLayout->GetTrimming(&trimming, &inlineObject);
-            textLayout->SetWordWrapping(e->GetWrapLine() ? DWRITE_WORD_WRAPPING_WRAP : DWRITE_WORD_WRAPPING_NO_WRAP);
-            switch (e->GetHorizontalAlignment())
-            {
-            case Alignment::StringAlignmentNear:
-                textLayout->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
-                break;
-            case Alignment::StringAlignmentCenter:
-                textLayout->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
-                break;
-            case Alignment::StringAlignmentFar:
-                textLayout->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
-                break;
-            }
-            if (!e->GetMultiline() && !e->GetWrapLine())
-            {
-                switch (e->GetVerticalAlignment())
-                {
-                case Alignment::StringAlignmentNear:
-                    textLayout->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
-                    break;
-                case Alignment::StringAlignmentCenter:
-                    textLayout->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
-                    break;
-                case Alignment::StringAlignmentFar:
-                    textLayout->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_FAR);
-                    break;
-                }
-            }
+        case Alignment::StringAlignmentNear:
+            textLayout->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
+            break;
+        case Alignment::StringAlignmentCenter:
+            textLayout->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+            break;
+        case Alignment::StringAlignmentFar:
+            textLayout->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_FAR);
+            break;
+        }
 
-            CRect textBounds = bounds;
-            textLayout->SetMaxWidth((FLOAT)textBounds.Width());
-            textLayout->SetMaxHeight((FLOAT)textBounds.Height());
+        CRect textBounds = bounds;
+        textLayout->SetMaxWidth((FLOAT)textBounds.Width());
+        textLayout->SetMaxHeight((FLOAT)textBounds.Height());
+        textLayout->SetTrimming(&trimming, inlineObject);
 
-            auto d2dRenderTarget = rt->GetDirect2DRenderTarget();
-            d2dRenderTarget->DrawTextLayout(
-                D2D1::Point2F((FLOAT)textBounds.left, (FLOAT)textBounds.top),
-                textLayout,
-                brush,
-                D2D1_DRAW_TEXT_OPTIONS_NO_SNAP
-            );
-
-            textLayout->SetTrimming(&trimming, inlineObject);
-            if (oldMaxWidth != textBounds.Width())
-            {
-                oldMaxWidth = textBounds.Width();
-                UpdateMinSize();
-            }
+        auto d2dRenderTarget = rt->GetDirect2DRenderTarget();
+        d2dRenderTarget->DrawTextLayout(
+            D2D1::Point2F((FLOAT)textBounds.left, (FLOAT)textBounds.top),
+            textLayout,
+            brush,
+            D2D1_DRAW_TEXT_OPTIONS_NO_SNAP
+        );
+        
+        if (oldMaxWidth != textBounds.Width())
+        {
+            oldMaxWidth = textBounds.Width();
+            UpdateMinSize();
         }
     }
     GraphicsRenderer::Render(bounds);
@@ -617,31 +576,16 @@ void SolidLabelElementRenderer::UpdateMinSize()
     auto rt = renderTarget.lock();
     if (rt)
     {
-        if (e->GetWrapLine())
+        CreateTextLayout();
+        if (textLayout)
         {
-            if (e->GetWrapLineHeightCalculation())
+            maxWidth = textLayout->GetMaxWidth();
+            if (oldMaxWidth != -1)
             {
-                CreateTextLayout();
-                if (textLayout)
-                {
-                    maxWidth = textLayout->GetMaxWidth();
-                    if (oldMaxWidth != -1)
-                    {
-                        textLayout->SetWordWrapping(DWRITE_WORD_WRAPPING_WRAP);
-                        textLayout->SetMaxWidth((float)oldMaxWidth);
-                    }
-                    calculateSizeFromTextLayout = true;
-                }
+                textLayout->SetWordWrapping(DWRITE_WORD_WRAPPING_WRAP);
+                textLayout->SetMaxWidth((float)oldMaxWidth);
             }
-        }
-        else
-        {
-            CreateTextLayout();
-            if (textLayout)
-            {
-                maxWidth = textLayout->GetMaxWidth();
-                calculateSizeFromTextLayout = true;
-            }
+            calculateSizeFromTextLayout = true;
         }
     }
     if (calculateSizeFromTextLayout)
@@ -650,11 +594,7 @@ void SolidLabelElementRenderer::UpdateMinSize()
         HRESULT hr = textLayout->GetMetrics(&metrics);
         if (SUCCEEDED(hr))
         {
-            cint width = 0;
-            if (!e->GetWrapLine() && !e->GetMultiline())
-            {
-                width = (cint)ceil(metrics.widthIncludingTrailingWhitespace);
-            }
+            cint width = (cint)ceil(metrics.widthIncludingTrailingWhitespace);
             minSize = CSize(width, (cint)ceil(metrics.height));
         }
         textLayout->SetMaxWidth(maxWidth);
@@ -678,6 +618,14 @@ void SolidLabelElementRenderer::FinalizeInternal()
     DestroyTextFormat(rt);
 }
 
+void SolidLabelElementRenderer::RenderTargetChangedInternal(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget, std::shared_ptr<Direct2DRenderTarget> newRenderTarget)
+{
+    DestroyBrush(oldRenderTarget);
+    DestroyTextFormat(oldRenderTarget);
+    CreateBrush(newRenderTarget);
+    CreateTextFormat(newRenderTarget);
+    UpdateMinSize();
+}
 #pragma endregion SolidLabel
 
 #pragma region RoundBorder
@@ -736,6 +684,23 @@ void RoundBorderElement::SetRadius(FLOAT value)
     }
 }
 
+bool RoundBorderElement::IsFill()
+{
+    return fill;
+}
+
+void RoundBorderElement::SetFill(bool value)
+{
+    if (fill != value)
+    {
+        fill = value;
+        if (renderer)
+        {
+            renderer->OnElementStateChanged();
+        }
+    }
+}
+
 void RoundBorderElementRenderer::Render(CRect bounds)
 {
     auto e = element.lock();
@@ -743,120 +708,30 @@ void RoundBorderElementRenderer::Render(CRect bounds)
     if (e->flags.self_visible)
     {
         auto d2dRenderTarget = rt->GetDirect2DRenderTarget();
-        d2dRenderTarget->FillRoundedRectangle(
-            D2D1::RoundedRect(
-                D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
-                e->GetRadius(),
-                e->GetRadius()
-            ),
-            brush
-        );
+        if (e->IsFill())
+        {
+            d2dRenderTarget->FillRoundedRectangle(
+                D2D1::RoundedRect(
+                    D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
+                    e->GetRadius(),
+                    e->GetRadius()
+                ),
+                brush
+            );
+        }
+        else
+        {
+            d2dRenderTarget->DrawRoundedRectangle(
+                D2D1::RoundedRect(
+                    D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
+                    e->GetRadius(),
+                    e->GetRadius()
+                ),
+                brush
+            );
+        }
     }
     GraphicsRenderer::Render(bounds);
 }
 
 #pragma endregion RoundBorder
-
-#pragma region Edit
-EditElement::EditElement()
-{
-
-}
-
-EditElement::~EditElement()
-{
-    renderer->Finalize();
-}
-
-CString EditElement::GetElementTypeName()
-{
-    return _T("Edit");
-}
-
-cint EditElement::GetTypeId()
-{
-    return Edit;
-}
-
-CColor EditElement::GetColor() const
-{
-    return color;
-}
-
-void EditElement::SetColor(CColor value)
-{
-    if (color != value)
-    {
-        color = value;
-        if (renderer)
-        {
-            renderer->OnElementStateChanged();
-        }
-    }
-}
-
-const Font& EditElement::GetFont() const
-{
-    return font;
-}
-
-void EditElement::SetFont(const Font& value)
-{
-    if (font != value)
-    {
-        font = value;
-        if (renderer)
-        {
-            renderer->OnElementStateChanged();
-        }
-    }
-}
-
-CStringA EditElement::GetText() const
-{
-    return text;
-}
-
-void EditElement::SetText(CStringA value)
-{
-    if (text != value)
-    {
-        text = value;
-        if (renderer)
-        {
-            renderer->OnElementStateChanged();
-        }
-    }
-}
-
-void EditElementRenderer::InitializeInternal()
-{
-
-}
-
-void EditElementRenderer::FinalizeInternal()
-{
-
-}
-
-void EditElementRenderer::RenderTargetChangedInternal(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget, std::shared_ptr<Direct2DRenderTarget> newRenderTarget)
-{
-
-}
-
-void EditElementRenderer::OnElementStateChanged()
-{
-
-}
-
-void EditElementRenderer::Render(CRect bounds)
-{
-    auto e = element.lock();
-    auto rt = renderTarget.lock();
-    if (e->flags.self_visible)
-    {
-
-    }
-    GraphicsRenderer::Render(bounds);
-}
-#pragma endregion Edit
