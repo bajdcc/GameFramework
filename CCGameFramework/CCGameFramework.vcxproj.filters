@@ -425,5 +425,8 @@
     <Text Include="script\scene\button.lua">
       <Filter>脚本</Filter>
     </Text>
+    <Text Include="script\scene\game\2048.lua">
+      <Filter>脚本</Filter>
+    </Text>
   </ItemGroup>
 </Project>

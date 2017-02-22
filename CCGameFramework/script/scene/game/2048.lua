@@ -8,14 +8,14 @@ local Text = require('script.lib.ui.text')
 local Button = require('script.lib.ui.comctl.button')
 local Edit = require('script.lib.ui.comctl.edit')
 
-local modname = 'ButtonComctlScene'
+local modname = 'Game2048Scene'
 local M = Scene:new()
 _G[modname] = M
 package.loaded[modname] = M
 
 function M:new(o)
 	o = o or {}
-	o.name = 'Button Common Control Scene'
+	o.name = '2048 - Game Scene'
 	o.state = {focused=nil, hover=nil}
 	setmetatable(o, self)
 	self.__index = self
@@ -27,7 +27,7 @@ function M:init()
 	self.minh = 600
 	UIExt.set_minw(self.minw, self.minh)
 
-	UIExt.trace('Scene [Button page] init')
+	UIExt.trace('Scene [2048 Game Page] init')
 	-- INFO
 	local info = UIExt.info()
 	-- BG
@@ -37,22 +37,11 @@ function M:init()
 	})
 	self.layers.bg = self:add(bg)
 	bg:add(Block:new({
-		color = '#9C9F3C',
+		color = '#222222',
 		right = info.width,
 		bottom = info.height
 	}))
-	UIExt.trace('Scene [Button page]: create background #' .. self.layers.bg.handle)
-	-- BG2
-	local bg2 = Gradient:new({
-		color1 = '#9C9F3C',
-		color2 = '#65662A',
-		direction = 1,
-		pre_resize = function(this, left, top, right, bottom)
-			return left, ((bottom - top) / 2) - 100, right, bottom
-		end
-	})
-	self.layers.bg2 = bg:add(bg2)
-	UIExt.trace('Scene [Button page]: create background2 #' .. self.layers.bg2.handle)
+	UIExt.trace('Scene [2048 Game Page]: create background #' .. self.layers.bg.handle)
 	-- TEXT
 	local cc = Text:new({
 		color = '#EEEEEE',
@@ -63,22 +52,22 @@ function M:init()
 		end,
 		hit = function(this, evt)
 			if evt == WinEvent.leftbuttondown then
-				FlipScene('ComCtl')
+				FlipScene('Button')
 			end
 		end
 	})
 	self.layers.cc = self:add(cc)
-	UIExt.trace('Scene [Button page]: create text #' .. self.layers.cc.handle)
+	UIExt.trace('Scene [2048 Game Page]: create text #' .. self.layers.cc.handle)
 	-- TEXT
 	local text = Text:new({
 		color = '#EEEEEE',
-		text = '¡¾°´Å¥¡¿',
+		text = '2048',
 		pre_resize = function(this, left, top, right, bottom)
 			return left, top, right, bottom / 2
 		end
 	})
 	self.layers.text = self:add(text)
-	UIExt.trace('Scene [Button page]: create text #' .. self.layers.text.handle)
+	UIExt.trace('Scene [2048 Game Page]: create text #' .. self.layers.text.handle)
 	-- MENU
 	self:init_menu(info)
 
@@ -90,13 +79,13 @@ function M:init()
 end
 
 function M:destroy()
-	UIExt.trace('Scene [Button page] destroy')
+	UIExt.trace('Scene [2048 Game Page] destroy')
 	UIExt.clear_scene()
 end
 
 function M:init_event()
 	self.handler[self.win_event.created] = function(this)
-		UIExt.trace('Scene [Button page] Test created message!')
+		UIExt.trace('Scene [2048 Game Page] Test created message!')
 	end
 	self.handler[self.win_event.timer] = function(this, id)
 	end
@@ -104,14 +93,15 @@ end
 
 function M:init_menu(info)
 	-- MENU CONTAINER LAYOUT
-	local row = 3
-	local col = 5
+	local row = 4
+	local col = 4
 	local menu = TableLayout:new({
 		row = row,
 		col = col,
 		pre_resize = function(this, left, top, right, bottom)
+			local w = left + (right - left) / 2
 			local h = top + (bottom - top) / 2
-			return left, h, right, h + 250
+			return w - 150, h - 50, w + 150, h + 250
 		end
 	})
 	self.layers.menu = self:add(menu)
@@ -127,13 +117,6 @@ function M:init_menu(info)
 			}):attach(menu)
 		end
 	end
-	-- ALLOCATE BUTTON GROUP
-	menu.children[1].text = '2048'	
-	menu.children[1].layers.fg.text = '2048'
-	menu.children[1].click = function()
-		FlipScene('Game_2048');
-	end
-	menu.children[1].layers.fg:update_and_paint()
 end
 
 return M

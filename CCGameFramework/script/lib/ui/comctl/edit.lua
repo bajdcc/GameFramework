@@ -27,20 +27,29 @@ function M:new(o)
 	o.multiline = o.multiline or 0
 	o.layers = {}
 	o.cur = SysCursor.ibeam
+	o.state = {focused=false, enter=false}
 	o.hit = function(this, evt, args)
 		if evt == WinEvent.leftbuttonup then
 			if o.click then o.click() end
 		elseif evt == WinEvent.gotfocus then
+			o.state.focused = true
 			this.layers.border.color = this.bordercolor_focus
 			this.layers.border:update_and_paint()
 		elseif evt == WinEvent.lostfocus then
+			o.state.focused = false
 			this.layers.border.color = this.bordercolor
 			this.layers.border:update_and_paint()
 		elseif evt == WinEvent.mouseenter then
+			o.state.enter = true
 			this.layers.border.color = this.bordercolor_enter
 			this.layers.border:update_and_paint()
 		elseif evt == WinEvent.mouseleave then
-			this.layers.border.color = this.bordercolor
+			o.state.enter = false
+			if o.state.focused then
+				this.layers.border.color = this.bordercolor_focus
+			else
+				this.layers.border.color = this.bordercolor
+			end
 			this.layers.border:update_and_paint()
 		elseif evt == WinEvent.char then
 			if UIExt.isprintable(args.code) then

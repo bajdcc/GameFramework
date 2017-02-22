@@ -38,7 +38,6 @@ local M = {
 }
 
 _G["WinEvent"] = M
-package.loaded["WinEvent"] = M
 
 local N = {
 	bordernosizing = 0,
@@ -60,7 +59,6 @@ local N = {
 }
 
 _G["HitTest"] = N
-package.loaded["HitTest"] = N
 
 local S = {
 	arrow = 1,
@@ -69,7 +67,6 @@ local S = {
 }
 
 _G["SysCursor"] = S
-package.loaded["SysCursor"] = S
 
 local K = {
 	backspace = 8,
@@ -77,6 +74,5 @@ local K = {
 }
 
 _G["SysKey"] = K
-package.loaded["SysKey"] = K
 
 return M

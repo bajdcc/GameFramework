@@ -31,11 +31,14 @@ end
 
 Window = {
 	Scene = {
+		-- MAIN
 		Welcome = require("script.scene.welcome"),
 		Time = require("script.scene.time"),
 		ComCtl = require("script.scene.comctl"),
 		Edit = require("script.scene.edit"),
-		Button = require("script.scene.button")
+		Button = require("script.scene.button"),
+		-- GAME
+		Game_2048 = require("script.scene.game.2048"),
 	}
 }
 
