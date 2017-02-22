@@ -419,5 +419,11 @@
     <Text Include="script\lib\ui\comctl\edit.lua">
       <Filter>脚本</Filter>
     </Text>
+    <Text Include="script\lib\ui\layout\table.lua">
+      <Filter>脚本</Filter>
+    </Text>
+    <Text Include="script\scene\button.lua">
+      <Filter>脚本</Filter>
+    </Text>
   </ItemGroup>
 </Project>

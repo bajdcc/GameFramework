@@ -189,7 +189,7 @@ protected:
 
     HitTestResult HitTest(CPoint location);
     void Created();
-    void Moving(CRect& bounds, bool fixSizeOnly);
+    void Moving(CRect& bounds);
     void Moved();
     void Enabled();
     void Disabled();

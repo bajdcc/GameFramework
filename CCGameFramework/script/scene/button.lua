@@ -1,19 +1,21 @@
 local Scene = require('script.lib.core.scene')
 local Gradient = require('script.lib.ui.gradient')
 local AbsoluteLayout = require('script.lib.ui.layout.abs')
-local LinearLayout = require('script.lib.ui.layout.linear')
+local TableLayout = require('script.lib.ui.layout.table')
+local Empty = require('script.lib.ui.empty')
 local Block = require('script.lib.ui.block')
 local Text = require('script.lib.ui.text')
 local Button = require('script.lib.ui.comctl.button')
+local Edit = require('script.lib.ui.comctl.edit')
 
-local modname = 'CommonControlScene'
+local modname = 'ButtonComctlScene'
 local M = Scene:new()
 _G[modname] = M
 package.loaded[modname] = M
 
 function M:new(o)
 	o = o or {}
-	o.name = 'Common Control Scene'
+	o.name = 'Button Common Control Scene'
 	o.state = {focused=nil, hover=nil}
 	setmetatable(o, self)
 	self.__index = self
@@ -25,7 +27,7 @@ function M:init()
 	self.minh = 600
 	UIExt.set_minw(self.minw, self.minh)
 
-	UIExt.trace('Scene [ComCtl page] init')
+	UIExt.trace('Scene [Button page] init')
 	-- INFO
 	local info = UIExt.info()
 	-- BG
@@ -35,22 +37,22 @@ function M:init()
 	})
 	self.layers.bg = self:add(bg)
 	bg:add(Block:new({
-		color = '#111111',
+		color = '#9C9F3C',
 		right = info.width,
 		bottom = info.height
 	}))
-	UIExt.trace('Scene [ComCtl page]: create background #' .. self.layers.bg.handle)
+	UIExt.trace('Scene [Button page]: create background #' .. self.layers.bg.handle)
 	-- BG2
 	local bg2 = Gradient:new({
-		color1 = '#111111',
-		color2 = '#AAAAAA',
+		color1 = '#9C9F3C',
+		color2 = '#65662A',
 		direction = 1,
 		pre_resize = function(this, left, top, right, bottom)
 			return left, ((bottom - top) / 2) - 100, right, bottom
 		end
 	})
 	self.layers.bg2 = bg:add(bg2)
-	UIExt.trace('Scene [ComCtl page]: create background2 #' .. self.layers.bg2.handle)
+	UIExt.trace('Scene [Button page]: create background2 #' .. self.layers.bg2.handle)
 	-- TEXT
 	local cc = Text:new({
 		color = '#EEEEEE',
@@ -61,22 +63,22 @@ function M:init()
 		end,
 		hit = function(this, evt)
 			if evt == WinEvent.leftbuttondown then
-				FlipScene('Welcome')
+				FlipScene('ComCtl')
 			end
 		end
 	})
 	self.layers.cc = self:add(cc)
-	UIExt.trace('Scene [Time page]: create text #' .. self.layers.cc.handle)
+	UIExt.trace('Scene [Button page]: create text #' .. self.layers.cc.handle)
 	-- TEXT
 	local text = Text:new({
 		color = '#EEEEEE',
-		text = '【通用控件】',
+		text = '【按钮】',
 		pre_resize = function(this, left, top, right, bottom)
 			return left, top, right, bottom / 2
 		end
 	})
 	self.layers.text = self:add(text)
-	UIExt.trace('Scene [ComCtl page]: create text #' .. self.layers.text.handle)
+	UIExt.trace('Scene [Button page]: create text #' .. self.layers.text.handle)
 	-- MENU
 	self:init_menu(info)
 
@@ -88,13 +90,13 @@ function M:init()
 end
 
 function M:destroy()
-	UIExt.trace('Scene [ComCtl page] destroy')
+	UIExt.trace('Scene [Button page] destroy')
 	UIExt.clear_scene()
 end
 
 function M:init_event()
 	self.handler[self.win_event.created] = function(this)
-		UIExt.trace('Scene [ComCtl page] Test created message!')
+		UIExt.trace('Scene [Button page] Test created message!')
 	end
 	self.handler[self.win_event.timer] = function(this, id)
 	end
@@ -102,37 +104,28 @@ end
 
 function M:init_menu(info)
 	-- MENU CONTAINER LAYOUT
-	local menu = LinearLayout:new({
-		align = 2,
+	local row = 3
+	local col = 5
+	local menu = TableLayout:new({
+		row = row,
+		col = col,
 		pre_resize = function(this, left, top, right, bottom)
-			local w = left + (right - left) / 2
 			local h = top + (bottom - top) / 2
-			return w - 100, h, w + 100, h + 250
+			return left, h, right, h + 250
 		end
 	})
 	self.layers.menu = self:add(menu)
 	
 	-- MENU BUTTON
-	Button:new({
-		text = '按钮',
-		click = function()
-			FlipScene('Button')
+	for i=1,row do
+		for j=1,col do
+			Button:new({
+				text = ''..i..'x'..j,
+				click = function()
+				end
+			}):attach(menu)
 		end
-	}):attach(menu)
-
-	Button:new({
-		text = '文本',
-		click = function()
-			FlipScene('Edit')
-		end
-	}):attach(menu)
-
-	Button:new({
-		text = '返回',
-		click = function()
-			FlipScene('Welcome')
-		end
-	}):attach(menu)
+	end
 end
 
 return M

@@ -87,8 +87,8 @@ void Window::Center()
     CRect windowBounds = GetBounds();
     windowBounds = CRect(windowBounds.TopLeft(), windowBounds.Size().Max(minSize));
     CSize size = windowBounds.Size();
-    size.cx += GetSystemMetrics(SM_CXBORDER) * 2;
-    size.cy += GetSystemMetrics(SM_CYBORDER) * 2 + GetSystemMetrics(SM_CYCAPTION) * 2;
+    size.cx += GetSystemMetrics(SM_CXDLGFRAME) * 2;
+    size.cy += GetSystemMetrics(SM_CYDLGFRAME) * 2 + GetSystemMetrics(SM_CYCAPTION);
     CPoint topLeft = (screenSize - size) / 2;
     SetWindowPos(handle, HWND_TOPMOST, topLeft.x, topLeft.y, size.cx, size.cy, SWP_NOZORDER);
     SetWindowPos(handle, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
@@ -172,7 +172,7 @@ CSize Window::GetClientWindowSize()
 {
     CRect rect;
     GetClientRect(handle, &rect);
-    return rect.Size();
+    return minSize.Max(rect.Size());
 }
 
 CString Window::GetTitle()
@@ -606,7 +606,7 @@ bool Window::HandleMessageInternal(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM l
     {
         LPRECT rawBounds = (LPRECT)lParam;
         CRect bounds(rawBounds);
-        Moving(bounds, true);
+        Moving(bounds);
         if (!bounds.EqualRect(rawBounds))
         {
             *rawBounds = bounds;
@@ -913,8 +913,6 @@ bool Window::HandleMessageInternal(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM l
         }
     }
     break;
-    case WM_NCCALCSIZE:
-        break;
     case WM_NCACTIVATE:
         break;
     case WM_MOUSEACTIVATE:
@@ -1004,53 +1002,25 @@ void Window::Created()
     PostNoArgLuaMsg(L, WE_Created);
 }
 
-void Window::Moving(CRect& bounds, bool fixSizeOnly)
+void Window::Moving(CRect& bounds)
 {
     CRect oldBounds = window->GetBounds();
-    CSize minWindowSize = minSize + (oldBounds.Size() - window->GetClientSize());
+    CSize minWindowSize = window->GetClientWindowSize();
     if (bounds.Width() < minWindowSize.cx)
     {
-        if (fixSizeOnly)
-        {
-            if (bounds.Width() < minWindowSize.cx)
-            {
-                bounds.right = bounds.left + minWindowSize.cx;
-            }
-        }
-        else if (oldBounds.left != bounds.left)
-        {
-            bounds.left = oldBounds.right - minWindowSize.cx;
-        }
-        else if (oldBounds.right != bounds.right)
-        {
-            bounds.right = oldBounds.left + minWindowSize.cx;
-        }
+        bounds.right = bounds.left + minWindowSize.cx;
     }
     if (bounds.Height() < minWindowSize.cy)
     {
-        if (fixSizeOnly)
-        {
-            if (bounds.Height() < minWindowSize.cy)
-            {
-                bounds.bottom = bounds.top + minWindowSize.cy;
-            }
-        }
-        else if (oldBounds.top != bounds.top)
-        {
-            bounds.top = oldBounds.bottom - minWindowSize.cy;
-        }
-        else if (oldBounds.bottom != bounds.bottom)
-        {
-            bounds.bottom = oldBounds.top + minWindowSize.cy;
-        }
+        bounds.bottom = bounds.top + minWindowSize.cy;
     }
     PostNoArgLuaMsg(L, WE_Moving);
 }
 
 void Window::Moved()
 {
-    root->SetRenderRect(CRect(CPoint(), GetClientSize()));
-    if (d2dRenderTarget && d2dRenderTarget->RecreateRenderTarget(window->GetClientSize()))
+    root->SetRenderRect(CRect(CPoint(), GetClientWindowSize()));
+    if (d2dRenderTarget && d2dRenderTarget->RecreateRenderTarget(window->GetClientWindowSize()))
         Render();
     PostNoArgLuaMsg(L, WE_Moved);
 }
