@@ -134,6 +134,14 @@ int ui_update_obj(lua_State *L)
             font.size = cint(luaL_checkinteger(L, -1)); lua_pop(L, 1);
             lua_getfield(L, -1, "family");
             font.fontFamily = CString(luaL_checklstring(L, -1, NULL)); lua_pop(L, 1);
+            lua_getfield(L, -1, "italic");
+            font.italic = cint(luaL_checkinteger(L, -1)); lua_pop(L, 1);
+            lua_getfield(L, -1, "bold");
+            font.bold = cint(luaL_checkinteger(L, -1)); lua_pop(L, 1);
+            lua_getfield(L, -1, "underline");
+            font.underline = cint(luaL_checkinteger(L, -1)); lua_pop(L, 1);
+            lua_getfield(L, -1, "strikeline");
+            font.strikeline = cint(luaL_checkinteger(L, -1)); lua_pop(L, 1);
             obj->SetFont(font);
         }
         {

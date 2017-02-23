@@ -9,7 +9,7 @@ _G[modname] = M
 package.loaded[modname] = M
 
 function M:new(o)
-	o = o or GdiBase:new()
+	o = o or GdiBase:new(o)
 	o.children = {}
 	o.bgcolor = o.bgcolor or '#FFFFFF'
 	o.bgcolor_focus = o.bgcolor_focus or '#ADD6E1'

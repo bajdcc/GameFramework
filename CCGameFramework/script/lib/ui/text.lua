@@ -20,6 +20,10 @@ function M:new(o)
 	o.align = o.align or o.Alignment.Center
 	o.valign = o.valign or o.Alignment.Center
 	o.text = o.text or ''
+	o.italic = o.italic or 0
+	o.bold = o.bold or 0
+	o.underline = o.underline or 0
+	o.strikeline = o.strikeline or 0
 	setmetatable(o, self)
 	self.__index = self
 	return o;

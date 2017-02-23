@@ -8,7 +8,7 @@ _G[modname] = M
 package.loaded[modname] = M
 
 function M:new(o)
-	o = o or GdiBase:new()
+	o = o or GdiBase:new(o)
 	o.children = {}
 	o.bgcolor = o.bgcolor or '#CCCCCC'
 	o.bgcolor_focus = o.bgcolor_focus or '#FFFFFF'
@@ -23,6 +23,7 @@ function M:new(o)
 	o.layers = {}
 	o.track_display = o.track_display or 1
 	o.cur = SysCursor.hand
+	o.radius = o.radius or 10
 	o.hit = function(this, evt)
 		if evt == WinEvent.leftbuttonup then
 			if this.click then this.click() end
@@ -53,7 +54,7 @@ function M:attach(parent)
 	parent:add(self)
 	self:add(Radius:new({
 		color = self.bgcolor,
-		radius = 10
+		radius = self.radius
 	}))
 	self:add(Text:new({
 		color = self.fgcolor,
