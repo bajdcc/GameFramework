@@ -13,4 +13,5 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 {
     auto window = std::make_shared<Window>(nullptr, _T("CC_GameFramework_CLS"), _T("CC GameFramework Window"), hInstance);
     window->Run();
+    return 0;
 }

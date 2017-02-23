@@ -170,6 +170,9 @@ function M:initevt()
 			if this.state.focused ~= nil then
 				this.state.focused:hit(this.win_event.char, {['code']=code,['flags']=flags})
 			end
+			if this.onchar then
+				this.onchar(this.win_event.char, {['code']=code,['flags']=flags})
+			end
 		end,
 		[self.win_event.moved] = self.resize
 	}

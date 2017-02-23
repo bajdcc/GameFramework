@@ -1206,7 +1206,7 @@ void Window::KeyDown(const KeyInfo& info)
 
 void Window::KeyUp(const KeyInfo& info)
 {
-    PostKeyLuaMsg(L, WE_KeyDown, info);
+    PostKeyLuaMsg(L, WE_KeyUp, info);
 }
 
 void Window::SysKeyDown(const KeyInfo& info)

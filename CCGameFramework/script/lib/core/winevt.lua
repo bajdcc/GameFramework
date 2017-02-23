@@ -70,7 +70,11 @@ _G["SysCursor"] = S
 
 local K = {
 	backspace = 8,
-	enter = 13
+	enter = 13,
+	left = 37,
+	up = 38,
+	right = 39,
+	down = 40
 }
 
 _G["SysKey"] = K

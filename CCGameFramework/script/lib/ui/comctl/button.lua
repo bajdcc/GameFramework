@@ -24,22 +24,29 @@ function M:new(o)
 	o.track_display = o.track_display or 1
 	o.cur = SysCursor.hand
 	o.radius = o.radius or 10
+	o.state = {focused=false, enter=false}
 	o.hit = function(this, evt)
 		if evt == WinEvent.leftbuttonup then
+			this.layers.bg.color = this.bgcolor
+			this.layers.bg:update_and_paint()
 			if this.click then this.click() end
 		elseif evt == WinEvent.gotfocus then
+			this.state.focused = true
 			this.layers.bg.color = this.bgcolor_focus
 			this.layers.bg:update_and_paint()
 		elseif evt == WinEvent.lostfocus then
+			this.state.focused = false
 			this.layers.bg.color = this.bgcolor
 			this.layers.bg:update_and_paint()
 		elseif evt == WinEvent.mouseenter then
+			this.state.enter = true
 			if this.track_display ~= 0 then
 				this.layers.fg.text = '[ ' .. this.text .. ' ]'
 			end
 			this.layers.fg.color = this.fgcolor_focus
 			this.layers.fg:update_and_paint()
 		elseif evt == WinEvent.mouseleave then
+			this.state.enter = false
 			this.layers.fg.text = this.text
 			this.layers.fg.color = this.fgcolor
 			this.layers.fg:update_and_paint()
