@@ -82,7 +82,7 @@ function M:attach(parent)
 		fill = 0
 	}))
 	self:add(AbsoluteLayout:new({
-		show_children = false
+		show_children = 0
 	}))
 	self.layers.sel = self.children[3]:add(Block:new({ -- SELECT BG
 		color = self.bgcolor_focus,
