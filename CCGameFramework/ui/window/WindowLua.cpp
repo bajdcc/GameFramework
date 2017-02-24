@@ -99,9 +99,9 @@ int ui_update_obj(lua_State *L)
     }
     {
         lua_getfield(L, -1, "show_self");
-        o->GetFlags().self_visible = lua_toboolean(L, -1) == 1; lua_pop(L, 1);
+        o->GetFlags().self_visible = cint(luaL_checkinteger(L, -1)) != 0; lua_pop(L, 1);
         lua_getfield(L, -1, "show_children");
-        o->GetFlags().children_visible = lua_toboolean(L, -1) == 1; lua_pop(L, 1);
+        o->GetFlags().children_visible = cint(luaL_checkinteger(L, -1)) != 0; lua_pop(L, 1);
     }
     switch (type)
     {
@@ -135,13 +135,13 @@ int ui_update_obj(lua_State *L)
             lua_getfield(L, -1, "family");
             font.fontFamily = CString(luaL_checklstring(L, -1, NULL)); lua_pop(L, 1);
             lua_getfield(L, -1, "italic");
-            font.italic = cint(luaL_checkinteger(L, -1)); lua_pop(L, 1);
+            font.italic = cint(luaL_checkinteger(L, -1)) != 0; lua_pop(L, 1);
             lua_getfield(L, -1, "bold");
-            font.bold = cint(luaL_checkinteger(L, -1)); lua_pop(L, 1);
+            font.bold = cint(luaL_checkinteger(L, -1)) != 0; lua_pop(L, 1);
             lua_getfield(L, -1, "underline");
-            font.underline = cint(luaL_checkinteger(L, -1)); lua_pop(L, 1);
+            font.underline = cint(luaL_checkinteger(L, -1)) != 0; lua_pop(L, 1);
             lua_getfield(L, -1, "strikeline");
-            font.strikeline = cint(luaL_checkinteger(L, -1)); lua_pop(L, 1);
+            font.strikeline = cint(luaL_checkinteger(L, -1)) != 0; lua_pop(L, 1);
             obj->SetFont(font);
         }
         {

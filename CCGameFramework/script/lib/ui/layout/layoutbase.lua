@@ -11,7 +11,7 @@ function M:new(o)
 	o.children = {}
 	setmetatable(o, self)
 	self.__index = self
-	return o;
+	return o
 end
 
 function M:add(o)

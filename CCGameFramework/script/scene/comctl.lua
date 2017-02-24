@@ -1,6 +1,5 @@
 local Scene = require('script.lib.core.scene')
 local Gradient = require('script.lib.ui.gradient')
-local AbsoluteLayout = require('script.lib.ui.layout.abs')
 local LinearLayout = require('script.lib.ui.layout.linear')
 local Block = require('script.lib.ui.block')
 local Text = require('script.lib.ui.text')
@@ -17,7 +16,7 @@ function M:new(o)
 	o.state = {focused=nil, hover=nil}
 	setmetatable(o, self)
 	self.__index = self
-	return o;
+	return o
 end
 
 function M:init()
@@ -29,7 +28,7 @@ function M:init()
 	-- INFO
 	local info = UIExt.info()
 	-- BG
-	local bg = AbsoluteLayout:new({
+	local bg = LinearLayout:new({
 		right = info.width,
 		bottom = info.height
 	})

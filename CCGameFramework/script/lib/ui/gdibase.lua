@@ -12,8 +12,8 @@ function M:new(o)
 	o.top = o.top or 0
 	o.right = o.right or 0
 	o.bottom = o.bottom or 0
-	o.show_self = o.show_self or true
-	o.show_children = o.show_children or true
+	o.show_self = o.show_self or 1
+	o.show_children = o.show_children or 1
 	o.ht = HitTest.nodecision
 	o.cur = SysCursor.arrow
 	setmetatable(o, self)

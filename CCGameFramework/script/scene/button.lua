@@ -1,6 +1,6 @@
 local Scene = require('script.lib.core.scene')
 local Gradient = require('script.lib.ui.gradient')
-local AbsoluteLayout = require('script.lib.ui.layout.abs')
+local LinearLayout = require('script.lib.ui.layout.linear')
 local TableLayout = require('script.lib.ui.layout.table')
 local Empty = require('script.lib.ui.empty')
 local Block = require('script.lib.ui.block')
@@ -19,7 +19,7 @@ function M:new(o)
 	o.state = {focused=nil, hover=nil}
 	setmetatable(o, self)
 	self.__index = self
-	return o;
+	return o
 end
 
 function M:init()
@@ -31,7 +31,7 @@ function M:init()
 	-- INFO
 	local info = UIExt.info()
 	-- BG
-	local bg = AbsoluteLayout:new({
+	local bg = LinearLayout:new({
 		right = info.width,
 		bottom = info.height
 	})
@@ -131,7 +131,7 @@ function M:init_menu(info)
 	menu.children[1].text = '2048'	
 	menu.children[1].layers.fg.text = '2048'
 	menu.children[1].click = function()
-		FlipScene('Game_2048');
+		FlipScene('Game_2048')
 	end
 	menu.children[1].layers.fg:update_and_paint()
 end

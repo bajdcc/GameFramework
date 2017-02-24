@@ -15,7 +15,7 @@ function M:new(o)
 	o.state = {focused=nil, hover=nil}
 	setmetatable(o, self)
 	self.__index = self
-	return o;
+	return o
 end
 
 function M:init()

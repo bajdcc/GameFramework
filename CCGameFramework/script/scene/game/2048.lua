@@ -96,11 +96,16 @@ function M:new(o)
 			down = 3,
 			left = 4,
 		},
-		direction = 0
+		direction = 0,
+		animate_timerid = 1000,
+		fps = 10,
+		animate_objs = {},
+		frames = 5,
+		addnew = false
 	}
 	setmetatable(o, self)
 	self.__index = self
-	return o;
+	return o
 end
 
 function M:init()
@@ -112,7 +117,7 @@ function M:init()
 	-- INFO
 	local info = UIExt.info()
 	-- BG
-	local bg = AbsoluteLayout:new({
+	local bg = LinearLayout:new({
 		right = info.width,
 		bottom = info.height
 	})
@@ -179,6 +184,11 @@ function M:init_event()
 		else return end
 		game_move(state)
 	end
+	self.handler[self.win_event.timer] = function(this, id)
+		if id == this.gamedef.animate_timerid then
+			game_animate(this.gamedef)
+		end
+	end
 end
 
 function M:init_menu(info)
@@ -212,16 +222,18 @@ function game_init(state)
 		padright = 5,
 		padbottom = 5
 	})
-	bg:add(menu)
-	state.ui.layers.menu = menu
+	state.ui.layers.menu = bg:add(menu)
+	local anibg = AbsoluteLayout:new({})
+	state.ui.layers.anibg = bg:add(anibg)
 	for i=1,state.size*state.size do
 		state.map[i] = 0
 		state.merged[i] = false
+		-- NORMAL BLOCK
 		local tile = LinearLayout:new({
-				padleft = 5,
-				padtop = 5,
-				padright = 5,
-				padbottom = 5
+			padleft = 5,
+			padtop = 5,
+			padright = 5,
+			padbottom = 5,
 		})
 		tile.x = (i - 1) / state.size + 1
 		tile.y = (i - 1) % state.size + 1
@@ -236,6 +248,23 @@ function game_init(state)
 			size = 40,
 			bold = 1
 		}):attach(tile)
+		-- ANIMATE BLOCK
+		local anitile = LinearLayout:new({
+			show_children = 0
+		})
+		anitile.x = (i - 1) / state.size + 1
+		anitile.y = (i - 1) % state.size + 1
+		anitile:attach(state.ui.layers.anibg)
+		Radius:new({
+			color = state.bg[0],
+			radius = 4
+		}):attach(anitile)
+		Text:new({
+			color = state.color[0],
+			text = state.display[0],
+			size = 40,
+			bold = 1
+		}):attach(anitile)
 	end
 	local score = Text:new({
 		color = '#222222',
@@ -271,6 +300,15 @@ function game_init(state)
 	state.ui.layers.rtstatus = slider.children[2]
 end
 
+function game_update_tile(state, obj, k)
+	obj.children[1].color = state.bg[k]
+	obj.children[1]:update()
+	obj.children[2].color = state.color[k]
+	obj.children[2].text = state.display[k]
+	obj.children[2].size = state.fontsize[k]
+	obj.children[2]:update()
+end
+
 function game_paint(state)
 	state.ui.layers.score.text = 'Score: ' .. state.score
 	state.ui.layers.score:update()
@@ -281,16 +319,17 @@ function game_paint(state)
 	elseif state.gamestate == state.gamestate_type.win then
 		state.ui.layers.rtstatus.text = '你赢了'
 	end
-	state.ui.layers.rtstatus:update();
+	state.ui.layers.rtstatus:update()
 	for i=1,state.size*state.size do
 		local k = state.map[i]
 		local obj = state.ui.layers.menu.children[i]
-		obj.children[1].color = state.bg[k]
-		obj.children[1]:update()
-		obj.children[2].color = state.color[k]
-		obj.children[2].text = state.display[k]
-		obj.children[2].size = state.fontsize[k]
-		obj.children[2]:update()
+		game_update_tile(state, obj, k)
+		if state.animate_objs[i] ~= nil then
+			local aid = state.animate_objs[i].startid
+			local ani = state.ui.layers.anibg.children[aid]
+			game_update_tile(state, ani, state.animate_objs[i].k)
+			ani:update()
+		end
 	end
 	UIExt.paint()
 end
@@ -306,12 +345,12 @@ function game_restart(state)
 	for i=1,state.startnum do
 		game_add_tile(state)
 	end
-	game_paint(state);
+	game_paint(state)
 end
 
 function game_add_tile(state)
 	local newi
-	if math.random(1,10) == 1 then newi = 4 else newi = 2 end
+	if math.random(1,10) == 1 then newi = 2 else newi = 1 end
 	local newk = game_get_random_available_cell(state)
 	state.map[newk] = newi
 end
@@ -359,6 +398,14 @@ function game_build_traversals(state, vector)
 	return traversals
 end
 
+function game_valid_cell(state, cell)
+	local size = state.size
+	if cell.x > 0 and cell.x <= size and cell.y > 0 and cell.y <= size then
+		return true
+	end
+	return false
+end
+
 function game_valid_free_cell(state, cell)
 	local size = state.size
 	if cell.x > 0 and cell.x <= size and cell.y > 0 and cell.y <= size then
@@ -375,7 +422,7 @@ function game_find_farthest_pos(state, cell, vector)
 		loc = {x=prev.x + vector.x, y=prev.y + vector.y}
 	until not game_valid_free_cell(state, loc)
 	local nextid = (loc.x-1)*state.size+loc.y
-	return prev, nextid
+	return prev, nextid, game_valid_cell(state, loc)
 end
 
 function game_move_available(state)
@@ -389,7 +436,7 @@ function game_move_available(state)
 					local cell = {x= i+vec.x, y= j+vec.y}
 					local tid = (cell.x-1)*state.size+cell.y
 					local val = state.map[tid]
-					if val ~= nil and v == val then
+					if game_valid_cell(state, cell) and v == val then
 						return true
 					end
 				end
@@ -400,12 +447,14 @@ function game_move_available(state)
 end
 
 function game_move(state)
+	if state.addnew or not game_empty_animate(state) then return end
 	local vector = game_get_direction_vector(state.direction)
 	local traversals = game_build_traversals(state, vector)
 	local needmove = false
 	for i=1,state.size*state.size do
 		state.merged[i] = false
 	end
+	local needclear = {}
 	for _i=1,#traversals.x do
 		local i = traversals.x[_i]
 		for _j=1,#traversals.y do
@@ -415,21 +464,28 @@ function game_move(state)
 			local tileid2 = tileid
 			local tile = state.map[tileid]
 			if tile ~= 0 then
-				local pos, nextid
-				pos, nextid = game_find_farthest_pos(state, cell, vector)
-				if state.map[nextid] == tile and not state.merged[nextid] then
+				local pos, nextid, nextvalid
+				pos, nextid, nextvalid = game_find_farthest_pos(state, cell, vector)
+				local posid = (pos.x-1)*state.size+pos.y
+				if nextvalid and state.map[nextid] == tile and not state.merged[nextid] then
+					-- MERGE: 与相邻的合并
 					state.merged[nextid] = true
 					state.map[tileid] = 0
+					game_add_animate(state, tileid, nextid, tile, tile + 1)
 					state.map[nextid] = tile + 1
+					needclear[#needclear + 1] = nextid
 					tileid = nextid
 					state.score = state.score + math.ceil(2 ^ state.map[nextid])
-					if tile > 10 and state.gamestate ~= state.gamestate_type.win then
+					if tile >= 10 and state.gamestate ~= state.gamestate_type.win then
 						state.gamestate = state.gamestate_type.win
 					end
-				else
+				elseif tileid ~= posid then
+					-- MERGE: 移动至最远处
 					state.map[tileid] = 0
-					tileid = (pos.x-1)*state.size+pos.y
-					state.map[tileid] = tile
+					game_add_animate(state, tileid, posid, tile, tile)
+					tileid = posid
+					state.map[posid] = tile
+					needclear[#needclear + 1] = posid
 				end
 			end
 			if tileid ~= tileid2 then
@@ -437,16 +493,89 @@ function game_move(state)
 			end
 		end
 	end
+	for k,v in pairs(needclear) do
+		state.map[v] = 0
+	end
 	if needmove then
-		game_add_tile(state)
-		local a = game_get_available_cells(state)
-		if #a == 0 then
-			if not game_move_available(state) then
-				state.gamestate = state.gamestate_type.failed
-			end
-		end
+		state.addnew = true
 		game_paint(state)
 	end
+	game_start_animate(state)
+end
+
+function game_add_animate(state, from, to, count, result)
+	if from == to then return end
+	local obj = state.ui.layers.menu.children[to]
+	state.animate_objs[from] = {
+		startid = from,
+		endid = to,
+		acc = 0,
+		alltime = state.frames,
+		k = count,
+		res = result
+	}
+end
+
+function game_start_animate(state)
+	UIExt.set_timer(state.animate_timerid, state.fps)
+end
+
+function game_end_animate(state)
+	UIExt.kill_timer(state.animate_timerid)
+end
+
+function game_empty_animate(state)
+	for i=1,state.size*state.size do
+		if state.animate_objs[i] ~= nil then
+			return false
+		end
+	end
+	return true
+end
+
+function game_animate(state)
+	local deleted = {}
+	local anibg = state.ui.layers.anibg.children
+	local blocks = state.ui.layers.menu.children
+	for k,obj in pairs(state.animate_objs) do
+		if obj.acc > obj.alltime then
+			deleted[#deleted + 1] = obj
+		else
+			local anitile = anibg[obj.startid]
+			local percent = obj.acc / obj.alltime
+			local left = (1-percent)*blocks[obj.startid].left + percent*blocks[obj.endid].left
+			local top = (1-percent)*blocks[obj.startid].top + percent*blocks[obj.endid].top
+			local right = (1-percent)*blocks[obj.startid].right + percent*blocks[obj.endid].right
+			local bottom = (1-percent)*blocks[obj.startid].bottom + percent*blocks[obj.endid].bottom
+			anitile:resize(left, top, right, bottom)
+			anitile.show_children = 1
+			anitile:update()
+			obj.acc = obj.acc + 1
+		end
+	end
+	for k,d in pairs(deleted) do
+		anibg[d.startid].show_children = 0
+		anibg[d.startid]:update()
+		state.map[d.endid] = d.res
+		blocks[d.endid].show_children = 1
+		blocks[d.endid]:update()
+		game_update_tile(state, anibg[d.startid], 0)
+		state.animate_objs[d.startid] = nil
+	end
+	if game_empty_animate(state) then
+		if state.addnew then
+			game_add_tile(state)
+			state.addnew = false
+			local a = game_get_available_cells(state)
+			if #a == 0 then
+				if not game_move_available(state) then
+					state.gamestate = state.gamestate_type.failed
+				end
+			end
+		end
+		game_end_animate(state)
+	end
+	game_paint(state)
 end
 
 return M
