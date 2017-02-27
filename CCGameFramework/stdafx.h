@@ -87,3 +87,8 @@
 #pragma comment(lib, "imm32")
 #pragma comment(lib, "dxgi")
 #pragma comment(lib, "winmm")
+
+#pragma comment(lib, "lib\\libevent")
+#pragma comment(lib, "lib\\libevent_core")
+#pragma comment(lib, "lib\\libevent_extras")
+#pragma comment(lib, "lib\\libcurl")

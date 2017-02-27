@@ -134,6 +134,13 @@ function M:init_menu(info)
 		FlipScene('Game_2048')
 	end
 	menu.children[1].layers.fg:update_and_paint()
+
+	menu.children[2].text = 'hitokoto'	
+	menu.children[2].layers.fg.text = 'hitokoto'
+	menu.children[2].click = function()
+		FlipScene('Hitokoto')
+	end
+	menu.children[2].layers.fg:update_and_paint()
 end
 
 return M

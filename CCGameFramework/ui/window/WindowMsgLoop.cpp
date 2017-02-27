@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "WindowMsgLoop.h"
 
-
 void Msg_Init(WindowMsgLoop::MSGMAP& msgMap);
 
 WindowMsgLoop::WindowMsgLoop()
@@ -11,39 +10,64 @@ WindowMsgLoop::WindowMsgLoop()
     Msg_Init(m_msgMap);
 }
 
+void msg_timer(evutil_socket_t fd, short event, void *arg)
+{
+    WindowMsgLoop *loop = (WindowMsgLoop *)arg;
+    if (loop->Event())
+    {
+        struct timeval tv;
+        evutil_timerclear(&tv);
+        tv.tv_sec = 0;
+        tv.tv_usec = 10;
+        event_add(&loop->msgtimer, &tv);
+    }
+}
+
 void WindowMsgLoop::Run()
 {
-    // for tracking the idle time state
-    BOOL bIdle = TRUE;
-    LONG lIdleCount = 0;
+    WORD wVersionRequested;
+    WSADATA wsaData;
+    wVersionRequested = MAKEWORD(2, 2);
+    WSAStartup(wVersionRequested, &wsaData);
 
-    // acquire and dispatch messages until a WM_QUIT message is received.
-    for (;;)
+    struct timeval tv;
+    evtimer_assign(&msgtimer, evbase, &msg_timer, this);
+    evutil_timerclear(&tv);
+    tv.tv_sec = 0;
+    tv.tv_usec = 10;
+    evtimer_add(&msgtimer, &tv);
+    event_base_dispatch(evbase);
+
+    WSACleanup();
+}
+
+BOOL WindowMsgLoop::Event()
+{
+    // phase1: check to see if we can do idle work
+    while (bIdle && !PeekMessage(&m_msg, NULL, NULL, NULL, PM_NOREMOVE))
     {
-        // phase1: check to see if we can do idle work
-        while (bIdle && !PeekMessage(&m_msg, NULL, NULL, NULL, PM_NOREMOVE))
+        // call OnIdle while in bIdle state
+        if (!OnIdle(lIdleCount++))
+            bIdle = FALSE; // assume "no idle" state
+    }
+
+    // phase2: pump messages while available
+    do
+    {
+        // pump message, but quit on WM_QUIT
+        if (!PumpMessage())
+            return FALSE;
+
+        // reset "no idle" state after pumping "normal" message
+        if (IsIdleMessage(&m_msg))
         {
-            // call OnIdle while in bIdle state
-            if (!OnIdle(lIdleCount++))
-                bIdle = FALSE; // assume "no idle" state
+            bIdle = TRUE;
+            lIdleCount = 0;
         }
 
-        // phase2: pump messages while available
-        do
-        {
-            // pump message, but quit on WM_QUIT
-            if (!PumpMessage())
-                return;
+    } while (PeekMessage(&m_msg, NULL, NULL, NULL, PM_NOREMOVE));
 
-            // reset "no idle" state after pumping "normal" message
-            if (IsIdleMessage(&m_msg))
-            {
-                bIdle = TRUE;
-                lIdleCount = 0;
-            }
-
-        } while (PeekMessage(&m_msg, NULL, NULL, NULL, PM_NOREMOVE));
-    }
+    return TRUE;
 }
 
 BOOL WindowMsgLoop::PumpMessage()
@@ -421,4 +445,9 @@ LPCTSTR WindowMsgLoop::DebugGetMessageName(UINT message)
         return found->second;
     else
         return _T("UNKNOWN");
+}
+
+void WindowMsgLoop::SetEventBase(event_base* base)
+{
+    evbase = base;
 }

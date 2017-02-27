@@ -69,6 +69,7 @@ enum WindowEvent
     WE_SysKeyDown,
     WE_SysKeyUp,
     WE_Char,
+    WE_HttpGet = 400
 };
 
 class Window : public std::enable_shared_from_this<Window>
@@ -114,6 +115,9 @@ public:
         hand,
         ibeam
     };
+
+    struct event_base *get_event();
+    struct lua_State *get_state();
 
     bool HandleMessage(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT& result);
     HWND GetWindowHandle() const;
@@ -248,6 +252,7 @@ private:
     cint ptrEle{ 0 };
     lua_State *L;
     CSize minSize{ 200, 200 };
+    struct event_base *evbase;
 };
 
 extern Window *window;

@@ -44,13 +44,13 @@
 #undef LT_OBJDIR
 
 /* Major version number */
-#define MAJOR_VERSION 1
+#define MAJOR_VERSION 3
 
 /* Micro version number */
-#define MICRO_VERSION 0
+#define MICRO_VERSION 4
 
 /* Minor version number */
-#define MINOR_VERSION 0
+#define MINOR_VERSION 4
 
 /* Name of package */
 #undef PACKAGE
@@ -77,7 +77,7 @@
 #undef STDC_HEADERS
 
 /* Version number of package */
-#define VERSION 1
+#define VERSION "3.4.4"
 
 /* Define to empty if `const' does not conform to ANSI C. */
 #undef const

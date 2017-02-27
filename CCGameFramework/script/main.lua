@@ -39,6 +39,8 @@ Window = {
 		Button = require("script.scene.button"),
 		-- GAME
 		Game_2048 = require("script.scene.game.2048"),
+		-- WEB
+		Hitokoto = require("script.scene.web.hitokoto"),
 	}
 }
 

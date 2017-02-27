@@ -166,6 +166,111 @@
     <ClInclude Include="base\libqrencode\config.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="base\event2\buffer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\event2\buffer_compat.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\event2\bufferevent.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\event2\bufferevent_compat.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\event2\bufferevent_ssl.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\event2\bufferevent_struct.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\event2\dns.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\event2\dns_compat.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\event2\dns_struct.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\event2\event.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\event2\event_compat.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\event2\event_struct.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\event2\http.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\event2\http_compat.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\event2\http_struct.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\event2\keyvalq_struct.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\event2\listener.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\event2\rpc.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\event2\rpc_compat.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\event2\rpc_struct.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\event2\tag.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\event2\tag_compat.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\event2\thread.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\event2\util.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\curl\curl.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\curl\curlbuild.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\curl\curlrules.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\curl\curlver.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\curl\easy.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\curl\mprintf.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\curl\multi.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\curl\stdcheaders.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\curl\typecheck-gcc.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\event2\event-config.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="lua_ext\Web.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -357,6 +462,9 @@
     <ClCompile Include="render\Direct2DRenderEdit.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="lua_ext\Web.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="script\lib\core\scene.lua">
@@ -426,6 +534,9 @@
       <Filter>脚本</Filter>
     </Text>
     <Text Include="script\scene\game\2048.lua">
+      <Filter>脚本</Filter>
+    </Text>
+	<Text Include="script\scene\web\hitokoto.lua">
       <Filter>脚本</Filter>
     </Text>
   </ItemGroup>

@@ -2,6 +2,8 @@
 #include "Window.h"
 #include "WindowMsgLoop.h"
 #include <lua_ext/ext.h>
+#include <event2/event.h>
+#include <curl/curl.h>
 
 static bool IsKeyPressing(cint code)
 {
@@ -35,6 +37,16 @@ static CString GetLastErrorStr() // Error Notification
     return buf;
 }
 
+event_base* Window::get_event()
+{
+    return evbase;
+}
+
+struct lua_State* Window::get_state()
+{
+    return L;
+}
+
 Window *window;
 
 static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -50,8 +62,11 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 Window::Window(HWND parent, CString className, CString windowTitle, HINSTANCE hInstance)
     : wndClass(className, false, false, WndProc, hInstance)
     , L(luaL_newstate())
+    , evbase(event_base_new())
 {
     window = this;
+    winMsgLoop.SetEventBase(evbase);
+    curl_global_init(CURL_GLOBAL_ALL);
     DWORD exStyle = WS_EX_APPWINDOW | WS_EX_CONTROLPARENT;
     DWORD style = WS_VISIBLE | WS_BORDER | WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
     CreateWindowEx(exStyle, className, windowTitle, style,
@@ -65,6 +80,8 @@ Window::~Window()
     Destroyed();
     DestroyWindow(handle);
     lua_close(L);
+    event_base_free(evbase);
+    curl_global_cleanup();
 }
 
 void Window::Init()

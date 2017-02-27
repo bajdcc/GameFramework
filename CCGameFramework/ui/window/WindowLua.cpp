@@ -112,7 +112,7 @@ int ui_update_obj(lua_State *L)
         auto obj = static_cast<SolidBackgroundElement*>(o.get());
         {
             lua_getfield(L, -1, "color");
-            auto color = luaL_checklstring(L, -1, NULL); lua_pop(L, 1);
+            auto color = luaL_checkstring(L, -1); lua_pop(L, 1);
             obj->SetColor(CColor::Parse(color));
             lua_getfield(L, -1, "fill");
             auto fill = luaL_checknumber(L, -1) != 0; lua_pop(L, 1);
@@ -125,7 +125,7 @@ int ui_update_obj(lua_State *L)
         auto obj = static_cast<SolidLabelElement*>(o.get());
         {
             lua_getfield(L, -1, "color");
-            auto color = luaL_checklstring(L, -1, NULL); lua_pop(L, 1);
+            auto color = luaL_checkstring(L, -1); lua_pop(L, 1);
             obj->SetColor(CColor::Parse(color));
         }
         {
@@ -133,7 +133,7 @@ int ui_update_obj(lua_State *L)
             lua_getfield(L, -1, "size");
             font.size = cint(luaL_checkinteger(L, -1)); lua_pop(L, 1);
             lua_getfield(L, -1, "family");
-            font.fontFamily = CString(luaL_checklstring(L, -1, NULL)); lua_pop(L, 1);
+            font.fontFamily = CString(luaL_checkstring(L, -1)); lua_pop(L, 1);
             lua_getfield(L, -1, "italic");
             font.italic = cint(luaL_checkinteger(L, -1)) != 0; lua_pop(L, 1);
             lua_getfield(L, -1, "bold");
@@ -146,7 +146,7 @@ int ui_update_obj(lua_State *L)
         }
         {
             lua_getfield(L, -1, "text");
-            obj->SetText(CString(luaL_checklstring(L, -1, NULL))); lua_pop(L, 1);
+            obj->SetText(CString(luaL_checkstring(L, -1))); lua_pop(L, 1);
         }
         {
             lua_getfield(L, -1, "align");
@@ -161,10 +161,10 @@ int ui_update_obj(lua_State *L)
         auto obj = static_cast<GradientBackgroundElement*>(o.get());
         {
             lua_getfield(L, -1, "color1");
-            auto color1 = luaL_checklstring(L, -1, NULL); lua_pop(L, 1);
+            auto color1 = luaL_checkstring(L, -1); lua_pop(L, 1);
             obj->SetColor1(CColor::Parse(color1));
             lua_getfield(L, -1, "color2");
-            auto color2 = luaL_checklstring(L, -1, NULL); lua_pop(L, 1);
+            auto color2 = luaL_checkstring(L, -1); lua_pop(L, 1);
             obj->SetColor2(CColor::Parse(color2));
         }
         {
@@ -178,7 +178,7 @@ int ui_update_obj(lua_State *L)
         auto obj = static_cast<RoundBorderElement*>(o.get());
         {
             lua_getfield(L, -1, "color");
-            auto color = luaL_checklstring(L, -1, NULL); lua_pop(L, 1);
+            auto color = luaL_checkstring(L, -1); lua_pop(L, 1);
             obj->SetColor(CColor::Parse(color));
             lua_getfield(L, -1, "radius");
             auto radius = luaL_checknumber(L, -1); lua_pop(L, 1);
@@ -194,10 +194,10 @@ int ui_update_obj(lua_State *L)
         auto obj = static_cast<QRImageElement*>(o.get());
         {
             lua_getfield(L, -1, "color");
-            auto color = luaL_checklstring(L, -1, NULL); lua_pop(L, 1);
+            auto color = luaL_checkstring(L, -1); lua_pop(L, 1);
             obj->SetColor(CColor::Parse(color));
             lua_getfield(L, -1, "text");
-            auto text = luaL_checklstring(L, -1, NULL); lua_pop(L, 1);
+            auto text = luaL_checkstring(L, -1); lua_pop(L, 1);
             obj->SetText(text);
             lua_getfield(L, -1, "opacity");
             auto opacity = (FLOAT)luaL_checknumber(L, -1); lua_pop(L, 1);
@@ -209,7 +209,7 @@ int ui_update_obj(lua_State *L)
     {
         auto obj = static_cast<EditElement*>(o.get());
         lua_getfield(L, -1, "text");
-        auto text = luaL_checklstring(L, -1, NULL); lua_pop(L, 1);
+        auto text = luaL_checkstring(L, -1); lua_pop(L, 1);
         obj->SetText(CString(text));
         lua_getfield(L, -1, "multiline");
         auto multiline = (cint)luaL_checkinteger(L, -1) == 0; lua_pop(L, 1);
@@ -219,7 +219,7 @@ int ui_update_obj(lua_State *L)
             lua_getfield(L, -1, "size");
             font.size = cint(luaL_checkinteger(L, -1)); lua_pop(L, 1);
             lua_getfield(L, -1, "family");
-            font.fontFamily = CString(luaL_checklstring(L, -1, NULL)); lua_pop(L, 1);
+            font.fontFamily = CString(luaL_checkstring(L, -1)); lua_pop(L, 1);
             lua_getfield(L, -1, "bold");
             font.bold = luaL_checkinteger(L, -1) != 0; lua_pop(L, 1);
             lua_getfield(L, -1, "italic");
