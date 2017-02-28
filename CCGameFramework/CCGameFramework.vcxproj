@@ -111,6 +111,7 @@ xcopy /r /y /e "$(ProjectDir)script" "$(TargetDir)script"</Command>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <IgnoreSpecificDefaultLibraries>libcmt.lib;libcmtd.lib</IgnoreSpecificDefaultLibraries>
     </Link>
     <PostBuildEvent>
       <Command>md "$(TargetDir)script"
@@ -155,6 +156,7 @@ xcopy /r /y /e "$(ProjectDir)script" "$(TargetDir)script"</Command>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <IgnoreSpecificDefaultLibraries>libcmt.lib;libcmtd.lib</IgnoreSpecificDefaultLibraries>
     </Link>
     <PostBuildEvent>
       <Command>md "$(TargetDir)script"
@@ -169,8 +171,6 @@ xcopy /r /y /e "$(ProjectDir)script" "$(TargetDir)script"</Command>
     <ClInclude Include="base\curl\easy.h" />
     <ClInclude Include="base\curl\mprintf.h" />
     <ClInclude Include="base\curl\multi.h" />
-    <ClInclude Include="base\curl\stdcheaders.h" />
-    <ClInclude Include="base\curl\typecheck-gcc.h" />
     <ClInclude Include="base\defines.h" />
     <ClInclude Include="base\event2\buffer.h" />
     <ClInclude Include="base\event2\bufferevent.h" />
@@ -476,7 +476,10 @@ xcopy /r /y /e "$(ProjectDir)script" "$(TargetDir)script"</Command>
     <Text Include="script\scene\game\2048.lua">
       <FileType>Document</FileType>
     </Text>
-	<Text Include="script\scene\web\hitokoto.lua">
+    <Text Include="script\scene\web\hitokoto.lua">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="script\lib\core\dkjson.lua">
       <FileType>Document</FileType>
     </Text>
   </ItemGroup>

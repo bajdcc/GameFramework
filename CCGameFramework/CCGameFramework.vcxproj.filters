@@ -259,12 +259,6 @@
     <ClInclude Include="base\curl\multi.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="base\curl\stdcheaders.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="base\curl\typecheck-gcc.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="base\event2\event-config.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -536,7 +530,10 @@
     <Text Include="script\scene\game\2048.lua">
       <Filter>脚本</Filter>
     </Text>
-	<Text Include="script\scene\web\hitokoto.lua">
+    <Text Include="script\scene\web\hitokoto.lua">
+      <Filter>脚本</Filter>
+    </Text>
+    <Text Include="script\lib\core\dkjson.lua">
       <Filter>脚本</Filter>
     </Text>
   </ItemGroup>

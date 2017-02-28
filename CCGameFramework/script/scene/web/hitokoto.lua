@@ -3,6 +3,7 @@ local Gradient = require('script.lib.ui.gradient')
 local Block = require('script.lib.ui.block')
 local Text = require('script.lib.ui.text')
 local QR = require('script.lib.ui.qr')
+local JSON = require("script.lib.core.dkjson")
 
 local modname = 'HitokotoScene'
 local M = Scene:new()
@@ -32,12 +33,23 @@ function M:init()
 	})
 	self.layers.bg = self:add(bg)
 	UIExt.trace('Scene [Hitokoto page]: create background #' .. self.layers.bg.handle)
+	local title = Text:new({
+		color = '#FFFFFF',
+		text = 'Ò»ÑÔ - Hitokoto',
+		pre_resize = function(this, left, top, right, bottom)
+			return left, top, right, bottom / 2
+		end
+	})
+	self.layers.title = self:add(title)
 	-- TEXT
 	local text = Text:new({
 		color = '#EEEEEE',
 		text = 'Ò»ÑÔ- ¥Ò¥È¥³¥È - Hitokoto.us',
 		right = info.width,
-		bottom = info.height
+		bottom = info.height,
+		size = 24,
+		padleft = 30,
+		padright = 30,
 	})
 	self.layers.text = self:add(text)
 	UIExt.trace('Scene [Hitokoto page]: create text #' .. self.layers.text.handle)
@@ -113,13 +125,17 @@ function M:init_event()
 			this.layers.bg:update()
 			UIExt.paint()
 		elseif id == 2 then
-			Web.get('http://api.hitokoto.us/rand', 100)
+			Web.get('http://api.hitokoto.us/rand?cat=a', 100)
 		end
 	end
 	self.handler[self.win_event.httpget] = function(this, id, code, text)
 		if id == 100 then
-			this.layers.text.text = text
-			this.layers.text:update()
+			local obj = JSON.decode(text, 1, nil)
+			if obj ~= nil then
+				local disp = obj.hitokoto .. ' ¡ª¡ª¡º' .. obj.source .. '¡»'
+				this.layers.text.text = disp
+				this.layers.text:update()
+			end
 		end
 	end
 end
