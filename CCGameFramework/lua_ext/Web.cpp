@@ -3,9 +3,11 @@
 #include "Web.h"
 #include "ext.h"
 #include <curl/curl.h>
+#include "base64/b64.h"
 
 static const luaL_Reg ui_lib[] = {
     { "get", web_http_get },
+    { "getb", web_http_get_b64 },
     { nullptr, nullptr }
 };
 
@@ -23,6 +25,7 @@ struct web_http_request
 {
     cint id;
     std::string url;
+    bool b64;
 };
 
 struct web_http_response
@@ -30,12 +33,24 @@ struct web_http_response
     cint id;
     UINT code;
     std::string text;
+    bool b64;
 };
 
 static size_t http_get_process(void *data, size_t size, size_t nmemb, std::string &content)
 {
     auto sizes = size * nmemb;
     content += std::string((char*)data, sizes);
+    return sizes;
+}
+
+static size_t http_get_process_bin(void *data, size_t size, size_t nmemb, std::vector<byte> &content)
+{
+    auto sizes = size * nmemb;
+    auto bin = (byte*)data;
+    for (size_t i = 0; i < sizes; ++i)
+    {
+        content.push_back(bin[i]);
+    }
     return sizes;
 }
 
@@ -69,10 +84,14 @@ void http_thread(web_http_request *request)
     auto url = request->url;
     auto response = new web_http_response();
     response->id = request->id;
+    response->b64 = request->b64;
     auto curl = curl_easy_init();
     delete request;
+    request = NULL;
     if (curl) {
         std::string text;
+        auto bindata = new std::vector<byte>();
+        bindata->reserve(102400);
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
         curl_easy_setopt(curl, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36");
         curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 2L);
@@ -81,8 +100,16 @@ void http_thread(web_http_request *request)
         curl_easy_setopt(curl, CURLOPT_ACCEPT_ENCODING, "");
         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, TRUE);
         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, TRUE);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &text);
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &http_get_process);
+        if (!response->b64)
+        {
+            curl_easy_setopt(curl, CURLOPT_WRITEDATA, &text);
+            curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &http_get_process);
+        }
+        else
+        {
+            curl_easy_setopt(curl, CURLOPT_WRITEDATA, bindata);
+            curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &http_get_process_bin);
+        }
         auto res = curl_easy_perform(curl);
         curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response->code);
         if (res == CURLE_OK)
@@ -90,13 +117,22 @@ void http_thread(web_http_request *request)
             char *content_type;
             curl_easy_getinfo(curl, CURLINFO_CONTENT_TYPE, &content_type);
             auto ct = CStringA(content_type);
-            if (ct.Find("UTF-8"))
+            if (response->b64)
             {
-                response->text = CStringA(Utf8ToStringT(text.c_str()));
+                std::vector<byte> b;
+                DWORD dw = (DWORD)bindata;
+                b.push_back(LOBYTE(LOWORD(dw)));
+                b.push_back(HIBYTE(LOWORD(dw)));
+                b.push_back(LOBYTE(HIWORD(dw)));
+                b.push_back(HIBYTE(HIWORD(dw)));
+                response->text = base64_encode(b);
             }
             else
             {
-                response->text = text.c_str();
+                if (ct.Find("UTF-8"))
+                    response->text = CStringA(Utf8ToStringT(text.c_str()));
+                else
+                    response->text = text.c_str();
             }
             auto ev = window->get_event();
             struct timeval tv;
@@ -116,9 +152,10 @@ void start_thread(evutil_socket_t fd, short event, void *arg)
     th.detach();
 }
 
-int web_http_get(lua_State* L)
+int web_http_get_internal(lua_State* L, bool b64)
 {
     auto request = new web_http_request();
+    request->b64 = b64;
     request->url = luaL_checkstring(L, 1);
     request->id = (cint)luaL_checkinteger(L, 2);
     auto ev = window->get_event();
@@ -129,4 +166,14 @@ int web_http_get(lua_State* L)
     tv.tv_usec = 100;
     evtimer_add(evt, &tv);
     return 0;
+}
+
+int web_http_get(lua_State* L)
+{
+    return web_http_get_internal(L, false);
+}
+
+int web_http_get_b64(lua_State* L)
+{
+    return web_http_get_internal(L, true);
 }

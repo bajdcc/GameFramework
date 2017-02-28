@@ -16,12 +16,12 @@ static void InitRenderer()
     SolidLabelElementRenderer::Register();
     RoundBorderElementRenderer::Register();
     QRImageElementRenderer::Register();
+    Base64ImageElementRenderer::Register();
     EditElementRenderer::Register();
 }
 
 Direct2D::Direct2D()
 {
-    
     ::CoInitializeEx(NULL, COINIT_MULTITHREADED);
     HRESULT hr;
     ID2D1Factory* d2d1;

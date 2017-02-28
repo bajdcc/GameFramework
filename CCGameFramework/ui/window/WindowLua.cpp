@@ -60,6 +60,9 @@ int ui_add_obj(lua_State *L)
     case QRImage:
         obj = QRImageElement::Create();
         break;
+    case Base64Image:
+        obj = Base64ImageElement::Create();
+        break;
     case Edit:
         obj = EditElement::Create();
         break;
@@ -199,6 +202,22 @@ int ui_update_obj(lua_State *L)
             lua_getfield(L, -1, "text");
             auto text = luaL_checkstring(L, -1); lua_pop(L, 1);
             obj->SetText(text);
+            lua_getfield(L, -1, "opacity");
+            auto opacity = (FLOAT)luaL_checknumber(L, -1); lua_pop(L, 1);
+            obj->SetOpacity(opacity);
+        }
+    }
+    break;
+    case Base64Image:
+    {
+        auto obj = static_cast<Base64ImageElement*>(o.get());
+        {
+            lua_getfield(L, -1, "text");
+            auto text = luaL_checkstring(L, -1); lua_pop(L, 1);
+            obj->SetText(text);
+            lua_getfield(L, -1, "url");
+            auto url = luaL_checkstring(L, -1); lua_pop(L, 1);
+            obj->SetUrl(url);
             lua_getfield(L, -1, "opacity");
             auto opacity = (FLOAT)luaL_checknumber(L, -1); lua_pop(L, 1);
             obj->SetOpacity(opacity);

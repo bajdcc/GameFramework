@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Direct2DRender.h"
 #include <base/libqrencode/qrencode.h>
+#include "base64/b64.h"
 
 #pragma region Image
 
@@ -128,6 +129,108 @@ void QRImageElementRenderer::Render(CRect bounds)
             e->GetOpacity(),
             D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR
         );
+    }
+    GraphicsImageRenderer::Render(bounds);
+}
+
+Base64ImageElement::Base64ImageElement()
+{
+
+}
+
+Base64ImageElement::~Base64ImageElement()
+{
+    renderer->Finalize();
+}
+
+CString Base64ImageElement::GetElementTypeName()
+{
+    return _T("Base64Image");
+}
+
+CStringA Base64ImageElement::GetText() const
+{
+    return text;
+}
+
+void Base64ImageElement::SetText(CStringA value)
+{
+    if (text != value)
+    {
+        text = value;
+        if (renderer)
+        {
+            renderer->OnElementStateChanged();
+        }
+    }
+}
+
+CStringA Base64ImageElement::GetUrl() const
+{
+    return url;
+}
+
+void Base64ImageElement::SetUrl(CStringA value)
+{
+    if (url != value)
+    {
+        url = value;
+    }
+}
+
+FLOAT Base64ImageElement::GetOpacity() const
+{
+    return opacity;
+}
+
+void Base64ImageElement::SetOpacity(FLOAT value)
+{
+    opacity = value;
+}
+
+cint Base64ImageElement::GetTypeId()
+{
+    return Base64Image;
+}
+
+void Base64ImageElementRenderer::CreateImage(std::shared_ptr<Direct2DRenderTarget> renderTarget)
+{
+    if (renderTarget)
+    {
+        auto e = element.lock();
+        auto txt = e->GetText();
+        if (e->GetUrl().CompareNoCase(url) != 0 && text.CompareNoCase(txt) != 0)
+        {
+            if (txt.IsEmpty())
+                return;
+            auto bin = base64_decode(txt.GetBuffer(0));
+            DWORD dw = MAKELONG(MAKEWORD(bin[0], bin[1]), MAKEWORD(bin[2], bin[3]));
+            auto b = (std::vector<byte>*)dw;
+            wic = renderTarget->CreateImageFromMemory(b->data(), b->size());
+            url = e->GetUrl();
+            text = txt;
+            delete b;
+        }
+        if (wic)
+            bitmap = renderTarget->GetBitmapFromWIC(wic);
+    }
+}
+
+void Base64ImageElementRenderer::Render(CRect bounds)
+{
+    auto e = element.lock();
+    if (e->flags.self_visible)
+    {
+        CComPtr<ID2D1RenderTarget> d2dRenderTarget = renderTarget.lock()->GetDirect2DRenderTarget();
+        if (bitmap)
+        {
+            d2dRenderTarget->DrawBitmap(
+                bitmap,
+                D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
+                e->GetOpacity(),
+                D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR
+            );
+        }
     }
     GraphicsImageRenderer::Render(bounds);
 }

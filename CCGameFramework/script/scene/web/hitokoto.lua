@@ -3,6 +3,7 @@ local Gradient = require('script.lib.ui.gradient')
 local Block = require('script.lib.ui.block')
 local Text = require('script.lib.ui.text')
 local QR = require('script.lib.ui.qr')
+local Base64Image = require('script.lib.ui.b64img')
 local JSON = require("script.lib.core.dkjson")
 
 local modname = 'HitokotoScene'
@@ -33,6 +34,12 @@ function M:init()
 	})
 	self.layers.bg = self:add(bg)
 	UIExt.trace('Scene [Hitokoto page]: create background #' .. self.layers.bg.handle)
+	local b64 = Base64Image:new({
+		right = info.width,
+		bottom = info.height,
+		opacity = 0.8
+	})
+	self.layers.b64 = self:add(b64)
 	local title = Text:new({
 		color = '#FFFFFF',
 		text = 'Ò»ÑÔ - Hitokoto',
@@ -45,6 +52,7 @@ function M:init()
 	local text = Text:new({
 		color = '#EEEEEE',
 		text = 'Ò»ÑÔ- ¥Ò¥È¥³¥È - Hitokoto.us',
+		family = '¿¬Ìå',
 		right = info.width,
 		bottom = info.height,
 		size = 24,
@@ -99,8 +107,10 @@ function M:init()
 	self:init_event()
 
 	-- TIMER
-	UIExt.set_timer(2, 10000)
-	UIExt.set_timer(5, 100)
+	UIExt.set_timer(2, 8000)
+	UIExt.set_timer(5, 10000)
+
+	self.bgidx = 0
 
 	self.resize(self)
 	UIExt.paint()
@@ -117,15 +127,9 @@ function M:init_event()
 	end
 	self.handler[self.win_event.timer] = function(this, id)
 		if id == 5 then
-			if this.hue > 240 then
-				this.hue = 0
-			end
-			this.hue = this.hue + 1
-			this.layers.bg.color = UIExt.hsb2rgb(this.hue, 128, 128)
-			this.layers.bg:update()
-			UIExt.paint()
+			Web.get('http://www.bing.com/HPImageArchive.aspx?format=js&n=1&idx=' .. this.bgidx, 101)
 		elseif id == 2 then
-			Web.get('http://api.hitokoto.us/rand?cat=a', 100)
+			Web.get('http://api.hitokoto.us/rand?cat=a&length=18', 100)
 		end
 	end
 	self.handler[self.win_event.httpget] = function(this, id, code, text)
@@ -134,8 +138,21 @@ function M:init_event()
 			if obj ~= nil then
 				local disp = obj.hitokoto .. ' ¡ª¡ª¡º' .. obj.source .. '¡»'
 				this.layers.text.text = disp
-				this.layers.text:update()
+				this.layers.text:update_and_paint()
 			end
+		elseif id == 101 then
+			local obj = JSON.decode(text, 1, nil)
+			if obj ~= nil then
+				local imgurl = 'http://www.bing.com' .. obj.images[1].url
+				this.bgidx = this.bgidx + 1
+				if this.bgidx > 6 then this.bgidx = 0 end
+				this.layers.b64.url = imgurl
+				this.layers.b64:update()
+				Web.getb(imgurl, 102)
+			end
+		elseif id == 102 then
+			this.layers.b64.text = text
+			this.layers.b64:update_and_paint()
 		end
 	end
 end

@@ -15,6 +15,7 @@
 - libqrencode-3.4.4
 - libevent-2.0.22
 - libcurl-7.53.1
+- dkjson(lua)
 
 ## 历程
 
@@ -22,12 +23,12 @@
 
 项目架构：
 
-- base - 基础类（包含二维码库）
+- base - 基础类（包含二维码库、libevent、libcurl）
 - ui - 界面逻辑
 - render - DX渲染逻辑
 - lua - lua代码
-- lua_ext - lua扩展
-- script - lua脚本
+- lua_ext - lua扩展（UI、Web）
+- script - lua脚本（UI、Scene）
 
 整体思路：
 
@@ -52,6 +53,8 @@
 - 添加文本框控件
 - 添加表格布局
 - 添加HTTP组件，整合libevent和libcurl
+- 添加图片控件，接收base64编码的图片二进制指针
+- 添加lua版本的json解析
 
 TODO：
 
@@ -71,5 +74,5 @@ TODO：
   - 计算器（计划中）
   - JSON校验器
 - 网络
-  - 一言（制作中）
+  - **一言（完善中）**
 

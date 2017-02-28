@@ -15,6 +15,7 @@ enum ElementId
     GradientBackground,
     RoundBorder,
     QRImage = 1100,
+    Base64Image = 1101,
     Edit = 1200
 };
 
@@ -573,6 +574,41 @@ protected:
     void CreateImage(std::shared_ptr<Direct2DRenderTarget> renderTarget)override;
 public:
     void Render(CRect bounds)override;
+};
+
+class Base64ImageElement : public GraphicsElement<Base64ImageElement>
+{
+public:
+    Base64ImageElement();
+    ~Base64ImageElement();
+
+    static CString GetElementTypeName();
+
+    cint GetTypeId()override;
+
+    CStringA GetText()const;
+    void SetText(CStringA value);
+    CStringA GetUrl()const;
+    void SetUrl(CStringA value);
+    FLOAT GetOpacity()const;
+    void SetOpacity(FLOAT value);
+
+protected:
+    CStringA text;
+    CStringA url;
+    FLOAT opacity;
+};
+
+class Base64ImageElementRenderer : public GraphicsImageRenderer<Base64ImageElement, Base64ImageElementRenderer>
+{
+protected:
+    void CreateImage(std::shared_ptr<Direct2DRenderTarget> renderTarget)override;
+public:
+    void Render(CRect bounds)override;
+private:
+    CComPtr<IWICBitmap> wic;
+    CStringA text;
+    CStringA url;
 };
 
 #pragma endregion Image

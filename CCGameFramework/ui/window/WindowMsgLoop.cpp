@@ -43,31 +43,10 @@ void WindowMsgLoop::Run()
 
 BOOL WindowMsgLoop::Event()
 {
-    // phase1: check to see if we can do idle work
-    while (bIdle && !PeekMessage(&m_msg, NULL, NULL, NULL, PM_NOREMOVE))
-    {
-        // call OnIdle while in bIdle state
-        if (!OnIdle(lIdleCount++))
-            bIdle = FALSE; // assume "no idle" state
-    }
+    if (!PeekMessage(&m_msg, NULL, NULL, NULL, PM_NOREMOVE))
+        return TRUE;
 
-    // phase2: pump messages while available
-    do
-    {
-        // pump message, but quit on WM_QUIT
-        if (!PumpMessage())
-            return FALSE;
-
-        // reset "no idle" state after pumping "normal" message
-        if (IsIdleMessage(&m_msg))
-        {
-            bIdle = TRUE;
-            lIdleCount = 0;
-        }
-
-    } while (PeekMessage(&m_msg, NULL, NULL, NULL, PM_NOREMOVE));
-
-    return TRUE;
+    return PumpMessage();
 }
 
 BOOL WindowMsgLoop::PumpMessage()

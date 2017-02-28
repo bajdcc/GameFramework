@@ -32,9 +32,6 @@ private:
 
     struct event_base *evbase;
     struct event msgtimer;
-
-    BOOL bIdle{ TRUE };
-    LONG lIdleCount{ 0 };
 };
 
 #endif

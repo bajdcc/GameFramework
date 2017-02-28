@@ -164,6 +164,7 @@ xcopy /r /y /e "$(ProjectDir)script" "$(TargetDir)script"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="base\base64\b64.h" />
     <ClInclude Include="base\curl\curl.h" />
     <ClInclude Include="base\curl\curlbuild.h" />
     <ClInclude Include="base\curl\curlrules.h" />
@@ -248,6 +249,7 @@ xcopy /r /y /e "$(ProjectDir)script" "$(TargetDir)script"</Command>
     <ClInclude Include="ui\window\WindowMsgLoop.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="base\base64\b64.cpp" />
     <ClCompile Include="base\libqrencode\bitstream.c">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
@@ -480,6 +482,9 @@ xcopy /r /y /e "$(ProjectDir)script" "$(TargetDir)script"</Command>
       <FileType>Document</FileType>
     </Text>
     <Text Include="script\lib\core\dkjson.lua">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="script\lib\ui\b64img.lua">
       <FileType>Document</FileType>
     </Text>
   </ItemGroup>
