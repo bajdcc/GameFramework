@@ -9,7 +9,7 @@ std::string base64_encode(const std::vector<byte>& data)
     auto binlength = data.size();
     std::string str;
 
-    for (auto i = 0; i < binlength; i += 3)
+    for (size_t i = 0; i < binlength; i += 3)
     {
         current = (bindata[i] >> 2);
         current &= (unsigned char)0x3F;
@@ -49,7 +49,7 @@ std::vector<byte> base64_decode(const std::string& data)
     unsigned char temp[4];
     auto len = data.length();
     std::vector<byte> bindata;
-    for (auto i = 0, j = 0; i < len; i += 4)
+    for (size_t i = 0, j = 0; i < len; i += 4)
     {
         memset(temp, 0xFF, sizeof(temp));
         for (k = 0; k < 64; k++)

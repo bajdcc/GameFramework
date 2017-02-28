@@ -1,6 +1,7 @@
 local Scene = require('script.lib.core.scene')
 local Gradient = require('script.lib.ui.gradient')
 local Block = require('script.lib.ui.block')
+local Radius = require('script.lib.ui.radius')
 local Text = require('script.lib.ui.text')
 local QR = require('script.lib.ui.qr')
 local Base64Image = require('script.lib.ui.b64img')
@@ -40,6 +41,17 @@ function M:init()
 		opacity = 0.8
 	})
 	self.layers.b64 = self:add(b64)
+	local titlebg = Radius:new({
+		color = '#111111AA',
+		radius = 10,
+		padleft = 100,
+		padright = 100,
+		pre_resize = function(this, left, top, right, bottom)
+			local height = top + (bottom - top) / 2
+			return left, height - 70, right, height + 70
+		end
+	})
+	self.layers.titlebg = self:add(titlebg)
 	local title = Text:new({
 		color = '#FFFFFF',
 		text = 'Ò»ÑÔ - Hitokoto',
@@ -129,14 +141,14 @@ function M:init_event()
 		if id == 5 then
 			Web.get('http://www.bing.com/HPImageArchive.aspx?format=js&n=1&idx=' .. this.bgidx, 101)
 		elseif id == 2 then
-			Web.get('http://api.hitokoto.us/rand?cat=a&length=18', 100)
+			Web.get('http://api.hitokoto.us/rand?cat=a&length=30', 100)
 		end
 	end
 	self.handler[self.win_event.httpget] = function(this, id, code, text)
 		if id == 100 then
 			local obj = JSON.decode(text, 1, nil)
 			if obj ~= nil then
-				local disp = obj.hitokoto .. ' ¡ª¡ª¡º' .. obj.source .. '¡»'
+				local disp = obj.hitokoto .. ' \n      ¡ª¡ª¡º' .. obj.source .. '¡»'
 				this.layers.text.text = disp
 				this.layers.text:update_and_paint()
 			end
