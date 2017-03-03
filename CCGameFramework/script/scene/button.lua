@@ -133,14 +133,23 @@ function M:init_menu(info)
 	menu.children[1].click = function()
 		FlipScene('Game_2048')
 	end
-	menu.children[1].layers.fg:update_and_paint()
+	menu.children[1].layers.fg:update()
 
 	menu.children[2].text = 'hitokoto'	
 	menu.children[2].layers.fg.text = 'hitokoto'
 	menu.children[2].click = function()
 		FlipScene('Hitokoto')
 	end
-	menu.children[2].layers.fg:update_and_paint()
+	menu.children[2].layers.fg:update()
+
+	menu.children[3].text = 'path'	
+	menu.children[3].layers.fg.text = 'path'
+	menu.children[3].click = function()
+		FlipScene('Path')
+	end
+	menu.children[3].layers.fg:update()
+
+	UIExt.paint()
 end
 
 return M

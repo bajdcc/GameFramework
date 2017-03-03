@@ -487,6 +487,9 @@ xcopy /r /y /e "$(ProjectDir)script" "$(TargetDir)script"</Command>
     <Text Include="script\lib\ui\b64img.lua">
       <FileType>Document</FileType>
     </Text>
+	<Text Include="script\scene\visual\path.lua">
+      <FileType>Document</FileType>
+    </Text>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -545,5 +545,8 @@
     <Text Include="script\lib\ui\b64img.lua">
       <Filter>脚本</Filter>
     </Text>
+    <Text Include="script\scene\visual\path.lua">
+      <Filter>脚本</Filter>
+    </Text>
   </ItemGroup>
 </Project>

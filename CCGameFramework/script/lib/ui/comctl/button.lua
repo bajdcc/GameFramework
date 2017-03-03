@@ -14,8 +14,10 @@ function M:new(o)
 	o.bgcolor_focus = o.bgcolor_focus or '#FFFFFF'
 	o.fgcolor = o.fgcolor or '#333333'
 	o.fgcolor_focus = o.fgcolor_focus or '#000000'
+	o.fgcolor_disable = o.fgcolor_disable or '#888888'
 	o.text = o.text or 'Button'
 	o.font_size = o.font_size or 24
+	o.family = o.font_family or 'ËÎÌו'
 	o.padleft = o.padleft or 10
 	o.padtop = o.padtop or 10
 	o.padright = o.padright or 10
@@ -25,7 +27,15 @@ function M:new(o)
 	o.cur = SysCursor.hand
 	o.radius = o.radius or 10
 	o.state = {focused=false, enter=false}
+	o.enable = o.enable or 1
 	o.hit = function(this, evt)
+		if this.enable ~= 1 then
+			this.layers.bg.color = this.bgcolor
+			this.layers.bg:update()
+			this.layers.fg.color = this.fgcolor_disable
+			this.layers.fg:update_and_paint()
+			return
+		end
 		if evt == WinEvent.leftbuttonup then
 			this.layers.bg.color = this.bgcolor
 			this.layers.bg:update_and_paint()
@@ -66,7 +76,8 @@ function M:attach(parent)
 	self:add(Text:new({
 		color = self.fgcolor,
 		text = self.text,
-		size = self.font_size
+		size = self.font_size,
+		family = self.font_family
 	}))
 	self.layers.bg = self.children[1]
 	self.layers.fg = self.children[2]
