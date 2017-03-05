@@ -16,6 +16,7 @@ static const luaL_Reg ui_lib[] = {
     { "clear_scene", ui_clear_scene },
     { "add_obj", ui_add_obj },
     { "update", ui_update_obj },
+    { "refresh", ui_refresh_obj },
     { "info", ui_info },
     { "set_minw", ui_win_set_minsize },
     { "paint", ui_paint },

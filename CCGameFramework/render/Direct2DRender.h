@@ -16,6 +16,7 @@ enum ElementId
     RoundBorder,
     QRImage = 1100,
     Base64Image = 1101,
+    WireworldAutomaton = 1102,
     Edit = 1200
 };
 
@@ -609,6 +610,44 @@ private:
     CComPtr<IWICBitmap> wic;
     CStringA text;
     CStringA url;
+};
+
+class WireworldAutomatonImageElement : public GraphicsElement<WireworldAutomatonImageElement>
+{
+public:
+    WireworldAutomatonImageElement();
+    ~WireworldAutomatonImageElement();
+
+    static CString GetElementTypeName();
+
+    cint GetTypeId()override;
+
+    CStringA GetText()const;
+    void SetText(CStringA value);
+    FLOAT GetOpacity()const;
+    void SetOpacity(FLOAT value);
+
+    void Refresh();
+
+protected:
+    CStringA text;
+    FLOAT opacity;
+};
+
+class WireworldAutomatonImageElementRenderer : public GraphicsImageRenderer<WireworldAutomatonImageElement, WireworldAutomatonImageElementRenderer>
+{
+protected:
+    void CreateImage(std::shared_ptr<Direct2DRenderTarget> renderTarget)override;
+public:
+    void Render(CRect bounds)override;
+    ~WireworldAutomatonImageElementRenderer();
+    void Refresh();
+private:
+    CComPtr<IWICBitmap> wic;
+    BYTE* buffer{ nullptr };
+    std::vector<byte> data;
+    WICRect rect;
+    D2D1_RECT_U d2dRect;
 };
 
 #pragma endregion Image

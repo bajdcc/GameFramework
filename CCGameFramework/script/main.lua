@@ -43,6 +43,7 @@ Window = {
 		Hitokoto = require("script.scene.web.hitokoto"),
 		-- VISUAL
 		Path = require("script.scene.visual.path"),
+		WireWorld = require("script.scene.visual.wireworld"),
 	}
 }
 

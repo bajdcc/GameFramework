@@ -548,5 +548,14 @@
     <Text Include="script\scene\visual\path.lua">
       <Filter>脚本</Filter>
     </Text>
+    <Text Include="script\lib\ui\watm.lua">
+      <Filter>脚本</Filter>
+    </Text>
+    <Text Include="script\scene\visual\wireworld.lua">
+      <Filter>脚本</Filter>
+    </Text>
+    <Text Include="script\lib\resource\wireworld_computer.txt">
+      <Filter>脚本</Filter>
+    </Text>
   </ItemGroup>
 </Project>

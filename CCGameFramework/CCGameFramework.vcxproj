@@ -487,7 +487,16 @@ xcopy /r /y /e "$(ProjectDir)script" "$(TargetDir)script"</Command>
     <Text Include="script\lib\ui\b64img.lua">
       <FileType>Document</FileType>
     </Text>
-	<Text Include="script\scene\visual\path.lua">
+    <Text Include="script\scene\visual\path.lua">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="script\lib\ui\watm.lua">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="script\scene\visual\wireworld.lua">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="script\lib\resource\wireworld_computer.txt">
       <FileType>Document</FileType>
     </Text>
   </ItemGroup>

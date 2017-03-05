@@ -17,6 +17,7 @@ static void InitRenderer()
     RoundBorderElementRenderer::Register();
     QRImageElementRenderer::Register();
     Base64ImageElementRenderer::Register();
+    WireworldAutomatonImageElementRenderer::Register();
     EditElementRenderer::Register();
 }
 

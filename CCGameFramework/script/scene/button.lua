@@ -149,6 +149,13 @@ function M:init_menu(info)
 	end
 	menu.children[3].layers.fg:update()
 
+	menu.children[4].text = 'wireworld'	
+	menu.children[4].layers.fg.text = 'wireworld'
+	menu.children[4].click = function()
+		FlipScene('WireWorld')
+	end
+	menu.children[4].layers.fg:update()
+
 	UIExt.paint()
 end
 

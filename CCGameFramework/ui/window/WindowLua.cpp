@@ -63,6 +63,9 @@ int ui_add_obj(lua_State *L)
     case Base64Image:
         obj = Base64ImageElement::Create();
         break;
+    case WireworldAutomaton:
+        obj = WireworldAutomatonImageElement::Create();
+        break;
     case Edit:
         obj = EditElement::Create();
         break;
@@ -224,6 +227,19 @@ int ui_update_obj(lua_State *L)
         }
     }
     break;
+    case WireworldAutomaton:
+    {
+        auto obj = static_cast<WireworldAutomatonImageElement*>(o.get());
+        {
+            lua_getfield(L, -1, "text");
+            auto text = luaL_checkstring(L, -1); lua_pop(L, 1);
+            obj->SetText(text);
+            lua_getfield(L, -1, "opacity");
+            auto opacity = (FLOAT)luaL_checknumber(L, -1); lua_pop(L, 1);
+            obj->SetOpacity(opacity);
+        }
+    }
+    break;
     case Edit:
     {
         auto obj = static_cast<EditElement*>(o.get());
@@ -248,6 +264,50 @@ int ui_update_obj(lua_State *L)
             obj->SetFont(font);
         }
     }
+        break;
+    default:
+        break;
+    }
+    return 0;
+}
+
+int ui_refresh_obj(lua_State *L)
+{
+    luaL_checktype(L, 1, LUA_TTABLE);
+    lua_getfield(L, -1, "type");
+    auto type = ElementId(cint(luaL_checkinteger(L, -1))); lua_pop(L, 1);
+    lua_getfield(L, -1, "handle");
+    auto handle = cint(luaL_checkinteger(L, -1)); lua_pop(L, 1);
+    if (window->mapEle.find(handle) == window->mapEle.end())
+        return luaL_argerror(L, 1, "Invalid obj id");
+    auto o = window->mapEle[handle].lock();
+    if (o->GetTypeId() != type)
+        return luaL_argerror(L, 1, "Invalid obj type");
+    switch (type)
+    {
+    case Empty:
+        break;
+    case SolidBackground:
+        break;
+    case SolidLabel:
+        break;
+    case GradientBackground:
+        break;
+    case RoundBorder:
+        break;
+    case QRImage:
+        break;
+    case Base64Image:
+        break;
+    case WireworldAutomaton:
+    {
+        auto obj = static_cast<WireworldAutomatonImageElement*>(o.get());
+        {
+            obj->Refresh();
+        }
+    }
+    break;
+    case Edit:
         break;
     default:
         break;

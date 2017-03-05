@@ -235,6 +235,7 @@ protected:
     friend int ui_clear_scene(lua_State *L);
     friend int ui_add_obj(lua_State *L);
     friend int ui_update_obj(lua_State *L);
+    friend int ui_refresh_obj(lua_State *L);
 
 protected:
     HWND handle;
