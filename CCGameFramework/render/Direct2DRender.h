@@ -627,7 +627,7 @@ public:
     FLOAT GetOpacity()const;
     void SetOpacity(FLOAT value);
 
-    void Refresh();
+    void Refresh(int arg);
 
 protected:
     CStringA text;
@@ -641,13 +641,16 @@ protected:
 public:
     void Render(CRect bounds)override;
     ~WireworldAutomatonImageElementRenderer();
-    void Refresh();
+    void Refresh(int arg);
 private:
     CComPtr<IWICBitmap> wic;
     BYTE* buffer{ nullptr };
     std::vector<byte> data;
     WICRect rect;
     D2D1_RECT_U d2dRect;
+    std::vector<INT> wires;
+    std::vector<INT> heads;
+    std::vector<INT> tails;
 };
 
 #pragma endregion Image

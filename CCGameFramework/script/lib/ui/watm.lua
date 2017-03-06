@@ -10,6 +10,7 @@ function M:new(o)
 	o.type = 1102
 	o.text = o.text or ''
 	o.opacity = o.opacity or 1.0
+	o.start = false
 	setmetatable(o, self)
 	self.__index = self
 	return o;

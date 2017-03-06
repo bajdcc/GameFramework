@@ -20,7 +20,8 @@ function M:new(o)
 	o = o or {}
 	o.name = 'Wireworld Scene'
 	o.def = {
-		timerid = 10
+		timerid = 10,
+		state = true
 	}
 	setmetatable(o, self)
 	self.__index = self
@@ -92,17 +93,18 @@ function M:destroy()
 end
 
 function M:init_event()
+	self.path = './script/lib/resource/wireworld_computer.txt'
 	self.handler[self.win_event.created] = function(this)
 		UIExt.trace('Scene [Wireworld Page] Test created message!')
 	end
 	self.handler[self.win_event.timer] = function(this, id)
 		if id == 8 then
-			this.layers.watm.text = './script/lib/resource/wireworld_computer.txt'
+			this.layers.watm.text = this.path
 			this.layers.watm:update_and_paint()
 			UIExt.kill_timer(8)
 			UIExt.set_timer(5, 30)
-		elseif id == 5 then
-			UIExt.refresh(this.layers.watm)
+		elseif id == 5 and this.def.state then
+			UIExt.refresh(this.layers.watm, 0)
 			UIExt.paint()
 		end
 	end
@@ -152,8 +154,8 @@ function M:init_menu(info)
 		track_display = 0,
 		font_size = 16,
 		click = function()
-			CurrentScene.def.type = 1
-			path_restart(CurrentScene.def)
+			UIExt.refresh(CurrentScene.layers.watm, 1)
+			UIExt.paint()
 		end
 	}):attach(slider)
 	Button:new({
@@ -162,8 +164,7 @@ function M:init_menu(info)
 		track_display = 0,
 		font_size = 16,
 		click = function()
-			CurrentScene.def.type = 2
-			path_restart(CurrentScene.def)
+			CurrentScene.def.state = not CurrentScene.def.state
 		end
 	}):attach(slider)
 	Text:new({

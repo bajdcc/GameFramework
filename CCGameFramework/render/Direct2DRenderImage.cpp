@@ -280,9 +280,9 @@ void WireworldAutomatonImageElement::SetOpacity(FLOAT value)
     opacity = value;
 }
 
-void WireworldAutomatonImageElement::Refresh()
+void WireworldAutomatonImageElement::Refresh(int arg)
 {
-    std::dynamic_pointer_cast<WireworldAutomatonImageElementRenderer, IGraphicsRenderer>(renderer)->Refresh();
+    std::dynamic_pointer_cast<WireworldAutomatonImageElementRenderer, IGraphicsRenderer>(renderer)->Refresh(arg);
 }
 
 DWORD watm_clr[] =
@@ -360,7 +360,7 @@ void WireworldAutomatonImageElementRenderer::Render(CRect bounds)
     if (e->flags.self_visible && bitmap)
     {
         CComPtr<ID2D1RenderTarget> d2dRenderTarget = renderTarget.lock()->GetDirect2DRenderTarget();
-        if (bounds.Width() > rect.Width * 2 && bounds.Height() > rect.Width / 2)
+        if ((rect.Width > 1000 || rect.Height > 600) && bounds.Width() > rect.Width * 2 && bounds.Height() > rect.Width / 2)
         {
             d2dRenderTarget->DrawBitmap(
                 bitmap,
@@ -422,11 +422,13 @@ bool CanHead(const BYTE* d, const INT& w, const INT& h, const INT& j, const INT&
     return n == 1 || n == 2;
 }
 
-void WireworldAutomatonImageElementRenderer::Refresh()
+void WireworldAutomatonImageElementRenderer::Refresh(int arg)
 {
-    std::vector<INT> wires;
-    std::vector<INT> heads;
-    std::vector<INT> tails;
+    if (arg == 1) buffer = nullptr;
+    if (arg != 0) return;
+    wires.clear();
+    heads.clear();
+    tails.clear();
     auto w = rect.Width, h = rect.Height;
     int k;
     auto d = data.data();

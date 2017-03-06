@@ -273,7 +273,8 @@ int ui_update_obj(lua_State *L)
 
 int ui_refresh_obj(lua_State *L)
 {
-    luaL_checktype(L, 1, LUA_TTABLE);
+    auto arg = (cint)luaL_checkinteger(L, 2); lua_pop(L, 1);
+    luaL_checktype(L, -1, LUA_TTABLE);
     lua_getfield(L, -1, "type");
     auto type = ElementId(cint(luaL_checkinteger(L, -1))); lua_pop(L, 1);
     lua_getfield(L, -1, "handle");
@@ -303,7 +304,7 @@ int ui_refresh_obj(lua_State *L)
     {
         auto obj = static_cast<WireworldAutomatonImageElement*>(o.get());
         {
-            obj->Refresh();
+            obj->Refresh(arg);
         }
     }
     break;
