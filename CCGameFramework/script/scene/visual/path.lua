@@ -38,7 +38,8 @@ function M:new(o)
 		elapse = 30,
 		type = 2,
 		timerid = 10,
-		stack = {}
+		stack = {},
+		geval = {}
 	}
 	setmetatable(o, self)
 	self.__index = self
@@ -182,7 +183,7 @@ function path_init(state)
 		padright = 2,
 		padbottom = 2,
 		pre_resize = function(this, left, top, right, bottom)
-			return left, bottom - 50, left + 250, bottom
+			return left, bottom - 50, left + 300, bottom
 		end
 	})
 	state.ui:add(slider)
@@ -203,6 +204,16 @@ function path_init(state)
 		font_size = 16,
 		click = function()
 			CurrentScene.def.type = 2
+			path_restart(CurrentScene.def)
+		end
+	}):attach(slider)
+		Button:new({
+		text = 'A*',
+		font_family = '¿¬Ìå',
+		track_display = 0,
+		font_size = 16,
+		click = function()
+			CurrentScene.def.type = 3
 			path_restart(CurrentScene.def)
 		end
 	}):attach(slider)
@@ -245,6 +256,9 @@ function path_paint(state)
 	elseif state.type == 2 then --BFS
 		state.ui.layers.rtstatus.text = '¹ã¶È ' .. #state.stack
 		state.ui.layers.rtstatus:update()
+	elseif state.type == 3 then --BFS
+		state.ui.layers.rtstatus.text = 'A* ' .. #state.stack
+		state.ui.layers.rtstatus:update()
 	end
 	UIExt.paint()
 end
@@ -258,20 +272,30 @@ function path_update_tile(state, obj, k)
 	obj.children[1]:update()
 end
 
+function path_setx(map, col, pt, k)
+	map[col*(pt.x-1)+pt.y] = k
+end
+
+function path_getx(map, col, pt)
+	return map[col*(pt.x-1)+pt.y]
+end
+
 function path_set_point(state, pt, k)
-	state.map[state.col*(pt.x-1)+pt.y] = k
+	path_setx(state.map, state.col, pt, k)
 end
 
 function path_get_point(state, pt)
-	return state.map[state.col*(pt.x-1)+pt.y]
+	return path_getx(state.map, state.col, pt)
 end
 
 function path_init_map(state)
 	for i=1,state.row*state.col do
 		state.map[i] = 1
+		state.geval[i] = 99999
 	end
 	path_set_point(state, state.pstart, 3)
 	path_set_point(state, state.pend, 4)
+	path_set_geval(state, state.pstart, 0)
 	path_add_barriar(state)
 end
 
@@ -318,10 +342,22 @@ function path_get_vector()
 	}
 end
 
+function path_set_geval(state, pt, k)
+	return path_setx(state.geval, state.col, pt, k)
+end
+
+function path_get_geval(state, pt)
+	return path_getx(state.geval, state.col, pt)
+end
+
 function path_calc_distance(state, pt)
-	local offx, offy = pt.x - state.pstart.x, pt.y - state.pstart.y
-	local dis = 3 * math.sqrt(offx*offx + offy*offy)
-	return 5 + math.ceil(dis)
+	if state.type == 3 then
+		return 5 + math.ceil(path_get_geval(state, pt))
+	else
+		local offx, offy = pt.x - state.pstart.x, pt.y - state.pstart.y
+		local dis = 3 * math.sqrt(offx*offx + offy*offy)
+		return 5 + math.ceil(dis)
+	end
 end
 
 function path_calc(state)
@@ -335,20 +371,47 @@ function path_calc(state)
 	if p == 5 then
 		path_set_point(state, cur, path_calc_distance(state, cur))
 	end
-	for i,v in ipairs(path_get_vector()) do
-		local newp = path_add_point(cur, v)
-		if path_valid_point(state, newp) then
-			local m = path_get_point(state, newp)
-			if m == 1 then
-				if state.type == 1 then --DFS
-					table.insert(state.stack, newp)
-				elseif state.type == 2 then --BFS
-					table.insert(state.stack, 1, newp)
+	if state.type == 3 then
+		local ge = path_get_geval(state, cur)
+		local newp
+		local tbl = {}
+		for i,v in ipairs(path_get_vector()) do
+			newp = path_add_point(cur, v)
+			if path_valid_point(state, newp) then
+				local m = path_get_point(state, newp)
+				if m == 1 then
+					local ve = ge
+					path_set_geval(state, newp, ge + 1)
+					ve = ve + math.abs(state.pend.x-newp.x) + math.abs(state.pend.y-newp.y)
+					table.insert(tbl, {ve, newp})
+				elseif m == 4 then
+					path_end(state)
+					return
 				end
-				path_set_point(state, newp, 5)
-			elseif m == 4 then
-				path_end(state)
-				break
+			end
+		end
+		table.sort(tbl, function(a, b) return a[1] < b[1] end)
+		for i,v in ipairs(tbl) do
+			local minp = tbl[1][2]
+			table.insert(state.stack, minp)
+			path_set_point(state, minp, 5)
+		end
+	else
+		for i,v in ipairs(path_get_vector()) do
+			local newp = path_add_point(cur, v)
+			if path_valid_point(state, newp) then
+				local m = path_get_point(state, newp)
+				if m == 1 then
+					if state.type == 1 then --DFS
+						table.insert(state.stack, newp)
+					elseif state.type == 2 then --BFS
+						table.insert(state.stack, 1, newp)
+					end
+					path_set_point(state, newp, 5)
+				elseif m == 4 then
+					path_end(state)
+					break
+				end
 			end
 		end
 	end
