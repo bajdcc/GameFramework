@@ -55,6 +55,8 @@
 - 添加HTTP组件，整合libevent和libcurl
 - 添加图片控件，接收base64编码的图片二进制指针
 - 添加lua版本的json解析
+- 完善HTTP组件(GET,POST)
+- 添加音频播放组件(libzplay)
 
 TODO：
 
@@ -75,7 +77,8 @@ TODO：
   - JSON校验器
 - 网络
   - **一言（已完成）**
+  - **网易云音乐播放器（制作中）**
 - 算法可视化
-  - A*寻路（制作中）
-  - **Wireworld 元胞自动机（制作中）**
+  - A*寻路（已完成）
+  - **Wireworld 元胞自动机（已完成）**
 

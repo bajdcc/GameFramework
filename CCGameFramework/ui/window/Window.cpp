@@ -1107,6 +1107,14 @@ void Window::Destroyed()
     }
     setTimer.clear();
     PostNoArgLuaMsg(L, WE_Destroyed);
+    if (window->zplay)
+    {
+        window->zplay->Stop();
+        window->zplay->Release();
+        window->zplay = nullptr;
+        delete window->zplaydata;
+        window->zplaydata = nullptr;
+    }
 }
 
 static void PostMouseLuaMsg(lua_State *L, WindowEvent evt, const MouseInfo& info)

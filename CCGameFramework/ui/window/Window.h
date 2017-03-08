@@ -5,6 +5,7 @@
 #include "WindowMsgLoop.h"
 #include <render/Direct2DRenderTarget.h>
 #include <render/Direct2DRender.h>
+#include "libzplay/libzplay.h"
 
 class CSize;
 class CRect;
@@ -69,7 +70,8 @@ enum WindowEvent
     WE_SysKeyDown,
     WE_SysKeyUp,
     WE_Char,
-    WE_HttpGet = 400
+    WE_HttpGet = 400,
+    WE_HttpPost
 };
 
 class Window : public std::enable_shared_from_this<Window>
@@ -236,6 +238,7 @@ protected:
     friend int ui_add_obj(lua_State *L);
     friend int ui_update_obj(lua_State *L);
     friend int ui_refresh_obj(lua_State *L);
+    friend int ui_play_song(lua_State *L);
 
 protected:
     HWND handle;
@@ -248,6 +251,8 @@ protected:
     std::set<cint> setTimer;
 
 private:
+    libZPlay::ZPlay *zplay{ nullptr };
+    std::vector<byte> *zplaydata{ nullptr };
     std::shared_ptr<IGraphicsElement> root;
     std::map<cint, std::weak_ptr<IGraphicsElement>> mapEle;
     cint ptrEle{ 0 };

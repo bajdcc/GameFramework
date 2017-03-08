@@ -35,7 +35,8 @@ local M = {
     syskeydown = 302,
     syskeyup = 303,
     char = 304,
-	httpget = 400
+	httpget = 400,
+	httppost = 401
 }
 
 _G["WinEvent"] = M

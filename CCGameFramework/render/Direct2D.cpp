@@ -1,7 +1,9 @@
 #include "stdafx.h"
 #include "Direct2D.h"
 #include "Direct2DRender.h"
+#ifdef _DEBUG
 #include <DXGIDebug.h>
+#endif
 
 D2D1::ColorF GetD2DColor(CColor color)
 {
@@ -58,6 +60,7 @@ Direct2D::~Direct2D()
 
 void Direct2D::ReportLiveObjects()
 {
+#ifdef _DEBUG
     HRESULT hr;
     HMODULE hDxgiDebug = GetModuleHandle(_T("Dxgidebug.dll"));
     if (!hDxgiDebug) return;
@@ -69,6 +72,7 @@ void Direct2D::ReportLiveObjects()
     if (FAILED(hr))	return;
     hr = dxgiDebug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_ALL);
     if (FAILED(hr))	return;
+#endif
 }
 
 CComPtr<ID2D1Factory> Direct2D::GetDirect2DFactory()

@@ -26,6 +26,7 @@ static const luaL_Reg ui_lib[] = {
     { "hsb2rgb", ui_helper_hsl2rgb },
     { "rgb2hsb", ui_helper_rgb2hsl },
     { "isprintable", ui_isprintchar },
+    { "play_song", ui_play_song },
     { nullptr, nullptr }
 };
 

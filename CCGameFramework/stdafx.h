@@ -92,3 +92,4 @@
 #pragma comment(lib, "lib\\libevent_core")
 #pragma comment(lib, "lib\\libevent_extras")
 #pragma comment(lib, "lib\\libcurl")
+#pragma comment(lib, "lib\\libzplay")

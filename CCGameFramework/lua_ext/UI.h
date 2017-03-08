@@ -21,4 +21,6 @@ extern int ui_helper_rgb2hsl(lua_State *L);
 
 extern int ui_isprintchar(lua_State *L);
 
+extern int ui_play_song(lua_State *L);
+
 #endif

@@ -268,6 +268,9 @@
     <ClInclude Include="base\base64\b64.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="base\libzplay\libzplay.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -555,6 +558,9 @@
       <Filter>脚本</Filter>
     </Text>
     <Text Include="script\lib\resource\wireworld_computer.txt">
+      <Filter>脚本</Filter>
+    </Text>
+    <Text Include="script\scene\web\music.lua">
       <Filter>脚本</Filter>
     </Text>
   </ItemGroup>

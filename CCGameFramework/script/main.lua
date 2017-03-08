@@ -41,6 +41,7 @@ Window = {
 		Game_2048 = require("script.scene.game.2048"),
 		-- WEB
 		Hitokoto = require("script.scene.web.hitokoto"),
+		Music = require("script.scene.web.music"),
 		-- VISUAL
 		Path = require("script.scene.visual.path"),
 		WireWorld = require("script.scene.visual.wireworld"),

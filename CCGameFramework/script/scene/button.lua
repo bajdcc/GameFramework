@@ -156,6 +156,13 @@ function M:init_menu(info)
 	end
 	menu.children[4].layers.fg:update()
 
+	menu.children[5].text = 'music'	
+	menu.children[5].layers.fg.text = 'music'
+	menu.children[5].click = function()
+		FlipScene('Music')
+	end
+	menu.children[5].layers.fg:update()
+
 	UIExt.paint()
 end
 

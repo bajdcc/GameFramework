@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Window.h"
+#include <base64/b64.h>
 
 int ui_clear_scene(lua_State *L)
 {
@@ -12,6 +13,14 @@ int ui_clear_scene(lua_State *L)
     window->setTimer.clear();
     window->root->GetRenderer()->SetRenderTarget(nullptr);
     window->root->GetChildren().clear();
+    if (window->zplay)
+    {
+        window->zplay->Stop();
+        window->zplay->Release();
+        window->zplay = nullptr;
+        delete window->zplaydata;
+        window->zplaydata = nullptr;
+    }
     return 0;
 }
 
@@ -362,5 +371,35 @@ int ui_quit(lua_State* L)
 {
     auto code = cint(luaL_checkinteger(L, 1));
     PostQuitMessage(code);
+    return 0;
+}
+
+int ui_play_song(lua_State *L)
+{
+    auto data = luaL_checkstring(L, 1);
+    auto bin = base64_decode(data);
+    DWORD dw = MAKELONG(MAKEWORD(bin[0], bin[1]), MAKEWORD(bin[2], bin[3]));
+    auto b = (std::vector<byte>*)dw;
+    auto &zplay = window->zplay;
+    if (zplay)
+    {
+        zplay->Stop();
+        zplay->Release();
+        delete window->zplaydata;
+    }
+    zplay = libZPlay::CreateZPlay();
+    window->zplaydata = b;
+    auto binary = window->zplaydata->data();
+    auto binsize = b->size();
+    auto result = zplay->OpenStream(0, 0, binary, binsize, libZPlay::sfMp3);
+    if (result == 0)
+    {
+        ATLTRACE(atlTraceWindowing, 0, "libzplay error: %s\n", zplay->GetError());
+        delete window->zplaydata;
+        window->zplaydata = nullptr;
+        zplay->Release();
+        zplay = nullptr;
+    }
+    zplay->Play();
     return 0;
 }

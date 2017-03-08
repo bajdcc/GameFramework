@@ -97,7 +97,8 @@
     </Link>
     <PostBuildEvent>
       <Command>md "$(TargetDir)script"
-xcopy /r /y /e "$(ProjectDir)script" "$(TargetDir)script"</Command>
+xcopy /r /y /e "$(ProjectDir)script" "$(TargetDir)script"
+xcopy /r /y /e "$(ProjectDir)dll" "$(TargetDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -115,7 +116,8 @@ xcopy /r /y /e "$(ProjectDir)script" "$(TargetDir)script"</Command>
     </Link>
     <PostBuildEvent>
       <Command>md "$(TargetDir)script"
-xcopy /r /y /e "$(ProjectDir)script" "$(TargetDir)script"</Command>
+xcopy /r /y /e "$(ProjectDir)script" "$(TargetDir)script"
+xcopy /r /y /e "$(ProjectDir)dll" "$(TargetDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -138,7 +140,8 @@ xcopy /r /y /e "$(ProjectDir)script" "$(TargetDir)script"</Command>
     </Link>
     <PostBuildEvent>
       <Command>md "$(TargetDir)script"
-xcopy /r /y /e "$(ProjectDir)script" "$(TargetDir)script"</Command>
+xcopy /r /y /e "$(ProjectDir)script" "$(TargetDir)script"
+xcopy /r /y /e "$(ProjectDir)dll" "$(TargetDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -160,7 +163,8 @@ xcopy /r /y /e "$(ProjectDir)script" "$(TargetDir)script"</Command>
     </Link>
     <PostBuildEvent>
       <Command>md "$(TargetDir)script"
-xcopy /r /y /e "$(ProjectDir)script" "$(TargetDir)script"</Command>
+xcopy /r /y /e "$(ProjectDir)script" "$(TargetDir)script"
+xcopy /r /y /e "$(ProjectDir)dll" "$(TargetDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -208,6 +212,7 @@ xcopy /r /y /e "$(ProjectDir)script" "$(TargetDir)script"</Command>
     <ClInclude Include="base\libqrencode\qrspec.h" />
     <ClInclude Include="base\libqrencode\rscode.h" />
     <ClInclude Include="base\libqrencode\split.h" />
+    <ClInclude Include="base\libzplay\libzplay.h" />
     <ClInclude Include="lua\lapi.h" />
     <ClInclude Include="lua\lauxlib.h" />
     <ClInclude Include="lua\lcode.h" />
@@ -497,6 +502,9 @@ xcopy /r /y /e "$(ProjectDir)script" "$(TargetDir)script"</Command>
       <FileType>Document</FileType>
     </Text>
     <Text Include="script\lib\resource\wireworld_computer.txt">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="script\scene\web\music.lua">
       <FileType>Document</FileType>
     </Text>
   </ItemGroup>
