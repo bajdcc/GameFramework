@@ -85,7 +85,8 @@ local U = {
 	toggle_play = 10,
 	get_status = 11,
 	get_info = 12,
-	get_play_info = 13
+	get_play_info = 13,
+	play_loop = 20
 }
 
 _G["MusicCtrl"] = U

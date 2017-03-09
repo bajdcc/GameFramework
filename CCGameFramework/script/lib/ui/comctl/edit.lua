@@ -30,46 +30,54 @@ function M:new(o)
 	o.state = {focused=false, enter=false}
 	o.hit = function(this, evt, args)
 		if evt == WinEvent.leftbuttonup then
-			if o.click then o.click() end
+			if this.click then this.click() end
 		elseif evt == WinEvent.gotfocus then
-			o.state.focused = true
+			this.state.focused = true
 			this.layers.border.color = this.bordercolor_focus
 			this.layers.border:update_and_paint()
 		elseif evt == WinEvent.lostfocus then
-			o.state.focused = false
+			this.state.focused = false
 			this.layers.border.color = this.bordercolor
 			this.layers.border:update_and_paint()
 		elseif evt == WinEvent.mouseenter then
-			o.state.enter = true
+			this.state.enter = true
 			this.layers.border.color = this.bordercolor_enter
 			this.layers.border:update_and_paint()
 		elseif evt == WinEvent.mouseleave then
-			o.state.enter = false
-			if o.state.focused then
+			this.state.enter = false
+			if this.state.focused then
 				this.layers.border.color = this.bordercolor_focus
 			else
 				this.layers.border.color = this.bordercolor
 			end
 			this.layers.border:update_and_paint()
 		elseif evt == WinEvent.char then
-			if UIExt.isprintable(args.code) then
-				this.layers.text.text = this.layers.text.text .. string.char(args.code)
+			if CurrentScene.hittable[this.layers.text.handle] == nil then
+				CurrentScene.hittable[this.layers.text.handle] = true
+				this.text = string.char(args.code)
+				this.layers.text.text = this.text
+				this.layers.text:update_and_paint()
+			elseif UIExt.isprintable(args.code) then
+				this.text = this.text .. string.char(args.code)
+				this.layers.text.text = this.text
 			elseif args.code == SysKey.backspace then
-				this.layers.text.text = string.sub(this.layers.text.text, 0, -2)
+				this.text = string.sub(this.text, 0, -2)
+				this.layers.text.text = this.text 
 			elseif args.code == SysKey.enter then
-				if o.multiline ~= 0 then
-					this.layers.text.text = this.layers.text.text .. '\n'
+				if this.multiline ~= 0 then
+					this.text = this.text .. '\n'
+					this.layers.text.text = this.text
 				else
-					if o.char_return then o.char_return(this.layers.text.text) end
+					if this.char_return then this.char_return(this.text) end
 				end
 			end
-			if o.char_input then o.char_input(this.layers.text.text) end
+			if this.char_input then this.char_input(this.text) end
 			this.layers.text:update_and_paint()
 		end
 	end
 	setmetatable(o, self)
 	self.__index = self
-	return o;
+	return o
 end
 
 function M:attach(parent)
@@ -98,6 +106,7 @@ function M:attach(parent)
 		padright = 5,
 		padbottom = 5,
 	}))
+	CurrentScene.hittable[self.layers.text.handle] = nil
 end
 
 return M

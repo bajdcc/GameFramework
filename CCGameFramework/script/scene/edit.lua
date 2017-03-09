@@ -126,6 +126,8 @@ function M:init_menu(info)
 		end
 	}):attach(menu)
 
+	UIExt.trace('Scene [Edit page]: create input #' .. self.layers.menu.children[1].handle)
+
 	Empty:new():attach(menu)
 
 	Button:new({

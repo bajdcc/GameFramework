@@ -454,7 +454,7 @@ int ui_music_ctl(lua_State *L)
         libZPlay::TStreamInfo info;
         zplay->GetStreamInfo(&info);
         CStringA str;
-        str.Format("长度：%02u:%02u:%02u:%03u\n码率：%dkbps",
+        str.Format("长度：%02u:%02u:%02u.%03u\n码率：%dkbps",
             info.Length.hms.hour,
             info.Length.hms.minute,
             info.Length.hms.second,
@@ -487,6 +487,22 @@ int ui_music_ctl(lua_State *L)
         }
         lua_pushstring(L, str.GetBuffer(0));
         return 1;
+    }
+    break;
+    case 20:
+    {
+        if (!zplay)
+        {
+            return 0;
+        }
+        libZPlay::TStreamStatus status;
+        zplay->GetStatus(&status);
+        CStringA str;
+        if (status.fPause == 0 && status.fPlay == 0)
+        {
+            zplay->Play();
+        }
+        return 0;
     }
     break;
     }

@@ -13,6 +13,8 @@ function M:new(o)
 	o.layers = {}
 	o.roots = {}
 	o.state = {focused=nil, hover=nil}
+	o.hittable = {}
+	o.texttable = {}
 	setmetatable(o, self)
 	self.__index = self
 	self:initevt()

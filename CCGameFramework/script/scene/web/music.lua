@@ -7,6 +7,7 @@ local Text = require('script.lib.ui.text')
 local Button = require('script.lib.ui.comctl.button')
 local Edit = require('script.lib.ui.comctl.edit')
 local JSON = require("script.lib.core.dkjson")
+local Base64Image = require('script.lib.ui.b64img')
 
 local modname = 'WebMusicScene'
 local M = Scene:new()
@@ -36,15 +37,15 @@ function M:init()
 	})
 	self.layers.bg = self:add(bg)
 	bg:add(Block:new({
-		color = '#9C9F3C',
+		color = '#1F7256',
 		right = info.width,
 		bottom = info.height
 	}))
 	UIExt.trace('Scene [Music page]: create background #' .. self.layers.bg.handle)
 	-- BG2
 	local bg2 = Gradient:new({
-		color1 = '#9C9F3C',
-		color2 = '#65662A',
+		color1 = '#1F7256',
+		color2 = '#164032',
 		direction = 1,
 		pre_resize = function(this, left, top, right, bottom)
 			return left, ((bottom - top) / 2) - 100, right, bottom
@@ -90,7 +91,16 @@ end
 
 function M:destroy()
 	UIExt.trace('Scene [Music page] destroy')
+	for i,v in ipairs(self.layers.btns.children) do
+		v.text = ''
+	end
 	UIExt.clear_scene()
+end
+
+local function music_set_text(obj, text)
+	if text == nil then return end
+	obj.text = text
+	obj:update()
 end
 
 function M:init_event()
@@ -99,52 +109,77 @@ function M:init_event()
 	end
 	self.handler[self.win_event.timer] = function(this, id)
 		if id == 15 then
-			local progress = UIExt.music_ctrl(MusicCtrl.get_status)
-			if progress == nil then return end
-			local target = this.layers.ctrl.children[2]
-			target.text = progress
-			target:update_and_paint()
+			music_set_text(this.layers.ctrl.children[3], UIExt.music_ctrl(MusicCtrl.get_status))
+			UIExt.paint()
 		elseif id == 16 then
-			local info = UIExt.music_ctrl(MusicCtrl.get_info)
-			if info == nil then return end
-			local target = this.layers.ctrl.children[3]
-			target.text = info
-			target:update_and_paint()
+			music_set_text(this.layers.ctrl.children[4], UIExt.music_ctrl(MusicCtrl.get_info))
+			UIExt.paint()
 		elseif id == 17 then
-			local info = UIExt.music_ctrl(MusicCtrl.get_play_info)
-			if info == nil then return end
-			local target = this.layers.rtstatus
-			target.text = info
-			target:update_and_paint()
+			music_set_text(this.layers.rtstatus, UIExt.music_ctrl(MusicCtrl.get_play_info))
+			UIExt.paint()
+		elseif id == 20 then
+			UIExt.music_ctrl(MusicCtrl.play_loop)
 		end
 	end
 	self.handler[self.win_event.httpget] = function(this, id, code, text)
 		if id == 10 then
-			if code ~= 200 then return end
+			if code ~= 200 then
+				music_set_text(this.layers.rtstatus, '歌曲下载失败')
+				return
+			end
+			music_set_text(this.layers.rtstatus, '准备播放歌曲')
+			
+			UIExt.set_timer(15, 1000)
+			UIExt.set_timer(16, 2000)
+			UIExt.set_timer(17, 1500)
+			UIExt.set_timer(20, 10000)
+
+			music_set_text(this.layers.ctrl.children[2], '歌曲名：' .. this.song_name)
+			UIExt.paint()
+
 			UIExt.play_song(text)
+		elseif id == 11 then
+			if code ~= 200 then
+				music_set_text(this.layers.rtstatus, '封面下载失败')
+				return
+			end
+			music_set_text(this.layers.rtstatus, '获取封面成功')
+			this.layers.pic.text = text
+			this.layers.pic:update()
 		end
 	end
 	self.handler[self.win_event.httppost] = function(this, id, code, text)
 		if id == 8 then
-			if code ~= 200 or text == nil then return end
+			if code ~= 200 or text == nil then
+				music_set_text(this.layers.rtstatus, '获取列表失败')
+				return
+			end
+			music_set_text(this.layers.rtstatus, '获取列表成功')
 			local obj = JSON.decode(text, 1, nil)
 			if obj == nil or obj.code ~= 200 or obj.result == nil or obj.result.songs == nil then return end
 			this.sids = obj.result.songs
+			local btns = this.layers.btns.children
 			for i,v in ipairs(obj.result.songs) do
-				local t = this.layers.btns.children[i]
-				t.text = v.name
-				t.layers.fg.text = v.name
-				t.layers.fg:update()
+				btns[i]:reset(v.name)
 			end
 			UIExt.paint()
 		elseif id == 9 then
-			if code ~= 200 or text == nil then return end
+			if code ~= 200 or text == nil then
+				music_set_text(this.layers.rtstatus, '获取信息失败')
+				return
+			end
+			music_set_text(this.layers.rtstatus, '歌曲下载中')
 			local obj = JSON.decode(text, 1, nil)
 			if obj == nil or obj.code ~= 200 or obj.songs == nil then return end
 			if #obj.songs == 0 or obj.songs[1] == nil then return end
-			local url = obj.songs[1]['mp3Url']
+			local song = obj.songs[1]
+			local url = song['mp3Url']
+			this.song_name = song['name']
+			this.pic_url = song['album']['picUrl']
 			if url ~= nil and url ~= '' then
 				Web.getb(url, 10)
+				this.layers.pic.url = this.pic_url
+				Web.getb(this.pic_url, 11)
 			end
 		end
 	end
@@ -153,10 +188,6 @@ end
 function M:init_menu(info)
 	self.sids = {}
 	self.playid = 0
-
-	UIExt.set_timer(15, 1000)
-	UIExt.set_timer(16, 2000)
-	UIExt.set_timer(17, 1500)
 
 	-- MUSIC LIST
 
@@ -209,7 +240,7 @@ function M:init_menu(info)
 		pre_resize = function(this, left, top, right, bottom)
 			local w = left + (right - left) / 2
 			local h = top + (bottom - top) / 2
-			return 10, h - 120, 200, h + 120
+			return 10, h - 120, 200, h + 200
 		end
 	})
 	self.layers.ctrl = self:add(ctrl)
@@ -220,6 +251,13 @@ function M:init_menu(info)
 		click = function()
 			UIExt.music_ctrl(MusicCtrl.toggle_play)
 		end
+	}):attach(ctrl)
+
+	Text:new({
+		text = '',
+		color = '#EEEEEE',
+		family = '楷体',
+		size = 20,
 	}):attach(ctrl)
 
 	Text:new({
@@ -244,6 +282,17 @@ function M:init_menu(info)
 		end
 	})
 	self.layers.menu = self:add(menu)
+
+	-- ALBUM PIC
+
+	local b64 = Base64Image:new({
+		pre_resize = function(this, left, top, right, bottom)
+			local w = left + (right - left) / 2
+			local h = top + (bottom - top) / 2
+			return w + 220, h - 120, right - 10, bottom - 80
+		end
+	})
+	self.layers.pic = self:add(b64)
 	
 	-- MENU BUTTON
 	Edit:new({
@@ -275,7 +324,7 @@ function M:init_menu(info)
 	self:add(slider)
 
 	Text:new({
-		text = '状态',
+		text = '',
 		family = '楷体',
 		color = '#EEEEEE',
 		size = 16
@@ -289,7 +338,16 @@ function M:play_song(id)
 	if i == nil then return end
 	local id = i['id']
 	if id == nil then return end
+	music_set_text(self.layers.rtstatus, '分析歌曲信息')
+	
+	UIExt.kill_timer(15)
+	UIExt.kill_timer(16)
+	UIExt.kill_timer(17)
+	UIExt.kill_timer(20)
+
 	Web.post('http://music.163.com/api/song/detail', 9, 'id=' .. id .. '&ids=[' .. id .. ']')
+
+	UIExt.paint()
 end
 
 return M
