@@ -134,7 +134,8 @@ function M:init_event()
 			UIExt.set_timer(17, 1500)
 			UIExt.set_timer(20, 10000)
 
-			music_set_text(this.layers.ctrl.children[2], '歌曲名：' .. this.song_name)
+			music_set_text(this.layers.ctrl.children[2], this.song_name)
+			music_set_text(this.layers.idstatus, 'ID：' .. this.song_id )
 			UIExt.paint()
 
 			UIExt.play_song(text)
@@ -146,6 +147,14 @@ function M:init_event()
 			music_set_text(this.layers.rtstatus, '获取封面成功')
 			this.layers.pic.text = text
 			this.layers.pic:update()
+		elseif id == 12 then
+			local obj = JSON.decode(text, 1, nil)
+			if obj == nil or obj.code ~= 200 then
+				music_set_text(this.layers.rtstatus, '歌词下载失败')
+				return
+			end
+			music_set_text(this.layers.rtstatus, '获取歌词成功')
+			this.lyric = obj.lyric
 		end
 	end
 	self.handler[self.win_event.httppost] = function(this, id, code, text)
@@ -176,10 +185,12 @@ function M:init_event()
 			local url = song['mp3Url']
 			this.song_name = song['name']
 			this.pic_url = song['album']['picUrl']
+			this.song_id = song['id']
 			if url ~= nil and url ~= '' then
 				Web.getb(url, 10)
 				this.layers.pic.url = this.pic_url
 				Web.getb(this.pic_url, 11)
+				Web.get('http://music.163.com/api/song/media?id=' .. this.song_id, 12)
 			end
 		end
 	end
@@ -298,13 +309,9 @@ function M:init_menu(info)
 	Edit:new({
 		text = '',
 		char_return = function (text)
-			CurrentScene.layers.text.text = text
-			CurrentScene.layers.text:update_and_paint()
 		end,
 		char_input = function (text)
 			Web.post('http://music.163.com/api/search/suggest/web', 8, 's=' .. text)
-			CurrentScene.layers.text.text = text
-			CurrentScene.layers.text:update_and_paint()
 		end
 	}):attach(menu)
 
@@ -312,16 +319,23 @@ function M:init_menu(info)
 
 	-- STATUS
 	local slider = LinearLayout:new({
-		align = 1,
+		align = 2,
 		padleft = 2,
 		padtop = 2,
 		padright = 2,
 		padbottom = 2,
 		pre_resize = function(this, left, top, right, bottom)
-			return left, bottom - 50, left + 120, bottom
+			return left, bottom - 120, left + 120, bottom
 		end
 	})
 	self:add(slider)
+
+	Text:new({
+		text = '',
+		color = '#EEEEEE',
+		size = 16
+	}):attach(slider)
+	self.layers.idstatus = slider.children[#slider.children]
 
 	Text:new({
 		text = '',
