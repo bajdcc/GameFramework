@@ -81,4 +81,13 @@ local K = {
 
 _G["SysKey"] = K
 
+local U = {
+	toggle_play = 10,
+	get_status = 11,
+	get_info = 12,
+	get_play_info = 13
+}
+
+_G["MusicCtrl"] = U
+
 return M

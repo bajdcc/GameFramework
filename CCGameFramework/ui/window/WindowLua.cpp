@@ -403,3 +403,92 @@ int ui_play_song(lua_State *L)
     zplay->Play();
     return 0;
 }
+
+int ui_music_ctl(lua_State *L)
+{
+    auto &zplay = window->zplay;
+    auto ctlid = (cint)luaL_checkinteger(L, 1);
+    switch (ctlid)
+    {
+    case 10:
+    {
+        if (!zplay)
+            return 0;
+        libZPlay::TStreamStatus status;
+        zplay->GetStatus(&status);
+        if (status.fPause == 1)
+        {
+            zplay->Resume();
+        }
+        else
+        {
+            if (status.fPlay == 0)
+                zplay->Play();
+            else
+                zplay->Pause();
+        }
+    }
+    break;
+    case 11:
+    {
+        if (!zplay)
+        {
+            lua_pushstring(L, "播放进度");
+            return 1;
+        }
+        libZPlay::TStreamTime pos;
+        zplay->GetPosition(&pos);
+        CStringA str;
+        str.Format("%02u:%02u:%02u", pos.hms.hour, pos.hms.minute, pos.hms.second);
+        lua_pushstring(L, str.GetBuffer(0));
+        return 1;
+    }
+    break;
+    case 12:
+    {
+        if (!zplay)
+        {
+            lua_pushstring(L, "歌曲信息");
+            return 1;
+        }
+        libZPlay::TStreamInfo info;
+        zplay->GetStreamInfo(&info);
+        CStringA str;
+        str.Format("长度：%02u:%02u:%02u:%03u\n码率：%dkbps",
+            info.Length.hms.hour,
+            info.Length.hms.minute,
+            info.Length.hms.second,
+            info.Length.hms.millisecond,
+            info.Bitrate);
+        lua_pushstring(L, str.GetBuffer(0));
+        return 1;
+    }
+    break;
+    case 13:
+    {
+        if (!zplay)
+        {
+            lua_pushstring(L, "未播放");
+            return 1;
+        }
+        libZPlay::TStreamStatus status;
+        zplay->GetStatus(&status);
+        CStringA str;
+        if (status.fPause == 1)
+        {
+            str = "暂停";
+        }
+        else
+        {
+            if (status.fPlay == 0)
+                str = "停止";
+            else
+                str = "播放中";
+        }
+        lua_pushstring(L, str.GetBuffer(0));
+        return 1;
+    }
+    break;
+    }
+    return 0;
+}

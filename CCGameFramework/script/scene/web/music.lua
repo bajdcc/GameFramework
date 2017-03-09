@@ -98,6 +98,25 @@ function M:init_event()
 		UIExt.trace('Scene [Music page] Test created message!')
 	end
 	self.handler[self.win_event.timer] = function(this, id)
+		if id == 15 then
+			local progress = UIExt.music_ctrl(MusicCtrl.get_status)
+			if progress == nil then return end
+			local target = this.layers.ctrl.children[2]
+			target.text = progress
+			target:update_and_paint()
+		elseif id == 16 then
+			local info = UIExt.music_ctrl(MusicCtrl.get_info)
+			if info == nil then return end
+			local target = this.layers.ctrl.children[3]
+			target.text = info
+			target:update_and_paint()
+		elseif id == 17 then
+			local info = UIExt.music_ctrl(MusicCtrl.get_play_info)
+			if info == nil then return end
+			local target = this.layers.rtstatus
+			target.text = info
+			target:update_and_paint()
+		end
 	end
 	self.handler[self.win_event.httpget] = function(this, id, code, text)
 		if id == 10 then
@@ -134,6 +153,12 @@ end
 function M:init_menu(info)
 	self.sids = {}
 	self.playid = 0
+
+	UIExt.set_timer(15, 1000)
+	UIExt.set_timer(16, 2000)
+	UIExt.set_timer(17, 1500)
+
+	-- MUSIC LIST
 
 	local btns = LinearLayout:new({
 		align = 2,
@@ -177,6 +202,39 @@ function M:init_menu(info)
 		end
 	}):attach(btns)
 
+	-- MUSIC CONTROLLER
+
+	local ctrl = LinearLayout:new({
+		align = 2,
+		pre_resize = function(this, left, top, right, bottom)
+			local w = left + (right - left) / 2
+			local h = top + (bottom - top) / 2
+			return 10, h - 120, 200, h + 120
+		end
+	})
+	self.layers.ctrl = self:add(ctrl)
+	
+	Button:new({
+		text = '²¥·Å/ÔÝÍ£',
+		track_display = 0,
+		click = function()
+			UIExt.music_ctrl(MusicCtrl.toggle_play)
+		end
+	}):attach(ctrl)
+
+	Text:new({
+		text = '',
+		color = '#EEEEEE',
+		size = 24,
+	}):attach(ctrl)
+
+	Text:new({
+		text = '',
+		color = '#EEEEEE',
+		size = 16,
+		align = 0,
+	}):attach(ctrl)
+
 	-- MENU CONTAINER LAYOUT
 	local menu = LinearLayout:new({
 		pre_resize = function(this, left, top, right, bottom)
@@ -202,10 +260,35 @@ function M:init_menu(info)
 	}):attach(menu)
 
 	Empty:new():attach(menu)
+
+	-- STATUS
+	local slider = LinearLayout:new({
+		align = 1,
+		padleft = 2,
+		padtop = 2,
+		padright = 2,
+		padbottom = 2,
+		pre_resize = function(this, left, top, right, bottom)
+			return left, bottom - 50, left + 120, bottom
+		end
+	})
+	self:add(slider)
+
+	Text:new({
+		text = '×´Ì¬',
+		family = '¿¬Ìå',
+		color = '#EEEEEE',
+		size = 16
+	}):attach(slider)
+	self.layers.rtstatus = slider.children[#slider.children]
 end
 
 function M:play_song(id)
-	local id = self.sids[id].id
+	if id == 0 or id > 4 then return end
+	local i = self.sids[id]
+	if i == nil then return end
+	local id = i['id']
+	if id == nil then return end
 	Web.post('http://music.163.com/api/song/detail', 9, 'id=' .. id .. '&ids=[' .. id .. ']')
 end
 

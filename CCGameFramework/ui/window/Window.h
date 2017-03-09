@@ -239,6 +239,7 @@ protected:
     friend int ui_update_obj(lua_State *L);
     friend int ui_refresh_obj(lua_State *L);
     friend int ui_play_song(lua_State *L);
+    friend int ui_music_ctl(lua_State *L);
 
 protected:
     HWND handle;
