@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Window.h"
 #include <base64/b64.h>
+#include "utils.h"
 
 int ui_clear_scene(lua_State *L)
 {
@@ -489,6 +490,43 @@ int ui_music_ctl(lua_State *L)
         return 1;
     }
     break;
+    case 14:
+    {
+        if (!zplay)
+        {
+            lua_pushinteger(L, -1);
+            return 1;
+        }
+        libZPlay::TStreamTime pos;
+        zplay->GetPosition(&pos);
+        int sec = pos.hms.hour * 3600
+            + pos.hms.minute * 60
+            + pos.hms.second;
+        lua_pushinteger(L, sec);
+        return 1;
+    }
+    break;
+    case 15:
+    {
+        if (!zplay)
+        {
+            lua_pushboolean(L, false);
+            return 1;
+        }
+        libZPlay::TStreamStatus status;
+        zplay->GetStatus(&status);
+        CStringA str;
+        if (status.fPause == 0 && status.fPlay == 0)
+        {
+            lua_pushboolean(L, false);
+        }
+        else
+        {
+            lua_pushboolean(L, true);
+        }
+        return 1;
+    }
+    break;
     case 20:
     {
         if (!zplay)
@@ -507,4 +545,46 @@ int ui_music_ctl(lua_State *L)
     break;
     }
     return 0;
+}
+
+int ui_parse_lyric(lua_State *L)
+{
+    std::string str = luaL_checkstring(L, 1);
+    std::regex e(R"(\[\d*:\d*[.:]\d*\].*)");
+    std::regex rep(R"(\[\d*:\d*[.:]\d*\](.*))");
+    std::regex t(R"(\[(\d*):(\d*)([.:])(\d*)\].*)");
+    std::map<int, std::string> ly;
+    auto lyrics = std::split(str);
+    for (auto lyr : lyrics)
+    {
+        std::smatch sm;
+        if (std::regex_match(lyr, sm, e))
+        {
+            auto lycn = std::regex_replace(lyr, rep, "$1");
+            for (std::string m : sm)
+            {
+                std::smatch tm;
+                if (std::regex_match(m, tm, t))
+                {
+                    auto hour = atoi(tm[1].str().c_str());
+                    auto minute = atoi(tm[2].str().c_str());
+                    auto second = atoi(tm[4].str().c_str());
+                    auto delim = tm[3].str();
+                    if (delim == ".")
+                        second = minute + 60 * hour;
+                    else
+                        second += 60 * minute + 3600 * hour;
+                    ly.insert(std::pair<int, std::string>(second, lycn));
+                }
+            }
+        }
+    }
+    lua_newtable(L);
+    for (auto& y : ly)
+    {
+        lua_pushinteger(L, y.first);
+        lua_pushstring(L, y.second.c_str());
+        lua_settable(L, -3);
+    }
+    return 1;
 }

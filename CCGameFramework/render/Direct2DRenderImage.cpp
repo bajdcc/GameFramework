@@ -206,6 +206,11 @@ void Base64ImageElementRenderer::CreateImage(std::shared_ptr<Direct2DRenderTarge
             auto bin = base64_decode(txt.GetBuffer(0));
             DWORD dw = MAKELONG(MAKEWORD(bin[0], bin[1]), MAKEWORD(bin[2], bin[3]));
             auto b = (std::vector<byte>*)dw;
+            if (b->empty())
+            {
+                delete b;
+                return;
+            }
             wic = renderTarget->CreateImageFromMemory(b->data(), b->size());
             url = e->GetUrl();
             text = txt;

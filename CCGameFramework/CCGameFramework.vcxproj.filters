@@ -271,6 +271,9 @@
     <ClInclude Include="base\libzplay\libzplay.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="base\utils.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -466,6 +469,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="base\base64\b64.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\utils.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

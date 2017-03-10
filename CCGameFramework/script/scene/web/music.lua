@@ -117,7 +117,20 @@ function M:init_event()
 		elseif id == 17 then
 			music_set_text(this.layers.rtstatus, UIExt.music_ctrl(MusicCtrl.get_play_info))
 			UIExt.paint()
+		elseif id == 18 then
+			if UIExt.music_ctrl(MusicCtrl.playing) then
+				local ly = this.lyric[UIExt.music_ctrl(MusicCtrl.get_sec)]
+				if ly then
+					music_set_text(this.layers.lyric, ly)
+				end
+			else
+				UIExt.kill_timer(18)
+				music_set_text(this.layers.lyric, '')
+			end
+			UIExt.paint()
 		elseif id == 20 then
+			music_set_text(this.layers.lyric, '正在播放歌曲：' .. this.song_name)
+			UIExt.paint()
 			UIExt.music_ctrl(MusicCtrl.play_loop)
 		end
 	end
@@ -132,6 +145,7 @@ function M:init_event()
 			UIExt.set_timer(15, 1000)
 			UIExt.set_timer(16, 2000)
 			UIExt.set_timer(17, 1500)
+			UIExt.set_timer(18, 100)
 			UIExt.set_timer(20, 10000)
 
 			music_set_text(this.layers.ctrl.children[2], this.song_name)
@@ -144,7 +158,7 @@ function M:init_event()
 				music_set_text(this.layers.rtstatus, '封面下载失败')
 				return
 			end
-			music_set_text(this.layers.rtstatus, '获取封面成功')
+			music_set_text(this.layers.rtstatus, '封面加载中')
 			this.layers.pic.text = text
 			this.layers.pic:update()
 		elseif id == 12 then
@@ -153,8 +167,10 @@ function M:init_event()
 				music_set_text(this.layers.rtstatus, '歌词下载失败')
 				return
 			end
-			music_set_text(this.layers.rtstatus, '获取歌词成功')
-			this.lyric = obj.lyric
+			music_set_text(this.layers.rtstatus, '歌词加载中')
+			this.lyric = UIExt.parse_lyric(obj.lyric)
+			music_set_text(this.layers.lyric, '正在播放歌曲：' .. this.song_name)
+			UIExt.paint()
 		end
 	end
 	self.handler[self.win_event.httppost] = function(this, id, code, text)
@@ -304,6 +320,19 @@ function M:init_menu(info)
 		end
 	})
 	self.layers.pic = self:add(b64)
+
+	-- LYRIC
+	local lyric = Text:new({
+		color = '#EEEEEE',
+		text = '',
+		family = '楷体',
+		size = 20,
+		pre_resize = function(this, left, top, right, bottom)
+			return left, top + 130, right, top + 160
+		end
+	})
+	self.layers.lyric = self:add(lyric)
+	UIExt.trace('Scene [Music page]: create lyric #' .. self.layers.lyric.handle)
 	
 	-- MENU BUTTON
 	Edit:new({
@@ -357,6 +386,7 @@ function M:play_song(id)
 	UIExt.kill_timer(15)
 	UIExt.kill_timer(16)
 	UIExt.kill_timer(17)
+	UIExt.kill_timer(18)
 	UIExt.kill_timer(20)
 
 	Web.post('http://music.163.com/api/song/detail', 9, 'id=' .. id .. '&ids=[' .. id .. ']')

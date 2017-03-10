@@ -86,6 +86,8 @@ local U = {
 	get_status = 11,
 	get_info = 12,
 	get_play_info = 13,
+	get_sec = 14,
+	playing = 15,
 	play_loop = 20
 }
 

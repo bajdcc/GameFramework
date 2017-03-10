@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "UI.h"
 #include "ext.h"
+#include "utils.h"
 
 extern CTraceCategoryEx<CTraceCategoryEx<>::TraceUser> atlTraceLua(_T("atlTraceLua"));
 
@@ -28,6 +29,7 @@ static const luaL_Reg ui_lib[] = {
     { "isprintable", ui_isprintchar },
     { "play_song", ui_play_song },
     { "music_ctrl", ui_music_ctl },
+    { "parse_lyric", ui_parse_lyric },
     { nullptr, nullptr }
 };
 
