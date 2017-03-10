@@ -28,6 +28,7 @@ function M:new(o)
 	o.layers = {}
 	o.cur = SysCursor.ibeam
 	o.state = {focused=false, enter=false}
+	o.readonly = o.readonly or 0
 	o.hit = function(this, evt, args)
 		if evt == WinEvent.leftbuttonup then
 			if this.click then this.click() end
@@ -52,6 +53,10 @@ function M:new(o)
 			end
 			this.layers.border:update_and_paint()
 		elseif evt == WinEvent.char then
+			if this.readonly ~= 0 then
+				if this.char_input then this.char_input(this, args.code) end
+				return
+			end
 			if CurrentScene.hittable[this.layers.text.handle] == nil then
 				CurrentScene.hittable[this.layers.text.handle] = true
 				this.text = string.char(args.code)
@@ -107,6 +112,12 @@ function M:attach(parent)
 		padbottom = 5,
 	}))
 	CurrentScene.hittable[self.layers.text.handle] = nil
+end
+
+function M:reset(text)
+	self.text = text
+	self.layers.text.text = text
+	self.layers.text:update()
 end
 
 return M

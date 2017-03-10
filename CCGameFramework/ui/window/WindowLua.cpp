@@ -527,6 +527,30 @@ int ui_music_ctl(lua_State *L)
         return 1;
     }
     break;
+    case 16:
+    {
+        if (!zplay)
+        {
+            lua_pushinteger(L, 0);
+            return 1;
+        }
+        unsigned l, r;
+        zplay->GetPlayerVolume(&l, &r);
+        lua_pushinteger(L, (l + r) / 2);
+        return 1;
+    }
+    break;
+    case 17:
+    {
+        if (!zplay)
+        {
+            return 0;
+        }
+        auto vol = (cint)luaL_checkinteger(L, 2);
+        zplay->SetPlayerVolume(vol, vol);
+        return 0;
+    }
+    break;
     case 20:
     {
         if (!zplay)

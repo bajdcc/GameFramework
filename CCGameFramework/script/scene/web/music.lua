@@ -118,7 +118,7 @@ function M:init_event()
 			music_set_text(this.layers.rtstatus, UIExt.music_ctrl(MusicCtrl.get_play_info))
 			UIExt.paint()
 		elseif id == 18 then
-			if UIExt.music_ctrl(MusicCtrl.playing) then
+			if UIExt.music_ctrl(MusicCtrl.playing) and this.lyric ~= nil then
 				local ly = this.lyric[UIExt.music_ctrl(MusicCtrl.get_sec)]
 				if ly then
 					music_set_text(this.layers.lyric, ly)
@@ -129,7 +129,6 @@ function M:init_event()
 			end
 			UIExt.paint()
 		elseif id == 20 then
-			music_set_text(this.layers.lyric, '’˝‘⁄≤•∑≈∏Ë«˙£∫' .. this.song_name)
 			UIExt.paint()
 			UIExt.music_ctrl(MusicCtrl.play_loop)
 		end
@@ -153,6 +152,8 @@ function M:init_event()
 			UIExt.paint()
 
 			UIExt.play_song(text)
+
+			this.layers.vol:update_vol(UIExt.music_ctrl(MusicCtrl.get_vol))
 		elseif id == 11 then
 			if code ~= 200 then
 				music_set_text(this.layers.rtstatus, '∑‚√Êœ¬‘ÿ ß∞‹')
@@ -163,7 +164,7 @@ function M:init_event()
 			this.layers.pic:update()
 		elseif id == 12 then
 			local obj = JSON.decode(text, 1, nil)
-			if obj == nil or obj.code ~= 200 then
+			if obj == nil or obj.code ~= 200 or obj.lyric == nil then
 				music_set_text(this.layers.rtstatus, '∏Ë¥ œ¬‘ÿ ß∞‹')
 				return
 			end
@@ -373,6 +374,47 @@ function M:init_menu(info)
 		size = 16
 	}):attach(slider)
 	self.layers.rtstatus = slider.children[#slider.children]
+
+	-- VOLUME
+	local volp = LinearLayout:new({
+		align = 2,
+		padleft = 2,
+		padtop = 2,
+		padright = 2,
+		padbottom = 2,
+		pre_resize = function(this, left, top, right, bottom)
+			return left + 130, bottom - 60, left + 250, bottom
+		end
+	})
+	self:add(volp)
+	self.layers.vol = Edit:new({
+		text = '',
+		readonly = 1,
+		char_return = function (text)
+		end,
+		char_input = function (this, code)
+			local c = string.char(code)
+			if c == '=' then
+				if CurrentScene.vol <= 90 then
+					this:update_vol(CurrentScene.vol + 10)
+				end
+			elseif c == '-' then
+				if CurrentScene.vol >= 10 then
+					this:update_vol(CurrentScene.vol - 10)
+				end
+			end
+		end,
+		font_size = 18
+	})
+	local vol = self.layers.vol
+	self.vol = 0
+	vol.update_vol = function(this, v)
+		CurrentScene.vol = v
+		this:reset('“Ù¡ø£∫' .. v)
+		UIExt.music_ctrl(MusicCtrl.set_vol, v)
+		UIExt.paint()
+	end
+	self.layers.vol:attach(volp)
 end
 
 function M:play_song(id)

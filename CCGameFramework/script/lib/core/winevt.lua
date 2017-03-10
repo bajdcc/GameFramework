@@ -88,6 +88,8 @@ local U = {
 	get_play_info = 13,
 	get_sec = 14,
 	playing = 15,
+	get_vol = 16,
+	set_vol = 17,
 	play_loop = 20
 }
 
