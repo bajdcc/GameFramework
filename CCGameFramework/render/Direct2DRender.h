@@ -312,7 +312,7 @@ protected:
         if (_renderTarget)
         {
             auto e = base::element.lock();
-            base::oldColor = std::pair<CColor, CColor>(e->GetColor1(), e->GetColor2());
+            base::oldColor = std::make_pair(e->GetColor1(), e->GetColor2());
             base::brush = _renderTarget->CreateDirect2DLinearBrush(base::oldColor.first, base::oldColor.second);
         }
     }

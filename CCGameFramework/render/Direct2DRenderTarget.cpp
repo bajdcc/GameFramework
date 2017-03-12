@@ -199,12 +199,12 @@ void Direct2DRenderTarget::DestroyDirect2DBrush(CColor color)
 
 CComPtr<ID2D1LinearGradientBrush> Direct2DRenderTarget::CreateDirect2DLinearBrush(CColor c1, CColor c2)
 {
-    return linearBrushes.Create(std::pair<CColor, CColor>(c1, c2));
+    return linearBrushes.Create(std::make_pair(c1, c2));
 }
 
 void Direct2DRenderTarget::DestroyDirect2DLinearBrush(CColor c1, CColor c2)
 {
-    linearBrushes.Destroy(std::pair<CColor, CColor>(c1, c2));
+    linearBrushes.Destroy(std::make_pair(c1, c2));
 }
 
 std::shared_ptr<D2DTextFormatPackage> Direct2DRenderTarget::CreateDirect2DTextFormat(const Font& font)

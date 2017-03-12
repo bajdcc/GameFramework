@@ -84,7 +84,7 @@ int ui_add_obj(lua_State *L)
     }
     obj->GetFlags().parent = p;
     p->GetChildren().push_back(obj);
-    window->mapEle.insert(std::pair<decltype(ptr), decltype(obj)>(ptr, obj));
+    window->mapEle.insert(std::make_pair(ptr, obj));
     lua_pushinteger(L, ptr);
     return 1;
 }
@@ -578,6 +578,7 @@ int ui_parse_lyric(lua_State *L)
     std::regex rep(R"(\[\d*:\d*[.:]\d*\](.*))");
     std::regex t(R"(\[(\d*):(\d*)([.:])(\d*)\].*)");
     std::map<int, std::string> ly;
+    std::unordered_set<int> emptys;
     auto lyrics = std::split(str);
     for (auto lyr : lyrics)
     {
@@ -598,10 +599,22 @@ int ui_parse_lyric(lua_State *L)
                         second = minute + 60 * hour;
                     else
                         second += 60 * minute + 3600 * hour;
-                    ly.insert(std::pair<int, std::string>(second, lycn));
+                    if (lycn.empty())
+                    {
+                        emptys.insert(second);
+                    }
+                    else
+                    {
+                        ly.insert(std::make_pair(second, lycn));
+                    }
                 }
             }
         }
+    }
+    for (auto& em : emptys)
+    {
+        if (ly.find(em) == ly.end())
+            ly.insert(std::make_pair(em, ""));
     }
     lua_newtable(L);
     for (auto& y : ly)

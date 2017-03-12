@@ -131,6 +131,7 @@ function M:init_event()
 		elseif id == 20 then
 			UIExt.paint()
 			UIExt.music_ctrl(MusicCtrl.play_loop)
+			UIExt.set_timer(18, 100)
 		end
 	end
 	self.handler[self.win_event.httpget] = function(this, id, code, text)
