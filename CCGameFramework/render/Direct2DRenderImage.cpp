@@ -208,7 +208,8 @@ void Base64ImageElementRenderer::CreateImage(std::shared_ptr<Direct2DRenderTarge
             auto b = (std::vector<byte>*)dw;
             if (b->empty())
             {
-                delete b;
+                //TODO: ´Ë´¦ÓÐbug
+                //delete b;
                 return;
             }
             wic = renderTarget->CreateImageFromMemory(b->data(), b->size());

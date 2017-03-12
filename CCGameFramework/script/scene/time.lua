@@ -4,7 +4,7 @@ local Block = require('script.lib.ui.block')
 local Text = require('script.lib.ui.text')
 local QR = require('script.lib.ui.qr')
 
-local modname = 'TimeScene'
+local modname = 'script.scene.time'
 local M = Scene:new()
 _G[modname] = M
 package.loaded[modname] = M

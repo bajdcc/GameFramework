@@ -5,7 +5,7 @@ local Block = require('script.lib.ui.block')
 local Text = require('script.lib.ui.text')
 local Button = require('script.lib.ui.comctl.button')
 
-local modname = 'CommonControlScene'
+local modname = 'script.scene.comctl'
 local M = Scene:new()
 _G[modname] = M
 package.loaded[modname] = M

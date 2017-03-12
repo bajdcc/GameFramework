@@ -57,12 +57,7 @@ function M:new(o)
 				if this.char_input then this.char_input(this, args.code) end
 				return
 			end
-			if CurrentScene.hittable[this.layers.text.handle] == nil then
-				CurrentScene.hittable[this.layers.text.handle] = true
-				this.text = string.char(args.code)
-				this.layers.text.text = this.text
-				this.layers.text:update_and_paint()
-			elseif UIExt.isprintable(args.code) then
+			if UIExt.isprintable(args.code) then
 				this.text = this.text .. string.char(args.code)
 				this.layers.text.text = this.text
 			elseif args.code == SysKey.backspace then
@@ -111,7 +106,6 @@ function M:attach(parent)
 		padright = 5,
 		padbottom = 5,
 	}))
-	CurrentScene.hittable[self.layers.text.handle] = nil
 end
 
 function M:reset(text)

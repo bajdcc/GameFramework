@@ -36,15 +36,6 @@ function M:new(o)
 			this.layers.fg:update_and_paint()
 			return
 		end
-		if CurrentScene.hittable[this.layers.fg.handle] == nil then
-			local newtext = CurrentScene.texttable[this.layers.fg.handle]
-			if newtext ~= nil then
-				CurrentScene.hittable[this.layers.fg.handle] = true
-				this.text = newtext
-				this.layers.fg.text = newtext
-				this.layers.fg:update_and_paint()
-			end
-		end
 		if evt == WinEvent.leftbuttonup then
 			this.layers.bg.color = this.bgcolor
 			this.layers.bg:update_and_paint()
@@ -97,8 +88,6 @@ function M:reset(text)
 	self.text = text
 	self.layers.fg.text = text
 	self.layers.fg:update()
-	CurrentScene.hittable[self.layers.fg.handle] = nil
-	CurrentScene.texttable[self.layers.fg.handle] = text
 end
 
 return M

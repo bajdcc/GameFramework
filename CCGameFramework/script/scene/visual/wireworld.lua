@@ -11,7 +11,7 @@ local Edit = require('script.lib.ui.comctl.edit')
 local Radius = require('script.lib.ui.radius')
 local WATM = require('script.lib.ui.watm')
 
-local modname = 'PathScene'
+local modname = 'script.scene.visual.wireworld'
 local M = Scene:new()
 _G[modname] = M
 package.loaded[modname] = M

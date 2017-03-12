@@ -10,7 +10,7 @@ local Button = require('script.lib.ui.comctl.button')
 local Edit = require('script.lib.ui.comctl.edit')
 local Radius = require('script.lib.ui.radius')
 
-local modname = 'Game2048Scene'
+local modname = 'script.scene.game.2048'
 local M = Scene:new()
 _G[modname] = M
 package.loaded[modname] = M

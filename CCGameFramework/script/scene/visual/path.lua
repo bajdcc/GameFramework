@@ -10,7 +10,7 @@ local Button = require('script.lib.ui.comctl.button')
 local Edit = require('script.lib.ui.comctl.edit')
 local Radius = require('script.lib.ui.radius')
 
-local modname = 'PathScene'
+local modname = 'script.scene.visual.path'
 local M = Scene:new()
 _G[modname] = M
 package.loaded[modname] = M

@@ -7,7 +7,7 @@ local Text = require('script.lib.ui.text')
 local Button = require('script.lib.ui.comctl.button')
 local Edit = require('script.lib.ui.comctl.edit')
 
-local modname = 'EditComctlScene'
+local modname = 'script.scene.edit'
 local M = Scene:new()
 _G[modname] = M
 package.loaded[modname] = M

@@ -23,7 +23,9 @@ function FlipScene(scene)
 		CurrentScene:event(CurrentScene.win_event.destroyed)
 		CurrentScene:destroy()
 	end
-	CurrentScene = Window.Scene[scene]:new()
+	local sence_name = Window.Scene[scene]
+	package.loaded[sence_name]  = nil
+	CurrentScene = require(Window.Scene[scene]):new()
 	CurrentScene:init()
 	CurrentScene:event(CurrentScene.win_event.created)
 	UIExt.paint()
@@ -32,19 +34,19 @@ end
 Window = {
 	Scene = {
 		-- MAIN
-		Welcome = require("script.scene.welcome"),
-		Time = require("script.scene.time"),
-		ComCtl = require("script.scene.comctl"),
-		Edit = require("script.scene.edit"),
-		Button = require("script.scene.button"),
+		Welcome = "script.scene.welcome",
+		Time = "script.scene.time",
+		ComCtl = "script.scene.comctl",
+		Edit = "script.scene.edit",
+		Button = "script.scene.button",
 		-- GAME
-		Game_2048 = require("script.scene.game.2048"),
+		Game_2048 = "script.scene.game.2048",
 		-- WEB
-		Hitokoto = require("script.scene.web.hitokoto"),
-		Music = require("script.scene.web.music"),
+		Hitokoto = "script.scene.web.hitokoto",
+		Music = "script.scene.web.music",
 		-- VISUAL
-		Path = require("script.scene.visual.path"),
-		WireWorld = require("script.scene.visual.wireworld"),
+		Path = "script.scene.visual.path",
+		WireWorld = "script.scene.visual.wireworld",
 	}
 }
 

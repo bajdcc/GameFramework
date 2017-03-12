@@ -9,7 +9,7 @@ local Edit = require('script.lib.ui.comctl.edit')
 local JSON = require("script.lib.core.dkjson")
 local Base64Image = require('script.lib.ui.b64img')
 
-local modname = 'WebMusicScene'
+local modname = 'script.scene.web.music'
 local M = Scene:new()
 _G[modname] = M
 package.loaded[modname] = M

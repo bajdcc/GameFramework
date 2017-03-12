@@ -7,7 +7,7 @@ local QR = require('script.lib.ui.qr')
 local Base64Image = require('script.lib.ui.b64img')
 local JSON = require("script.lib.core.dkjson")
 
-local modname = 'HitokotoScene'
+local modname = 'script.scene.web.hitokoto'
 local M = Scene:new()
 _G[modname] = M
 package.loaded[modname] = M
