@@ -58,10 +58,10 @@ function M:new(o)
 				return
 			end
 			if UIExt.isprintable(args.code) then
-				this.text = this.text .. string.char(args.code)
+				this.text = this.text .. UIExt.import_char(args.code)
 				this.layers.text.text = this.text
 			elseif args.code == SysKey.backspace then
-				this.text = string.sub(this.text, 0, -2)
+				this.text = UIExt.remove_char(this.text)
 				this.layers.text.text = this.text 
 			elseif args.code == SysKey.enter then
 				if this.multiline ~= 0 then

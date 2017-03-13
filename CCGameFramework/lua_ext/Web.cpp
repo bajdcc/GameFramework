@@ -4,6 +4,7 @@
 #include "ext.h"
 #include <curl/curl.h>
 #include "base64/b64.h"
+#include <base/utils.h>
 
 static const luaL_Reg ui_lib[] = {
     { "get", web_http_get },
@@ -79,12 +80,24 @@ CString Utf8ToStringT(LPCSTR str)
 {
     _ASSERT(str);
     USES_CONVERSION;
-    WCHAR *buf;
-    int length = MultiByteToWideChar(CP_UTF8, 0, str, -1, nullptr, 0);
-    buf = new WCHAR[length + 1];
+    auto length = MultiByteToWideChar(CP_UTF8, 0, str, -1, nullptr, 0);
+    CString s;
+    auto buf = s.GetBuffer(length + 1);
     ZeroMemory(buf, (length + 1) * sizeof(WCHAR));
     MultiByteToWideChar(CP_UTF8, 0, str, -1, buf, length);
-    return (CString(W2T(buf)));
+    s.ReleaseBuffer();
+    return s;
+}
+
+CStringA StringTToUtf8(CString str)
+{
+    USES_CONVERSION;
+    auto length = WideCharToMultiByte(CP_UTF8, 0, str, -1, nullptr, 0, nullptr, nullptr);
+    CStringA s;
+    auto buf = s.GetBuffer(length + 1);
+    ZeroMemory(buf, (length + 1) * sizeof(CHAR));
+    WideCharToMultiByte(CP_UTF8, 0, str, -1, buf, length, nullptr, nullptr);
+    return s;
 }
 
 void http_thread(web_http_request *request)
@@ -100,6 +113,27 @@ void http_thread(web_http_request *request)
     delete request;
     request = nullptr;
     if (curl) {
+        auto params = std::split(postfield, '&');
+        postfield.clear();
+        for (auto& p : params)
+        {
+            auto p2 = std::split(p, '=');
+            if (p2.size() == 2)
+            {
+                postfield += p2[0];
+                postfield += '=';
+                auto utf8 = StringTToUtf8(CString(p2[1].c_str()));
+                auto pf = curl_easy_escape(curl, utf8.GetBuffer(0), utf8.GetLength());
+                postfield += pf;
+                curl_free(pf);
+                postfield += '&';
+            }
+        }
+        if (!postfield.empty() && postfield.back() == '&')
+        {
+            postfield.pop_back();
+        }
+        params.clear();
         std::string text;
         auto bindata = new std::vector<byte>();
         bindata->reserve(102400);
@@ -146,6 +180,7 @@ void http_thread(web_http_request *request)
             else
             {
                 if (ct.Find("UTF-8"))
+                    //TODO: º«Óï»áÏÔÊ¾ÂÒÂë
                     response->text = CStringA(Utf8ToStringT(text.c_str()));
                 else
                     response->text = text.c_str();

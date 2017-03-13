@@ -551,6 +551,27 @@ int ui_music_ctl(lua_State *L)
         return 0;
     }
     break;
+    case 18:
+    {
+        if (!zplay)
+        {
+            lua_pushnumber(L, 0);
+            return 1;
+        }
+        libZPlay::TStreamTime pos;
+        zplay->GetPosition(&pos);
+        auto sec = pos.hms.hour * 3600
+            + pos.hms.minute * 60
+            + pos.hms.second;
+        libZPlay::TStreamInfo info;
+        zplay->GetStreamInfo(&info);
+        auto full = info.Length.hms.hour * 3600
+            + info.Length.hms.minute * 60
+            + info.Length.hms.second;
+        lua_pushnumber(L, 1.0 * sec / full);
+        return 1;
+    }
+    break;
     case 20:
     {
         if (!zplay)

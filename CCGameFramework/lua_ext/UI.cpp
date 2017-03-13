@@ -27,6 +27,9 @@ static const luaL_Reg ui_lib[] = {
     { "hsb2rgb", ui_helper_hsl2rgb },
     { "rgb2hsb", ui_helper_rgb2hsl },
     { "isprintable", ui_isprintchar },
+    { "import_char", ui_importchar },
+    { "remove_char", ui_removechar },
+    { "limit_str", ui_limitstr },
     { "play_song", ui_play_song },
     { "music_ctrl", ui_music_ctl },
     { "parse_lyric", ui_parse_lyric },
@@ -149,6 +152,49 @@ int ui_helper_rgb2hsl(lua_State* L)
 int ui_isprintchar(lua_State *L)
 {
     auto c = (cint)luaL_checkinteger(L, 1);
-    lua_pushboolean(L, !iscntrl(c));
+    auto b = c > 255 ? true : !iscntrl(c);
+    lua_pushboolean(L, b);
+    return 1;
+}
+
+int ui_importchar(lua_State *L)
+{
+    auto c = (cint)luaL_checkinteger(L, 1);
+    std::string str;
+    if (c <= 255)
+    {
+        str.push_back((char)c);
+    }
+    else
+    {
+        CString s;
+        s.AppendChar(c);
+        str = CStringA(s).GetBuffer(0);
+    }
+    lua_pushstring(L, str.c_str());
+    return 1;
+}
+
+int ui_removechar(lua_State *L)
+{
+    CStringA str = luaL_checkstring(L, 1);
+    CString s2(str);
+    if (s2.IsEmpty())
+    {
+        lua_pushstring(L, "");
+        return 1;
+    }
+    s2.Delete(s2.GetLength() - 1);
+    lua_pushstring(L, CStringA(s2).GetBuffer(0));
+    return 1;
+}
+
+int ui_limitstr(lua_State *L)
+{
+    auto str = luaL_checkstring(L, 1);
+    auto limit = (cint)luaL_checkinteger(L, 2);
+    CString s(str);
+    s = s.Left(limit);
+    lua_pushstring(L, CStringA(s).GetBuffer(0));
     return 1;
 }

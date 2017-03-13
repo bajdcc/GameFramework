@@ -90,6 +90,7 @@ local U = {
 	playing = 15,
 	get_vol = 16,
 	set_vol = 17,
+	get_progress = 18,
 	play_loop = 20
 }
 

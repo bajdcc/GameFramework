@@ -834,8 +834,6 @@ bool Window::HandleMessageInternal(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM l
             ImmReleaseContext(handle, imc);
         }
         break;
-    case WM_IME_STARTCOMPOSITION:
-        break;
         // ************************************** hit test
     case WM_NCHITTEST:
     {

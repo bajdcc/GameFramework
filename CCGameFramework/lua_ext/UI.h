@@ -20,6 +20,9 @@ extern int ui_helper_hsl2rgb(lua_State *L);
 extern int ui_helper_rgb2hsl(lua_State *L);
 
 extern int ui_isprintchar(lua_State *L);
+extern int ui_importchar(lua_State *L);
+extern int ui_removechar(lua_State *L);
+extern int ui_limitstr(lua_State *L);
 
 extern int ui_play_song(lua_State *L);
 extern int ui_music_ctl(lua_State *L);

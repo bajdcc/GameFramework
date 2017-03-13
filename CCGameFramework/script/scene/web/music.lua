@@ -110,6 +110,8 @@ function M:init_event()
 	self.handler[self.win_event.timer] = function(this, id)
 		if id == 15 then
 			music_set_text(this.layers.ctrl.children[3], UIExt.music_ctrl(MusicCtrl.get_status))
+			this.progress = UIExt.music_ctrl(MusicCtrl.get_progress)
+			this.layers.bar:_resize()
 			UIExt.paint()
 		elseif id == 16 then
 			music_set_text(this.layers.ctrl.children[4], UIExt.music_ctrl(MusicCtrl.get_info))
@@ -148,19 +150,21 @@ function M:init_event()
 			UIExt.set_timer(18, 100)
 			UIExt.set_timer(20, 10000)
 
-			music_set_text(this.layers.ctrl.children[2], this.song_name)
+			music_set_text(this.layers.ctrl.children[2], this.song_name .. ' - ' .. this.singer)
 			music_set_text(this.layers.idstatus, 'ID：' .. this.song_id )
-			UIExt.paint()
+			music_set_text(this.layers.lyric, '')
 
 			UIExt.play_song(text)
 
+			this.layers.bar.percent = 0.0
 			this.layers.vol:update_vol(UIExt.music_ctrl(MusicCtrl.get_vol))
+			UIExt.paint()
 		elseif id == 11 then
 			if code ~= 200 then
 				music_set_text(this.layers.rtstatus, '封面下载失败')
 				return
 			end
-			music_set_text(this.layers.rtstatus, '封面加载中')
+			music_set_text(this.layers.rtstatus, '封面加载成功')
 			this.layers.pic.text = text
 			this.layers.pic:update()
 		elseif id == 12 then
@@ -169,7 +173,7 @@ function M:init_event()
 				music_set_text(this.layers.rtstatus, '歌词下载失败')
 				return
 			end
-			music_set_text(this.layers.rtstatus, '歌词加载中')
+			music_set_text(this.layers.rtstatus, '歌词加载成功')
 			this.lyric = UIExt.parse_lyric(obj.lyric)
 			music_set_text(this.layers.lyric, '正在播放歌曲：' .. this.song_name)
 			UIExt.paint()
@@ -187,7 +191,7 @@ function M:init_event()
 			this.sids = obj.result.songs
 			local btns = this.layers.btns.children
 			for i,v in ipairs(obj.result.songs) do
-				btns[i]:reset(v.name)
+				btns[i]:reset(UIExt.limit_str(v.name, 25))
 			end
 			UIExt.paint()
 		elseif id == 9 then
@@ -202,6 +206,7 @@ function M:init_event()
 			local song = obj.songs[1]
 			local url = song['mp3Url']
 			this.song_name = song['name']
+			this.singer = song.artists[1]['name']
 			this.pic_url = song['album']['picUrl']
 			this.song_id = song['id']
 			if url ~= nil and url ~= '' then
@@ -217,6 +222,19 @@ end
 function M:init_menu(info)
 	self.sids = {}
 	self.playid = 0
+	self.progress = 0.0
+
+	local bar = Block:new({
+		color = '#F5441E',
+		pre_resize = function(this, left, top, right, bottom)
+			return left, top, right * CurrentScene.progress, 4
+		end,
+		_resize = function(this)
+			local info = UIExt.info()
+			this:resize(0, 0, info.width, info.height)
+		end
+	})
+	self.layers.bar = self:add(bar)
 
 	-- MUSIC LIST
 
