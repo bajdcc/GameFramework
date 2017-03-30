@@ -141,14 +141,16 @@ function M:init_event()
 		if id == 5 then
 			Web.get('http://www.bing.com/HPImageArchive.aspx?format=js&n=1&idx=' .. this.bgidx, 101)
 		elseif id == 2 then
-			Web.get('http://api.hitokoto.us/rand?cat=a&length=30', 100)
+			--Web.get('http://api.hitokoto.us/rand?cat=a&length=30', 100)
+			Web.get('http://api.hitokoto.cn/?c=a&length=30&encode=json', 100)
 		end
 	end
 	self.handler[self.win_event.httpget] = function(this, id, code, text)
 		if id == 100 then
 			local obj = JSON.decode(text, 1, nil)
 			if obj ~= nil then
-				local disp = obj.hitokoto .. ' \n      ¡ª¡ª¡º' .. obj.source .. '¡»'
+				--local disp = obj.hitokoto .. ' \n      ¡ª¡ª¡º' .. obj.source .. '¡»'
+				local disp = '¡º' .. obj.from .. '¡»\n\n' .. obj.hitokoto
 				this.layers.text.text = disp
 				this.layers.text:update_and_paint()
 			end
