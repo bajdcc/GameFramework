@@ -213,6 +213,7 @@ xcopy /r /y /e "$(ProjectDir)dll" "$(TargetDir)"</Command>
     <ClInclude Include="base\libqrencode\rscode.h" />
     <ClInclude Include="base\libqrencode\split.h" />
     <ClInclude Include="base\libzplay\libzplay.h" />
+    <ClInclude Include="base\pe2d\PhysicsEngine2D.h" />
     <ClInclude Include="base\utils.h" />
     <ClInclude Include="lua\lapi.h" />
     <ClInclude Include="lua\lauxlib.h" />
@@ -283,6 +284,8 @@ xcopy /r /y /e "$(ProjectDir)dll" "$(TargetDir)"</Command>
     <ClCompile Include="base\libqrencode\split.c">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="base\pe2d\PhysicsEngine2D.cpp" />
+    <ClCompile Include="base\pe2d\PhysicsEngine2DRender.cpp" />
     <ClCompile Include="base\utils.cpp" />
     <ClCompile Include="lua\lapi.c">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
@@ -507,6 +510,12 @@ xcopy /r /y /e "$(ProjectDir)dll" "$(TargetDir)"</Command>
       <FileType>Document</FileType>
     </Text>
     <Text Include="script\scene\web\music.lua">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="script\scene\game\2dpe.lua">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="script\lib\ui\2dpe.lua">
       <FileType>Document</FileType>
     </Text>
   </ItemGroup>

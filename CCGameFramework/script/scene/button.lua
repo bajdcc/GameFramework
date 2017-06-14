@@ -158,6 +158,12 @@ function M:init_menu(info)
 	end
 	menu.children[5].layers.fg:update()
 
+	menu.children[6]:reset('2dpe')
+	menu.children[6].click = function()
+		FlipScene('PE2D')
+	end
+	menu.children[6].layers.fg:update()
+
 	UIExt.paint()
 end
 

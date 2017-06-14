@@ -20,6 +20,7 @@ static void InitRenderer()
     QRImageElementRenderer::Register();
     Base64ImageElementRenderer::Register();
     WireworldAutomatonImageElementRenderer::Register();
+    PhysicsEngine2DElementRenderer::Register();
     EditElementRenderer::Register();
 }
 

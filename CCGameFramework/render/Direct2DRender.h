@@ -4,6 +4,7 @@
 #include <ui/gdi/Gdi.h>
 #include "Direct2D.h"
 #include "Direct2DRenderTarget.h"
+#include <base/pe2d/PhysicsEngine2D.h>
 
 #pragma region Base
 
@@ -17,6 +18,7 @@ enum ElementId
     QRImage = 1100,
     Base64Image = 1101,
     WireworldAutomaton = 1102,
+    PhysicsEngine2D = 1103,
     Edit = 1200
 };
 
@@ -710,5 +712,47 @@ protected:
     cint oldMaxWidth{ -1 };
 };
 #pragma endregion Edit
+
+#pragma region PhysicsEngine2D
+
+class PhysicsEngine2DElement : public GraphicsElement<PhysicsEngine2DElement>
+{
+public:
+    PhysicsEngine2DElement();
+    ~PhysicsEngine2DElement();
+
+    static CString GetElementTypeName();
+
+    cint GetTypeId()override;
+
+    FLOAT GetOpacity()const;
+    void SetOpacity(FLOAT value);
+
+    void Refresh(int arg);
+
+protected:
+    CStringA text;
+    FLOAT opacity{ 0 };
+};
+
+class PhysicsEngine2DElementRenderer : public GraphicsRenderer<PhysicsEngine2DElement, PhysicsEngine2DElementRenderer, Direct2DRenderTarget>
+{
+public:
+    void Render(CRect bounds)override;
+    ~PhysicsEngine2DElementRenderer();
+    void Refresh(int arg);
+
+    void OnElementStateChanged()override;
+
+protected:
+    void InitializeInternal()override;
+    void FinalizeInternal()override;
+    void RenderTargetChangedInternal(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget, std::shared_ptr<Direct2DRenderTarget> newRenderTarget)override;
+
+private:
+    PhysicsEngine pe;
+};
+
+#pragma endregion PhysicsEngine2D
 
 #endif

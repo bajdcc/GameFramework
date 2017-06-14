@@ -76,6 +76,9 @@ int ui_add_obj(lua_State *L)
     case WireworldAutomaton:
         obj = WireworldAutomatonImageElement::Create();
         break;
+    case PhysicsEngine2D:
+        obj = PhysicsEngine2DElement::Create();
+        break;
     case Edit:
         obj = EditElement::Create();
         break;
@@ -125,7 +128,7 @@ int ui_update_obj(lua_State *L)
         break;
     case SolidBackground:
     {
-        auto obj = static_cast<SolidBackgroundElement*>(o.get());
+        auto obj = std::dynamic_pointer_cast<SolidBackgroundElement>(o);
         {
             lua_getfield(L, -1, "color");
             auto color = luaL_checkstring(L, -1); lua_pop(L, 1);
@@ -138,7 +141,7 @@ int ui_update_obj(lua_State *L)
     break;
     case SolidLabel:
     {
-        auto obj = static_cast<SolidLabelElement*>(o.get());
+        auto obj = std::dynamic_pointer_cast<SolidLabelElement>(o);
         {
             lua_getfield(L, -1, "color");
             auto color = luaL_checkstring(L, -1); lua_pop(L, 1);
@@ -174,7 +177,7 @@ int ui_update_obj(lua_State *L)
     break;
     case GradientBackground:
     {
-        auto obj = static_cast<GradientBackgroundElement*>(o.get());
+        auto obj = std::dynamic_pointer_cast<GradientBackgroundElement>(o);
         {
             lua_getfield(L, -1, "color1");
             auto color1 = luaL_checkstring(L, -1); lua_pop(L, 1);
@@ -191,7 +194,7 @@ int ui_update_obj(lua_State *L)
     break;
     case RoundBorder:
     {
-        auto obj = static_cast<RoundBorderElement*>(o.get());
+        auto obj = std::dynamic_pointer_cast<RoundBorderElement>(o);
         {
             lua_getfield(L, -1, "color");
             auto color = luaL_checkstring(L, -1); lua_pop(L, 1);
@@ -207,7 +210,7 @@ int ui_update_obj(lua_State *L)
     break;
     case QRImage:
     {
-        auto obj = static_cast<QRImageElement*>(o.get());
+        auto obj = std::dynamic_pointer_cast<QRImageElement>(o);
         {
             lua_getfield(L, -1, "color");
             auto color = luaL_checkstring(L, -1); lua_pop(L, 1);
@@ -223,7 +226,7 @@ int ui_update_obj(lua_State *L)
     break;
     case Base64Image:
     {
-        auto obj = static_cast<Base64ImageElement*>(o.get());
+        auto obj = std::dynamic_pointer_cast<Base64ImageElement>(o);
         {
             lua_getfield(L, -1, "text");
             auto text = luaL_checkstring(L, -1); lua_pop(L, 1);
@@ -239,7 +242,7 @@ int ui_update_obj(lua_State *L)
     break;
     case WireworldAutomaton:
     {
-        auto obj = static_cast<WireworldAutomatonImageElement*>(o.get());
+        auto obj = std::dynamic_pointer_cast<WireworldAutomatonImageElement>(o);
         {
             lua_getfield(L, -1, "text");
             auto text = luaL_checkstring(L, -1); lua_pop(L, 1);
@@ -250,9 +253,19 @@ int ui_update_obj(lua_State *L)
         }
     }
     break;
+    case PhysicsEngine2D:
+    {
+        auto obj = std::dynamic_pointer_cast<PhysicsEngine2DElement>(o);
+        {
+            lua_getfield(L, -1, "opacity");
+            auto opacity = (FLOAT)luaL_checknumber(L, -1); lua_pop(L, 1);
+            obj->SetOpacity(opacity);
+        }
+    }
+    break;
     case Edit:
     {
-        auto obj = static_cast<EditElement*>(o.get());
+        auto obj = std::dynamic_pointer_cast<EditElement>(o);
         lua_getfield(L, -1, "text");
         auto text = luaL_checkstring(L, -1); lua_pop(L, 1);
         obj->SetText(CString(text));
@@ -312,7 +325,7 @@ int ui_refresh_obj(lua_State *L)
         break;
     case WireworldAutomaton:
     {
-        auto obj = static_cast<WireworldAutomatonImageElement*>(o.get());
+        auto obj = std::dynamic_pointer_cast<WireworldAutomatonImageElement>(o);
         {
             obj->Refresh(arg);
         }

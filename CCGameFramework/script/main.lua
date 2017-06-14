@@ -41,6 +41,7 @@ Window = {
 		Button = "script.scene.button",
 		-- GAME
 		Game_2048 = "script.scene.game.2048",
+		PE2D = "script.scene.game.2dpe",
 		-- WEB
 		Hitokoto = "script.scene.web.hitokoto",
 		Music = "script.scene.web.music",

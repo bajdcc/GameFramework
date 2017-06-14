@@ -274,6 +274,9 @@
     <ClInclude Include="base\utils.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="base\pe2d\PhysicsEngine2D.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -474,6 +477,12 @@
     <ClCompile Include="base\utils.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="base\pe2d\PhysicsEngine2DRender.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\pe2d\PhysicsEngine2D.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="script\lib\core\scene.lua">
@@ -567,6 +576,12 @@
       <Filter>脚本</Filter>
     </Text>
     <Text Include="script\scene\web\music.lua">
+      <Filter>脚本</Filter>
+    </Text>
+    <Text Include="script\lib\ui\2dpe.lua">
+      <Filter>脚本</Filter>
+    </Text>
+    <Text Include="script\scene\game\2dpe.lua">
       <Filter>脚本</Filter>
     </Text>
   </ItemGroup>
