@@ -201,8 +201,16 @@ function M:init_event()
 			end
 			music_set_text(this.layers.rtstatus, '歌曲下载中')
 			local obj = JSON.decode(text, 1, nil)
-			if obj == nil or obj.code ~= 200 or obj.songs == nil then return end
-			if #obj.songs == 0 or obj.songs[1] == nil then return end
+			if obj == nil or obj.code ~= 200 or obj.songs == nil then
+				music_set_text(this.layers.rtstatus, '歌曲解析失败')
+				UIExt.paint()
+				return
+			end
+			if #obj.songs == 0 or obj.songs[1] == nil then
+				music_set_text(this.layers.rtstatus, '没有播放源')
+				UIExt.paint()
+				return
+			end
 			local song = obj.songs[1]
 			local url = song['mp3Url']
 			this.song_name = song['name']
@@ -214,6 +222,9 @@ function M:init_event()
 				this.layers.pic.url = this.pic_url
 				Web.getb(this.pic_url, 11)
 				Web.get('http://music.163.com/api/song/media?id=' .. this.song_id, 12)
+			else
+				music_set_text(this.layers.rtstatus, '播放地址无效')
+				UIExt.paint()
 			end
 		end
 	end

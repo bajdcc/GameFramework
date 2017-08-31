@@ -477,10 +477,10 @@
     <ClCompile Include="base\utils.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="base\pe2d\PhysicsEngine2DRender.cpp">
+    <ClCompile Include="base\pe2d\PhysicsEngine2D.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="base\pe2d\PhysicsEngine2D.cpp">
+    <ClCompile Include="base\pe2d\PhysicsEngine2DRender.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -576,12 +576,6 @@
       <Filter>脚本</Filter>
     </Text>
     <Text Include="script\scene\web\music.lua">
-      <Filter>脚本</Filter>
-    </Text>
-    <Text Include="script\lib\ui\2dpe.lua">
-      <Filter>脚本</Filter>
-    </Text>
-    <Text Include="script\scene\game\2dpe.lua">
       <Filter>脚本</Filter>
     </Text>
   </ItemGroup>
