@@ -213,6 +213,7 @@ xcopy /r /y /e "$(ProjectDir)dll" "$(TargetDir)"</Command>
     <ClInclude Include="base\libqrencode\rscode.h" />
     <ClInclude Include="base\libqrencode\split.h" />
     <ClInclude Include="base\libzplay\libzplay.h" />
+    <ClInclude Include="base\pe2d\math\vector3.h" />
     <ClInclude Include="base\pe2d\PhysicsEngine2D.h" />
     <ClInclude Include="base\utils.h" />
     <ClInclude Include="lua\lapi.h" />
@@ -284,8 +285,10 @@ xcopy /r /y /e "$(ProjectDir)dll" "$(TargetDir)"</Command>
     <ClCompile Include="base\libqrencode\split.c">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="base\pe2d\math\vector3.cpp" />
     <ClCompile Include="base\pe2d\PhysicsEngine2D.cpp" />
     <ClCompile Include="base\pe2d\PhysicsEngine2DRender.cpp" />
+    <ClCompile Include="base\pe2d\RenderSphere.cpp" />
     <ClCompile Include="base\utils.cpp" />
     <ClCompile Include="lua\lapi.c">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>

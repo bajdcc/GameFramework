@@ -277,6 +277,9 @@
     <ClInclude Include="base\pe2d\PhysicsEngine2D.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="base\pe2d\math\vector3.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -481,6 +484,12 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="base\pe2d\PhysicsEngine2DRender.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\pe2d\math\vector3.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\pe2d\RenderSphere.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

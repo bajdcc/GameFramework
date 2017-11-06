@@ -14,6 +14,9 @@ void PhysicsEngine::RenderByType(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
     case 1:
         RenderSimpleColor(rt, bounds);
         break;
+    case 2:
+        RenderSimpleSphere(rt, bounds);
+        break;
     }
 }
 
@@ -119,6 +122,50 @@ void PhysicsEngine::RenderSimpleColor(CComPtr<ID2D1RenderTarget> rt, CRect bound
             read += 4;
         }
     }
+    auto d2dRect = D2D1::RectU(0, 0, rect.Width, rect.Height);
+    bitmap = _rt->GetBitmapFromWIC(wic);
+    bitmap->CopyFromMemory(&d2dRect, buffer, rect.Width * 4);
+    delete[]buffer;
+    rt->DrawBitmap(
+        bitmap,
+        D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
+        1.0f,
+        D2D1_BITMAP_INTERPOLATION_MODE_LINEAR // 线性即可
+    );
+    painted = true;
+}
+
+void PhysicsEngine::RenderSimpleSphere(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
+{
+    if (bounds.Width() < 256 || bounds.Height() < 256)
+        return;
+    if (painted)
+    {
+        // 画渲染好的位图
+        rt->DrawBitmap(
+            bitmap,
+            D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
+            1.0f,
+            D2D1_BITMAP_INTERPOLATION_MODE_LINEAR
+        );
+        return;
+    }
+    auto _rt = d2drt.lock();
+    auto _w = 256, _h = 256;
+    auto wic = _rt->CreateBitmap(_w, _h);
+    WICRect rect;
+    rect.X = 0;
+    rect.Y = 0;
+    rect.Width = _w;
+    rect.Height = _h;
+    auto buffer = new BYTE[rect.Width * rect.Height * 4];
+    auto hr = wic->CopyPixels(&rect, rect.Width * 4, rect.Width * rect.Height * 4, buffer);
+
+    // ----------------------------------------------------
+    // 位图渲染开始
+    RenderSphereIntern(buffer, _w, _h);
+    // ----------------------------------------------------
+
     auto d2dRect = D2D1::RectU(0, 0, rect.Width, rect.Height);
     bitmap = _rt->GetBitmapFromWIC(wic);
     bitmap->CopyFromMemory(&d2dRect, buffer, rect.Width * 4);
