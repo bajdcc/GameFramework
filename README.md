@@ -86,3 +86,11 @@ TODO：
 #### 光线追踪
 
 - [用JavaScript玩转计算机图形学(一)光线追踪入门 - Milo Yip](http://www.cnblogs.com/miloyip/archive/2010/03/29/1698953.html)
+
+#### 截图
+
+![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/gui_main.png)
+
+![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/gui_1.png)
+
+![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/gui_2.png)

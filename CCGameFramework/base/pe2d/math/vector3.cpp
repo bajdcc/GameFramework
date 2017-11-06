@@ -1,4 +1,4 @@
-#include "stdafx.h"
+ï»¿#include "stdafx.h"
 #include "vector3.h"
 
 // REFER TO: D3DX9MATH.H
@@ -88,7 +88,7 @@ vector3 vector3::operator + (const vector3& v) const
 
 vector3 vector3::operator - (const vector3& v) const
 {
-    return vector3(x + v.x, y + v.y, z + v.z);
+    return vector3(x - v.x, y - v.y, z - v.z);
 }
 
 vector3 vector3::operator * (FLOAT s) const
@@ -103,7 +103,7 @@ vector3 vector3::operator / (FLOAT s) const
 
 BOOL vector3::operator == (const vector3& v) const
 {
-    return x == v.x && y == v.y && z == v.z; // ÓĞ¾«¶ÈÎÊÌâ£¬ÕâÀïÏÈ²»¹Ü
+    return x == v.x && y == v.y && z == v.z; // æœ‰ç²¾åº¦é—®é¢˜ï¼Œè¿™é‡Œå…ˆä¸ç®¡
 }
 
 BOOL vector3::operator != (const vector3& v) const

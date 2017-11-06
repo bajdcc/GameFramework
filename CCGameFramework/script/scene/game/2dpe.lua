@@ -176,6 +176,8 @@ function M:init_menu(info)
 		track_display = 0,
 		font_size = 16,
 		click = function()
+			CurrentScene.layers.text.text = '简单球体光线追踪'
+			CurrentScene.layers.text:update()
 			CurrentScene.layers.wm.show_self = 0
 			CurrentScene.layers.wm:update()
 			UIExt.refresh(CurrentScene.layers.pe2d, 2)

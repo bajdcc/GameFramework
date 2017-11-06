@@ -1,11 +1,11 @@
-#include "stdafx.h"
+Ôªø#include "stdafx.h"
 #include "PhysicsEngine2D.h"
 #include "render/Direct2DRenderTarget.h"
 
 void PhysicsEngine::RenderByType(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
 {
     if (!d2drt.lock()) return;
-    //  æ¿˝≤Œº˚ http://www.cnblogs.com/miloyip/archive/2010/03/29/1698953.html
+    // Á§∫‰æãÂèÇËßÅ http://www.cnblogs.com/miloyip/archive/2010/03/29/1698953.html
     switch (type)
     {
     case 0:
@@ -59,6 +59,7 @@ void PhysicsEngine::SetType(cint value)
     switch (value)
     {
     case 1:
+    case 2:
         painted = false;
         break;
     }
@@ -75,7 +76,7 @@ void PhysicsEngine::RenderSimpleColor(CComPtr<ID2D1RenderTarget> rt, CRect bound
         return;
     if (painted)
     {
-        // ª≠‰÷»æ∫√µƒŒªÕº
+        // ÁîªÊ∏≤ÊüìÂ•ΩÁöÑ‰ΩçÂõæ
         rt->DrawBitmap(
             bitmap,
             D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
@@ -130,7 +131,7 @@ void PhysicsEngine::RenderSimpleColor(CComPtr<ID2D1RenderTarget> rt, CRect bound
         bitmap,
         D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
         1.0f,
-        D2D1_BITMAP_INTERPOLATION_MODE_LINEAR // œﬂ–‘º¥ø…
+        D2D1_BITMAP_INTERPOLATION_MODE_LINEAR // Á∫øÊÄßÂç≥ÂèØ
     );
     painted = true;
 }
@@ -141,10 +142,10 @@ void PhysicsEngine::RenderSimpleSphere(CComPtr<ID2D1RenderTarget> rt, CRect boun
         return;
     if (painted)
     {
-        // ª≠‰÷»æ∫√µƒŒªÕº
+        // ÁîªÊ∏≤ÊüìÂ•ΩÁöÑ‰ΩçÂõæ
         rt->DrawBitmap(
             bitmap,
-            D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
+            D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.left + 256, (FLOAT)bounds.top + 256),
             1.0f,
             D2D1_BITMAP_INTERPOLATION_MODE_LINEAR
         );
@@ -162,7 +163,7 @@ void PhysicsEngine::RenderSimpleSphere(CComPtr<ID2D1RenderTarget> rt, CRect boun
     auto hr = wic->CopyPixels(&rect, rect.Width * 4, rect.Width * rect.Height * 4, buffer);
 
     // ----------------------------------------------------
-    // ŒªÕº‰÷»æø™ º
+    // ‰ΩçÂõæÊ∏≤ÊüìÂºÄÂßã
     RenderSphereIntern(buffer, _w, _h);
     // ----------------------------------------------------
 
@@ -172,9 +173,9 @@ void PhysicsEngine::RenderSimpleSphere(CComPtr<ID2D1RenderTarget> rt, CRect boun
     delete[]buffer;
     rt->DrawBitmap(
         bitmap,
-        D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
+        D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.left + 256, (FLOAT)bounds.top + 256),
         1.0f,
-        D2D1_BITMAP_INTERPOLATION_MODE_LINEAR // œﬂ–‘º¥ø…
+        D2D1_BITMAP_INTERPOLATION_MODE_LINEAR // Á∫øÊÄßÂç≥ÂèØ
     );
     painted = true;
 }
