@@ -728,11 +728,15 @@ public:
     FLOAT GetOpacity()const;
     void SetOpacity(FLOAT value);
 
+    cint GetType()const;
+    void SetType(cint value);
+
     void Refresh(int arg);
 
 protected:
     CStringA text;
     FLOAT opacity{ 0 };
+    cint type{ 0 };
 };
 
 class PhysicsEngine2DElementRenderer : public GraphicsRenderer<PhysicsEngine2DElement, PhysicsEngine2DElementRenderer, Direct2DRenderTarget>

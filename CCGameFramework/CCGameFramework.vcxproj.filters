@@ -579,4 +579,12 @@
       <Filter>脚本</Filter>
     </Text>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="script\scene\game\2dpe.lua">
+      <Filter>脚本</Filter>
+    </None>
+    <None Include="script\lib\ui\2dpe.lua">
+      <Filter>脚本</Filter>
+    </None>
+  </ItemGroup>
 </Project>

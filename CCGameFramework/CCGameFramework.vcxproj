@@ -513,6 +513,10 @@ xcopy /r /y /e "$(ProjectDir)dll" "$(TargetDir)"</Command>
       <FileType>Document</FileType>
     </Text>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="script\lib\ui\2dpe.lua" />
+    <None Include="script\scene\game\2dpe.lua" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

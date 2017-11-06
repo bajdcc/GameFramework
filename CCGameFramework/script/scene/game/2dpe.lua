@@ -18,7 +18,7 @@ package.loaded[modname] = M
 
 function M:new(o)
 	o = o or {}
-	o.name = '2D Physics Engine'
+	o.name = '图形学展示'
 	o.def = {
 		timerid = 10,
 		state = true
@@ -67,8 +67,8 @@ function M:init()
 	-- TEXT
 	local text = Text:new({
 		color = '#222222',
-		text = '2D Physics Engine',
-		family = 'Times New Roman',
+		text = self.name,
+		family = '楷体',
 		pre_resize = function(this, left, top, right, bottom)
 			return left, top, right, top + 50
 		end
@@ -80,6 +80,18 @@ function M:init()
 
 	-- EVENT
 	self:init_event()
+
+	-- WATERMARK
+	local wm = Text:new({
+		color = '#1E75BB',
+		text = '点击下方按钮以查看图形学示例',
+		family = '楷体',
+		pre_resize = function(this, left, top, right, bottom)
+			return left, top + 50, right, bottom - 50
+		end
+	})
+	self.layers.wm = self:add(wm)
+	UIExt.trace('Scene [2D Physics Engine]: create watermark #' .. self.layers.wm.handle)
 
 	UIExt.set_timer(8, 500)
 
@@ -98,10 +110,8 @@ function M:init_event()
 	end
 	self.handler[self.win_event.timer] = function(this, id)
 		if id == 8 then
-			this.layers.pe2d:update_and_paint()
 			UIExt.kill_timer(8)
-			UIExt.set_timer(5, 30)
-		elseif id == 5 and this.def.state then
+			this.layers.pe2d:update_and_paint()
 			UIExt.refresh(this.layers.pe2d, 0)
 			UIExt.paint()
 		end
@@ -142,32 +152,58 @@ function M:init_menu(info)
 		padright = 2,
 		padbottom = 2,
 		pre_resize = function(this, left, top, right, bottom)
-			return left, bottom - 50, left + 350, bottom
+			return left, bottom - 50, left + 500, bottom
 		end
 	})
 	self:add(slider)
 	Button:new({
-		text = '重新开始',
+		text = '色彩图',
 		font_family = '楷体',
 		track_display = 0,
 		font_size = 16,
-		click = function()
+		click = function(this)
+			CurrentScene.layers.text.text = '随机渐变'
+			CurrentScene.layers.text:update()
+			CurrentScene.layers.wm.show_self = 0
+			CurrentScene.layers.wm:update()
+			UIExt.refresh(CurrentScene.layers.pe2d, 1)
+			UIExt.paint()
 		end
 	}):attach(slider)
 	Button:new({
-		text = '暂停/继续',
+		text = '球体渲染',
 		font_family = '楷体',
 		track_display = 0,
 		font_size = 16,
 		click = function()
-			CurrentScene.def.state = not CurrentScene.def.state
+			CurrentScene.layers.wm.show_self = 0
+			CurrentScene.layers.wm:update()
+			UIExt.refresh(CurrentScene.layers.pe2d, 2)
+			UIExt.paint()
 		end
 	}):attach(slider)
-	Text:new({
-		text = '状态',
-		family = '楷体',
-		size = 16,
+	Button:new({
+		text = '法向渲染',
+		font_family = '楷体',
+		track_display = 0,
+		font_size = 16,
 		click = function()
+			CurrentScene.layers.wm.show_self = 0
+			CurrentScene.layers.wm:update()
+			UIExt.refresh(CurrentScene.layers.pe2d, 3)
+			UIExt.paint()
+		end
+	}):attach(slider)
+	Button:new({
+		text = '添加材质',
+		font_family = '楷体',
+		track_display = 0,
+		font_size = 16,
+		click = function()
+			CurrentScene.layers.wm.show_self = 0
+			CurrentScene.layers.wm:update()
+			UIExt.refresh(CurrentScene.layers.pe2d, 4)
+			UIExt.paint()
 		end
 	}):attach(slider)
 	self.layers.rtstatus = slider.children[#slider.children]
