@@ -22,7 +22,7 @@ private:
     void RenderSimpleSphere(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
 
 private:
-    void RenderSphereIntern(BYTE* buffer, cint width, cint height);
+    void RenderSphereIntern(BYTE* buffer, BYTE* buffer2, cint width, cint height);;
 
 private:
     CComPtr<ID2D1SolidColorBrush> bg;
@@ -31,6 +31,7 @@ private:
     std::weak_ptr<Direct2DRenderTarget> d2drt;
     bool painted{ false };
     CComPtr<ID2D1Bitmap> bitmap;
+    CComPtr<ID2D1Bitmap> bitmap2;
 };
 
 #endif

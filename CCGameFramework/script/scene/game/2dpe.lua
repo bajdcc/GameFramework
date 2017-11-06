@@ -185,7 +185,7 @@ function M:init_menu(info)
 		end
 	}):attach(slider)
 	Button:new({
-		text = '法向渲染',
+		text = '添加材质',
 		font_family = '楷体',
 		track_display = 0,
 		font_size = 16,
@@ -197,7 +197,7 @@ function M:init_menu(info)
 		end
 	}):attach(slider)
 	Button:new({
-		text = '添加材质',
+		text = '发光的球',
 		font_family = '楷体',
 		track_display = 0,
 		font_size = 16,
