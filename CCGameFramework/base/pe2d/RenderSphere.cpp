@@ -119,7 +119,7 @@ public:
                 // r(t) = o + t.d
                 auto distance = -DdotV - sqrtf(discr);      // 得出t，即摄影机发出的光线到其与球面的交点距离
                 auto position = ray.Eval(distance);         // 代入直线方程，得出交点位置
-                auto normal = Normalize(position - center); // 法向量 = 起点(摄影机) - 终点(球面交点)
+                auto normal = Normalize(position - center); // 法向量 = 光线终点(球面交点) - 球心坐标
                 return IntersectResult(distance, position, normal);
             }
         }
