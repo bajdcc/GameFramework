@@ -20,6 +20,9 @@ void PhysicsEngine::RenderByType(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
     case 3:
         RenderMaterialSphere(rt, bounds);
         break;
+    case 4:
+        RenderReflectSphere(rt, bounds);
+        break;
     }
 }
 
@@ -75,7 +78,7 @@ void PhysicsEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
 
 }
 
-void PhysicsEngine::RenderSimpleColor(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
+void PhysicsEngine::RenderSingleBitmap(CComPtr<ID2D1RenderTarget> rt, CRect bounds, void(*callback)(BYTE*, int, int))
 {
     if (bounds.Width() < 256 || bounds.Height() < 256)
         return;
@@ -84,7 +87,7 @@ void PhysicsEngine::RenderSimpleColor(CComPtr<ID2D1RenderTarget> rt, CRect bound
         // 画渲染好的位图
         rt->DrawBitmap(
             bitmap,
-            D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
+            D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.left + 256, (FLOAT)bounds.top + 256),
             1.0f,
             D2D1_BITMAP_INTERPOLATION_MODE_LINEAR
         );
@@ -100,45 +103,29 @@ void PhysicsEngine::RenderSimpleColor(CComPtr<ID2D1RenderTarget> rt, CRect bound
     rect.Height = _h;
     auto buffer = new BYTE[rect.Width * rect.Height * 4];
     auto hr = wic->CopyPixels(&rect, rect.Width * 4, rect.Width * rect.Height * 4, buffer);
-    auto read = buffer;
-    auto rd = rand() % 3;
-    for (auto y = 0; y < _h; y++)
-    {
-        for (auto x = 0; x < _w; x++)
-        {
-            if (rd == 0)
-            {
-                read[0] = BYTE(x * 255 / _w); //B
-                read[1] = BYTE(y * 255 / _h); //G
-                read[2] = 0;                  //R
-            }
-            else if (rd == 1)
-            {
-                read[0] = BYTE(x * 255 / _w); //B
-                read[1] = 0;                  //G
-                read[2] = BYTE(y * 255 / _h); //R
-            }
-            else if (rd == 2)
-            {
-                read[0] = 0;                  //B
-                read[1] = BYTE(x * 255 / _w); //G
-                read[2] = BYTE(y * 255 / _h); //R
-            }
-            read[3] = 255; //A
-            read += 4;
-        }
-    }
+
+    // ----------------------------------------------------
+    // 位图渲染开始
+    callback(buffer, _w, _h);
+    // ----------------------------------------------------
+
     auto d2dRect = D2D1::RectU(0, 0, rect.Width, rect.Height);
     bitmap = _rt->GetBitmapFromWIC(wic);
     bitmap->CopyFromMemory(&d2dRect, buffer, rect.Width * 4);
-    delete[]buffer;
     rt->DrawBitmap(
         bitmap,
-        D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
+        D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.left + 256, (FLOAT)bounds.top + 256),
         1.0f,
         D2D1_BITMAP_INTERPOLATION_MODE_LINEAR // 线性即可
     );
+
+    delete[]buffer;
     painted = true;
+}
+
+void PhysicsEngine::RenderSimpleColor(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
+{
+    RenderSingleBitmap(rt, bounds, RenderSimpleIntern);
 }
 
 void PhysicsEngine::RenderSimpleSphere(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
@@ -205,45 +192,41 @@ void PhysicsEngine::RenderSimpleSphere(CComPtr<ID2D1RenderTarget> rt, CRect boun
 
 void PhysicsEngine::RenderMaterialSphere(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
 {
-    if (bounds.Width() < 256 || bounds.Height() < 256)
-        return;
-    if (painted)
+    RenderSingleBitmap(rt, bounds, RenderMaterialIntern);
+}
+
+void PhysicsEngine::RenderReflectSphere(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
+{
+    RenderSingleBitmap(rt, bounds, RenderReflectIntern);
+}
+
+void PhysicsEngine::RenderSimpleIntern(BYTE* buffer, cint width, cint height)
+{
+    const auto rd = rand() % 3;
+    for (auto y = 0; y < height; y++)
     {
-        // 画渲染好的位图
-        rt->DrawBitmap(
-            bitmap,
-            D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.left + 256, (FLOAT)bounds.top + 256),
-            1.0f,
-            D2D1_BITMAP_INTERPOLATION_MODE_LINEAR
-        );
-        return;
+        for (auto x = 0; x < width; x++)
+        {
+            if (rd == 0)
+            {
+                buffer[0] = BYTE(x * 255 / width); //B
+                buffer[1] = BYTE(y * 255 / height); //G
+                buffer[2] = 0;                  //R
+            }
+            else if (rd == 1)
+            {
+                buffer[0] = BYTE(x * 255 / width); //B
+                buffer[1] = 0;                  //G
+                buffer[2] = BYTE(y * 255 / height); //R
+            }
+            else if (rd == 2)
+            {
+                buffer[0] = 0;                  //B
+                buffer[1] = BYTE(x * 255 / width); //G
+                buffer[2] = BYTE(y * 255 / height); //R
+            }
+            buffer[3] = 255; //A
+            buffer += 4;
+        }
     }
-    auto _rt = d2drt.lock();
-    auto _w = 256, _h = 256;
-    auto wic = _rt->CreateBitmap(_w, _h);
-    WICRect rect;
-    rect.X = 0;
-    rect.Y = 0;
-    rect.Width = _w;
-    rect.Height = _h;
-    auto buffer = new BYTE[rect.Width * rect.Height * 4];
-    auto hr = wic->CopyPixels(&rect, rect.Width * 4, rect.Width * rect.Height * 4, buffer);
-
-    // ----------------------------------------------------
-    // 位图渲染开始
-    RenderMaterialIntern(buffer, _w, _h);
-    // ----------------------------------------------------
-
-    auto d2dRect = D2D1::RectU(0, 0, rect.Width, rect.Height);
-    bitmap = _rt->GetBitmapFromWIC(wic);
-    bitmap->CopyFromMemory(&d2dRect, buffer, rect.Width * 4);
-    rt->DrawBitmap(
-        bitmap,
-        D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.left + 256, (FLOAT)bounds.top + 256),
-        1.0f,
-        D2D1_BITMAP_INTERPOLATION_MODE_LINEAR // 线性即可
-    );
-
-    delete[]buffer;
-    painted = true;
 }

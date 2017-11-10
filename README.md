@@ -79,15 +79,17 @@ TODO：
 - 算法可视化
   - A*寻路（已完成）
   - **Wireworld 元胞自动机（已完成）**
-  - 光线追踪
+  - **光线追踪（进行中）**
   
 ### 第三阶段：图形学
 
 #### 光线追踪
 
-- [用JavaScript玩转计算机图形学(一)光线追踪入门 - Milo Yip](http://www.cnblogs.com/miloyip/archive/2010/03/29/1698953.html)
+- [用JavaScript玩转计算机图形学(一)光线追踪入门 - Milo Yip](http://www.cnblogs.com/miloyip/archive/2010/03/29/1698953.html) **（已完成）**
 
 #### 截图
+
+**光线追踪入门**
 
 ![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/gui_main.png)
 
@@ -96,3 +98,5 @@ TODO：
 ![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/gui_2.png)
 
 ![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/gui_3.png)
+
+![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/gui_4.png)

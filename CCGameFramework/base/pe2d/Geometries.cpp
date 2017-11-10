@@ -69,13 +69,17 @@ color color::operator*(const color& c) const
     return color(r * c.r, g * c.g, b * c.b);
 }
 
+Material::Material(float reflectiveness): reflectiveness(reflectiveness)
+{
+}
+
 Material::~Material()
 {
 }
 
 CheckerMaterial::CheckerMaterial(float scale, float reflectiveness)
-    : scale(scale)
-    , reflectiveness(reflectiveness)
+    : Material(reflectiveness)
+    , scale(scale)
 {
 }
 
@@ -91,10 +95,10 @@ auto lightDir = Normalize(vector3(1.0f, 1.0f, 1.0f));
 color lightColor(Gdiplus::Color::White);
 
 PhongMaterial::PhongMaterial(color diffuse, color specular, float shininess, float reflectiveness)
-    : diffuse(diffuse)
+    : Material(reflectiveness)
+    , diffuse(diffuse)
     , specular(specular)
     , shininess(shininess)
-    , reflectiveness(reflectiveness)
 {
 }
 

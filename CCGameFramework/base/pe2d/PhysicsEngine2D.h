@@ -2,6 +2,7 @@
 #define PE2D_PE2D_H
 #include "render/Direct2DAllocator.h"
 #include <memory>
+#include "Geometries.h"
 
 
 class PhysicsEngine
@@ -18,13 +19,19 @@ public:
 
 private:
     void RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
+    void RenderSingleBitmap(CComPtr<ID2D1RenderTarget> rt, CRect bounds, void(*callback)(BYTE*, cint, cint));
+
     void RenderSimpleColor(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
     void RenderSimpleSphere(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
     void RenderMaterialSphere(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
+    void RenderReflectSphere(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
 
 private:
-    static void RenderSphereIntern(BYTE* buffer, BYTE* buffer2, cint width, cint height);;
-    static void RenderMaterialIntern(BYTE* buffer, int i, int h);
+    static void RenderSimpleIntern(BYTE* buffer, cint width, cint height);
+    static void RenderSphereIntern(BYTE* buffer, BYTE* buffer2, cint width, cint height);
+    static void RenderMaterialIntern(BYTE* buffer, cint width, cint height);
+    static void RenderReflectIntern(BYTE* buffer, cint width, cint height);
+    static color RenderReflectRecursive(World& world, const Ray& ray, int maxReflect);
 
 private:
     CComPtr<ID2D1SolidColorBrush> bg;

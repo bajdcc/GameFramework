@@ -64,8 +64,11 @@ public:
 class Material
 {
 public:
+    Material(float reflectiveness);
     virtual ~Material();
     virtual color Sample(Ray ray, vector3 position, vector3 normal) = 0;
+
+    float reflectiveness{ 0.0f };
 };
 
 // 棋盘材质
@@ -77,7 +80,6 @@ public:
     color Sample(Ray ray, vector3 position, vector3 normal) override;
 
     float scale{ 0.0f };
-    float reflectiveness{ 0.0f };
 };
 
 // Phong材质
@@ -91,7 +93,6 @@ public:
     color diffuse;
     color specular;
     float shininess{ 0.0f };
-    float reflectiveness{ 0.0f };
 };
 
 // 几何体接口
