@@ -104,11 +104,23 @@ PhongMaterial::PhongMaterial(color diffuse, color specular, float shininess, flo
 
 color PhongMaterial::Sample(Ray ray, vector3 position, vector3 normal)
 {
-    // 暂时没弄清楚 
+    /*
+      参考 https://www.cnblogs.com/bluebean/p/5299358.html Blinn-Phong模型
+        Ks：物体对于反射光线的衰减系数
+        N：表面法向量
+        H：光入射方向L和视点方向V的中间向量
+        Shininess：高光系数
+
+        Specular = Ks * lightColor * pow(dot(N, H), shininess)
+
+        当视点方向和反射光线方向一致时，计算得到的H与N平行，dot(N,H)取得最大；当视点方向V偏离反射方向时，H也偏离N。
+        简单来说，入射光与视线的差越接近法向量，镜面反射越明显
+     */
+
     const auto NdotL = DotProduct(normal, lightDir);
     const auto H = Normalize(lightDir - ray.direction);
     const auto NdotH = DotProduct(normal, H);
-    const auto diffuseTerm = diffuse * fmax(NdotL, 0.0f);
+    const auto diffuseTerm = diffuse * fmax(NdotL, 0.0f); // N * L 入射光在镜面法向上的投影 = 漫反射
     const auto specularTerm = specular * powf(fmax(NdotH, 0.0f), shininess);
     return lightColor * (diffuseTerm + specularTerm);
 }
