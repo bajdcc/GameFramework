@@ -2,7 +2,7 @@
 #include "PhysicsEngine2D.h"
 #include "Geometries.h"
 
-void PhysicsEngine::RenderSphereIntern(BYTE * buffer, BYTE * buffer2, cint width, cint height)
+void PhysicsEngine::RenderMaterialIntern(BYTE * buffer, cint width, cint height)
 {
     // -------------------------------------
     // 摄影机
@@ -50,10 +50,6 @@ void PhysicsEngine::RenderSphereIntern(BYTE * buffer, BYTE * buffer2, cint width
                 buffer[1] = (BYTE)depth;
                 buffer[2] = (BYTE)depth;
                 buffer[3] = 255;
-                buffer2[0] = (BYTE)((result.normal.x + 1) * 128); // 法向[-1,1]映射至[0,255]
-                buffer2[1] = (BYTE)((result.normal.y + 1) * 128);
-                buffer2[2] = (BYTE)((result.normal.z + 1) * 128);
-                buffer2[3] = 255;
             }
             else
             {
@@ -62,14 +58,9 @@ void PhysicsEngine::RenderSphereIntern(BYTE * buffer, BYTE * buffer2, cint width
                 buffer[1] = 0;
                 buffer[2] = 0;
                 buffer[3] = 255;
-                buffer2[0] = 0;
-                buffer2[1] = 0;
-                buffer2[2] = 0;
-                buffer2[3] = 255;
             }
 
             buffer += 4;
-            buffer2 += 4;
         }
     }
 }

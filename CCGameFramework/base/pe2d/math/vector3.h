@@ -1,3 +1,5 @@
+#ifndef VECTOR3_H
+#define VECTOR3_H
 #include <stdafx.h>
 
 // REFER TO: D3DX9MATH.H
@@ -43,3 +45,5 @@ FLOAT Magnitude(const vector3& v);
 vector3 Normalize(const vector3& v);
 FLOAT DotProduct(const vector3& v1, const vector3& v2);
 vector3 CrossProduct(const vector3& v1, const vector3& v2);
+
+#endif // VECTOR3_H

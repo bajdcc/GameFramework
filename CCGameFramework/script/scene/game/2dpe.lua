@@ -190,6 +190,8 @@ function M:init_menu(info)
 		track_display = 0,
 		font_size = 16,
 		click = function()
+			CurrentScene.layers.text.text = '渲染材质'
+			CurrentScene.layers.text:update()
 			CurrentScene.layers.wm.show_self = 0
 			CurrentScene.layers.wm:update()
 			UIExt.refresh(CurrentScene.layers.pe2d, 3)
@@ -197,11 +199,13 @@ function M:init_menu(info)
 		end
 	}):attach(slider)
 	Button:new({
-		text = '发光的球',
+		text = '添加反射',
 		font_family = '楷体',
 		track_display = 0,
 		font_size = 16,
 		click = function()
+			CurrentScene.layers.text.text = '实现反射效果'
+			CurrentScene.layers.text:update()
 			CurrentScene.layers.wm.show_self = 0
 			CurrentScene.layers.wm:update()
 			UIExt.refresh(CurrentScene.layers.pe2d, 4)

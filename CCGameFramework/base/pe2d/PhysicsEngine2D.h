@@ -20,9 +20,11 @@ private:
     void RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
     void RenderSimpleColor(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
     void RenderSimpleSphere(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
+    void RenderMaterialSphere(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
 
 private:
-    void RenderSphereIntern(BYTE* buffer, BYTE* buffer2, cint width, cint height);;
+    static void RenderSphereIntern(BYTE* buffer, BYTE* buffer2, cint width, cint height);;
+    static void RenderMaterialIntern(BYTE* buffer, int i, int h);
 
 private:
     CComPtr<ID2D1SolidColorBrush> bg;
