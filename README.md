@@ -94,3 +94,5 @@ TODO：
 ![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/gui_1.png)
 
 ![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/gui_2.png)
+
+![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/gui_3.png)

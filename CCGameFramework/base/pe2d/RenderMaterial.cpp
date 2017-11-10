@@ -7,7 +7,7 @@ void PhysicsEngine::RenderMaterialIntern(BYTE * buffer, cint width, cint height)
     // -------------------------------------
     // 摄影机
     PerspectiveCamera camera(
-        vector3(0, 10, 10),   // 摄影机眼睛的位置
+        vector3(0, 5, 15),    // 摄影机眼睛的位置
         vector3(0, 0, -1),    // 视角中向前方向的单位向量
         vector3(0, 1, 0),     // 视角中向上方向的单位向量
         90.0f);               // FOV
@@ -19,11 +19,28 @@ void PhysicsEngine::RenderMaterialIntern(BYTE * buffer, cint width, cint height)
     World world;
 
     // -------------------------------------
+    // 平面
+    auto plane = std::make_shared<Plane>(
+        vector3(0.0f, 1.0f, 0.0f),     // 球心坐标
+        0.0f                           // 半径
+        );
+    plane->material = std::make_shared<CheckerMaterial>(0.1f, 0.0f);
+    world.Add(plane);
+
+    // -------------------------------------
     // 球体
-    world.Add(std::make_shared<Sphere>(
-        vector3(0.0f, 10.0f, -10.0f), // 球心坐标
-        10.0f                         // 半径
-    ));
+    auto sphere1 = std::make_shared<Sphere>(
+        vector3(-10.0f, 10.0f, -10.0f), // 球心坐标
+        10.0f                           // 半径
+    );
+    sphere1->material = std::make_shared<PhongMaterial>(color(Gdiplus::Color::Red), color(Gdiplus::Color::White), 16.0f, 0.0f);
+    world.Add(sphere1);
+    auto sphere2 = std::make_shared<Sphere>(
+        vector3(10.0f, 10.0f, -10.0f),  // 球心坐标
+        10.0f                           // 半径
+    );
+    sphere2->material = std::make_shared<PhongMaterial>(color(Gdiplus::Color::Blue), color(Gdiplus::Color::White), 16.0f, 0.0f);
+    world.Add(sphere2);
 
     // -------------------------------------
     // 光线追踪
@@ -44,11 +61,11 @@ void PhysicsEngine::RenderMaterialIntern(BYTE * buffer, cint width, cint height)
             auto result = world.Intersect(ray);
             if (result.body)
             {
-                auto depth = 255 - min((result.distance / maxDepth) * 255.0f, 255.0f);
-                // 输出灰阶
-                buffer[0] = (BYTE)depth;
-                buffer[1] = (BYTE)depth;
-                buffer[2] = (BYTE)depth;
+                // 采样
+                auto color = result.body->material->Sample(ray, result.position, result.normal);
+                buffer[0] = BYTE(color.b * 255);
+                buffer[1] = BYTE(color.g * 255);
+                buffer[2] = BYTE(color.r * 255);
                 buffer[3] = 255;
             }
             else

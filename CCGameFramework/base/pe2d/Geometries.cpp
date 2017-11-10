@@ -38,6 +38,81 @@ IntersectResult::IntersectResult(Geometries* body, float distance, const vector3
 {
 }
 
+color::color(BYTE r, BYTE g, BYTE b)
+    : r(r / 255.0f), g(g / 255.0f), b(b / 255.0f)
+{
+}
+
+color::color(float r, float g, float b)
+    : r(r), g(g), b(b)
+{
+}
+
+color::color(Gdiplus::Color clr)
+    : r(clr.GetR() / 255.0f), g(clr.GetG() / 255.0f), b(clr.GetB() / 255.0f)
+{
+}
+
+color color::operator+(const color& c) const
+{
+    // 注意溢出，区间[0,1]
+    return color(fmin(r + c.r, 1.0f), fmin(g + c.g, 1.0f), fmin(b + c.b, 1.0f));
+}
+
+color color::operator*(float s) const
+{
+    return color(r * s, g * s, b * s);
+}
+
+color color::operator*(const color& c) const
+{
+    return color(r * c.r, g * c.g, b * c.b);
+}
+
+Material::~Material()
+{
+}
+
+CheckerMaterial::CheckerMaterial(float scale, float reflectiveness)
+    : scale(scale)
+    , reflectiveness(reflectiveness)
+{
+}
+
+color CheckerMaterial::Sample(Ray ray, vector3 position, vector3 normal)
+{
+    static color black(Gdiplus::Color::Black);
+    static color white(Gdiplus::Color::White);
+    return fabs(int(floorf(position.x * 0.1f) + floorf(position.z * scale)) % 2) < 1 ? black : white;
+}
+
+// global temp
+auto lightDir = Normalize(vector3(1.0f, 1.0f, 1.0f));
+color lightColor(Gdiplus::Color::White);
+
+PhongMaterial::PhongMaterial(color diffuse, color specular, float shininess, float reflectiveness)
+    : diffuse(diffuse)
+    , specular(specular)
+    , shininess(shininess)
+    , reflectiveness(reflectiveness)
+{
+}
+
+color PhongMaterial::Sample(Ray ray, vector3 position, vector3 normal)
+{
+    // 暂时没弄清楚 
+    const auto NdotL = DotProduct(normal, lightDir);
+    const auto H = Normalize(lightDir - ray.direction);
+    const auto NdotH = DotProduct(normal, H);
+    const auto diffuseTerm = diffuse * fmax(NdotL, 0.0f);
+    const auto specularTerm = specular * powf(fmax(NdotH, 0.0f), shininess);
+    return lightColor * (diffuseTerm + specularTerm);
+}
+
+Geometries::~Geometries()
+{
+}
+
 void World::Add(std::shared_ptr<Geometries> body)
 {
     collections.push_back(body);
@@ -100,4 +175,37 @@ IntersectResult Sphere::Intersect(Ray ray)
     }
 
     return IntersectResult(); // 失败，不相交
+}
+
+Plane::Plane(const vector3& normal, float d)
+    : normal(normal)
+    , d(d)
+{
+    position = normal * d;
+}
+
+IntersectResult Plane::Intersect(Ray ray)
+{
+    const auto a = DotProduct(ray.direction, normal);
+
+    if (a >= 0)
+        // 反方向看不到平面，负数代表角度为钝角
+        // 举例，平面法向量n=(0,1,0)，距离d=0，
+        // 我从上面往下看，光线方向为y轴负向，而平面法向为y轴正向
+        // 所以两者夹角为钝角，上面的a为cos(夹角)=负数，不满足条件
+        // 当a为0，即视线与平面平行时，自然看不到平面
+        // a为正时，视线从平面下方向上看，看到平面的反面，因此也看不到平面
+        return IntersectResult();
+
+    // 参考 http://blog.sina.com.cn/s/blog_8f050d6b0101crwb.html
+    /* 将直线方程写成参数方程形式，即有：
+       L(x,y,z) = ray.origin + ray.direction * t(t 就是距离 dist)
+       将平面方程写成点法式方程形式，即有：
+       plane.normal . (P(x,y,z) - plane.position) = 0
+       解得 t = {(plane.position - ray.origin) . normal} / (ray.direction . plane.normal )
+    */
+    const auto b = DotProduct(normal, ray.origin - position);
+
+    const auto dist = -b / a;
+    return IntersectResult(this, dist, ray.Eval(dist), normal);
 }

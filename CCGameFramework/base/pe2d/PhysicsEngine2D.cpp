@@ -63,6 +63,8 @@ void PhysicsEngine::SetType(cint value)
     {
     case 1:
     case 2:
+    case 3:
+    case 4:
         painted = false;
         break;
     }
@@ -214,12 +216,6 @@ void PhysicsEngine::RenderMaterialSphere(CComPtr<ID2D1RenderTarget> rt, CRect bo
             1.0f,
             D2D1_BITMAP_INTERPOLATION_MODE_LINEAR
         );
-        rt->DrawBitmap(
-            bitmap2,
-            D2D1::RectF((FLOAT)bounds.left + 256, (FLOAT)bounds.top, (FLOAT)bounds.left + 512, (FLOAT)bounds.top + 256),
-            1.0f,
-            D2D1_BITMAP_INTERPOLATION_MODE_LINEAR
-        );
         return;
     }
     auto _rt = d2drt.lock();
@@ -231,7 +227,6 @@ void PhysicsEngine::RenderMaterialSphere(CComPtr<ID2D1RenderTarget> rt, CRect bo
     rect.Width = _w;
     rect.Height = _h;
     auto buffer = new BYTE[rect.Width * rect.Height * 4];
-    auto buffer2 = new BYTE[rect.Width * rect.Height * 4];
     auto hr = wic->CopyPixels(&rect, rect.Width * 4, rect.Width * rect.Height * 4, buffer);
 
     // ----------------------------------------------------
@@ -249,16 +244,6 @@ void PhysicsEngine::RenderMaterialSphere(CComPtr<ID2D1RenderTarget> rt, CRect bo
         D2D1_BITMAP_INTERPOLATION_MODE_LINEAR // 线性即可
     );
 
-    bitmap2 = _rt->GetBitmapFromWIC(wic);
-    bitmap2->CopyFromMemory(&d2dRect, buffer2, rect.Width * 4);
-    rt->DrawBitmap(
-        bitmap2,
-        D2D1::RectF((FLOAT)bounds.left + 256, (FLOAT)bounds.top, (FLOAT)bounds.left + 512, (FLOAT)bounds.top + 256),
-        1.0f,
-        D2D1_BITMAP_INTERPOLATION_MODE_LINEAR // 线性即可
-    );
-
     delete[]buffer;
-    delete[]buffer2;
     painted = true;
 }

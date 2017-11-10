@@ -44,7 +44,7 @@ void PhysicsEngine::RenderSphereIntern(BYTE * buffer, BYTE * buffer2, cint width
             auto result = world.Intersect(ray);
             if (result.body)
             {
-                auto depth = 255 - min((result.distance / maxDepth) * 255.0f, 255.0f);
+                auto depth = 255 - fmin((result.distance / maxDepth) * 255.0f, 255.0f);
                 // 输出灰阶
                 buffer[0] = (BYTE)depth;
                 buffer[1] = (BYTE)depth;
