@@ -26,6 +26,11 @@ private:
     void RenderMaterialSphere(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
     void RenderReflectSphere(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
 
+	void RenderDirectionalLight(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
+	void RenderPointLight(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
+	void RenderSpotLight(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
+	void RenderTriLight(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
+
 private:
     static void RenderSimpleIntern(BYTE* buffer, cint width, cint height);
     static void RenderSphereIntern(BYTE* buffer, BYTE* buffer2, cint width, cint height);

@@ -11,19 +11,31 @@ void PhysicsEngine::RenderByType(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
     case 0:
         RenderDefault(rt, bounds);
         break;
-    case 1:
-        RenderSimpleColor(rt, bounds);
-        break;
-    case 2:
-        RenderSimpleSphere(rt, bounds);
-        break;
-    case 3:
-        RenderMaterialSphere(rt, bounds);
-        break;
-    case 4:
-        RenderReflectSphere(rt, bounds);
-        break;
-    }
+	case 1:
+		RenderSimpleColor(rt, bounds);
+		break;
+	case 2:
+		RenderSimpleSphere(rt, bounds);
+		break;
+	case 3:
+		RenderMaterialSphere(rt, bounds);
+		break;
+	case 4:
+		RenderReflectSphere(rt, bounds);
+		break;
+	case 11:
+		RenderDirectionalLight(rt, bounds);
+		break;
+	case 12:
+		RenderPointLight(rt, bounds);
+		break;
+	case 13:
+		RenderSpotLight(rt, bounds);
+		break;
+	case 14:
+		RenderTriLight(rt, bounds);
+		break;
+	}
 }
 
 void PhysicsEngine::Render(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
@@ -64,11 +76,15 @@ void PhysicsEngine::SetType(cint value)
     type = value;
     switch (value)
     {
-    case 1:
-    case 2:
-    case 3:
-    case 4:
-        painted = false;
+	case 1:
+	case 2:
+	case 3:
+	case 4:
+	case 11:
+	case 12:
+	case 13:
+	case 14:
+		painted = false;
         break;
     }
 }
@@ -198,6 +214,22 @@ void PhysicsEngine::RenderMaterialSphere(CComPtr<ID2D1RenderTarget> rt, CRect bo
 void PhysicsEngine::RenderReflectSphere(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
 {
     RenderSingleBitmap(rt, bounds, RenderReflectIntern);
+}
+
+void PhysicsEngine::RenderDirectionalLight(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
+{
+}
+
+void PhysicsEngine::RenderPointLight(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
+{
+}
+
+void PhysicsEngine::RenderSpotLight(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
+{
+}
+
+void PhysicsEngine::RenderTriLight(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
+{
 }
 
 void PhysicsEngine::RenderSimpleIntern(BYTE* buffer, cint width, cint height)

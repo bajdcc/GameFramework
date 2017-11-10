@@ -87,7 +87,7 @@ function M:init()
 		text = '点击下方按钮以查看图形学示例',
 		family = '楷体',
 		pre_resize = function(this, left, top, right, bottom)
-			return left, top + 50, right, bottom - 50
+			return left, top + 50, right, bottom - 100
 		end
 	})
 	self.layers.wm = self:add(wm)
@@ -125,7 +125,7 @@ function M:init_menu(info)
 		padleft = 10,
 		padtop = 60,
 		padright = 10,
-		padbottom = 60
+		padbottom = 110
 	})
 	self:add(bg)
 	self.layers.pe2d = bg:add(PE2D:new())
@@ -145,6 +145,8 @@ function M:init_menu(info)
 		padbottom = 1,
 	})
 	content:attach(self.layers.menu)
+
+	-- SLIDER #1
 	local slider = LinearLayout:new({
 		align = 1,
 		padleft = 2,
@@ -212,7 +214,75 @@ function M:init_menu(info)
 			UIExt.paint()
 		end
 	}):attach(slider)
-	self.layers.rtstatus = slider.children[#slider.children]
+
+	-- SLIDER #2
+	local slider2 = LinearLayout:new({
+		align = 1,
+		padleft = 2,
+		padtop = 2,
+		padright = 2,
+		padbottom = 2,
+		pre_resize = function(this, left, top, right, bottom)
+			return left, bottom - 100, left + 500, bottom - 50
+		end
+	})
+	self:add(slider2)
+	Button:new({
+		text = '平行光',
+		font_family = '楷体',
+		track_display = 0,
+		font_size = 16,
+		click = function(this)
+			CurrentScene.layers.text.text = '平行光效果'
+			CurrentScene.layers.text:update()
+			CurrentScene.layers.wm.show_self = 0
+			CurrentScene.layers.wm:update()
+			UIExt.refresh(CurrentScene.layers.pe2d, 11)
+			UIExt.paint()
+		end
+	}):attach(slider2)
+	Button:new({
+		text = '点光源',
+		font_family = '楷体',
+		track_display = 0,
+		font_size = 16,
+		click = function()
+			CurrentScene.layers.text.text = '点光源效果'
+			CurrentScene.layers.text:update()
+			CurrentScene.layers.wm.show_self = 0
+			CurrentScene.layers.wm:update()
+			UIExt.refresh(CurrentScene.layers.pe2d, 12)
+			UIExt.paint()
+		end
+	}):attach(slider2)
+	Button:new({
+		text = '聚光灯',
+		font_family = '楷体',
+		track_display = 0,
+		font_size = 16,
+		click = function()
+			CurrentScene.layers.text.text = '聚光灯效果'
+			CurrentScene.layers.text:update()
+			CurrentScene.layers.wm.show_self = 0
+			CurrentScene.layers.wm:update()
+			UIExt.refresh(CurrentScene.layers.pe2d, 13)
+			UIExt.paint()
+		end
+	}):attach(slider2)
+	Button:new({
+		text = '三元色',
+		font_family = '楷体',
+		track_display = 0,
+		font_size = 16,
+		click = function()
+			CurrentScene.layers.text.text = '颜色混合'
+			CurrentScene.layers.text:update()
+			CurrentScene.layers.wm.show_self = 0
+			CurrentScene.layers.wm:update()
+			UIExt.refresh(CurrentScene.layers.pe2d, 14)
+			UIExt.paint()
+		end
+	}):attach(slider2)
 end
 
 return M
