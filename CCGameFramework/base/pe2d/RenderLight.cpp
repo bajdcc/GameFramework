@@ -2,59 +2,8 @@
 #include "PhysicsEngine2D.h"
 #include "Geometries.h"
 
-void PhysicsEngine::RenderDirectionalLight(BYTE* buffer, cint width, cint height)
+void PhysicsEngine::RenderLightIntern(World& world, const PerspectiveCamera& camera, BYTE* buffer, cint width, cint height)
 {
-    // -------------------------------------
-    // 摄影机
-    PerspectiveCamera camera(
-        vector3(0, 10, 10),   // 摄影机眼睛的位置
-        vector3(0, 0, -1),    // 视角中向前方向的单位向量
-        vector3(0, 1, 0),     // 视角中向上方向的单位向量
-        90.0f);               // FOV
-
-    // 最大深度
-    const auto maxDepth = 20;
-
-    // -------------------------------------
-    // 几何体集合
-    World world;
-
-    // -------------------------------------
-    // 平面
-    auto plane1 = std::make_shared<Plane>(
-        vector3(0.0f, 1.0f, 0.0f),
-        0.0f
-        );
-    world.AddGeometries(plane1);
-    auto plane2 = std::make_shared<Plane>(
-        vector3(0.0f, 0.0f, 1.0f),
-        -50.0f
-        );
-    world.AddGeometries(plane2);
-    auto plane3 = std::make_shared<Plane>(
-        vector3(1.0f, 0.0f, 0.0f),
-        -20.0f
-        );
-    world.AddGeometries(plane3);
-
-    // -------------------------------------
-    // 球体
-    auto sphere1 = std::make_shared<Sphere>(
-        vector3(0.0f, 10.0f, -10.0f),
-        10.0f
-        );
-    world.AddGeometries(sphere1);
-
-    // -------------------------------------
-    // 平行光
-    auto light = std::make_shared<DirectionalLight>(
-        color(Gdiplus::Color::White),   // 颜色
-        vector3(-1.75f, -2.0f, -1.5f)   // 朝向
-        );
-    world.AddLight(light);
-
-    // -------------------------------------
-    // 光线追踪
     for (auto y = 0; y < height; y++)
     {
         const auto sy = 1.0f - (1.0f * y / height);
@@ -105,14 +54,250 @@ void PhysicsEngine::RenderDirectionalLight(BYTE* buffer, cint width, cint height
     }
 }
 
+void PhysicsEngine::RenderDirectionalLight(BYTE* buffer, cint width, cint height)
+{
+    // -------------------------------------
+    // 摄影机
+    const PerspectiveCamera camera(
+        vector3(0.0f, 10.0f, 10.0f),
+        vector3(0.0f, 0.0f, -1.0f),
+        vector3(0.0f, 1.0f, 0.0f),
+        90.0f);
+
+    // 最大深度
+    const auto maxDepth = 20;
+
+    // -------------------------------------
+    // 几何体集合
+    World world;
+
+    // -------------------------------------
+    // 平面
+    const auto plane1 = std::make_shared<Plane>(
+        vector3(0.0f, 1.0f, 0.0f),
+        0.0f
+        );
+    world.AddGeometries(plane1);
+    const auto plane2 = std::make_shared<Plane>(
+        vector3(0.0f, 0.0f, 1.0f),
+        -50.0f
+        );
+    world.AddGeometries(plane2);
+    const auto plane3 = std::make_shared<Plane>(
+        vector3(1.0f, 0.0f, 0.0f),
+        -20.0f
+        );
+    world.AddGeometries(plane3);
+
+    // -------------------------------------
+    // 球体
+    const auto sphere1 = std::make_shared<Sphere>(
+        vector3(0.0f, 10.0f, -10.0f),
+        10.0f
+        );
+    world.AddGeometries(sphere1);
+
+    // -------------------------------------
+    // 平行光
+    const auto light = std::make_shared<DirectionalLight>(
+        color(Gdiplus::Color::White),   // 颜色
+        vector3(-1.75f, -2.0f, -1.5f)   // 朝向
+        );
+    world.AddLight(light);
+
+    // -------------------------------------
+    // 光线追踪
+    RenderLightIntern(world, camera, buffer, width, height);
+}
+
 void PhysicsEngine::RenderPointLight(BYTE* buffer, cint width, cint height)
 {
+    // -------------------------------------
+    // 摄影机
+    const PerspectiveCamera camera(
+        vector3(0.0f, 10.0f, 10.0f),
+        vector3(0.0f, 0.0f, -1.0f),
+        vector3(0.0f, 1.0f, 0.0f),
+        90.0f);
+
+    // 最大深度
+    const auto maxDepth = 20;
+
+    // -------------------------------------
+    // 几何体集合
+    World world;
+
+    // -------------------------------------
+    // 平面
+    const auto plane1 = std::make_shared<Plane>(
+        vector3(0.0f, 1.0f, 0.0f),
+        0.0f
+        );
+    world.AddGeometries(plane1);
+    const auto plane2 = std::make_shared<Plane>(
+        vector3(0.0f, 0.0f, 1.0f),
+        -50.0f
+        );
+    world.AddGeometries(plane2);
+    const auto plane3 = std::make_shared<Plane>(
+        vector3(1.0f, 0.0f, 0.0f),
+        -20.0f
+        );
+    world.AddGeometries(plane3);
+
+    // -------------------------------------
+    // 球体
+    const auto sphere1 = std::make_shared<Sphere>(
+        vector3(0.0f, 10.0f, -10.0f),
+        10.0f
+        );
+    world.AddGeometries(sphere1);
+
+    // -------------------------------------
+    // 点光源
+    const auto light = std::make_shared<PointLight>(
+        color(Gdiplus::Color::White) * 2000.0f,  // 颜色
+        vector3(30.0f, 40.0f, 20.0f)             // 位置
+        );
+    world.AddLight(light);
+
+    // -------------------------------------
+    // 光线追踪
+    RenderLightIntern(world, camera, buffer, width, height);
 }
 
 void PhysicsEngine::RenderSpotLight(BYTE* buffer, cint width, cint height)
 {
+    // -------------------------------------
+    // 摄影机
+    const PerspectiveCamera camera(
+        vector3(0.0f, 10.0f, 10.0f),
+        vector3(0.0f, 0.0f, -1.0f),
+        vector3(0.0f, 1.0f, 0.0f),
+        90.0f);
+
+    const auto maxDepth = 20; // 最大深度
+
+    // -------------------------------------
+    // 几何体集合
+    World world;
+
+    // -------------------------------------
+    // 平面
+    const auto plane1 = std::make_shared<Plane>(
+        vector3(0.0f, 1.0f, 0.0f),
+        0.0f
+        );
+    world.AddGeometries(plane1);
+    const auto plane2 = std::make_shared<Plane>(
+        vector3(0.0f, 0.0f, 1.0f),
+        -50.0f
+        );
+    world.AddGeometries(plane2);
+    const auto plane3 = std::make_shared<Plane>(
+        vector3(1.0f, 0.0f, 0.0f),
+        -20.0f
+        );
+    world.AddGeometries(plane3);
+
+    // -------------------------------------
+    // 球体
+    const auto sphere1 = std::make_shared<Sphere>(
+        vector3(0.0f, 10.0f, -10.0f),
+        10.0f
+        );
+    world.AddGeometries(sphere1);
+
+    // -------------------------------------
+    // 聚光灯
+    const auto light = std::make_shared<SpotLight>(
+        color(Gdiplus::Color::White) * 2000.0f,  // 颜色
+        vector3(30.0f, 40.0f, 20.0f),            // 位置
+        vector3(-1.0f, -1.0f, -1.0f),            // 朝向
+        20.0f,                                   // 内圆锥的内角
+        30.0f,                                   // 外圆锥的内角
+        0.5f                                     // 衰减
+        );
+    world.AddLight(light);
+
+    // -------------------------------------
+    // 光线追踪
+    RenderLightIntern(world, camera, buffer, width, height);
 }
 
 void PhysicsEngine::RenderTriLight(BYTE* buffer, cint width, cint height)
 {
+    // -------------------------------------
+    // 摄影机
+    const PerspectiveCamera camera(
+        vector3(0.0f, 40.0f, 15.0f),
+        vector3(0.0f, -1.25f, -1.0f),
+        vector3(0.0f, 1.0f, 0.0f),
+        60.0f);
+
+    const auto maxDepth = 20; // 最大深度
+
+    // -------------------------------------
+    // 几何体集合
+    World world;
+
+    // -------------------------------------
+    // 平面
+    const auto plane1 = std::make_shared<Plane>(
+        vector3(0.0f, 1.0f, 0.0f),
+        0.0f
+        );
+    world.AddGeometries(plane1);
+    const auto plane2 = std::make_shared<Plane>(
+        vector3(0.0f, 0.0f, 1.0f),
+        -50.0f
+        );
+    world.AddGeometries(plane2);
+    const auto plane3 = std::make_shared<Plane>(
+        vector3(1.0f, 0.0f, 0.0f),
+        -20.0f
+        );
+    world.AddGeometries(plane3);
+
+    // -------------------------------------
+    // 点光源
+    const auto light1 = std::make_shared<PointLight>(
+        color(Gdiplus::Color::White) * 1000.0f,
+        vector3(30.0f, 40.0f, 20.0f)
+        );
+    world.AddLight(light1);
+
+    // -------------------------------------
+    // 聚光灯
+    const auto light2 = std::make_shared<SpotLight>(
+        color(Gdiplus::Color::Red) * 3000.0f,
+        vector3(0.0f, 30.0f, 10.0f),
+        vector3(0.0f, -1.0f, -1.0f),
+        20.0f,
+        30.0f,
+        1.0f
+        );
+    world.AddLight(light2);
+    const auto light3 = std::make_shared<SpotLight>(
+        color(Gdiplus::Color::Green) * 3000.0f,
+        vector3(6.0f, 30.0f, 20.0f),
+        vector3(0.0f, -1.0f, -1.0f),
+        20.0f,
+        30.0f,
+        1.0f
+        );
+    world.AddLight(light3);
+    const auto light4 = std::make_shared<SpotLight>(
+        color(Gdiplus::Color::Blue) * 3000.0f,
+        vector3(-6.0f, 30.0f, 20.0f),
+        vector3(0.0f, -1.0f, -1.0f),
+        20.0f,
+        30.0f,
+        1.0f
+        );
+    world.AddLight(light4);
+
+    // -------------------------------------
+    // 光线追踪
+    RenderLightIntern(world, camera, buffer, width, height);
 }

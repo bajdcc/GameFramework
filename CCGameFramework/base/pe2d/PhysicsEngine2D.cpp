@@ -223,14 +223,17 @@ void PhysicsEngine::RenderDirectionalLight(CComPtr<ID2D1RenderTarget> rt, CRect 
 
 void PhysicsEngine::RenderPointLight(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
 {
+    RenderSingleBitmap(rt, bounds, RenderPointLight);
 }
 
 void PhysicsEngine::RenderSpotLight(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
 {
+    RenderSingleBitmap(rt, bounds, RenderSpotLight);
 }
 
 void PhysicsEngine::RenderTriLight(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
 {
+    RenderSingleBitmap(rt, bounds, RenderTriLight);
 }
 
 void PhysicsEngine::RenderSimpleIntern(BYTE* buffer, cint width, cint height)

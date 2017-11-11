@@ -42,6 +42,7 @@ private:
     static void RenderPointLight(BYTE* buffer, cint width, cint height);
     static void RenderSpotLight(BYTE* buffer, cint width, cint height);
     static void RenderTriLight(BYTE* buffer, cint width, cint height);
+    static void RenderLightIntern(World&, const PerspectiveCamera&, BYTE* buffer, cint width, cint height);
 
 private:
     CComPtr<ID2D1SolidColorBrush> bg;

@@ -138,10 +138,5 @@ FLOAT DotProduct(const vector3& v1, const vector3& v2)
 
 vector3 CrossProduct(const vector3& v1, const vector3& v2)
 {
-    vector3 res;
-    /* this is a left-handed cross product, right? */
-    res.x = v1.y * v2.z - v1.z * v2.y;
-    res.y = v1.z * v2.x - v1.x * v2.z;
-    res.z = v1.x * v2.y - v1.y * v2.x;
-    return res;
+    return vector3(v1.y * v2.z - v1.z * v2.y, v1.z * v2.x - v1.x * v2.z, v1.x * v2.y - v1.y * v2.x);
 }

@@ -118,7 +118,7 @@ public:
     virtual ~Light();
     virtual LightSample Sample(World& world, vector3 position) = 0;
 
-    bool shadow{ false }; // 是否要有阴影
+    bool shadow{ true }; // 默认有阴影
 };
 
 // 平行光
@@ -129,9 +129,43 @@ public:
 
     LightSample Sample(World& world, vector3 position) override;
 
-    color irradiance;    // 辐照强度
+    color irradiance;    // 幅照度
     vector3 direction;   // 光照方向
     vector3 L;           // 光源方向
+};
+
+// 点光源
+class PointLight : public Light
+{
+public:
+    PointLight(color intensity, vector3 position);
+
+    LightSample Sample(World& world, vector3 position) override;
+
+    color intensity;     // 幅射强度
+    vector3 position;    // 光源位置
+};
+
+// 聚光灯
+class SpotLight : public Light
+{
+public:
+    SpotLight(color intensity, vector3 position, vector3 direction, float theta, float phi, float falloff);
+
+    LightSample Sample(World& world, vector3 position) override;
+
+    color intensity;     // 幅射强度
+    vector3 position;    // 光源位置
+    vector3 direction;   // 光照方向
+    float theta;         // 内圆锥的内角
+    float phi;           // 外圆锥的内角
+    float falloff;       // 衰减
+
+    /* 以下为预计算常量 */
+    vector3 S;           // 光源方向
+    float cosTheta;      // cos(内圆锥角)
+    float cosPhi;        // cos(外圆锥角)
+    float baseMultiplier;// 1/(cosTheta-cosPhi)
 };
 
 // 几何体接口

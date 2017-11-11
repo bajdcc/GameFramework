@@ -11,10 +11,10 @@ vector3 Ray::Eval(float t) const
     return origin + (direction * t);
 }
 
-PerspectiveCamera::PerspectiveCamera(vector3 eye, vector3 front, vector3 up, float fov)
-    : eye(eye), front(front), up(up), fov(fov)
+PerspectiveCamera::PerspectiveCamera(vector3 eye, vector3 front, vector3 u, float fov)
+    : eye(eye), front(front), up(u), fov(fov)
 {
-    right = CrossProduct(front, up);
+    right = CrossProduct(front, u);
     up = CrossProduct(right, front);
     fovScale = tanf(fov * float(M_PI) / 360.0f) * 2;
 }
@@ -166,6 +166,99 @@ LightSample DirectionalLight::Sample(World& world, vector3 position)
     }
 
     return LightSample(L, irradiance); // 就返回光源颜色
+}
+
+PointLight::PointLight(color intensity, vector3 position)
+    : intensity(intensity), position(position)
+{
+}
+
+static LightSample zero;
+
+LightSample PointLight::Sample(World& world, vector3 pos)
+{
+    // 计算L，但保留r和r^2，供之后使用
+    const auto delta = position - pos; // 距离向量
+    const auto rr = SquareMagnitude(delta);
+    const auto r = sqrtf(rr); // 算出光源到pos的距离
+    const auto L = delta / r; // 距离单位向量
+
+    if (shadow) {
+        const Ray shadowRay(pos, L);
+        const auto shadowResult = world.Intersect(shadowRay);
+        // 在r以内的相交点才会遮蔽光源
+        // shadowResult.distance <= r 表示：
+        //   以pos交点 -> 光源位置 发出一条阴影测试光线
+        //   如果阴影测试光线与其他物体有交点，那么相交距离 <= r
+        //   说明pos位置无法直接看到光源
+        if (shadowResult.body && shadowResult.distance <= r)
+            return zero;
+    }
+
+    // 平方反比衰减
+    const auto attenuation = 1 / rr;
+
+    // 返回衰减后的光源颜色
+    return LightSample(L, intensity * attenuation);
+}
+
+SpotLight::SpotLight(color intensity, vector3 position, vector3 direction, float theta, float phi, float falloff)
+    : intensity(intensity), position(position), direction(direction), theta(theta), phi(phi), falloff(falloff)
+{
+    S = -Normalize(direction);
+    cosTheta = cosf(theta * float(M_PI) / 360.0f);
+    cosPhi = cosf(phi * float(M_PI) / 360.0f);
+    baseMultiplier = 1.0f / (cosTheta - cosPhi);
+}
+
+LightSample SpotLight::Sample(World& world, vector3 pos)
+{
+    // 计算L，但保留r和r^2，供之后使用
+    const auto delta = position - pos; // 距离向量
+    const auto rr = SquareMagnitude(delta);
+    const auto r = sqrtf(rr); // 算出光源到pos的距离
+    const auto L = delta / r; // 距离单位向量
+
+    /*
+     * spot(alpha) =
+     *
+     *     1
+     *         where cos(alpha) >= cos(theta/2)
+     *
+     *     pow( (cos(alpha) - cos(phi/2)) / (cos(theta/2) - cos(phi/2)) , p)
+     *         where cos(phi/2) < cos(alpha) < cos(theta/2)
+     *
+     *     0
+     *         where cos(alpha) <= cos(phi/2)
+     */
+
+    // 计算spot
+    auto spot = 0.0f;
+    const auto SdotL = DotProduct(S, L);
+    if (SdotL >= cosTheta)
+        spot = 1.0f;
+    else if (SdotL <= cosPhi)
+        spot = 0.0f;
+    else
+        spot = powf((SdotL - cosPhi) * baseMultiplier, falloff);
+
+    if (shadow) {
+        const Ray shadowRay(pos, L);
+        const auto shadowResult = world.Intersect(shadowRay);
+        // 在r以内的相交点才会遮蔽光源
+        // shadowResult.distance <= r 表示：
+        //   以pos交点 -> 光源位置 发出一条阴影测试光线
+        //   如果阴影测试光线与其他物体有交点，那么相交距离 <= r
+        //   说明pos位置无法直接看到光源
+        if (shadowResult.body && shadowResult.distance <= r)
+            return zero;
+    }
+
+    // 平方反比衰减
+    const auto attenuation = 1 / rr;
+
+    // 返回衰减后的光源颜色
+    return LightSample(L, intensity * (attenuation * spot));
 }
 
 Geometries::~Geometries()
