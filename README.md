@@ -87,6 +87,7 @@ TODO：
 
 - [用JavaScript玩转计算机图形学(一)光线追踪入门 - Milo Yip](http://www.cnblogs.com/miloyip/archive/2010/03/29/1698953.html) **（已完成）**
 - [用JavaScript玩转计算机图形学(二)基本光源 - Milo Yip](http://www.cnblogs.com/miloyip/archive/2010/04/02/1702768.html) **（已完成）**
+- [用 C 语言画光（一）：基础](https://zhuanlan.zhihu.com/p/30745861) **（已完成）**
 
 #### 截图
 
@@ -114,22 +115,28 @@ TODO：
 
 **基本光源**
 
-**5. 平行光**
+**1. 平行光**
 
 ![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/gui_5.png)
 
-**6. 平行光（带阴影）**
+**1. 平行光（带阴影）**
 
 ![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/gui_5s.png)
 
-**7. 点光源（带阴影）**
+**2. 点光源（带阴影）**
 
 ![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/gui_6.png)
 
-**8. 聚光灯（带阴影）**
+**3. 聚光灯（带阴影）**
 
 ![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/gui_7.png)
 
-**9. 三原色（带阴影）**
+**4. 三原色（带阴影）**
 
 ![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/gui_8.png)
+
+**画光系列**
+
+**1. 抖动采样**
+
+![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/light_1.png)

@@ -23,19 +23,28 @@ void PhysicsEngine::RenderByType(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
 	case 4:
 		RenderReflectSphere(rt, bounds);
 		break;
-	case 11:
-		RenderDirectionalLight(rt, bounds);
-		break;
-	case 12:
-		RenderPointLight(rt, bounds);
-		break;
-	case 13:
-		RenderSpotLight(rt, bounds);
-		break;
-	case 14:
-		RenderTriLight(rt, bounds);
-		break;
-	}
+    case 11:
+        RenderDirectionalLight(rt, bounds);
+        break;
+    case 12:
+        RenderPointLight(rt, bounds);
+        break;
+    case 13:
+        RenderSpotLight(rt, bounds);
+        break;
+    case 14:
+        RenderTriLight(rt, bounds);
+        break;
+    case 21:
+        Render2DLight(rt, bounds);
+        break;
+    case 22:
+        Render2DShadow(rt, bounds);
+        break;
+    case 23:
+        Render2DSolid(rt, bounds);
+        break;
+    }
 }
 
 void PhysicsEngine::Render(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
@@ -74,19 +83,8 @@ void PhysicsEngine::Reset(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget,
 void PhysicsEngine::SetType(cint value)
 {
     type = value;
-    switch (value)
-    {
-	case 1:
-	case 2:
-	case 3:
-	case 4:
-	case 11:
-	case 12:
-	case 13:
-	case 14:
-		painted = false;
-        break;
-    }
+    if (value != 0)
+        painted = false;
 }
 
 void PhysicsEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)

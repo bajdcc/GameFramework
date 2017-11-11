@@ -29,7 +29,7 @@ function M:new(o)
 end
 
 function M:init()
-	self.minw = 800
+	self.minw = 900
 	self.minh = 600
 	UIExt.set_minw(self.minw, self.minh)
 
@@ -283,6 +283,61 @@ function M:init_menu(info)
 			UIExt.paint()
 		end
 	}):attach(slider2)
+
+	-- SLIDER #3
+	local slider3 = LinearLayout:new({
+		align = 1,
+		padleft = 2,
+		padtop = 2,
+		padright = 2,
+		padbottom = 2,
+		pre_resize = function(this, left, top, right, bottom)
+			return right - 400, bottom - 100, right, bottom - 50
+		end
+	})
+	self:add(slider3)
+	Button:new({
+		text = '发光圆形',
+		font_family = '楷体',
+		track_display = 0,
+		font_size = 16,
+		click = function(this)
+			CurrentScene.layers.text.text = '发光圆形（抖动采样）'
+			CurrentScene.layers.text:update()
+			CurrentScene.layers.wm.show_self = 0
+			CurrentScene.layers.wm:update()
+			UIExt.refresh(CurrentScene.layers.pe2d, 21)
+			UIExt.paint()
+		end
+	}):attach(slider3)
+	Button:new({
+		text = '多个形状',
+		font_family = '楷体',
+		track_display = 0,
+		font_size = 16,
+		click = function()
+			CurrentScene.layers.text.text = '阴影效果'
+			CurrentScene.layers.text:update()
+			CurrentScene.layers.wm.show_self = 0
+			CurrentScene.layers.wm:update()
+			UIExt.refresh(CurrentScene.layers.pe2d, 22)
+			UIExt.paint()
+		end
+	}):attach(slider3)
+		Button:new({
+		text = '实体几何',
+		font_family = '楷体',
+		track_display = 0,
+		font_size = 16,
+		click = function()
+			CurrentScene.layers.text.text = '实体几何展示'
+			CurrentScene.layers.text:update()
+			CurrentScene.layers.wm.show_self = 0
+			CurrentScene.layers.wm:update()
+			UIExt.refresh(CurrentScene.layers.pe2d, 23)
+			UIExt.paint()
+		end
+	}):attach(slider3)
 end
 
 return M
