@@ -218,6 +218,7 @@ void PhysicsEngine::RenderReflectSphere(CComPtr<ID2D1RenderTarget> rt, CRect bou
 
 void PhysicsEngine::RenderDirectionalLight(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
 {
+    RenderSingleBitmap(rt, bounds, RenderDirectionalLight);
 }
 
 void PhysicsEngine::RenderPointLight(CComPtr<ID2D1RenderTarget> rt, CRect bounds)

@@ -38,6 +38,11 @@ private:
     static void RenderReflectIntern(BYTE* buffer, cint width, cint height);
     static color RenderReflectRecursive(World& world, const Ray& ray, int maxReflect);
 
+    static void RenderDirectionalLight(BYTE* buffer, cint width, cint height);
+    static void RenderPointLight(BYTE* buffer, cint width, cint height);
+    static void RenderSpotLight(BYTE* buffer, cint width, cint height);
+    static void RenderTriLight(BYTE* buffer, cint width, cint height);
+
 private:
     CComPtr<ID2D1SolidColorBrush> bg;
     CColor bgColor;

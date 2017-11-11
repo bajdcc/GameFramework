@@ -38,6 +38,11 @@ IntersectResult::IntersectResult(Geometries* body, float distance, const vector3
 {
 }
 
+color::color()
+    : r(0.0f), g(0.0f), b(0.0f)
+{
+}
+
 color::color(BYTE r, BYTE g, BYTE b)
     : r(r / 255.0f), g(g / 255.0f), b(b / 255.0f)
 {
@@ -125,20 +130,63 @@ color PhongMaterial::Sample(Ray ray, vector3 position, vector3 normal)
     return lightColor * (diffuseTerm + specularTerm);
 }
 
+LightSample::LightSample()
+{
+}
+
+LightSample::LightSample(vector3 L, color EL)
+    : L(L), EL(EL)
+{
+}
+
+bool LightSample::empty() const
+{
+    return L.x == 0.0f && L.y == 0.0f && L.z == 0.0f && EL.r == 0.0f && EL.g == 0.0f && EL.b == 0.0f;
+}
+
+Light::~Light()
+{
+}
+
+DirectionalLight::DirectionalLight(color irradiance, vector3 direction)
+    : irradiance(irradiance), direction(direction)
+{
+    L = -Normalize(direction);
+}
+
+LightSample DirectionalLight::Sample(World& world, vector3 position)
+{
+    static LightSample zero;
+
+    if (shadow) {
+        const Ray shadowRay(position, L);
+        const auto shadowResult = world.Intersect(shadowRay);
+        if (shadowResult.body)
+            return zero;
+    }
+
+    return LightSample(L, irradiance); // 就返回光源颜色
+}
+
 Geometries::~Geometries()
 {
 }
 
-void World::Add(std::shared_ptr<Geometries> body)
+void World::AddGeometries(std::shared_ptr<Geometries> body)
 {
-    collections.push_back(body);
+    geometries.push_back(body);
+}
+
+void World::AddLight(std::shared_ptr<Light> light)
+{
+    lights.push_back(light);
 }
 
 IntersectResult World::Intersect(Ray ray)
 {
     auto minDistance = FLT_MAX;
     IntersectResult minResult;
-    for (auto & body : collections) {
+    for (auto & body : geometries) {
         const auto result = body->Intersect(ray);
         if (result.body && result.distance < minDistance) {
             minDistance = result.distance;

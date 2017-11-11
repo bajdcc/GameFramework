@@ -21,11 +21,11 @@ void PhysicsEngine::RenderMaterialIntern(BYTE * buffer, cint width, cint height)
     // -------------------------------------
     // 平面
     auto plane = std::make_shared<Plane>(
-        vector3(0.0f, 1.0f, 0.0f),     // 球心坐标
-        0.0f                           // 半径
+        vector3(0.0f, 1.0f, 0.0f),      // 距原点垂足坐标
+        0.0f                            // 到原点最短距离
         );
     plane->material = std::make_shared<CheckerMaterial>(0.1f, 0.0f);
-    world.Add(plane);
+    world.AddGeometries(plane);
 
     // -------------------------------------
     // 球体
@@ -34,13 +34,13 @@ void PhysicsEngine::RenderMaterialIntern(BYTE * buffer, cint width, cint height)
         10.0f                           // 半径
     );
     sphere1->material = std::make_shared<PhongMaterial>(color(Gdiplus::Color::Red), color(Gdiplus::Color::White), 16.0f, 0.0f);
-    world.Add(sphere1);
+    world.AddGeometries(sphere1);
     auto sphere2 = std::make_shared<Sphere>(
         vector3(10.0f, 10.0f, -10.0f),  // 球心坐标
         10.0f                           // 半径
     );
     sphere2->material = std::make_shared<PhongMaterial>(color(Gdiplus::Color::Blue), color(Gdiplus::Color::White), 16.0f, 0.0f);
-    world.Add(sphere2);
+    world.AddGeometries(sphere2);
 
     // -------------------------------------
     // 光线追踪
@@ -106,7 +106,7 @@ void PhysicsEngine::RenderReflectIntern(BYTE* buffer, cint width, cint height)
         0.0f                           // 半径
         );
     plane->material = std::make_shared<CheckerMaterial>(0.1f, 0.5f);
-    world.Add(plane);
+    world.AddGeometries(plane);
 
     // -------------------------------------
     // 球体
@@ -115,13 +115,13 @@ void PhysicsEngine::RenderReflectIntern(BYTE* buffer, cint width, cint height)
         10.0f                           // 半径
         );
     sphere1->material = std::make_shared<PhongMaterial>(color(Gdiplus::Color::Red), color(Gdiplus::Color::White), 16.0f, 0.25f);
-    world.Add(sphere1);
+    world.AddGeometries(sphere1);
     auto sphere2 = std::make_shared<Sphere>(
         vector3(10.0f, 10.0f, -10.0f),  // 球心坐标
         10.0f                           // 半径
         );
     sphere2->material = std::make_shared<PhongMaterial>(color(Gdiplus::Color::Blue), color(Gdiplus::Color::White), 16.0f, 0.25f);
-    world.Add(sphere2);
+    world.AddGeometries(sphere2);
 
     // -------------------------------------
     // 光线追踪

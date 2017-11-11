@@ -20,7 +20,7 @@ void PhysicsEngine::RenderSphereIntern(BYTE * buffer, BYTE * buffer2, cint width
 
     // -------------------------------------
     // 球体
-    world.Add(std::make_shared<Sphere>(
+    world.AddGeometries(std::make_shared<Sphere>(
         vector3(0.0f, 10.0f, -10.0f), // 球心坐标
         10.0f                         // 半径
     ));

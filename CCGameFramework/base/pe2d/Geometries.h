@@ -49,6 +49,7 @@ public:
 class color
 {
 public:
+    color();
     color(BYTE r, BYTE g, BYTE b);
     color(float r, float g, float b);
     color(Gdiplus::Color clr);
@@ -68,7 +69,7 @@ public:
     virtual ~Material();
     virtual color Sample(Ray ray, vector3 position, vector3 normal) = 0;
 
-    float reflectiveness{ 0.0f };
+    float reflectiveness;
 };
 
 // 棋盘材质
@@ -79,7 +80,7 @@ public:
 
     color Sample(Ray ray, vector3 position, vector3 normal) override;
 
-    float scale{ 0.0f };
+    float scale;
 };
 
 // Phong材质
@@ -92,7 +93,45 @@ public:
 
     color diffuse;
     color specular;
-    float shininess{ 0.0f };
+    float shininess;
+};
+
+// 光源采样
+class LightSample
+{
+public:
+    LightSample();
+    LightSample(vector3 L, color EL);
+
+    bool empty() const;
+
+    vector3 L;
+    color EL;
+};
+
+class World;
+
+// 光源采样接口
+class Light
+{
+public:
+    virtual ~Light();
+    virtual LightSample Sample(World& world, vector3 position) = 0;
+
+    bool shadow{ false }; // 是否要有阴影
+};
+
+// 平行光
+class DirectionalLight : public Light
+{
+public:
+    DirectionalLight(color irradiance, vector3 direction);
+
+    LightSample Sample(World& world, vector3 position) override;
+
+    color irradiance;    // 辐照强度
+    vector3 direction;   // 光照方向
+    vector3 L;           // 光源方向
 };
 
 // 几何体接口
@@ -109,11 +148,13 @@ public:
 class World
 {
 public:
-    void Add(std::shared_ptr<Geometries> body);
+    void AddGeometries(std::shared_ptr<Geometries> body);
+    void AddLight(std::shared_ptr<Light> light);
 
     IntersectResult Intersect(Ray ray); // 相交测试
-
-    std::vector<std::shared_ptr<Geometries>> collections;
+    
+    std::vector<std::shared_ptr<Geometries>> geometries;
+    std::vector<std::shared_ptr<Light>> lights;
 };
 
 // 球体
