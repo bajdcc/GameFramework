@@ -32,8 +32,8 @@ private:
     void RenderTriLight(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
 
     void Render2DLight(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
-    void Render2DShadow(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
     void Render2DSolid(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
+	void Render2DReflect(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
 
 private:
     static void RenderSimpleIntern(BYTE* buffer, cint width, cint height);

@@ -39,10 +39,10 @@ void PhysicsEngine::RenderByType(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
         Render2DLight(rt, bounds);
         break;
     case 22:
-        Render2DShadow(rt, bounds);
+        Render2DSolid(rt, bounds);
         break;
     case 23:
-        Render2DSolid(rt, bounds);
+        Render2DReflect(rt, bounds);
         break;
     }
 }

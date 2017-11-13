@@ -507,10 +507,10 @@
     <ClCompile Include="base\pe2d\Render2DLight.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="base\pe2d\Render2DShadow.cpp">
+    <ClCompile Include="base\pe2d\Render2DSolid.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="base\pe2d\Render2DSolid.cpp">
+    <ClCompile Include="base\pe2d\Render2DReflect.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

@@ -311,12 +311,12 @@ function M:init_menu(info)
 		end
 	}):attach(slider3)
 	Button:new({
-		text = '多个形状',
+		text = '实体几何',
 		font_family = '楷体',
 		track_display = 0,
 		font_size = 16,
 		click = function()
-			CurrentScene.layers.text.text = '阴影效果'
+			CurrentScene.layers.text.text = '实体几何效果（交、并、差、反）'
 			CurrentScene.layers.text:update()
 			CurrentScene.layers.wm.show_self = 0
 			CurrentScene.layers.wm:update()
@@ -325,12 +325,12 @@ function M:init_menu(info)
 		end
 	}):attach(slider3)
 		Button:new({
-		text = '实体几何',
+		text = '反射',
 		font_family = '楷体',
 		track_display = 0,
 		font_size = 16,
 		click = function()
-			CurrentScene.layers.text.text = '实体几何展示'
+			CurrentScene.layers.text.text = '反射效果'
 			CurrentScene.layers.text:update()
 			CurrentScene.layers.wm.show_self = 0
 			CurrentScene.layers.wm:update()
