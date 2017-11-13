@@ -15,7 +15,7 @@ public:
     void Finalize(std::shared_ptr<Direct2DRenderTarget> rt);
     void Reset(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget, std::shared_ptr<Direct2DRenderTarget> newRenderTarget);
 
-    void SetType(cint value);
+    int SetType(cint value);
 
 private:
     void RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
@@ -53,7 +53,10 @@ private:
     CColor bgColor;
     cint type{ 0 };
     std::weak_ptr<Direct2DRenderTarget> d2drt;
-    bool painted{ false };
+    bool painted{ true };
+    bool locked{ false };
+    std::auto_ptr<BYTE> buf;
+    WICRect rect;
     CComPtr<ID2D1Bitmap> bitmap;
     CComPtr<ID2D1Bitmap> bitmap2;
 };

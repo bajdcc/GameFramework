@@ -2,7 +2,7 @@
 #include "PhysicsEngine2D.h"
 #include "render/Direct2DRenderTarget.h"
 
-#define N 64
+#define N 256
 #define MAX_STEP 10
 #define MAX_DISTANCE 2.0f
 #define EPSILON 1e-6f
@@ -11,7 +11,7 @@
 #define CIRCLE_Y 0.5f
 #define CIRCLE_R 0.1f
 
-auto PI2 = 2.0f * float(M_PI);
+extern auto PI2 = 2.0f * float(M_PI);
 
 /**
  * \brief 圆的带符号距离场 SDF=||x-c||-r
@@ -22,7 +22,7 @@ auto PI2 = 2.0f * float(M_PI);
  * \param r 圆半径
  * \return 到圆的距离
  */
-float circleSDF(float x, float y, float cx, float cy, float r) {
+extern float circleSDF(float x, float y, float cx, float cy, float r) {
     const auto ux = x - cx, uy = y - cy;
     return sqrtf(ux * ux + uy * uy) - r;
 }
@@ -35,7 +35,7 @@ float circleSDF(float x, float y, float cx, float cy, float r) {
  * \param dy dest Y坐标
  * \return 亮度
  */
-float trace(float ox, float oy, float dx, float dy) {
+static float trace(float ox, float oy, float dx, float dy) {
     auto t = 0.0f;
     for (auto i = 0; i < MAX_STEP && t < MAX_DISTANCE; i++) {
         const auto sd = circleSDF(ox + dx * t, oy + dy * t, CIRCLE_X, CIRCLE_Y, CIRCLE_R); // 圆在(0.5,0.5) r=0.1
@@ -52,7 +52,7 @@ float trace(float ox, float oy, float dx, float dy) {
  * \param y Y坐标
  * \return 亮度
  */
-float sample(float x, float y) {
+static float sample(float x, float y) {
     auto sum = 0.0f;
     for (auto i = 0; i < N; i++) {
         // const auto a = PI2 * rand() / RAND_MAX;                  // 均匀采样
@@ -63,63 +63,100 @@ float sample(float x, float y) {
     return sum / N;
 }
 
-void DrawUniform(BYTE* buffer, cint width, cint height)
+static volatile bool* g_painted = nullptr;
+static volatile BYTE* g_buf = nullptr;
+static volatile int g_width, g_height;
+static volatile int g_cnt = 0;
+static std::mutex mtx;
+
+static void DrawScene(int part)
 {
+    auto buffer = g_buf;
+    auto width = g_width;
+    auto height = g_height;
     auto m = min(width, height);
     for (auto y = 0; y < height; y++)
     {
-        for (auto x = 0; x < width; x++)
+        if (y % 4 == part)
         {
-            const auto color = BYTE(fminf(sample(float(x) / m, float(y) / m) * 255.0f, 255.0f));
-            buffer[0] = color;
-            buffer[1] = color;
-            buffer[2] = color;
-            buffer[3] = 255;
-            buffer += 4;
+            for (auto x = 0; x < width; x++)
+            {
+                const auto color = BYTE(fminf(sample(float(x) / m, float(y) / m) * 255.0f, 255.0f));
+                buffer[0] = color;
+                buffer[1] = color;
+                buffer[2] = color;
+                buffer[3] = 255;
+                buffer += 4;
+            }
         }
+        else
+            buffer += 4 * width;
     }
+    mtx.lock();
+    g_cnt++;
+    if (g_cnt == 4)
+        *g_painted = true;
+    mtx.unlock();
 }
 
 void PhysicsEngine::Render2DLight(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
 {
-    if (painted)
+    if (painted || buf.get())
     {
+        if (buf.get())
+        {
+            auto d2dRect = D2D1::RectU(0, 0, rect.Width, rect.Height);
+            bitmap->CopyFromMemory(&d2dRect, buf.get(), rect.Width * 4);
+            if (painted)
+                buf.release();
+        }
         // 画渲染好的位图
         rt->DrawBitmap(
             bitmap,
             D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top,
-                (FLOAT)bounds.left + fminf((FLOAT)bounds.Width(), bitmap->GetSize().width),
+            (FLOAT)bounds.left + fminf((FLOAT)bounds.Width(), bitmap->GetSize().width),
                 (FLOAT)bounds.top + fminf((FLOAT)bounds.Height(), bitmap->GetSize().height)),
             1.0f,
             D2D1_BITMAP_INTERPOLATION_MODE_LINEAR
         );
         return;
     }
+
     auto _rt = d2drt.lock();
     auto _w = bounds.Width(), _h = bounds.Height();
     auto wic = _rt->CreateBitmap(_w, _h);
-    WICRect rect;
     rect.X = 0;
     rect.Y = 0;
     rect.Width = _w;
     rect.Height = _h;
-    auto buffer = new BYTE[rect.Width * rect.Height * 4];
-    auto hr = wic->CopyPixels(&rect, rect.Width * 4, rect.Width * rect.Height * 4, buffer);
+    if (!buf.get())
+    {
+        buf.reset(new BYTE[rect.Width * rect.Height * 4]);
+        wic->CopyPixels(&rect, rect.Width * 4, rect.Width * rect.Height * 4, buf.get());
+    }
 
-    // ----------------------------------------------------
-    // 位图渲染开始
-    DrawUniform(buffer, _w, _h);
-    // ----------------------------------------------------
-
-    auto d2dRect = D2D1::RectU(0, 0, rect.Width, rect.Height);
     bitmap = _rt->GetBitmapFromWIC(wic);
-    bitmap->CopyFromMemory(&d2dRect, buffer, rect.Width * 4);
     rt->DrawBitmap(
         bitmap,
         D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
         1.0f,
         D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR
     );
-    delete[]buffer;
-    painted = true;
+
+    g_painted = &painted;
+    g_buf = buf.get();
+    g_width = _w;
+    g_height = _h;
+    g_cnt = 0;
+    // ----------------------------------------------------
+    // 位图渲染开始
+    std::thread th0(DrawScene, 0);
+    th0.detach();
+    std::thread th1(DrawScene, 1);
+    th1.detach();
+    std::thread th2(DrawScene, 2);
+    th2.detach();
+    std::thread th3(DrawScene, 3);
+    th3.detach();
+    // ----------------------------------------------------
 }

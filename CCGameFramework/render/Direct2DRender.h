@@ -629,7 +629,7 @@ public:
     FLOAT GetOpacity()const;
     void SetOpacity(FLOAT value);
 
-    void Refresh(int arg);
+    int Refresh(int arg);
 
 protected:
     CStringA text;
@@ -643,7 +643,7 @@ protected:
 public:
     void Render(CRect bounds)override;
     ~WireworldAutomatonImageElementRenderer();
-    void Refresh(int arg);
+    int Refresh(int arg);
 private:
     CComPtr<IWICBitmap> wic;
     BYTE* buffer{ nullptr };
@@ -731,7 +731,7 @@ public:
     cint GetType()const;
     void SetType(cint value);
 
-    void Refresh(int arg);
+    int Refresh(int arg);
 
 protected:
     CStringA text;
@@ -744,7 +744,7 @@ class PhysicsEngine2DElementRenderer : public GraphicsRenderer<PhysicsEngine2DEl
 public:
     void Render(CRect bounds)override;
     ~PhysicsEngine2DElementRenderer();
-    void Refresh(int arg);
+    int Refresh(int arg);
 
     void OnElementStateChanged()override;
 

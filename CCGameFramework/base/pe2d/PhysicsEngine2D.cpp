@@ -80,11 +80,33 @@ void PhysicsEngine::Reset(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget,
     }
 }
 
-void PhysicsEngine::SetType(cint value)
+int PhysicsEngine::SetType(cint value)
 {
+    if (value == 22 || value == 21)
+    {
+        if (locked)
+        {
+            if (painted)
+            {
+                locked = false;
+                return 1;
+            }
+            return 0;
+        }
+        if (painted)
+        {
+            painted = false;
+            locked = true;
+            type = value;
+        }
+        return 0;
+    }
+    if (locked)
+        return -1;
     type = value;
     if (value != 0)
         painted = false;
+    return 0;
 }
 
 void PhysicsEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)

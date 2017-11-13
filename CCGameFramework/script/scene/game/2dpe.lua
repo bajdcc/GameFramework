@@ -114,6 +114,16 @@ function M:init_event()
 			this.layers.pe2d:update_and_paint()
 			UIExt.refresh(this.layers.pe2d, 0)
 			UIExt.paint()
+		elseif id == 21 then
+			if UIExt.refresh(this.layers.pe2d, 21) == 1 then
+				UIExt.kill_timer(21)
+			end
+			UIExt.paint()
+		elseif id == 22 then
+			if UIExt.refresh(this.layers.pe2d, 22) == 1 then
+				UIExt.kill_timer(22)
+			end
+			UIExt.paint()
 		end
 	end
 	self.handler[self.win_event.keydown] = function(this, code, flags)
@@ -306,8 +316,7 @@ function M:init_menu(info)
 			CurrentScene.layers.text:update()
 			CurrentScene.layers.wm.show_self = 0
 			CurrentScene.layers.wm:update()
-			UIExt.refresh(CurrentScene.layers.pe2d, 21)
-			UIExt.paint()
+			UIExt.set_timer(21, 100)
 		end
 	}):attach(slider3)
 	Button:new({
@@ -316,12 +325,11 @@ function M:init_menu(info)
 		track_display = 0,
 		font_size = 16,
 		click = function()
-			CurrentScene.layers.text.text = '实体几何效果（交、并、差、反）'
+			CurrentScene.layers.text.text = '实体几何效果'
 			CurrentScene.layers.text:update()
 			CurrentScene.layers.wm.show_self = 0
 			CurrentScene.layers.wm:update()
-			UIExt.refresh(CurrentScene.layers.pe2d, 22)
-			UIExt.paint()
+			UIExt.set_timer(22, 100)
 		end
 	}):attach(slider3)
 		Button:new({

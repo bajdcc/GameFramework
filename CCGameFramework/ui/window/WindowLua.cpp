@@ -327,18 +327,19 @@ int ui_refresh_obj(lua_State *L)
     {
         auto obj = std::dynamic_pointer_cast<WireworldAutomatonImageElement>(o);
         {
-            obj->Refresh(arg);
+            lua_pushinteger(L, obj->Refresh(arg));
         }
+        return 1;
     }
     break;
     case PhysicsEngine2D:
     {
         auto obj = std::dynamic_pointer_cast<PhysicsEngine2DElement>(o);
         {
-            obj->Refresh(arg);
+            lua_pushinteger(L, obj->Refresh(arg));
         }
+        return 1;
     }
-    break;
     case Edit:
         break;
     default:

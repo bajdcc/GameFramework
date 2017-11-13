@@ -40,9 +40,9 @@ void PhysicsEngine2DElement::SetType(cint value)
     type = value;
 }
 
-void PhysicsEngine2DElement::Refresh(int arg)
+int PhysicsEngine2DElement::Refresh(int arg)
 {
-    std::dynamic_pointer_cast<PhysicsEngine2DElementRenderer, IGraphicsRenderer>(renderer)->Refresh(arg);
+    return std::dynamic_pointer_cast<PhysicsEngine2DElementRenderer, IGraphicsRenderer>(renderer)->Refresh(arg);
 }
 
 void PhysicsEngine2DElementRenderer::Render(CRect bounds)
@@ -60,9 +60,9 @@ PhysicsEngine2DElementRenderer::~PhysicsEngine2DElementRenderer()
 {
 }
 
-void PhysicsEngine2DElementRenderer::Refresh(int arg)
+int PhysicsEngine2DElementRenderer::Refresh(int arg)
 {
-    pe.SetType(arg);
+    return pe.SetType(arg);
 }
 
 void PhysicsEngine2DElementRenderer::OnElementStateChanged()

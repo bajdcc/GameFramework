@@ -286,9 +286,9 @@ void WireworldAutomatonImageElement::SetOpacity(FLOAT value)
     opacity = value;
 }
 
-void WireworldAutomatonImageElement::Refresh(int arg)
+int WireworldAutomatonImageElement::Refresh(int arg)
 {
-    std::dynamic_pointer_cast<WireworldAutomatonImageElementRenderer, IGraphicsRenderer>(renderer)->Refresh(arg);
+    return std::dynamic_pointer_cast<WireworldAutomatonImageElementRenderer, IGraphicsRenderer>(renderer)->Refresh(arg);
 }
 
 DWORD watm_clr[] =
@@ -428,10 +428,10 @@ bool CanHead(const BYTE* d, const INT& w, const INT& h, const INT& j, const INT&
     return n == 1 || n == 2;
 }
 
-void WireworldAutomatonImageElementRenderer::Refresh(int arg)
+int WireworldAutomatonImageElementRenderer::Refresh(int arg)
 {
     if (arg == 1) buffer = nullptr;
-    if (arg != 0) return;
+    if (arg != 0) return -1;
     wires.clear();
     heads.clear();
     tails.clear();
@@ -484,5 +484,6 @@ void WireworldAutomatonImageElementRenderer::Refresh(int arg)
     {
         bitmap->CopyFromMemory(&d2dRect, buffer, rect.Width * 4);
     }
+    return 0;
 }
 #pragma endregion Image

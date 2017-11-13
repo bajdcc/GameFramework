@@ -88,6 +88,9 @@ TODO：
 - [用JavaScript玩转计算机图形学(一)光线追踪入门 - Milo Yip](http://www.cnblogs.com/miloyip/archive/2010/03/29/1698953.html) **（已完成）**
 - [用JavaScript玩转计算机图形学(二)基本光源 - Milo Yip](http://www.cnblogs.com/miloyip/archive/2010/04/02/1702768.html) **（已完成）**
 - [用 C 语言画光（一）：基础](https://zhuanlan.zhihu.com/p/30745861) **（已完成）**
+- [用 C 语言画光（二）：构造实体几何](https://zhuanlan.zhihu.com/p/30748318) **（已完成）**
+- [用 C 语言画光（三）：形状](https://zhuanlan.zhihu.com/p/30816284) **（已完成）**
+
 
 #### 截图
 
@@ -136,6 +139,8 @@ TODO：
 ![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/gui_8.png)
 
 **画光系列**
+
+（采用动态刷新法）
 
 **1. 抖动采样**
 
