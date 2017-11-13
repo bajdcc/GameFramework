@@ -140,3 +140,7 @@ TODO：
 **1. 抖动采样**
 
 ![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/light_1.png)
+
+**2. 实体几何**
+
+![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/light_2.png)
