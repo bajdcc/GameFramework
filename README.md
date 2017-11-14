@@ -90,6 +90,7 @@ TODO：
 - [用 C 语言画光（一）：基础](https://zhuanlan.zhihu.com/p/30745861) **（已完成）**
 - [用 C 语言画光（二）：构造实体几何](https://zhuanlan.zhihu.com/p/30748318) **（已完成）**
 - [用 C 语言画光（三）：形状](https://zhuanlan.zhihu.com/p/30816284) **（已完成）**
+- [用 C 语言画光（四）：反射](https://zhuanlan.zhihu.com/p/30961545) **（已完成）**
 
 
 #### 截图
@@ -149,3 +150,7 @@ TODO：
 **2. 实体几何**
 
 ![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/light_2.png)
+
+**3. 反射**
+
+![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/light_3.png)

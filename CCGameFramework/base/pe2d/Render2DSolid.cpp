@@ -11,11 +11,11 @@
 
 extern float PI2;
 
-typedef struct
+struct Result
 {
 	float sd;           // 带符号距离（signed distance）
 	float emissive;     // 自发光强度（emissive）
-} Result;
+};
 
 /**
 * \brief 求并集
@@ -23,7 +23,7 @@ typedef struct
 * \param b
 * \return
 */
-Result unionOp(Result a, Result b) {
+static Result unionOp(Result a, Result b) {
 	return a.sd < b.sd ? a : b; // 取SD最小的步进
 }
 
@@ -33,7 +33,7 @@ Result unionOp(Result a, Result b) {
 * \param b
 * \return
 */
-Result intersectOp(Result a, Result b) {
+static Result intersectOp(Result a, Result b) {
 	Result r = a.sd > b.sd ? b : a;
 	r.sd = a.sd > b.sd ? a.sd : b.sd;
 	return r;
@@ -45,7 +45,7 @@ Result intersectOp(Result a, Result b) {
 * \param b
 * \return
 */
-Result subtractOp(Result a, Result b) {
+static Result subtractOp(Result a, Result b) {
 	Result r = a;
 	r.sd = (a.sd > -b.sd) ? a.sd : -b.sd;
 	return r;
@@ -56,7 +56,7 @@ Result subtractOp(Result a, Result b) {
 * \param a
 * \return
 */
-Result complementOp(Result a) {
+static Result complementOp(Result a) {
 	a.sd = -a.sd;
 	return a;
 }

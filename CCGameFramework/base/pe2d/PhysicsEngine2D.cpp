@@ -82,7 +82,7 @@ void PhysicsEngine::Reset(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget,
 
 int PhysicsEngine::SetType(cint value)
 {
-    if (value == 22 || value == 21)
+    if (value == 21 || value == 22 || value == 23)
     {
         if (locked)
         {
