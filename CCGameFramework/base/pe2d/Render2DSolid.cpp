@@ -275,6 +275,8 @@ void PhysicsEngine::Render2DSolid(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
         {
             auto d2dRect = D2D1::RectU(0, 0, rect.Width, rect.Height);
             bitmap->CopyFromMemory(&d2dRect, buf.get(), rect.Width * 4);
+            if (painted)
+                buf.release();
         }
 		// 画渲染好的位图
 		rt->DrawBitmap(
