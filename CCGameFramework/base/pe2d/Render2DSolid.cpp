@@ -5,7 +5,7 @@
 #define SCAN_N 10
 
 #define N 64
-#define MAX_STEP 10
+#define MAX_STEP 64
 #define MAX_DISTANCE 2.0f
 #define EPSILON 1e-6f
 
