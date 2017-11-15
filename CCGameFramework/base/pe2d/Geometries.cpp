@@ -74,6 +74,26 @@ color color::operator*(const color& c) const
     return color(r * c.r, g * c.g, b * c.b);
 }
 
+void color::Add(const color& c)
+{
+    r += c.r; g += c.g; b += c.b;
+}
+
+const bool color::Valid() const
+{
+    return r > 0.0f && g > 0.0f && b > 0.0f;
+}
+
+color color::make_color(float s)
+{
+    return color(s, s, s);
+}
+
+color color::make_color(float r, float g, float b)
+{
+    return color(r, g, b);
+}
+
 Material::Material(float reflectiveness): reflectiveness(reflectiveness)
 {
 }

@@ -4,6 +4,17 @@
 #include <memory>
 #include "Geometries.h"
 
+class DrawSceneBag
+{
+public:
+    volatile bool* g_painted{ nullptr };
+    volatile BYTE* g_buf{ nullptr };
+    volatile int g_width{ 0 }, g_height{ 0 };
+    volatile int g_cnt{ 0 };
+    std::mutex mtx;
+};
+
+extern DrawSceneBag bag;
 
 class PhysicsEngine
 {
@@ -16,6 +27,8 @@ public:
     void Reset(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget, std::shared_ptr<Direct2DRenderTarget> newRenderTarget);
 
     int SetType(cint value);
+
+    using scene_t = void(*)(int);
 
 private:
     void RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
@@ -34,6 +47,7 @@ private:
     void Render2DLight(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
     void Render2DSolid(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
 	void Render2DReflect(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
+    void Render2DTri(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
 
 private:
     static void RenderSimpleIntern(BYTE* buffer, cint width, cint height);
@@ -48,6 +62,8 @@ private:
     static void RenderTriLight(BYTE* buffer, cint width, cint height);
     static void RenderLightIntern(World&, const PerspectiveCamera&, BYTE* buffer, cint width, cint height);
 
+    void RenderSceneIntern(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
+
 private:
     CComPtr<ID2D1SolidColorBrush> bg;
     CColor bgColor;
@@ -59,6 +75,7 @@ private:
     WICRect rect;
     CComPtr<ID2D1Bitmap> bitmap;
     CComPtr<ID2D1Bitmap> bitmap2;
+    scene_t scene;
 };
 
 #endif

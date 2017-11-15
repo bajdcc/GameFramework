@@ -154,3 +154,17 @@ TODO：
 **3. 反射**
 
 ![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/light_3.png)
+
+**画光系列（彩色）**
+
+**1. 实体几何**
+
+![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/color_1.png)
+
+**2. 反射**
+
+![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/color_2.png)
+
+**3. 三原色**
+
+![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/color_3.png)

@@ -58,6 +58,11 @@ public:
     color operator * (float s) const;
     color operator * (const color& c) const;
 
+    void Add(const color& c);
+    const bool Valid() const;
+    static color make_color(float s);
+    static color make_color(float r, float g, float b);
+
     float r, g, b;
 };
 

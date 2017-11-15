@@ -15,7 +15,7 @@ function PassEventToScene(id, ...)
 	if DebugSkipMsg[id] == nil then
 		UIExt.trace('[' .. CurrentScene.name .. '] Event: ' .. id)
 	end
-	CurrentScene:event(id, ...)
+	return CurrentScene:event(id, ...)
 end
 
 function FlipScene(scene)

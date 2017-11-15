@@ -1077,7 +1077,11 @@ void Window::Opened()
 
 void Window::Closing(bool& cancel)
 {
-    PostNoArgLuaMsg(L, WE_Closing);
+    lua_getglobal(L, "PassEventToScene");
+    lua_pushinteger(L, WE_Closing);
+    lua_call(L, 1, 1);
+    cancel = lua_toboolean(L, -1) != 0;
+    lua_pop(L, 1);
 }
 
 void Window::Closed()

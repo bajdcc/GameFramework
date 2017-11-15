@@ -2,6 +2,8 @@
 #include "PhysicsEngine2D.h"
 #include "render/Direct2DRenderTarget.h"
 
+DrawSceneBag bag;
+
 void PhysicsEngine::RenderByType(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
 {
     if (!d2drt.lock()) return;
@@ -44,6 +46,9 @@ void PhysicsEngine::RenderByType(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
     case 23:
         Render2DReflect(rt, bounds);
         break;
+    case 24:
+        Render2DTri(rt, bounds);
+        break;
     }
 }
 
@@ -63,6 +68,7 @@ void PhysicsEngine::Initialize(std::shared_ptr<Direct2DRenderTarget> rt)
 
 void PhysicsEngine::Finalize(std::shared_ptr<Direct2DRenderTarget> rt)
 {
+
 }
 
 void PhysicsEngine::Reset(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget, std::shared_ptr<Direct2DRenderTarget> newRenderTarget)
@@ -82,7 +88,9 @@ void PhysicsEngine::Reset(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget,
 
 int PhysicsEngine::SetType(cint value)
 {
-    if (value == 21 || value == 22 || value == 23)
+    if (value == -1)
+        return painted ? 1 : 0;
+    if (value >= 21 && value <= 30)
     {
         if (locked)
         {

@@ -29,7 +29,7 @@ end
 function M:event(id, ...)
 	local f = self.handler[id]
 	if f then 
-		f(self, ...)
+		return f(self, ...)
 	end
 end
 
@@ -174,7 +174,10 @@ function M:initevt()
 				this.onchar(this.win_event.char, {['code']=code,['flags']=flags})
 			end
 		end,
-		[self.win_event.moved] = self.resize
+		[self.win_event.moved] = self.resize,
+		[self.win_event.closing] = function(this)
+			return false
+		end
 	}
 end
 

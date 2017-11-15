@@ -57,6 +57,7 @@ function M:init()
 			return right - 200, bottom - 50, right, bottom
 		end,
 		hit = function(this, evt)
+			if UIExt.refresh(CurrentScene.layers.pe2d, -1) == 0 then return end
 			if evt == WinEvent.leftbuttondown then
 				FlipScene('Button')
 			end
@@ -114,24 +115,17 @@ function M:init_event()
 			this.layers.pe2d:update_and_paint()
 			UIExt.refresh(this.layers.pe2d, 0)
 			UIExt.paint()
-		elseif id == 21 then
-			if UIExt.refresh(this.layers.pe2d, 21) == 1 then
-				UIExt.kill_timer(21)
-			end
-			UIExt.paint()
-		elseif id == 22 then
-			if UIExt.refresh(this.layers.pe2d, 22) == 1 then
-				UIExt.kill_timer(22)
-			end
-			UIExt.paint()
-		elseif id == 23 then
-			if UIExt.refresh(this.layers.pe2d, 23) == 1 then
-				UIExt.kill_timer(23)
+		elseif id >= 21 and id <= 30 then
+			if UIExt.refresh(this.layers.pe2d, id) == 1 then
+				UIExt.kill_timer(id)
 			end
 			UIExt.paint()
 		end
 	end
 	self.handler[self.win_event.keydown] = function(this, code, flags)
+	end
+	self.handler[self.win_event.closing] = function(this)
+		return UIExt.refresh(this.layers.pe2d, -1) == 0
 	end
 end
 
@@ -169,7 +163,7 @@ function M:init_menu(info)
 		padright = 2,
 		padbottom = 2,
 		pre_resize = function(this, left, top, right, bottom)
-			return left, bottom - 50, left + 500, bottom
+			return left, bottom - 50, right - 200, bottom
 		end
 	})
 	self:add(slider)
@@ -179,6 +173,9 @@ function M:init_menu(info)
 		track_display = 0,
 		font_size = 16,
 		click = function(this)
+			if UIExt.refresh(CurrentScene.layers.pe2d, -1) == 0 then
+				return
+			end
 			CurrentScene.layers.text.text = '随机渐变'
 			CurrentScene.layers.text:update()
 			CurrentScene.layers.wm.show_self = 0
@@ -193,6 +190,7 @@ function M:init_menu(info)
 		track_display = 0,
 		font_size = 16,
 		click = function()
+			if UIExt.refresh(CurrentScene.layers.pe2d, -1) == 0 then return end
 			CurrentScene.layers.text.text = '简单球体光线追踪'
 			CurrentScene.layers.text:update()
 			CurrentScene.layers.wm.show_self = 0
@@ -207,6 +205,7 @@ function M:init_menu(info)
 		track_display = 0,
 		font_size = 16,
 		click = function()
+			if UIExt.refresh(CurrentScene.layers.pe2d, -1) == 0 then return end
 			CurrentScene.layers.text.text = '渲染材质'
 			CurrentScene.layers.text:update()
 			CurrentScene.layers.wm.show_self = 0
@@ -221,6 +220,7 @@ function M:init_menu(info)
 		track_display = 0,
 		font_size = 16,
 		click = function()
+			if UIExt.refresh(CurrentScene.layers.pe2d, -1) == 0 then return end
 			CurrentScene.layers.text.text = '实现反射效果'
 			CurrentScene.layers.text:update()
 			CurrentScene.layers.wm.show_self = 0
@@ -238,7 +238,7 @@ function M:init_menu(info)
 		padright = 2,
 		padbottom = 2,
 		pre_resize = function(this, left, top, right, bottom)
-			return left, bottom - 100, left + 500, bottom - 50
+			return left, bottom - 100, right, bottom - 50
 		end
 	})
 	self:add(slider2)
@@ -248,6 +248,7 @@ function M:init_menu(info)
 		track_display = 0,
 		font_size = 16,
 		click = function(this)
+			if UIExt.refresh(CurrentScene.layers.pe2d, -1) == 0 then return end
 			CurrentScene.layers.text.text = '平行光效果'
 			CurrentScene.layers.text:update()
 			CurrentScene.layers.wm.show_self = 0
@@ -262,6 +263,7 @@ function M:init_menu(info)
 		track_display = 0,
 		font_size = 16,
 		click = function()
+			if UIExt.refresh(CurrentScene.layers.pe2d, -1) == 0 then return end
 			CurrentScene.layers.text.text = '点光源效果'
 			CurrentScene.layers.text:update()
 			CurrentScene.layers.wm.show_self = 0
@@ -276,6 +278,7 @@ function M:init_menu(info)
 		track_display = 0,
 		font_size = 16,
 		click = function()
+			if UIExt.refresh(CurrentScene.layers.pe2d, -1) == 0 then return end
 			CurrentScene.layers.text.text = '聚光灯效果'
 			CurrentScene.layers.text:update()
 			CurrentScene.layers.wm.show_self = 0
@@ -290,6 +293,7 @@ function M:init_menu(info)
 		track_display = 0,
 		font_size = 16,
 		click = function()
+			if UIExt.refresh(CurrentScene.layers.pe2d, -1) == 0 then return end
 			CurrentScene.layers.text.text = '颜色混合'
 			CurrentScene.layers.text:update()
 			CurrentScene.layers.wm.show_self = 0
@@ -299,57 +303,79 @@ function M:init_menu(info)
 		end
 	}):attach(slider2)
 
-	-- SLIDER #3
-	local slider3 = LinearLayout:new({
-		align = 1,
-		padleft = 2,
-		padtop = 2,
-		padright = 2,
-		padbottom = 2,
-		pre_resize = function(this, left, top, right, bottom)
-			return right - 400, bottom - 100, right, bottom - 50
-		end
-	})
-	self:add(slider3)
 	Button:new({
 		text = '发光圆形',
 		font_family = '楷体',
 		track_display = 0,
 		font_size = 16,
 		click = function(this)
+			if UIExt.refresh(CurrentScene.layers.pe2d, -1) == 0 then return end
 			CurrentScene.layers.text.text = '发光圆形（抖动采样）'
 			CurrentScene.layers.text:update()
 			CurrentScene.layers.wm.show_self = 0
 			CurrentScene.layers.wm:update()
 			UIExt.set_timer(21, 100)
 		end
-	}):attach(slider3)
+	}):attach(slider2)
 	Button:new({
 		text = '实体几何',
 		font_family = '楷体',
 		track_display = 0,
 		font_size = 16,
 		click = function()
+			if UIExt.refresh(CurrentScene.layers.pe2d, -1) == 0 then return end
 			CurrentScene.layers.text.text = '实体几何效果'
 			CurrentScene.layers.text:update()
 			CurrentScene.layers.wm.show_self = 0
 			CurrentScene.layers.wm:update()
 			UIExt.set_timer(22, 100)
 		end
-	}):attach(slider3)
-		Button:new({
+	}):attach(slider2)
+	Button:new({
 		text = '反射',
 		font_family = '楷体',
 		track_display = 0,
 		font_size = 16,
 		click = function()
+			if UIExt.refresh(CurrentScene.layers.pe2d, -1) == 0 then return end
 			CurrentScene.layers.text.text = '反射效果'
 			CurrentScene.layers.text:update()
 			CurrentScene.layers.wm.show_self = 0
 			CurrentScene.layers.wm:update()
 			UIExt.set_timer(23, 100)
 		end
-	}):attach(slider3)
+	}):attach(slider2)
+
+	Button:new({
+		text = '颜色混合',
+		font_family = '楷体',
+		track_display = 0,
+		font_size = 16,
+		click = function()
+			if UIExt.refresh(CurrentScene.layers.pe2d, -1) == 0 then return end
+			CurrentScene.layers.text.text = '三原色反射效果'
+			CurrentScene.layers.text:update()
+			CurrentScene.layers.wm.show_self = 0
+			CurrentScene.layers.wm:update()
+			UIExt.set_timer(24, 100)
+		end
+	}):attach(slider)
+
+	Button:new({
+		text = '待定',
+		font_family = '楷体',
+		track_display = 0,
+		font_size = 16,
+		click = function()
+			if UIExt.refresh(CurrentScene.layers.pe2d, -1) == 0 then return end
+			CurrentScene.layers.text.text = ''
+			CurrentScene.layers.text:update()
+			CurrentScene.layers.wm.show_self = 0
+			CurrentScene.layers.wm:update()
+			UIExt.set_timer(25, 100)
+		end
+	}):attach(slider)
+
 end
 
 return M

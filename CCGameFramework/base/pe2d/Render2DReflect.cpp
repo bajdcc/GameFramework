@@ -6,10 +6,10 @@
 
 #define N 64
 #define MAX_STEP 64
-#define MAX_DISTANCE 2.0f
+#define MAX_DISTANCE 5.0f
 #define EPSILON 1e-6f
 #define BIAS 1e-4f
-#define MAX_DEPTH 3
+#define MAX_DEPTH 5
 
 extern float PI2;
 
@@ -20,33 +20,26 @@ extern float planeSDF(float x, float y, float px, float py, float nx, float ny);
 struct Result
 {
     float sd;           // 带符号距离（signed distance）
-    float emissive;     // 自发光强度（emissive）
-    float reflectivity; // 反射系数
+    color emissive;     // 自发光强度（emissive）
+    color reflectivity; // 反射系数
 };
 
-static Result unionOp(Result a, Result b) {
-    return a.sd < b.sd ? a : b;
-}
+extern Result unionOp(Result a, Result b);
+extern Result intersectOp(Result a, Result b);
+extern Result subtractOp(Result a, Result b);
 
-static Result intersectOp(Result a, Result b) {
-    return a.sd > b.sd ? a : b;
-}
-
-static Result subtractOp(Result a, Result b) {
-    Result r = a;
-    r.sd = (a.sd > -b.sd) ? a.sd : -b.sd;
-    return r;
-}
-
-static Result scene(float x, float y)
+static Result scene_ref(float x, float y)
 {
-    Result a = { circleSDF(x, y, 1.1f, 0.3f, 0.1f), 2.0f, 0.0f };
-    Result b = { boxSDF(x, y, 0.6f, 0.2f, PI2 / 16.0f, 0.1f, 0.1f), 0.0f, 0.9f };
-    Result c = { boxSDF(x, y, 1.5f, 0.2f, PI2 / 16.0f, 0.1f, 0.1f), 0.0f, 0.9f };
-    Result d = { planeSDF(x, y, 0.0f, 0.5f, 0.0f, -1.0f), 0.0f, 0.9f };
-    Result e = { circleSDF(x, y, 1.1f, 0.5f, 0.4f), 0.0f, 0.9f };
+    Result a = { circleSDF(x, y, 1.1f, 0.3f, 0.15f), color(0.0f, 0.0f, 0.8f), color(0.0f, 0.0f, 0.0f) };
+    Result b = { boxSDF(x, y, 0.6f, 0.2f, PI2 / 16.0f, 0.1f, 0.1f), color(0.8f, 0.0f, 0.0f), color(0.0f, 0.0f, 0.0f) };
+    Result c = { boxSDF(x, y, 1.5f, 0.2f, PI2 / 16.0f, 0.1f, 0.1f), color(0.0f, 0.8f, 0.0f), color(0.0f, 0.0f, 0.0f) };
+    Result d = { planeSDF(x, y, 0.0f, 0.5f, 0.0f, -1.0f), color(0.0f, 0.0f, 0.0f), color(0.9f, 0.9f, 0.9f) };
+    Result e = { circleSDF(x, y, 1.1f, 0.5f, 0.4f), color(0.0f, 0.0f, 0.0f), color(0.9f, 0.9f, 0.9f) };
+
     return unionOp(unionOp(a, unionOp(b, c)), subtractOp(d, e));
 }
+
+Result (*g_scene)(float x, float y);
 
 /**
  * \brief 求梯度
@@ -55,9 +48,9 @@ static Result scene(float x, float y)
  * \param nx 要求的法向量X坐标
  * \param ny 要求的法向量Y坐标
  */
-static void gradient(float x, float y, float* nx, float* ny) {
-    *nx = (scene(x + EPSILON, y).sd - scene(x - EPSILON, y).sd) * (0.5f / EPSILON);
-    *ny = (scene(x, y + EPSILON).sd - scene(x, y - EPSILON).sd) * (0.5f / EPSILON);
+extern void gradient(float x, float y, float* nx, float* ny) {
+    *nx = (g_scene(x + EPSILON, y).sd - g_scene(x - EPSILON, y).sd) * (0.5f / EPSILON);
+    *ny = (g_scene(x, y + EPSILON).sd - g_scene(x, y - EPSILON).sd) * (0.5f / EPSILON);
 }
 
 /**
@@ -69,7 +62,7 @@ static void gradient(float x, float y, float* nx, float* ny) {
  * \param rx 反射光线X坐标
  * \param ry 反射光线Y坐标
  */
-static void reflect(float ix, float iy, float nx, float ny, float* rx, float* ry) {
+extern void reflect(float ix, float iy, float nx, float ny, float* rx, float* ry) {
     const auto idotn2 = (ix * nx + iy * ny) * 2.0f;
     *rx = ix - idotn2 * nx;
     *ry = iy - idotn2 * ny;
@@ -82,58 +75,55 @@ static void reflect(float ix, float iy, float nx, float ny, float* rx, float* ry
  * \param dx 终点X坐标
  * \param dy 终点T坐标
  * \param depth 层数
- * \return 采样灰度
+ * \return 采样
  */
-static float trace(float ox, float oy, float dx, float dy, int depth) {
+extern color trace(float ox, float oy, float dx, float dy, int depth) {
+    static color black;
     auto t = 0.0f;
     for (auto i = 0; i < MAX_STEP && t < MAX_DISTANCE; i++) {
-        auto x = ox + dx * t, y = oy + dy * t;
-        auto r = scene(x, y);
+        const auto x = ox + dx * t, y = oy + dy * t;
+        auto r = g_scene(x, y);
         if (r.sd < EPSILON) {                                   // 如果线与图形有交点
             auto sum = r.emissive;                              // 用于累计采样，此处值为除去反射的正常接收光线
-            if (depth < MAX_DEPTH && r.reflectivity > 0.0f) {   // 在反射深度内，且允许反射
+            if (depth < MAX_DEPTH && r.reflectivity.Valid()) {  // 在反射深度内，且允许反射
                 float nx, ny, rx, ry;
                 gradient(x, y, &nx, &ny);                       // 求该交点处法向量
                 reflect(dx, dy, nx, ny, &rx, &ry);              // 求出反射光线
                 // BIAS为偏差
                 // 加上反射光线 = 反射光线追踪采样值 * 反射系数
-                sum += r.reflectivity * trace(x + nx * BIAS, y + ny * BIAS, rx, ry, depth + 1);
+                sum.Add(r.reflectivity * trace(x + nx * BIAS, y + ny * BIAS, rx, ry, depth + 1));
             }
             return sum;
         }
         t += r.sd;
     }
-    return 0.0f;
+    return black;
 }
 
 /**
 * \brief 采样(x,y)位置处的光线
 * \param x X坐标
 * \param y Y坐标
-* \return 亮度
+* \return 采样
 */
-static float sample(float x, float y) {
-    auto sum = 0.0f;
+extern color sample(float x, float y) {
+    color sum;
     for (auto i = 0; i < N; i++) {
         // const auto a = PI2 * rand() / RAND_MAX;                  // 均匀采样
         // const auto a = PI2 * i / N;                              // 分层采样
         const auto a = PI2 * (i + float(rand()) / RAND_MAX) / N;    // 抖动采样
-        sum += trace(x, y, cosf(a), sinf(a), 0); // 追踪 (x,y) 从 随机方向(cos(a),sin(a)) 收集到的光
+        sum.Add(trace(x, y, cosf(a), sinf(a), 0)); // 追踪 (x,y) 从 随机方向(cos(a),sin(a)) 收集到的光
     }
-    return sum / N;
+    return sum * (1.0f / N);
 }
 
-static volatile bool* g_painted = nullptr;
-static volatile BYTE* g_buf = nullptr;
-static volatile int g_width, g_height;
-static volatile int g_cnt = 0;
-static std::mutex mtx;
+extern DrawSceneBag bag;
 
-static void DrawScene(int part)
+extern void DrawSceneGlobal(int part)
 {
-    auto buffer = g_buf;
-    auto width = g_width;
-    auto height = g_height;
+    auto buffer = bag.g_buf;
+    auto width = bag.g_width;
+    auto height = bag.g_height;
     auto m = min(width, height);
     for (auto y = 0; y < height; y++)
     {
@@ -141,10 +131,10 @@ static void DrawScene(int part)
         {
             for (auto x = 0; x < width; x++)
             {
-                const auto color = BYTE(fminf(sample(float(x) / m, float(y) / m) * 255.0f, 255.0f));
-                buffer[0] = color;
-                buffer[1] = color;
-                buffer[2] = color;
+                const auto color = sample(float(x) / m, float(y) / m);
+                buffer[0] = BYTE(color.b * 255.0f);
+                buffer[1] = BYTE(color.g * 255.0f);
+                buffer[2] = BYTE(color.r * 255.0f);
                 buffer[3] = 255;
                 buffer += 4;
             }
@@ -152,14 +142,14 @@ static void DrawScene(int part)
         else
             buffer += 4 * width;
     }
-    mtx.lock();
-    g_cnt++;
-    if (g_cnt == 4)
-        *g_painted = true;
-    mtx.unlock();
+    bag.mtx.lock();
+    bag.g_cnt++;
+    if (bag.g_cnt == 4)
+        *bag.g_painted = true;
+    bag.mtx.unlock();
 }
 
-void PhysicsEngine::Render2DReflect(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
+void PhysicsEngine::RenderSceneIntern(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
 {
     if (painted || buf.get())
     {
@@ -203,20 +193,27 @@ void PhysicsEngine::Render2DReflect(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
         D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR
     );
 
-    g_painted = &painted;
-    g_buf = buf.get();
-    g_width = _w;
-    g_height = _h;
-    g_cnt = 0;
+    bag.g_painted = &painted;
+    bag.g_buf = buf.get();
+    bag.g_width = _w;
+    bag.g_height = _h;
+    bag.g_cnt = 0;
     // ----------------------------------------------------
     // 位图渲染开始
-    std::thread th0(DrawScene, 0);
+    std::thread th0(scene, 0);
     th0.detach();
-    std::thread th1(DrawScene, 1);
+    std::thread th1(scene, 1);
     th1.detach();
-    std::thread th2(DrawScene, 2);
+    std::thread th2(scene, 2);
     th2.detach();
-    std::thread th3(DrawScene, 3);
+    std::thread th3(scene, 3);
     th3.detach();
     // ----------------------------------------------------
+}
+
+void PhysicsEngine::Render2DReflect(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
+{
+    g_scene = ::scene_ref;
+    scene = DrawSceneGlobal;
+    RenderSceneIntern(rt, bounds);
 }
