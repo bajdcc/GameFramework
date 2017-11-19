@@ -22,6 +22,7 @@ struct Result
     float sd;           // 带符号距离（signed distance）
     color emissive;     // 自发光强度（emissive）
     color reflectivity; // 反射系数
+    float eta;          // 折射率
 };
 
 extern Result unionOp(Result a, Result b);

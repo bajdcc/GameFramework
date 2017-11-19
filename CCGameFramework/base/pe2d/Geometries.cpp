@@ -84,6 +84,16 @@ const bool color::Valid() const
     return r > 0.0f && g > 0.0f && b > 0.0f;
 }
 
+void color::Set(float s)
+{
+    r = s; g = s; b = s;
+}
+
+color color::Negative(float s)
+{
+    return color(s - r, s - g, s - b);
+}
+
 color color::make_color(float s)
 {
     return color(s, s, s);

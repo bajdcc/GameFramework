@@ -516,6 +516,9 @@
     <ClCompile Include="base\pe2d\Render2DTri.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="base\pe2d\Render2DRefraction.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="script\lib\core\scene.lua">

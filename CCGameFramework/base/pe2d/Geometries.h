@@ -60,6 +60,8 @@ public:
 
     void Add(const color& c);
     const bool Valid() const;
+    void Set(float s);
+    color Negative(float s);
     static color make_color(float s);
     static color make_color(float r, float g, float b);
 

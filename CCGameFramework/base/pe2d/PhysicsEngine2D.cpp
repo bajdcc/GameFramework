@@ -49,6 +49,9 @@ void PhysicsEngine::RenderByType(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
     case 24:
         Render2DTri(rt, bounds);
         break;
+    case 25:
+        Render2DRefraction(rt, bounds);
+        break;
     }
 }
 

@@ -345,6 +345,20 @@ function M:init_menu(info)
 			UIExt.set_timer(23, 100)
 		end
 	}):attach(slider2)
+	Button:new({
+		text = '折射',
+		font_family = '楷体',
+		track_display = 0,
+		font_size = 16,
+		click = function()
+			if UIExt.refresh(CurrentScene.layers.pe2d, -1) == 0 then return end
+			CurrentScene.layers.text.text = '折射效果'
+			CurrentScene.layers.text:update()
+			CurrentScene.layers.wm.show_self = 0
+			CurrentScene.layers.wm:update()
+			UIExt.set_timer(25, 100)
+		end
+	}):attach(slider2)
 
 	Button:new({
 		text = '颜色混合',
@@ -372,7 +386,7 @@ function M:init_menu(info)
 			CurrentScene.layers.text:update()
 			CurrentScene.layers.wm.show_self = 0
 			CurrentScene.layers.wm:update()
-			UIExt.set_timer(25, 100)
+			--UIExt.set_timer(26, 100)
 		end
 	}):attach(slider)
 
