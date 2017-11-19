@@ -173,18 +173,18 @@ float triangleSDF(float x, float y, float ax, float ay, float bx, float by, floa
 * \return 带符号距离和发光强度
 */
 static Result scene_sol(float x, float y) {
-	Result r1 = { circleSDF(x, y, 0.4f, 0.3f, 0.20f), color(Gdiplus::Color::Blue) };
-	Result r2 = { circleSDF(x, y, 0.6f, 0.3f, 0.20f), color(Gdiplus::Color::Blue) };
-	Result r3 = { circleSDF(x, y, 0.8f, 0.7f, 0.15f), color(Gdiplus::Color::Cyan) };
-	Result r4 = { circleSDF(x, y, 0.9f, 0.7f, 0.15f), color(Gdiplus::Color::Teal) };
+	Result r1 = { circleSDF(x, y, 0.4f, 0.3f, 0.20f), color(Gdiplus::Color::Blue) * 4.0f };
+	Result r2 = { circleSDF(x, y, 0.6f, 0.3f, 0.20f), color(Gdiplus::Color::Blue) * 4.0f };
+	Result r3 = { circleSDF(x, y, 0.8f, 0.7f, 0.15f), color(Gdiplus::Color::Cyan) * 2.0f };
+	Result r4 = { circleSDF(x, y, 0.9f, 0.7f, 0.15f), color(Gdiplus::Color::Teal) * 4.0f };
 	Result r5 = { circleSDF(x, y, 1.1f, 0.5f, 0.10f), color::make_color(0.0f) };
 
-	Result r10 = { circleSDF(x, y, 1.5f, 0.5f, 0.10f), color(Gdiplus::Color::YellowGreen) };
-	Result r11 = { planeSDF(x, y, 1.0f, 0.5f, 0.0f, 1.0f), color(Gdiplus::Color::YellowGreen) * 0.8f };
+	Result r10 = { circleSDF(x, y, 1.5f, 0.5f, 0.10f), color(Gdiplus::Color::YellowGreen) * 4.0f };
+	Result r11 = { planeSDF(x, y, 1.0f, 0.5f, 0.0f, 1.0f), color(Gdiplus::Color::YellowGreen) * 4.0f };
 
-	Result r20 = { capsuleSDF(x, y, 0.4f, 0.7f, 0.6f, 0.7f, 0.05f), color(Gdiplus::Color::Green) };
-	Result r21 = { boxSDF(x, y, 1.5f, 0.2f, 0.0f, 0.1f, 0.05f), color(Gdiplus::Color::Red) };
-	Result r22 = { triangleSDF(x, y, 1.0f, 0.2f, 1.2f, 0.2f, 1.1f, 0.3f), color(Gdiplus::Color::Firebrick) };
+	Result r20 = { capsuleSDF(x, y, 0.4f, 0.7f, 0.6f, 0.7f, 0.05f), color(Gdiplus::Color::Green) * 3.0f };
+	Result r21 = { boxSDF(x, y, 1.5f, 0.2f, 0.0f, 0.1f, 0.05f), color(Gdiplus::Color::Red) * 3.0f };
+	Result r22 = { triangleSDF(x, y, 1.0f, 0.2f, 1.2f, 0.2f, 1.1f, 0.3f), color(Gdiplus::Color::Firebrick) * 3.0f };
 
 	return unionOp(
 		unionOp(
@@ -250,9 +250,9 @@ static void DrawScene(int part)
             for (auto x = 0; x < width; x++)
             {
                 const auto color = sample(float(x) / m, float(y) / m);
-                buffer[0] = BYTE(color.b * 255.0f);
-                buffer[1] = BYTE(color.g * 255.0f);
-                buffer[2] = BYTE(color.r * 255.0f);
+                buffer[0] = BYTE(fminf(color.b, 1.0f) * 255.0f);
+                buffer[1] = BYTE(fminf(color.g, 1.0f) * 255.0f);
+                buffer[2] = BYTE(fminf(color.r, 1.0f) * 255.0f);
                 buffer[3] = 255;
                 buffer += 4;
             }

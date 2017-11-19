@@ -31,9 +31,9 @@ extern Result subtractOp(Result a, Result b);
 
 static Result scene_ref(float x, float y)
 {
-    Result a = { circleSDF(x, y, 1.1f, 0.3f, 0.15f), color(0.0f, 0.0f, 0.8f), color(0.0f, 0.0f, 0.0f) };
-    Result b = { boxSDF(x, y, 0.6f, 0.2f, PI2 / 16.0f, 0.1f, 0.1f), color(0.8f, 0.0f, 0.0f), color(0.0f, 0.0f, 0.0f) };
-    Result c = { boxSDF(x, y, 1.5f, 0.2f, PI2 / 16.0f, 0.1f, 0.1f), color(0.0f, 0.8f, 0.0f), color(0.0f, 0.0f, 0.0f) };
+    Result a = { circleSDF(x, y, 1.1f, 0.3f, 0.15f), color(0.0f, 0.0f, 4.8f), color(0.0f, 0.0f, 0.0f) };
+    Result b = { boxSDF(x, y, 0.6f, 0.2f, PI2 / 16.0f, 0.1f, 0.1f), color(4.8f, 0.0f, 0.0f), color(0.0f, 0.0f, 0.0f) };
+    Result c = { boxSDF(x, y, 1.5f, 0.2f, PI2 / 16.0f, 0.1f, 0.1f), color(0.0f, 4.8f, 0.0f), color(0.0f, 0.0f, 0.0f) };
     Result d = { planeSDF(x, y, 0.0f, 0.5f, 0.0f, -1.0f), color(0.0f, 0.0f, 0.0f), color(0.9f, 0.9f, 0.9f) };
     Result e = { circleSDF(x, y, 1.1f, 0.5f, 0.4f), color(0.0f, 0.0f, 0.0f), color(0.9f, 0.9f, 0.9f) };
 
@@ -133,9 +133,9 @@ extern void DrawSceneGlobal(int part)
             for (auto x = 0; x < width; x++)
             {
                 const auto color = sample(float(x) / m, float(y) / m);
-                buffer[0] = BYTE(color.b * 255.0f);
-                buffer[1] = BYTE(color.g * 255.0f);
-                buffer[2] = BYTE(color.r * 255.0f);
+                buffer[0] = BYTE(fminf(color.b, 1.0f) * 255.0f);
+                buffer[1] = BYTE(fminf(color.g, 1.0f) * 255.0f);
+                buffer[2] = BYTE(fminf(color.r, 1.0f) * 255.0f);
                 buffer[3] = 255;
                 buffer += 4;
             }

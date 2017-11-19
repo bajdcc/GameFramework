@@ -9,7 +9,7 @@
 #define MAX_DISTANCE 5.0f
 #define EPSILON 1e-6f
 #define BIAS 1e-4f
-#define MAX_DEPTH 1
+#define MAX_DEPTH 5
 
 extern float PI2;
 
@@ -32,8 +32,8 @@ extern Result subtractOp(Result a, Result b);
 static Result scene_ref(float x, float y)
 {
     Result b = { boxSDF(x, y, 0.9f, 0.5f, 0.0f, 0.15f, 0.08f), color(0.0f, 0.0f, 0.0f), color(0.2f, 0.2f, 0.2f), 1.5f };
-    Result c = { circleSDF(x, y, 0.8f, -0.4f, 0.05f), color(20.0f, 0.0f, 0.0f), color(0.0f, 0.0f, 0.0f), 0.0f };
-    Result c2 = { circleSDF(x, y, 1.4f, -0.4f, 0.05f), color(0.0f, 0.0f, 20.0f), color(0.0f, 0.0f, 0.0f), 0.0f };
+    Result c = { circleSDF(x, y, 0.7f, -0.3f, 0.05f), color(20.0f, 0.0f, 0.0f), color(0.0f, 0.0f, 0.0f), 0.0f };
+    Result c2 = { circleSDF(x, y, 1.5f, -0.3f, 0.05f), color(0.0f, 0.0f, 20.0f), color(0.0f, 0.0f, 0.0f), 0.0f };
     Result d = { circleSDF(x, y, 1.3f, 0.2f, 0.35f), color(0.0f, 0.0f, 0.0f), color(0.2f, 0.2f, 0.2f), 1.5f };
     Result e = { circleSDF(x, y, 1.3f, 0.8f, 0.35f), color(0.0f, 0.0f, 0.0f), color(0.2f, 0.2f, 0.2f), 1.5f };
     Result f = { boxSDF(x, y, 1.8f, 0.5f, 0.0f, 0.2f, 0.1f), color(0.0f, 0.0f, 0.0f), color(0.2f, 0.2f, 0.2f), 1.5f };
@@ -147,9 +147,9 @@ static void DrawSceneRefraction(int part)
             for (auto x = 0; x < width; x++)
             {
                 const auto color = sample(float(x) / m, float(y) / m);
-                buffer[0] = BYTE(color.b * 255.0f);
-                buffer[1] = BYTE(color.g * 255.0f);
-                buffer[2] = BYTE(color.r * 255.0f);
+                buffer[0] = BYTE(fminf(color.b, 1.0f) * 255.0f);
+                buffer[1] = BYTE(fminf(color.g, 1.0f) * 255.0f);
+                buffer[2] = BYTE(fminf(color.r, 1.0f) * 255.0f);
                 buffer[3] = 255;
                 buffer += 4;
             }

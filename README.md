@@ -161,10 +161,20 @@ TODO：
 
 ![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/color_1.png)
 
+![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/color_1a.png)
+
 **2. 反射**
 
 ![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/color_2.png)
 
+![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/color_2a.png)
+
 **3. 三原色**
 
 ![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/color_3.png)
+
+![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/color_3a.png)
+
+**4. 折射**
+
+![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/color_4.png)

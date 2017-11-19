@@ -25,12 +25,12 @@ extern Result subtractOp(Result a, Result b);
 
 static Result scene_tri(float x, float y)
 {
-    Result a = { circleSDF(x, y, 1.1f, 0.2f, 0.1f), color(Gdiplus::Color::Red), color::make_color(0.0f) };
-    Result b = { circleSDF(x, y, 0.8f, 0.5f, 0.1f), color(Gdiplus::Color::Blue), color::make_color(0.0f) };
-    Result c = { circleSDF(x, y, 1.4f, 0.5f, 0.1f), color(Gdiplus::Color::Green), color::make_color(0.0f) };
-    Result d = { circleSDF(x, y, 1.1f, 0.8f, 0.1f), color(Gdiplus::Color::White), color::make_color(0.0f) };
-    Result h = { planeSDF(x, y, 0.0f, 0.0f, 0.0f, -1.0f), color(0.0f, 0.0f, 0.0f), color(0.99f, 0.99f, 0.99f) };
-    Result i = { circleSDF(x, y, 1.1f, 0.5f, 0.45f), color(0.0f, 0.0f, 0.0f), color(0.99f, 0.99f, 0.99f) };
+    Result a = { circleSDF(x, y, 1.1f, 0.2f, 0.1f), color(Gdiplus::Color::Red) * 8.0f, color::make_color(0.0f) };
+    Result b = { circleSDF(x, y, 0.8f, 0.5f, 0.1f), color(Gdiplus::Color::Blue) * 8.0f, color::make_color(0.0f) };
+    Result c = { circleSDF(x, y, 1.4f, 0.5f, 0.1f), color(Gdiplus::Color::Green) * 8.0f, color::make_color(0.0f) };
+    Result d = { circleSDF(x, y, 1.1f, 0.8f, 0.1f), color(Gdiplus::Color::Black), color::make_color(0.0f) };
+    Result h = { planeSDF(x, y, 0.0f, 0.0f, 0.0f, -1.0f), color(0.0f, 0.0f, 0.0f), color(0.9f, 0.9f, 0.9f) };
+    Result i = { circleSDF(x, y, 1.1f, 0.5f, 0.45f), color(0.0f, 0.0f, 0.0f), color(0.9f, 0.9f, 0.9f) };
 
     return unionOp(unionOp(unionOp(a, b), unionOp(c, d)), subtractOp(h, i));
 }
