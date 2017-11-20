@@ -290,6 +290,7 @@ xcopy /r /y /e "$(ProjectDir)dll" "$(TargetDir)"</Command>
     <ClCompile Include="base\pe2d\math\vector3.cpp" />
     <ClCompile Include="base\pe2d\PhysicsEngine2D.cpp" />
     <ClCompile Include="base\pe2d\PhysicsEngine2DRender.cpp" />
+    <ClCompile Include="base\pe2d\Render2DFont.cpp" />
     <ClCompile Include="base\pe2d\Render2DLight.cpp" />
     <ClCompile Include="base\pe2d\Render2DReflect.cpp" />
     <ClCompile Include="base\pe2d\Render2DRefraction.cpp" />

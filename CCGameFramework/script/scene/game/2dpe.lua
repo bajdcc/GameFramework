@@ -376,17 +376,17 @@ function M:init_menu(info)
 	}):attach(slider)
 
 	Button:new({
-		text = '待定',
+		text = '文字',
 		font_family = '楷体',
 		track_display = 0,
 		font_size = 16,
 		click = function()
 			if UIExt.refresh(CurrentScene.layers.pe2d, -1) == 0 then return end
-			CurrentScene.layers.text.text = ''
+			CurrentScene.layers.text.text = '文字透明效果'
 			CurrentScene.layers.text:update()
 			CurrentScene.layers.wm.show_self = 0
 			CurrentScene.layers.wm:update()
-			--UIExt.set_timer(26, 100)
+			UIExt.set_timer(26, 100)
 		end
 	}):attach(slider)
 

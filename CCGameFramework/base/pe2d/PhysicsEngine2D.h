@@ -49,6 +49,7 @@ private:
 	void Render2DReflect(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
     void Render2DTri(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
     void Render2DRefraction(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
+    void Render2DFont(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
 
 private:
     static void RenderSimpleIntern(BYTE* buffer, cint width, cint height);

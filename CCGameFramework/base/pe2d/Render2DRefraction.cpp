@@ -80,7 +80,7 @@ int refract(float ix, float iy, float nx, float ny, float eta, float* rx, float*
  * \param depth 层数
  * \return 采样
  */
-static color trace_ref(float ox, float oy, float dx, float dy, int depth) {
+extern color trace_ref(float ox, float oy, float dx, float dy, int depth) {
     static color black;
     auto t = 1e-3f;
     auto sign = g_scene(ox, oy).sd > 0.0f;                      // 判断光线自物体内部还是外部，正为外，负为内
