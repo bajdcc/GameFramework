@@ -7,7 +7,7 @@
 #define SCAN_N 10
 
 #define N 64
-#define MAX_STEP 64
+#define MAX_STEP 800
 #define MAX_DISTANCE 5.0f
 #define EPSILON 1e-6f
 #define BIAS 1e-4f
@@ -27,16 +27,23 @@ struct Result
     float eta;          // 折射率
 };
 
-static std::vector<int> g_buf;
+static std::vector<float> g_buf;
 static int g_width;
 static int g_height;
+static int g_m;
+static float g_pixel;
 static int g_max;
 
 static float fontSDF(float x, float y) {
-    auto idx = int(y * g_height) * g_width + int(x * g_height);
-    if (idx >= 0 && idx < g_max)
-        return float(g_buf[idx]) / g_height;
-    return float(g_buf[0]) / g_height;
+    const auto j = int(ceil(y * g_m));
+    const auto i = int(ceil(x * g_m));
+    if (i < 0 || j < 0 || i >= g_width || j >= g_height)
+        return 100.0f;
+    const auto idx = j * g_width + i;
+    const auto dist = g_buf[idx];
+    if (dist == 0.0f) return 0.0f;
+    if (dist < 0.1f) return 0.001f;
+    return dist * 0.45f;
 }
 
 extern Result unionOp(Result a, Result b);
@@ -45,17 +52,60 @@ extern Result subtractOp(Result a, Result b);
 
 static Result scene_ref(float x, float y)
 {
-    Result c = { circleSDF(x, y, 0.7f, -0.3f, 0.05f), color(10.0f, 0.0f, 0.0f), color(0.0f, 0.0f, 0.0f), 0.0f };
-    Result i = { fontSDF(x, y), color(0.1f, 0.1f, 0.1f), color(0.0f, 0.0f, 0.0f), 1.5f };
-    return unionOp(c, i);
+    //Result c = { circleSDF(x, y, 0.7f, -0.3f, 0.05f), color(10.0f, 10.0f, 0.0f), color(0.0f, 0.0f, 0.0f), 0.0f };
+    Result i = { fontSDF(x, y), color(0.9f, 0.9f, 0.9f), color(0.0f, 0.0f, 0.0f), 0.0f };
+    return i;// unionOp(c, i);
 }
 
 extern Result(*g_scene)(float x, float y);
 
 extern void gradient(float x, float y, float* nx, float* ny);
 extern void reflect(float ix, float iy, float nx, float ny, float* rx, float* ry);
+extern int refract(float ix, float iy, float nx, float ny, float eta, float* rx, float* ry);
 
-extern color trace_ref(float ox, float oy, float dx, float dy, int depth);
+/**
+* \brief 递归光线追踪
+* \param ox 起点X坐标
+* \param oy 起点Y坐标
+* \param dx 终点X坐标
+* \param dy 终点T坐标
+* \param depth 层数
+* \return 采样
+*/
+static color trace(float ox, float oy, float dx, float dy, int depth) {
+    static color black;
+    auto t = 1e-3f;
+    auto sign = g_scene(ox, oy).sd > 0.0f;                      // 判断光线自物体内部还是外部，正为外，负为内
+    for (auto i = 0; i < MAX_STEP && t < MAX_DISTANCE; i++) {
+        const auto x = ox + dx * t, y = oy + dy * t;
+        auto r = g_scene(x, y);
+        if (sign ? (r.sd < EPSILON) : (r.sd > -EPSILON)) {      // 如果线与图形有交点
+            auto sum = r.emissive;                              // 用于累计采样，此处值为除去反射的正常接收光线
+            if (depth < MAX_DEPTH &&
+                (r.reflectivity.Valid() || r.eta > 0.0f)) {     // 在反射深度内，且允许反射
+                float nx, ny, rx, ry;
+                auto refl = r.reflectivity;
+                gradient(x, y, &nx, &ny);                       // 求该交点处法向量
+                nx = sign ? nx : -nx, ny = sign ? ny : -ny;     // 当光线从形状内往外发射时，要反转法线方向
+                if (r.eta > 0.0f) {
+                    if (refract(dx, dy, nx, ny, !sign ? r.eta : 1.0f / r.eta, &rx, &ry))
+                        sum.Add((refl.Negative(1.0f)) * trace(x - nx * BIAS, y - ny * BIAS, rx, ry, depth + 1));
+                    else
+                        refl.Set(1.0f);                         // 不折射则为全内反射
+                }
+                if (refl.Valid()) {
+                    reflect(dx, dy, nx, ny, &rx, &ry);          // 求出反射光线
+                                                                // BIAS为偏差
+                                                                // 加上反射光线 = 反射光线追踪采样值 * 反射系数
+                    sum.Add(refl * trace(x + nx * BIAS, y + ny * BIAS, rx, ry, depth + 1));
+                }
+            }
+            return sum;
+        }
+        sign ? t += r.sd : t -= r.sd;
+    }
+    return black;
+}
 
 /**
 * \brief 采样(x,y)位置处的光线
@@ -69,7 +119,7 @@ static color sample(float x, float y) {
         // const auto a = PI2 * rand() / RAND_MAX;                  // 均匀采样
         // const auto a = PI2 * i / N;                              // 分层采样
         const auto a = PI2 * (i + float(rand()) / RAND_MAX) / N;    // 抖动采样
-        sum.Add(trace_ref(x, y, cosf(a), sinf(a), 0)); // 追踪 (x,y) 从 随机方向(cos(a),sin(a)) 收集到的光
+        sum.Add(trace(x, y, cosf(a), sinf(a), 0)); // 追踪 (x,y) 从 随机方向(cos(a),sin(a)) 收集到的光
     }
     return sum * (1.0f / N);
 }
@@ -88,20 +138,23 @@ static void DrawSceneFont(int part)
         {
             for (auto x = 0; x < width; x++)
             {
-                //const auto color = sample(float(x) / m, float(y) / m);
-                //auto idx = y * g_width + x;
-                //const auto color = (idx >= 0 && idx < g_max) ? (g_buf[idx] % 256) : 0;
-                //buffer[0] = color;
-                //buffer[1] = color;
-                //buffer[2] = color;
-                //buffer[3] = 255;
-                //buffer += 4;
+#if 0
+                auto idx = y * g_width + x;
+                const auto color = BYTE(g_buf[idx] * 255);
+                const auto b = color;
+                buffer[0] = b;
+                buffer[1] = b;
+                buffer[2] = b;
+                buffer[3] = 255;
+                buffer += 4;
+#else
                 const auto color = sample(float(x) / m, float(y) / m);
                 buffer[0] = BYTE(fminf(color.b, 1.0f) * 255.0f);
                 buffer[1] = BYTE(fminf(color.g, 1.0f) * 255.0f);
                 buffer[2] = BYTE(fminf(color.r, 1.0f) * 255.0f);
                 buffer[3] = 255;
                 buffer += 4;
+#endif
             }
         }
         else
@@ -124,6 +177,9 @@ void PhysicsEngine::Render2DFont(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
     g_width = _w;
     g_height = _h;
     g_max = _w * _h;
+    auto m = min(_w, _h);
+    g_m = m;
+    g_pixel = 1.0f / m;
 
     auto hwnd = window->GetWindowHandle();
     auto hDC = ::GetDC(hwnd);
@@ -147,7 +203,7 @@ void PhysicsEngine::Render2DFont(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
     ::SetTextColor(hMem, RGB(255, 255, 255));
 
     auto hFont = ::CreateFont(
-        190/*高度*/, 0/*宽度*/, 0/*不用管*/, 0/*不用管*/, FW_NORMAL/*一般这个值设为400*/,
+        200/*高度*/, 0/*宽度*/, 0/*不用管*/, 0/*不用管*/, FW_NORMAL/*一般这个值设为400*/,
         FALSE/*不带斜体*/, FALSE/*不带下划线*/, FALSE/*不带删除线*/,
         DEFAULT_CHARSET,  //这里我们使用默认字符集，还有其他以 _CHARSET 结尾的常量可用
         OUT_CHARACTER_PRECIS, CLIP_CHARACTER_PRECIS,  //这行参数不用管
@@ -159,7 +215,7 @@ void PhysicsEngine::Render2DFont(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
 
     CString s(_T("bajdcc"));
     CRect rect(bounds);
-    rect.DeflateRect(100, 50);
+    rect.DeflateRect(100, 10);
     ::DrawText(hMem, s.GetBuffer(0), s.GetLength(), &rect, DT_EDITCONTROL | DT_WORDBREAK | DT_CENTER | DT_NOPREFIX);
 
     // 取像素
@@ -178,7 +234,7 @@ void PhysicsEngine::Render2DFont(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
             struct font_bag
             {
                 WORD x, y;
-                WORD dist;
+                float dist;
             };
 
             std::queue<font_bag> Q;
@@ -193,12 +249,12 @@ void PhysicsEngine::Render2DFont(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
 
                     if (c != 0) // 字
                     {
-                        Q.push(font_bag{ WORD(nHeight - i), WORD(j), WORD(0) });
-                        g_buf[(nHeight - i)*nWidth + j] = 0;
+                        Q.push(font_bag{ WORD(nHeight - i), WORD(j), float(0.0f) });
+                        g_buf[(nHeight - i)*nWidth + j] = 0.0f;
                     }
                     else
                     {
-                        g_buf[(nHeight - i)*nWidth + j] = -1;
+                        g_buf[(nHeight - i)*nWidth + j] = -1.0f;
                     }
                 }
             }
@@ -206,7 +262,7 @@ void PhysicsEngine::Render2DFont(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
             {
                 for (auto j = 0; j < bm.bmWidth; j++)
                 {
-                    if (g_buf[i*nWidth + j] == 0)
+                    if (g_buf[i*nWidth + j] == 0.0f)
                         buf[i*nWidth + j] = 1;
                     else
                         buf[i*nWidth + j] = 0;
@@ -226,18 +282,23 @@ void PhysicsEngine::Render2DFont(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
                 Q.pop();
                 const auto x = front.x;
                 const auto y = front.y;
-                const auto dist = front.dist + 1;
+                const auto dist = front.dist + 1.0f / m;
                 for (auto i = 0; i < 4; i++)
                 {
                     const auto x1 = x + direction[i][0];
                     const auto y1 = y + direction[i][1];
                     if (x1 >= 0 && y1 >= 0 && x1 < _h && y1 < _w)
                     {
-                        if (buf[x1 * nWidth + y1] == 0)
+                        const auto idx = x1 * nWidth + y;
+                        if (buf[idx] == 0)
                         {
-                            Q.push(font_bag{ WORD(x1), WORD(y1), WORD(dist) });
-                            g_buf[x1 * nWidth + y1] = dist;
-                            buf[x1 * nWidth + y1] = 1;
+                            Q.push(font_bag{ WORD(x1), WORD(y1), float(dist) });
+                            g_buf[idx] = dist;
+                            buf[idx] = 1;
+                        }
+                        else if (g_buf[idx] > 0.0f && g_buf[idx] > dist)
+                        {
+                            g_buf[idx] = dist;
                         }
                     }
                 }

@@ -60,7 +60,7 @@ extern void reflect(float ix, float iy, float nx, float ny, float* rx, float* ry
  * \param ry 折射光线Y坐标
  * \return 是否产生折射
  */
-int refract(float ix, float iy, float nx, float ny, float eta, float* rx, float* ry) {
+extern int refract(float ix, float iy, float nx, float ny, float eta, float* rx, float* ry) {
     auto idotn = ix * nx + iy * ny;
     auto k = 1.0f - eta * eta * (1.0f - idotn * idotn);
     if (k < 0.0f)
@@ -80,14 +80,14 @@ int refract(float ix, float iy, float nx, float ny, float eta, float* rx, float*
  * \param depth 层数
  * \return 采样
  */
-extern color trace_ref(float ox, float oy, float dx, float dy, int depth) {
+static color trace(float ox, float oy, float dx, float dy, int depth) {
     static color black;
     auto t = 1e-3f;
     auto sign = g_scene(ox, oy).sd > 0.0f;                      // 判断光线自物体内部还是外部，正为外，负为内
     for (auto i = 0; i < MAX_STEP && t < MAX_DISTANCE; i++) {
         const auto x = ox + dx * t, y = oy + dy * t;
         auto r = g_scene(x, y);
-        if (sign ? (r.sd < EPSILON) : (r.sd > -EPSILON)) {          // 如果线与图形有交点
+        if (sign ? (r.sd < EPSILON) : (r.sd > -EPSILON)) {      // 如果线与图形有交点
             auto sum = r.emissive;                              // 用于累计采样，此处值为除去反射的正常接收光线
             if (depth < MAX_DEPTH &&
                 (r.reflectivity.Valid() || r.eta > 0.0f)) {     // 在反射深度内，且允许反射
@@ -97,7 +97,7 @@ extern color trace_ref(float ox, float oy, float dx, float dy, int depth) {
                 nx = sign ? nx : -nx, ny = sign ? ny : -ny;     // 当光线从形状内往外发射时，要反转法线方向
                 if (r.eta > 0.0f) {
                     if (refract(dx, dy, nx, ny, !sign ? r.eta : 1.0f / r.eta, &rx, &ry))
-                        sum.Add((refl.Negative(1.0f)) * trace_ref(x - nx * BIAS, y - ny * BIAS, rx, ry, depth + 1));
+                        sum.Add((refl.Negative(1.0f)) * trace(x - nx * BIAS, y - ny * BIAS, rx, ry, depth + 1));
                     else
                         refl.Set(1.0f);                         // 不折射则为全内反射
                 }
@@ -105,7 +105,7 @@ extern color trace_ref(float ox, float oy, float dx, float dy, int depth) {
                     reflect(dx, dy, nx, ny, &rx, &ry);          // 求出反射光线
                     // BIAS为偏差
                     // 加上反射光线 = 反射光线追踪采样值 * 反射系数
-                    sum.Add(refl * trace_ref(x + nx * BIAS, y + ny * BIAS, rx, ry, depth + 1));
+                    sum.Add(refl * trace(x + nx * BIAS, y + ny * BIAS, rx, ry, depth + 1));
                 }
             }
             return sum;
@@ -127,7 +127,7 @@ static color sample(float x, float y) {
         // const auto a = PI2 * rand() / RAND_MAX;                  // 均匀采样
         // const auto a = PI2 * i / N;                              // 分层采样
         const auto a = PI2 * (i + float(rand()) / RAND_MAX) / N;    // 抖动采样
-        sum.Add(trace_ref(x, y, cosf(a), sinf(a), 0)); // 追踪 (x,y) 从 随机方向(cos(a),sin(a)) 收集到的光
+        sum.Add(trace(x, y, cosf(a), sinf(a), 0)); // 追踪 (x,y) 从 随机方向(cos(a),sin(a)) 收集到的光
     }
     return sum * (1.0f / N);
 }
