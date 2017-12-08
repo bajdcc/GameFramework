@@ -179,6 +179,10 @@ TODO：
 
 ![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/color_4.png)
 
+**5. 折射（菲涅耳方程）**
+
+![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/color_5.png)
+
 **画光系列（文字）**
 
 ![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/font_1.png)

@@ -61,14 +61,44 @@ extern void reflect(float ix, float iy, float nx, float ny, float* rx, float* ry
  * \return 是否产生折射
  */
 extern int refract(float ix, float iy, float nx, float ny, float eta, float* rx, float* ry) {
-    auto idotn = ix * nx + iy * ny;
-    auto k = 1.0f - eta * eta * (1.0f - idotn * idotn);
+    const auto idotn = ix * nx + iy * ny;
+    const auto k = 1.0f - eta * eta * (1.0f - idotn * idotn);
     if (k < 0.0f)
         return 0; // Total internal reflection
-    auto a = eta * idotn + sqrtf(k);
+    const auto a = eta * idotn + sqrtf(k);
     *rx = eta * ix - a * nx;
     *ry = eta * iy - a * ny;
     return 1;
+}
+
+/**
+ * \brief 菲涅耳方程（描述了光线经过两个介质的界面时，反射和透射的光强比重）
+ * \param cosi 入射角余弦
+ * \param cost 折射角余弦
+ * \param etai 外界折射率
+ * \param etat 介质折射率
+ * \return 比重
+ */
+static float fresnel(float cosi, float cost, float etai, float etat) {
+    const auto rs = (etat * cosi - etai * cost) / (etat * cosi + etai * cost);
+    const auto rp = (etai * cosi - etat * cost) / (etai * cosi + etat * cost);
+    return (rs * rs + rp * rp) * 0.5f;
+}
+
+/**
+ * \brief 菲涅耳方程的近似
+ * \param cosi 入射角余弦
+ * \param cost 折射角余弦
+ * \param etai 外界折射率
+ * \param etat 介质折射率
+ * \return 比重
+ */
+static float schlick(float cosi, float cost, float etai, float etat) {
+    float r0 = (etai - etat) / (etai + etat);
+    r0 *= r0;
+    const float a = 1.0f - (etai < etat ? cosi : cost);
+    const float aa = a * a;
+    return r0 + (1.0f - r0) * aa * aa * a;
 }
 
 /**
@@ -83,7 +113,7 @@ extern int refract(float ix, float iy, float nx, float ny, float eta, float* rx,
 static color trace(float ox, float oy, float dx, float dy, int depth) {
     static color black;
     auto t = 1e-3f;
-    auto sign = g_scene(ox, oy).sd > 0.0f;                      // 判断光线自物体内部还是外部，正为外，负为内
+    const auto sign = g_scene(ox, oy).sd > 0.0f;                      // 判断光线自物体内部还是外部，正为外，负为内
     for (auto i = 0; i < MAX_STEP && t < MAX_DISTANCE; i++) {
         const auto x = ox + dx * t, y = oy + dy * t;
         auto r = g_scene(x, y);
@@ -94,10 +124,19 @@ static color trace(float ox, float oy, float dx, float dy, int depth) {
                 float nx, ny, rx, ry;
                 auto refl = r.reflectivity;
                 gradient(x, y, &nx, &ny);                       // 求该交点处法向量
-                nx = sign ? nx : -nx, ny = sign ? ny : -ny;     // 当光线从形状内往外发射时，要反转法线方向
+                auto s = 1.0f / sqrtf(nx * nx + ny * ny);            // 法向量单位化，这点很重要，之前代码中没有
+                nx = s * (sign ? nx : -nx);                     // 当光线从形状内往外发射时，要反转法线方向
+                ny = s * (sign ? ny : -ny);
                 if (r.eta > 0.0f) {
-                    if (refract(dx, dy, nx, ny, !sign ? r.eta : 1.0f / r.eta, &rx, &ry))
+                    if (refract(dx, dy, nx, ny, sign ? (1.0f / r.eta) : r.eta, &rx, &ry))
+                    {
+                        const auto cosi = -(dx * nx + dy * ny);
+                        const auto cost = -(rx * nx + ry * ny);
+                        refl = refl * (sign ? fresnel(cosi, cost, 1.0f, r.eta) : fresnel(cosi, cost, r.eta, 1.0f));
+                        refl.Normalize();
+                        // refl = !sign ? schlick(cosi, cost, r.eta, 1.0f) : schlick(cosi, cost, 1.0f, r.eta);
                         sum.Add((refl.Negative(1.0f)) * trace(x - nx * BIAS, y - ny * BIAS, rx, ry, depth + 1));
+                    }
                     else
                         refl.Set(1.0f);                         // 不折射则为全内反射
                 }

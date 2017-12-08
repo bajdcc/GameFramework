@@ -94,6 +94,11 @@ color color::Negative(float s)
     return color(s - r, s - g, s - b);
 }
 
+void color::Normalize()
+{
+    r = fmax(0.0f, fmin(r, 1.0f)); g = fmax(0.0f, fmin(g, 1.0f)); b = fmax(0.0f, fmin(b, 1.0f));
+}
+
 color color::make_color(float s)
 {
     return color(s, s, s);
