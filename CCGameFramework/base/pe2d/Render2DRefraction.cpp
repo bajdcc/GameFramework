@@ -4,7 +4,7 @@
 
 #define SCAN_N 10
 
-#define N 64
+#define N 256
 #define MAX_STEP 64
 #define MAX_DISTANCE 5.0f
 #define EPSILON 1e-6f
@@ -17,12 +17,39 @@ extern float circleSDF(float x, float y, float cx, float cy, float r);
 extern float boxSDF(float x, float y, float cx, float cy, float theta, float sx, float sy);
 extern float planeSDF(float x, float y, float px, float py, float nx, float ny);
 
+/**
+ * \brief 正多边形的SDF
+ * \param x 目标X坐标
+ * \param y 目标Y坐标
+ * \param cx 中心点X坐标
+ * \param cy 中心点Y坐标
+ * \param r 半径
+ * \param n 边的数量
+ * \return SD
+ */
+extern float ngonSDF(float x, float y, float cx, float cy, float r, float n) {
+	const auto ux = x - cx, uy = y - cy, a = PI2 / n;
+	const auto t = fmodf(atan2f(uy, ux) + PI2, a), s = sqrtf(ux * ux + uy * uy);
+	return planeSDF(s * cosf(t), s * sinf(t), r, 0.0f, cosf(a * 0.5f), sinf(a * 0.5f));
+}
+
+/**
+ * \brief 比尔-朗伯定律
+ * \param a 物质的吸光系数
+ * \param d 光程距离
+ * \return 透射率
+ */
+static color beerLambert(color a, float d) {
+	return color(expf(-a.r * d), expf(-a.g * d), expf(-a.b * d));
+}
+
 struct Result
 {
     float sd;           // 带符号距离（signed distance）
     color emissive;     // 自发光强度（emissive）
     color reflectivity; // 反射系数
     float eta;          // 折射率
+	color absorption;   // 吸收率
 };
 
 extern Result unionOp(Result a, Result b);
@@ -31,16 +58,16 @@ extern Result subtractOp(Result a, Result b);
 
 static Result scene_ref(float x, float y)
 {
-    Result b = { boxSDF(x, y, 0.9f, 0.5f, 0.0f, 0.15f, 0.08f), color(0.0f, 0.0f, 0.0f), color(0.2f, 0.2f, 0.2f), 1.5f };
-    Result c = { circleSDF(x, y, 0.7f, -0.3f, 0.05f), color(20.0f, 0.0f, 0.0f), color(0.0f, 0.0f, 0.0f), 0.0f };
-    Result c2 = { circleSDF(x, y, 1.5f, -0.3f, 0.05f), color(0.0f, 0.0f, 20.0f), color(0.0f, 0.0f, 0.0f), 0.0f };
-    Result d = { circleSDF(x, y, 1.3f, 0.2f, 0.35f), color(0.0f, 0.0f, 0.0f), color(0.2f, 0.2f, 0.2f), 1.5f };
-    Result e = { circleSDF(x, y, 1.3f, 0.8f, 0.35f), color(0.0f, 0.0f, 0.0f), color(0.2f, 0.2f, 0.2f), 1.5f };
-    Result f = { boxSDF(x, y, 1.8f, 0.5f, 0.0f, 0.2f, 0.1f), color(0.0f, 0.0f, 0.0f), color(0.2f, 0.2f, 0.2f), 1.5f };
-    Result g = { circleSDF(x, y, 1.8f, 0.12f, 0.35f), color(0.0f, 0.0f, 0.0f), color(0.2f, 0.2f, 0.2f), 1.5f };
-    Result h = { circleSDF(x, y, 1.8f, 0.87f, 0.35f), color(0.0f, 0.0f, 0.0f), color(0.2f, 0.2f, 0.2f), 1.5f };
-    Result i = { circleSDF(x, y, 0.4f, 0.5f, 0.2f), color(0.0f, 0.0f, 0.0f), color(0.2f, 0.2f, 0.2f), 1.5f };
-    Result j = { planeSDF(x, y, 0.4f, 0.5f, 0.0f, -1.0f), color(0.0f, 0.0f, 0.0f), color(0.2f, 0.2f, 0.2f), 1.5f };
+    Result b = { ngonSDF(x, y, 0.9f, 0.5f, 0.15f, 5.0f), color(0.0f, 0.0f, 0.0f), color(0.2f, 0.2f, 0.2f), 1.5f, color(4.0f, 1.0f, 4.0f) };
+    Result c = { circleSDF(x, y, 0.7f, -0.3f, 0.05f), color(20.0f, 5.0f, 10.0f), color(0.0f, 0.0f, 0.0f), 0.0f, color(0.0f, 0.0f, 0.0f) };
+    Result c2 = { circleSDF(x, y, 1.5f, -0.3f, 0.05f), color(10.0f, 5.0f, 20.0f), color(0.0f, 0.0f, 0.0f), 0.0f, color(0.0f, 0.0f, 0.0f) };
+    Result d = { circleSDF(x, y, 1.3f, 0.2f, 0.35f), color(0.0f, 0.0f, 0.0f), color(0.2f, 0.2f, 0.2f), 1.5f, color(3.0f, 0.0f, 3.0f) };
+    Result e = { circleSDF(x, y, 1.3f, 0.8f, 0.35f), color(0.0f, 0.0f, 0.0f), color(0.2f, 0.2f, 0.2f), 1.5f, color(3.0f, 0.0f, 3.0f) };
+    Result f = { boxSDF(x, y, 1.8f, 0.5f, 0.0f, 0.2f, 0.1f), color(0.0f, 0.0f, 0.0f), color(0.2f, 0.2f, 0.2f), 1.5f, color(1.0f, 1.0f, 1.0f) };
+    Result g = { circleSDF(x, y, 1.8f, 0.12f, 0.35f), color(0.0f, 0.0f, 0.0f), color(0.2f, 0.2f, 0.2f), 1.5f, color(1.0f, 1.0f, 1.0f) };
+    Result h = { circleSDF(x, y, 1.8f, 0.87f, 0.35f), color(0.0f, 0.0f, 0.0f), color(0.2f, 0.2f, 0.2f), 1.5f, color(1.0f, 1.0f, 1.0f) };
+    Result i = { circleSDF(x, y, 0.4f, 0.5f, 0.2f), color(0.0f, 0.0f, 0.0f), color(0.2f, 0.2f, 0.2f), 1.5f, color(2.0f, 1.0f, 1.0f) };
+    Result j = { planeSDF(x, y, 0.4f, 0.5f, 0.0f, -1.0f), color(0.0f, 0.0f, 0.0f), color(0.2f, 0.2f, 0.2f), 1.5f, color(2.0f, 1.0f, 1.0f) };
     return unionOp(unionOp(c2, subtractOp(f, unionOp(g, h))), unionOp(unionOp(c, intersectOp(d, e)), unionOp(b, intersectOp(i, j))));
 }
 
@@ -147,7 +174,7 @@ static color trace(float ox, float oy, float dx, float dy, int depth) {
                     sum.Add(refl * trace(x + nx * BIAS, y + ny * BIAS, rx, ry, depth + 1));
                 }
             }
-            return sum;
+			return sum * beerLambert(r.absorption, t);
         }
         sign ? t += r.sd : t -= r.sd;
     }

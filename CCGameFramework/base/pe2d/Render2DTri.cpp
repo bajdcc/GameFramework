@@ -12,9 +12,11 @@ extern float planeSDF(float x, float y, float px, float py, float nx, float ny);
 
 struct Result
 {
-    float sd;           // 带符号距离（signed distance）
-    color emissive;     // 自发光强度（emissive）
-    color reflectivity; // 反射系数
+	float sd;           // 带符号距离（signed distance）
+	color emissive;     // 自发光强度（emissive）
+	color reflectivity; // 反射系数
+	float eta;          // 折射率
+	color absorption;   // 吸收率
 };
 
 extern Result(*g_scene)(float x, float y);

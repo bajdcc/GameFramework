@@ -17,6 +17,7 @@ struct Result
 	color emissive;     // 自发光强度（emissive）
     color reflectivity; // 反射系数
     float eta;          // 折射率
+	color absorption;   // 吸收率
 };
 
 /**
