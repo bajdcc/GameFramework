@@ -183,6 +183,10 @@ TODO：
 
 ![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/color_5.png)
 
+**6. 折射（比尔-朗伯定律）**
+
+![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/color_6.png)
+
 **画光系列（文字）**
 
 ![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/font_1.png)
