@@ -187,6 +187,8 @@ TODO：
 
 ![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/color_6.png)
 
+![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/color_6a.png)
+
 **画光系列（文字）**
 
 ![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/font_1.png)
