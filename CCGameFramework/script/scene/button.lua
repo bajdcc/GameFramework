@@ -164,6 +164,12 @@ function M:init_menu(info)
 	end
 	menu.children[6].layers.fg:update()
 
+	menu.children[7]:reset('cg')
+	menu.children[7].click = function()
+		FlipScene('CG')
+	end
+	menu.children[7].layers.fg:update()
+
 	UIExt.paint()
 end
 

@@ -33,23 +33,26 @@ public:
 private:
     void RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
     void RenderSingleBitmap(CComPtr<ID2D1RenderTarget> rt, CRect bounds, void(*callback)(BYTE*, cint, cint));
+    void RenderSingleBitmap2D(CComPtr<ID2D1RenderTarget> rt, CRect bounds, void(*callback)(BYTE*, cint, cint));
 
     void RenderSimpleColor(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
     void RenderSimpleSphere(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
     void RenderMaterialSphere(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
     void RenderReflectSphere(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
 
-	void RenderDirectionalLight(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
-	void RenderPointLight(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
-	void RenderSpotLight(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
+    void RenderDirectionalLight(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
+    void RenderPointLight(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
+    void RenderSpotLight(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
     void RenderTriLight(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
 
     void Render2DLight(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
     void Render2DSolid(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
-	void Render2DReflect(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
+    void Render2DReflect(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
     void Render2DTri(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
     void Render2DRefraction(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
     void Render2DFont(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
+
+    void Render2DScene1(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
 
 private:
     static void RenderSimpleIntern(BYTE* buffer, cint width, cint height);
@@ -63,6 +66,8 @@ private:
     static void RenderSpotLight(BYTE* buffer, cint width, cint height);
     static void RenderTriLight(BYTE* buffer, cint width, cint height);
     static void RenderLightIntern(World&, const PerspectiveCamera&, BYTE* buffer, cint width, cint height);
+
+    static void Render2DScene1Intern(BYTE* buffer, cint width, cint height);
 
     void RenderSceneIntern(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
 

@@ -11,7 +11,7 @@ local Edit = require('script.lib.ui.comctl.edit')
 local Radius = require('script.lib.ui.radius')
 local PE2D = require('script.lib.ui.2dpe')
 
-local modname = 'script.scene.visual.2d'
+local modname = 'script.scene.visual.2dpe'
 local M = Scene:new()
 _G[modname] = M
 package.loaded[modname] = M

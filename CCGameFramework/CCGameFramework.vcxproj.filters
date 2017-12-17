@@ -280,6 +280,9 @@
     <ClInclude Include="base\pe2d\math\vector3.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="base\pe2d\Geometries2D.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
     <ClInclude Include="base\pe2d\Geometries.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -495,9 +498,6 @@
     <ClCompile Include="base\pe2d\RenderSphere.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="base\pe2d\Geometries.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="base\pe2d\RenderMaterial.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -520,6 +520,15 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="base\pe2d\Render2DFont.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\pe2d\Render2DScene1.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\pe2d\Geometries2D.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\pe2d\Geometries.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -619,10 +628,13 @@
     </Text>
   </ItemGroup>
   <ItemGroup>
-    <None Include="script\scene\game\2dpe.lua">
+    <None Include="script\lib\ui\2dpe.lua">
       <Filter>脚本</Filter>
     </None>
-    <None Include="script\lib\ui\2dpe.lua">
+    <None Include="script\scene\visual\cg.lua">
+      <Filter>脚本</Filter>
+    </None>
+    <None Include="script\scene\visual\2dpe.lua">
       <Filter>脚本</Filter>
     </None>
   </ItemGroup>
