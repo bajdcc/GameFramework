@@ -19,7 +19,7 @@ Geo2DObject::~Geo2DObject()
 {
 }
 
-Geo2DOper::Geo2DOper()
+Geo2DOper::Geo2DOper(OpType op, std::shared_ptr<Geo2DObject> o1, std::shared_ptr<Geo2DObject> o2) : op(op), obj1(o1), obj2(o2)
 {
 }
 
@@ -90,4 +90,14 @@ Geo2DResult Geo2DCircle::sample(vector2 ori, vector2 dir) const
 vector2 Geo2DCircle::get_center() const
 {
     return center;
+}
+
+Geo2DFactory::Geo2DObjPtr Geo2DFactory::intersect(Geo2DObjPtr s1, Geo2DObjPtr s2)
+{
+    return std::make_shared<Geo2DOper>(Geo2DOper::t_intersect, s1, s2);
+}
+
+Geo2DFactory::Geo2DObjPtr Geo2DFactory::new_circle(float cx, float cy, float r, color L)
+{
+    return std::make_shared<Geo2DCircle>(cx, cy, r, L);
 }

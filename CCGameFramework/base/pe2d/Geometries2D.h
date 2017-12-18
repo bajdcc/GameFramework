@@ -31,7 +31,16 @@ public:
 class Geo2DOper : public Geo2DObject
 {
 public:
-    Geo2DOper();
+    enum OpType
+    {
+        t_none,
+        t_intersect,
+        t_union,
+        t_subtract,
+        t_complement,
+    };
+
+    Geo2DOper(OpType op, std::shared_ptr<Geo2DObject> o1, std::shared_ptr<Geo2DObject> o2);
     ~Geo2DOper();
 
     /**
@@ -42,16 +51,9 @@ public:
      */
     Geo2DResult sample(vector2 ori, vector2 dir) const override;
 
-    enum OpType
-    {
-        t_none,
-        t_intersect,
-        t_union,
-        t_subtract,
-        t_complement,
-    };
-
     OpType op{ t_none };
+
+    std::shared_ptr<Geo2DObject> obj1, obj2;
 };
 
 // 2D形状
@@ -89,6 +91,16 @@ public:
 
     vector2 center;
     float r;
+};
+
+class Geo2DFactory
+{
+public:
+    using Geo2DObjPtr = std::shared_ptr<Geo2DObject>;
+
+    static Geo2DObjPtr intersect(Geo2DObjPtr s1, Geo2DObjPtr s2);
+
+    static Geo2DObjPtr new_circle(float cx, float cy, float r, color L);
 };
 
 #endif // GEOMETRIES2D_H

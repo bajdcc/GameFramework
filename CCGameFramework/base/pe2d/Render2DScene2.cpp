@@ -8,9 +8,9 @@
 extern float PI2;
 extern DrawSceneBag bag;
 
-static std::shared_ptr<Geo2DObject> root;
+std::shared_ptr<Geo2DObject> root;
 
-static color trace1(float ox, float oy, float dx, float dy) {
+static color trace2(float ox, float oy, float dx, float dy) {
     const auto r = root->sample(vector2(ox, oy), vector2(dx, dy));
     if (r.body)
     {
@@ -20,17 +20,17 @@ static color trace1(float ox, float oy, float dx, float dy) {
     return black;
 }
 
-static color sample1(float x, float y) {
+static color sample2(float x, float y) {
     color sum;
     for (auto i = 0; i < N; i++) {
         const auto a = PI2 * (i + float(rand()) / RAND_MAX) / N;
-        const auto c = trace1(x, y, cosf(a), sinf(a));
+        const auto c = trace2(x, y, cosf(a), sinf(a));
         sum.Add(c);
     }
     return sum * (1.0f / N);
 }
 
-static void DrawScene1(int part)
+static void DrawScene2(int part)
 {
     auto buffer = bag.g_buf;
     auto width = bag.g_width;
@@ -42,7 +42,7 @@ static void DrawScene1(int part)
         {
             for (auto x = 0; x < width; x++)
             {
-                const auto color = sample1(float(x) / m, float(y) / m);
+                const auto color = sample2(float(x) / m, float(y) / m);
                 buffer[0] = BYTE(fminf(color.b, 1.0f) * 255.0f);
                 buffer[1] = BYTE(fminf(color.g, 1.0f) * 255.0f);
                 buffer[2] = BYTE(fminf(color.r, 1.0f) * 255.0f);
@@ -60,18 +60,23 @@ static void DrawScene1(int part)
     bag.mtx.unlock();
 }
 
-void PhysicsEngine::Render2DScene1(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
+void PhysicsEngine::Render2DScene2(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
 {
-    scene = DrawScene1;
+    scene = DrawScene2;
 
     // --------------------------------------
     // 场景设置
     if (!buf.get())
     {
-        root = Geo2DFactory::new_circle(1.0f, 0.5f, 0.1f, color(1.0f, 1.0f, 1.0f));
+        root = Geo2DFactory::intersect(
+            Geo2DFactory::new_circle(1.0f, 0.4f, 0.1f, color(1.0f, 1.0f, 1.0f)),
+            Geo2DFactory::new_circle(1.0f, 0.5f, 0.1f, color(1.0f, 1.0f, 1.0f)));
     }
 
     // --------------------------------------
 
     RenderSceneIntern(rt, bounds);
+
+    if (painted)
+        root.reset();
 }

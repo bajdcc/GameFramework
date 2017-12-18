@@ -58,6 +58,9 @@ void PhysicsEngine::RenderByType(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
     case 41:
         Render2DScene1(rt, bounds);
         break;
+    case 42:
+        Render2DScene2(rt, bounds);
+        break;
     }
 }
 
