@@ -1,21 +1,22 @@
 ﻿#include "stdafx.h"
 #include "PhysicsEngine2D.h"
 #include "render/Direct2DRenderTarget.h"
+#include "Geometries2D.h"
 
-#define N 64
-#define MAX_STEP 64
-#define MAX_DISTANCE 5.0f
-#define EPSILON 1e-6f
-#define BIAS 1e-4f
-#define MAX_DEPTH 5
-#define SCAN_N 10
+#define N 256
 
 extern float PI2;
 extern DrawSceneBag bag;
 
+static std::shared_ptr<Geo2DObject> root;
+
 static color trace1(float ox, float oy, float dx, float dy) {
+    const auto r = root->sample(vector2(ox, oy), vector2(dx, dy));
+    if (r.body)
+    {
+        return r.body->L;
+    }
     static color black;
-    
     return black;
 }
 
@@ -23,7 +24,8 @@ static color sample1(float x, float y) {
     color sum;
     for (auto i = 0; i < N; i++) {
         const auto a = PI2 * (i + float(rand()) / RAND_MAX) / N;
-        sum.Add(trace1(x, y, cosf(a), sinf(a)));
+        const auto c = trace1(x, y, cosf(a), sinf(a));
+        sum.Add(c);
     }
     return sum * (1.0f / N);
 }
@@ -61,5 +63,12 @@ static void DrawScene1(int part)
 void PhysicsEngine::Render2DScene1(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
 {
     scene = DrawScene1;
+
+    // --------------------------------------
+    // 场景设置
+    root = std::make_shared<Geo2DCircle>(1.0f, 0.5f, 0.1f, color(1.0f, 1.0f, 1.0f));
+
+    // --------------------------------------
+
     RenderSceneIntern(rt, bounds);
 }

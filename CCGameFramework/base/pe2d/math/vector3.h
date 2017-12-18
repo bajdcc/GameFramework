@@ -8,13 +8,13 @@ typedef struct {
     float x;
     float y;
     float z;
-} vector;
+} _vector3;
 
-typedef struct vector3 : public vector
+typedef struct vector3 : public _vector3
 {
     vector3();
     vector3(FLOAT pf);
-    vector3(const vector& v);
+    vector3(const _vector3& v);
     vector3(FLOAT fx, FLOAT fy, FLOAT fz);
 
     vector3& operator += (const vector3&);

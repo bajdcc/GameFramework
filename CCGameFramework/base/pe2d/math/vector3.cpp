@@ -13,7 +13,7 @@ vector3::vector3(FLOAT f)
     x = y = z = f;
 }
 
-vector3::vector3(const vector& v)
+vector3::vector3(const _vector3& v)
 {
     x = v.x; y = v.y; z = v.z;
 }

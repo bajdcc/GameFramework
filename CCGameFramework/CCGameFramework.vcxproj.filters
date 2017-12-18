@@ -286,6 +286,9 @@
     <ClInclude Include="base\pe2d\Geometries.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="base\pe2d\math\vector2.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -529,6 +532,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="base\pe2d\Geometries.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\pe2d\math\vector2.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

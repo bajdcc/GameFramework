@@ -215,6 +215,7 @@ xcopy /r /y /e "$(ProjectDir)dll" "$(TargetDir)"</Command>
     <ClInclude Include="base\libzplay\libzplay.h" />
     <ClInclude Include="base\pe2d\Geometries.h" />
     <ClInclude Include="base\pe2d\Geometries2D.h" />
+    <ClInclude Include="base\pe2d\math\vector2.h" />
     <ClInclude Include="base\pe2d\math\vector3.h" />
     <ClInclude Include="base\pe2d\PhysicsEngine2D.h" />
     <ClInclude Include="base\utils.h" />
@@ -289,6 +290,7 @@ xcopy /r /y /e "$(ProjectDir)dll" "$(TargetDir)"</Command>
     </ClCompile>
     <ClCompile Include="base\pe2d\Geometries.cpp" />
     <ClCompile Include="base\pe2d\Geometries2D.cpp" />
+    <ClCompile Include="base\pe2d\math\vector2.cpp" />
     <ClCompile Include="base\pe2d\math\vector3.cpp" />
     <ClCompile Include="base\pe2d\PhysicsEngine2D.cpp" />
     <ClCompile Include="base\pe2d\PhysicsEngine2DRender.cpp" />

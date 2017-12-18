@@ -202,7 +202,7 @@ static Result scene_sol(float x, float y) {
 * \brief 光线步行法 收集dest向origin发射的光线
 * \param ox origin X坐标
 * \param oy origin Y坐标
-* \param dx d X坐标
+* \param dx dest X坐标
 * \param dy dest Y坐标
 * \return 采样
 */
