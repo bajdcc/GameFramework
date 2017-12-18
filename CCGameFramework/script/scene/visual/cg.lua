@@ -115,6 +115,11 @@ function M:init_event()
 			this.layers.pe2d:update_and_paint()
 			UIExt.refresh(this.layers.pe2d, 0)
 			UIExt.paint()
+		elseif id >= 41 and id <= 50 then
+			if UIExt.refresh(this.layers.pe2d, id) == 1 then
+				UIExt.kill_timer(id)
+			end
+			UIExt.paint()
 		end
 	end
 	self.handler[self.win_event.keydown] = function(this, code, flags)
@@ -172,8 +177,7 @@ function M:init_menu(info)
 			CurrentScene.layers.text:update()
 			CurrentScene.layers.wm.show_self = 0
 			CurrentScene.layers.wm:update()
-			UIExt.refresh(CurrentScene.layers.pe2d, 41)
-			UIExt.paint()
+			UIExt.set_timer(41, 100)
 		end
 	}):attach(slider)
 

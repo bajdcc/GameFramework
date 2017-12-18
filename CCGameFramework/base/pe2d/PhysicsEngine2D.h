@@ -33,7 +33,6 @@ public:
 private:
     void RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
     void RenderSingleBitmap(CComPtr<ID2D1RenderTarget> rt, CRect bounds, void(*callback)(BYTE*, cint, cint));
-    void RenderSingleBitmap2D(CComPtr<ID2D1RenderTarget> rt, CRect bounds, void(*callback)(BYTE*, cint, cint));
 
     void RenderSimpleColor(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
     void RenderSimpleSphere(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
@@ -66,8 +65,6 @@ private:
     static void RenderSpotLight(BYTE* buffer, cint width, cint height);
     static void RenderTriLight(BYTE* buffer, cint width, cint height);
     static void RenderLightIntern(World&, const PerspectiveCamera&, BYTE* buffer, cint width, cint height);
-
-    static void Render2DScene1Intern(BYTE* buffer, cint width, cint height);
 
     void RenderSceneIntern(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
 
