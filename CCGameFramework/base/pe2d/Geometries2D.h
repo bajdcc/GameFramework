@@ -9,10 +9,15 @@ class Geo2DShape;
 struct Geo2DResult
 {
     Geo2DResult();
-    Geo2DResult(const Geo2DShape* body, float distance, const vector2& position, const vector2& normal);
+    Geo2DResult(const Geo2DShape* body, bool inside, float distance, float distance2, const vector2& position, const vector2& normal);
+
+    Geo2DResult(const Geo2DResult& r);
+    const Geo2DResult& operator = (const Geo2DResult& r);
 
     const Geo2DShape* body{ nullptr };
-    float distance{ 0.0f };
+    bool inside{ false };
+    float distance{ FLT_MAX };
+    float distance2{ FLT_MAX };
     vector2 position;
     vector2 normal;
 };
@@ -90,7 +95,7 @@ public:
     vector2 get_center() const override;
 
     vector2 center;
-    float r;
+    float r, rsq;
 };
 
 class Geo2DFactory
@@ -98,7 +103,9 @@ class Geo2DFactory
 public:
     using Geo2DObjPtr = std::shared_ptr<Geo2DObject>;
 
-    static Geo2DObjPtr intersect(Geo2DObjPtr s1, Geo2DObjPtr s2);
+    static Geo2DObjPtr and(Geo2DObjPtr s1, Geo2DObjPtr s2);
+    static Geo2DObjPtr or(Geo2DObjPtr s1, Geo2DObjPtr s2);
+    static Geo2DObjPtr sub(Geo2DObjPtr s1, Geo2DObjPtr s2);
 
     static Geo2DObjPtr new_circle(float cx, float cy, float r, color L);
 };

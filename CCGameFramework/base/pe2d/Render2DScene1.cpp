@@ -68,7 +68,7 @@ void PhysicsEngine::Render2DScene1(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
     // 场景设置
     if (!buf.get())
     {
-        root = Geo2DFactory::new_circle(1.0f, 0.5f, 0.1f, color(1.0f, 1.0f, 1.0f));
+        root = Geo2DFactory::new_circle(1.0f, 0.5f, 0.4f, color(1.0f, 1.0f, 1.0f));
     }
 
     // --------------------------------------

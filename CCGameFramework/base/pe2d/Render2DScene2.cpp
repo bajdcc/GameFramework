@@ -36,6 +36,7 @@ static void DrawScene2(int part)
     auto width = bag.g_width;
     auto height = bag.g_height;
     auto m = min(width, height);
+    auto k = sample2(1.3f,0.5f);
     for (auto y = 0; y < height; y++)
     {
         if (y % 4 == part)
@@ -68,9 +69,9 @@ void PhysicsEngine::Render2DScene2(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
     // 场景设置
     if (!buf.get())
     {
-        root = Geo2DFactory::intersect(
-            Geo2DFactory::new_circle(1.0f, 0.4f, 0.1f, color(1.0f, 1.0f, 1.0f)),
-            Geo2DFactory::new_circle(1.0f, 0.5f, 0.1f, color(1.0f, 1.0f, 1.0f)));
+        root = Geo2DFactory::and(
+            Geo2DFactory::new_circle(0.9f, 0.5f, 0.4f, color(1.0f, 1.0f, 1.0f)),
+            Geo2DFactory::new_circle(1.3f, 0.5f, 0.4f, color(1.0f, 1.0f, 1.0f)));
     }
 
     // --------------------------------------
