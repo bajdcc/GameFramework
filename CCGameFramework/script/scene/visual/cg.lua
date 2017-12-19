@@ -29,7 +29,7 @@ function M:new(o)
 end
 
 function M:init()
-	self.minw = 900
+	self.minw = 800
 	self.minh = 600
 	UIExt.set_minw(self.minw, self.minh)
 

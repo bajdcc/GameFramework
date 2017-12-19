@@ -64,11 +64,11 @@ Geo2DResult Geo2DOper::sample(vector2 ori, vector2 dst) const
                 switch (rd)
                 {
                 case 0: // not(A or B)
-                    if (r1.distance2 > r2.distance || r2.distance2 < r1.distance)
+                    if (r1.distance2 > r2.distance || r2.distance2 < r1.distance) // ABAB+BABA
                         return r1.distance2 > r2.distance ? r2 : r1;
-                    if (r1.distance < r2.distance && r2.distance2 < r1.distance2)
+                    if (r1.distance < r2.distance && r2.distance2 < r1.distance2) // ABBA
                         return r2;
-                    if (r2.distance < r1.distance || r1.distance2 < r2.distance2)
+                    if (r2.distance < r1.distance && r1.distance2 < r2.distance2) // BAAB
                         return r1;
                     return Geo2DResult();
                 case 1: // B
