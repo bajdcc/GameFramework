@@ -64,23 +64,31 @@ Geo2DResult Geo2DOper::sample(vector2 ori, vector2 dst) const
                 switch (rd)
                 {
                 case 0: // not(A or B)
-                    if (r1.distance2 > r2.distance || r2.distance2 < r1.distance) // ABAB+BABA
-                        return r1.distance2 > r2.distance ? r2 : r1;
-                    if (r1.distance < r2.distance && r2.distance2 < r1.distance2) // ABBA
+                    if (r1.distance < r2.distance)
+                    {
+                        if (r2.distance2 > r1.distance && r2.distance > r1.distance2)
+                            break;
                         return r2;
-                    if (r2.distance < r1.distance && r1.distance2 < r2.distance2) // BAAB
+                    }
+                    if (r2.distance < r1.distance)
+                    {
+                        if (r1.distance2 > r2.distance && r1.distance > r2.distance2)
+                            break;
                         return r1;
-                    return Geo2DResult();
+                    }
+                    break;
                 case 1: // B
                     if (r1.distance < r2.distance2)
                         return r1;
-                    return Geo2DResult();
+                    break;
                 case 2: // A
                     if (r2.distance < r1.distance2)
-                        return r1;
-                    return Geo2DResult();
+                        return r2;
+                    break;
                 case 3: // A and B
                     return r1.distance > r2.distance ? r1 : r2;
+                default:
+                    break;
                 }
             }
         }
@@ -93,9 +101,9 @@ Geo2DResult Geo2DOper::sample(vector2 ori, vector2 dst) const
         switch (rd)
         {
         case 0: // not(A or B)
-            return Geo2DResult();
+            break;
         case 1: // B
-            return Geo2DResult();
+            break;
         case 2: // A
             return r1;
         case 3: // A and B
@@ -109,7 +117,7 @@ Geo2DResult Geo2DOper::sample(vector2 ori, vector2 dst) const
                     r.distance = r.distance2;
                     return r;
                 }
-                return Geo2DResult();
+                break;
             }
             if (r1.inside)
             {
@@ -119,7 +127,7 @@ Geo2DResult Geo2DOper::sample(vector2 ori, vector2 dst) const
             {
                 if (r1.distance2 < r2.distance2)
                 {
-                    return Geo2DResult();
+                    break;
                 }
                 auto r(r2);
                 r.body = r1.body;
@@ -128,6 +136,8 @@ Geo2DResult Geo2DOper::sample(vector2 ori, vector2 dst) const
                 return r;
             }
             return r1;
+        default:
+            break;
         }
     }
     return Geo2DResult();

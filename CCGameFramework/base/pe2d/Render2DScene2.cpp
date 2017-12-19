@@ -3,7 +3,7 @@
 #include "render/Direct2DRenderTarget.h"
 #include "Geometries2D.h"
 
-#define N 16
+#define N 256
 
 extern float PI2;
 extern DrawSceneBag bag;
@@ -71,11 +71,11 @@ void PhysicsEngine::Render2DScene2(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
     {
 		root = Geo2DFactory:: or (
 			Geo2DFactory:: and (
-				Geo2DFactory::new_circle(0.5f, 0.5f, 0.2f, color(1.0f, 1.0f, 1.0f)),
-				Geo2DFactory::new_circle(0.7f, 0.5f, 0.2f, color(1.0f, 1.0f, 1.0f))),
+				Geo2DFactory::new_circle(1.3f, 0.5f, 0.4f, color(2.0f, 1.0f, 1.0f)),
+				Geo2DFactory::new_circle(1.7f, 0.5f, 0.4f, color(2.0f, 1.0f, 1.0f))),
 			Geo2DFactory:: sub (
-				Geo2DFactory::new_circle(1.1f, 0.5f, 0.2f, color(1.0f, 1.0f, 1.0f)),
-				Geo2DFactory::new_circle(1.3f, 0.5f, 0.2f, color(1.0f, 1.0f, 1.0f))));
+				Geo2DFactory::new_circle(0.5f, 0.5f, 0.4f, color(1.0f, 1.0f, 2.0f)),
+				Geo2DFactory::new_circle(0.9f, 0.5f, 0.4f, color(1.0f, 1.0f, 2.0f))));
     }
 
     // --------------------------------------
