@@ -69,6 +69,8 @@ public:
     {
         t_none,
         t_circle,
+        t_box,
+        t_triangle,
         t_ngon,
         t_plane,
         t_capsule,

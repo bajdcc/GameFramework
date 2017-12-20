@@ -66,27 +66,57 @@ Geo2DResult Geo2DOper::sample(vector2 ori, vector2 dst) const
                 case 0: // not(A or B)
                     if (r1.distance < r2.distance)
                     {
-                        if (r2.distance2 > r1.distance && r2.distance > r1.distance2)
+                        if (r2.distance > r1.distance2) // AABB
                             break;
-                        return r2;
+                        if (r2.distance2 < r1.distance2) // ABBA
+                            return r2;
+                        auto r(r2); // ABAB
+                        r.distance2 = r1.distance2;
+                        return r;
+
                     }
                     if (r2.distance < r1.distance)
                     {
-                        if (r1.distance2 > r2.distance && r1.distance > r2.distance2)
+                        if (r1.distance > r2.distance2) // BBAA
                             break;
-                        return r1;
+                        if (r1.distance2 < r2.distance2) // BAAB
+                            return r1;
+                        auto r(r1); // BABA
+                        r.distance2 = r2.distance2;
+                        return r;
                     }
                     break;
                 case 1: // B
-                    if (r1.distance < r2.distance2)
-                        return r1;
+                    if (r1.distance < r2.distance2) // ABA
+                    {
+                        auto r(r1);
+                        r.distance2 = r2.distance2;
+                        r.inside = false;
+                        return r;
+                    }
                     break;
                 case 2: // A
-                    if (r2.distance < r1.distance2)
-                        return r2;
+                    if (r2.distance < r1.distance2) // BAB
+                    {
+                        auto r(r2);
+                        r.distance2 = r1.distance2;
+                        r.inside = false;
+                        return r;
+                    }
                     break;
                 case 3: // A and B
-                    return r1.distance > r2.distance ? r1 : r2;
+                    if (r1.distance > r2.distance) // BA
+                    {
+                        auto r(r2);
+                        r.distance = r1.distance;
+                        return r;
+                    }
+                    else // AB
+                    {
+                        auto r(r1);
+                        r.distance = r2.distance;
+                        return r;
+                    }
                 default:
                     break;
                 }
@@ -107,35 +137,64 @@ Geo2DResult Geo2DOper::sample(vector2 ori, vector2 dst) const
         case 2: // A
             return r1;
         case 3: // A and B
-            if (r2.inside)
+            if (r1.inside && r2.inside)
             {
-                if (r1.distance2 > r2.distance2)
+                if (r2.distance2 < r1.distance2) // BA
                 {
-                    auto r(r2);
-                    r.body = r1.body;
+                    auto r(r1);
+                    r.distance = r2.distance2;
+                    r.distance2 = r1.distance2;
                     r.inside = false;
-                    r.distance = r.distance2;
                     return r;
                 }
-                break;
-            }
-            if (r1.inside)
-            {
-                return r1;
-            }
-            if (r2.distance < r1.distance)
-            {
-                if (r1.distance2 < r2.distance2)
+                else // AB
                 {
                     break;
                 }
-                auto r(r2);
-                r.body = r1.body;
-                r.inside = false;
-                r.distance = r.distance2;
+            }
+            else if (r2.inside)
+            {
+                if (r1.distance2 > r2.distance2) // ABA
+                {
+                    auto r(r1);
+                    r.distance = r2.distance2;
+                    r.distance2 = r1.distance2;
+                    return r;
+                }
+                else // AAB
+                    break;
+            }
+            else if (r1.inside) // BAB
+            {
+                auto r(r1);
+                r.distance = r2.distance2;
+                r.distance2 = r1.distance2;
+                r.inside = true;
                 return r;
             }
-            return r1;
+            else
+            {
+                if (r1.distance < r2.distance)
+                {
+                    if (r2.distance > r1.distance2) // AABB
+                        return r1;
+                    if (r2.distance2 < r1.distance2) // ABBA
+                        return r1;
+                    auto r(r1); // ABAB
+                    r.distance2 = r2.distance;
+                    return r;
+                }
+                else
+                {
+                    if (r1.distance > r2.distance2) // BBAA
+                        return r1;
+                    if (r1.distance2 < r2.distance2) // BAAB
+                        break;
+                    auto r(r1); // BABA
+                    r.distance = r2.distance2;
+                    return r;
+                }
+            }
         default:
             break;
         }

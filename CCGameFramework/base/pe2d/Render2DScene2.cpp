@@ -36,7 +36,6 @@ static void DrawScene2(int part)
     auto width = bag.g_width;
     auto height = bag.g_height;
     auto m = min(width, height);
-    auto k = sample2(1.3f,0.5f);
     for (auto y = 0; y < height; y++)
     {
         if (y % 4 == part)
