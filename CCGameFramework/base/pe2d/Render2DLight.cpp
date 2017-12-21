@@ -11,6 +11,7 @@
 #define CIRCLE_Y 0.5f
 #define CIRCLE_R 0.1f
 
+extern auto PI = 1.0f * float(M_PI);
 extern auto PI2 = 2.0f * float(M_PI);
 
 /**

@@ -4,11 +4,13 @@
 #include "Geometries2D.h"
 #include "lua_ext/ext.h"
 
-#define N 16
+#define N 256
 #define TRACE_POINT 1
 #define TRACE_N 256
 
+extern float PI;
 extern float PI2;
+
 extern DrawSceneBag bag;
 
 std::shared_ptr<Geo2DObject> root;
@@ -59,6 +61,11 @@ static void bresenham(int x0, int y0, int x1, int y1) {
 }
 #endif
 
+static int clamp(int value, int lower, int upper)
+{
+    return max(min(value, upper), lower);
+}
+
 static void DrawScene2(int part)
 {
     auto buffer = bag.g_buf;
@@ -86,12 +93,12 @@ static void DrawScene2(int part)
     bag.g_cnt++;
     if (bag.g_cnt == 4)
     {
-        *bag.g_painted = true;
 #ifdef TRACE_POINT
         const auto _mouse_x = int(g_ui_map["CG-2-MOUSE-X"]);
         const auto _mouse_y = int(g_ui_map["CG-2-MOUSE-Y"]);
         const auto mouse_x = 1.0f * _mouse_x / m;
         const auto mouse_y = 1.0f * _mouse_y / m;
+        const auto mouse_t = int(g_ui_map["CG-2-MOUSE-TYPE"]);
         if (0 <= mouse_x && 0 <= mouse_y && mouse_x < width && mouse_y < height)
         {
             for (auto i = 0; i < TRACE_N; i++) {
@@ -99,14 +106,17 @@ static void DrawScene2(int part)
                 const auto r = root->sample(vector2(mouse_x, mouse_y), vector2(cosf(a), sinf(a)));
                 if (r.body)
                 {
-                    if (i % 2 == 0)
-                        bresenham(_mouse_x, _mouse_y, int(r.min_pt.position.x * m), int(r.min_pt.position.y * m));
+                    if (mouse_t == 1)
+                        bresenham(clamp(_mouse_x, 0, width), clamp(_mouse_y, 0, height - 1),
+                            clamp(int(r.min_pt.position.x * m), 0, width), clamp(int(r.min_pt.position.y * m), 0, height - 1));
                     else
-                        bresenham(_mouse_x, _mouse_y, int(r.max_pt.position.x * m), int(r.max_pt.position.y * m));
+                        bresenham(clamp(_mouse_x, 0, width), clamp(_mouse_y, 0, height - 1),
+                            clamp(int(r.max_pt.position.x * m), 0, width), clamp(int(r.max_pt.position.y * m), 0, height - 1));
                 }
             }
         }
 #endif
+        *bag.g_painted = true;
     }
     bag.mtx.unlock();
 }
@@ -119,13 +129,16 @@ void PhysicsEngine::Render2DScene2(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
     // 场景设置
     if (!buf.get())
     {
-		root = Geo2DFactory:: or (
-			Geo2DFactory:: and (
-				Geo2DFactory::new_circle(1.3f, 0.5f, 0.4f, color(2.0f, 1.0f, 1.0f)),
-				Geo2DFactory::new_circle(1.7f, 0.5f, 0.4f, color(2.0f, 1.0f, 1.0f))),
-			Geo2DFactory:: sub (
-				Geo2DFactory::new_circle(0.5f, 0.5f, 0.4f, color(1.0f, 1.0f, 2.0f)),
-				Geo2DFactory::new_circle(0.9f, 0.5f, 0.4f, color(1.0f, 1.0f, 2.0f))));
+        root =
+            Geo2DOr(
+                Geo2DOr(
+                    Geo2DAnd(
+                        Geo2DNewCircle(1.3f, 0.5f, 0.4f, color(2.0f, 1.0f, 1.0f)),
+                        Geo2DNewCircle(1.7f, 0.5f, 0.4f, color(2.0f, 1.0f, 1.0f))),
+                    Geo2DSub(
+                        Geo2DNewCircle(0.5f, 0.5f, 0.4f, color(1.0f, 1.0f, 2.0f)),
+                        Geo2DNewCircle(0.9f, 0.5f, 0.4f, color(1.0f, 1.0f, 2.0f)))),
+                Geo2DNewBox(1.0f, 0.5f, 0.1f, 0.1f, PI*0.25f, color(1.0f, 2.0f, 1.0f)));
     }
 
     // --------------------------------------

@@ -1,6 +1,8 @@
 ﻿#include "stdafx.h"
 #include "Geometries2D.h"
 
+#define EPSILON 1.0e-6f
+
 Geo2DPoint::Geo2DPoint()
 {
 }
@@ -318,6 +320,98 @@ vector2 Geo2DCircle::get_center() const
     return center;
 }
 
+Geo2DBox::Geo2DBox(float cx, float cy, float sx, float sy, float theta, color L)
+    : Geo2DShape(t_circle, L), center(cx, cy), s(sx, sy), theta(theta), costheta(cosf(theta)), sintheta(sinf(theta))
+{
+}
+
+Geo2DBox::~Geo2DBox()
+{
+}
+
+static int SignBit(const float& a)
+{
+    if (fabs(a) < EPSILON)
+    {
+        return 0;
+    }
+    return a > 0 ? 1 : -1;
+}
+
+static bool IntersectWithLineAB(const vector2& ori, const vector2& dir, const vector2& p1, const vector2& p2, float& t, vector2& p)
+{
+    const auto tAB1 = dir.y * (p2.x - p1.x) - dir.x * (p2.y - p1.y);
+    if (fabs(tAB1) > EPSILON)
+    {
+        t = ((ori.x - p1.x) * (p2.y - p1.y) - (ori.y - p1.y) * (p2.x - p1.x)) / tAB1;
+        p = ori + dir * t;
+        return (SignBit(p1.x - p.x) == SignBit(p.x - p2.x)) && (SignBit(p1.y - p.y) == SignBit(p.y - p2.y));
+    }
+    return false;
+}
+
+Geo2DResult Geo2DBox::sample(vector2 ori, vector2 dir) const
+{
+    const auto _A = vector2(costheta * -s.x + sintheta * -s.y, costheta * -s.y - sintheta * -s.x);
+    const auto _B = vector2(costheta * s.x + sintheta * -s.y, costheta * -s.y - sintheta * s.x);
+    const auto A = center + _A;
+    const auto B = center + _B;
+    const auto C = center - _A;
+    const auto D = center - _B;
+    const vector2 pts[4] = { A,B,C,D };
+
+    static int m[4][2] = { {0,1},{1,2},{2,3},{3,0} };
+    float t[2];
+    vector2 p[2];
+    int ids[2];
+    int cnt = 0;
+    for (int i = 0; i < 4 && cnt < 2; i++)
+    {
+        if (IntersectWithLineAB(ori, dir, pts[m[i][0]], pts[m[i][1]], t[cnt], p[cnt]))
+        {
+            ids[cnt++] = i;
+        }
+    }
+    if (cnt == 2)
+    {
+        const auto td = ((t[0] >= 0 ? 1 : 0) << 1) | (t[1] >= 0 ? 1 : 0);
+        switch (td)
+        {
+        case 0: // 双反，无交点，在外
+            break;
+        case 1: // t[1]，有交点，在内
+            return Geo2DResult(this, false,
+                Geo2DPoint(t[0], p[0], Normalize(pts[m[ids[0]][0]] + pts[m[ids[0]][1]] - center - center)),
+                Geo2DPoint(t[1], p[1], Normalize(pts[m[ids[1]][0]] + pts[m[ids[1]][1]] - center - center)));
+        case 2: // t[0]，有交点，在内
+            return Geo2DResult(this, false,
+                Geo2DPoint(t[1], p[1], Normalize(pts[m[ids[1]][0]] + pts[m[ids[1]][1]] - center - center)),
+                Geo2DPoint(t[0], p[0], Normalize(pts[m[ids[0]][0]] + pts[m[ids[0]][1]] - center - center)));
+        case 3: // 双正，有交点，在外
+            if (t[0] > t[1])
+            {
+                return Geo2DResult(this, false,
+                    Geo2DPoint(t[1], p[1], Normalize(pts[m[ids[1]][0]] + pts[m[ids[1]][1]] - center - center)),
+                    Geo2DPoint(t[0], p[0], Normalize(pts[m[ids[0]][0]] + pts[m[ids[0]][1]] - center - center)));
+            }
+            else
+            {
+                return Geo2DResult(this, false,
+                    Geo2DPoint(t[0], p[0], Normalize(pts[m[ids[0]][0]] + pts[m[ids[0]][1]] - center - center)),
+                    Geo2DPoint(t[1], p[1], Normalize(pts[m[ids[1]][0]] + pts[m[ids[1]][1]] - center - center)));
+            }
+        default:
+            break;
+        }
+    }
+    return Geo2DResult();
+}
+
+vector2 Geo2DBox::get_center() const
+{
+    return center;
+}
+
 Geo2DFactory::Geo2DObjPtr Geo2DFactory::and (Geo2DObjPtr s1, Geo2DObjPtr s2)
 {
     return std::make_shared<Geo2DOper>(Geo2DOper::t_intersect, s1, s2);
@@ -336,4 +430,9 @@ Geo2DFactory::Geo2DObjPtr Geo2DFactory::sub(Geo2DObjPtr s1, Geo2DObjPtr s2)
 Geo2DFactory::Geo2DObjPtr Geo2DFactory::new_circle(float cx, float cy, float r, color L)
 {
     return std::make_shared<Geo2DCircle>(cx, cy, r, L);
+}
+
+Geo2DFactory::Geo2DObjPtr Geo2DFactory::new_box(float cx, float cy, float sx, float sy, float theta, color L)
+{
+    return std::make_shared<Geo2DBox>(cx, cy, sx, sy, theta, L);
 }

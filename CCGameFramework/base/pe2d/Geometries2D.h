@@ -110,6 +110,30 @@ public:
     float r, rsq;
 };
 
+// 矩形
+class Geo2DBox : public Geo2DShape
+{
+public:
+    Geo2DBox(float cx, float cy, float sx, float sy, float theta, color L);
+    ~Geo2DBox();
+
+    Geo2DResult sample(vector2 ori, vector2 dir) const override;
+
+    vector2 get_center() const override;
+
+    vector2 center;
+    vector2 s;
+    float theta, costheta, sintheta;
+};
+
+#define Geo2DSub Geo2DFactory::sub
+#define Geo2DOr Geo2DFactory::or
+#define Geo2DAnd Geo2DFactory::and
+
+#define Geo2DNewCircle Geo2DFactory::new_circle
+#define Geo2DNewBox Geo2DFactory::new_box
+
+
 class Geo2DFactory
 {
 public:
@@ -120,6 +144,7 @@ public:
     static Geo2DObjPtr sub(Geo2DObjPtr s1, Geo2DObjPtr s2);
 
     static Geo2DObjPtr new_circle(float cx, float cy, float r, color L);
+    static Geo2DObjPtr new_box(float cx, float cy, float sx, float sy, float theta, color L);
 };
 
 #endif // GEOMETRIES2D_H
