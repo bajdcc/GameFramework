@@ -54,6 +54,8 @@ function M:hittest(x, y)
 		if obj then
 			CurrentHitTest = obj.ht
 			CurrentCursor = obj.cur
+			CurrentCursorX = x
+			CurrentCursorY = y
 			return obj
 		end
 	end

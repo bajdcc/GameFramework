@@ -2,8 +2,11 @@
 #include "PhysicsEngine2D.h"
 #include "render/Direct2DRenderTarget.h"
 #include "Geometries2D.h"
+#include "lua_ext/ext.h"
 
-#define N 256
+#define N 16
+#define TRACE_POINT 1
+#define TRACE_N 256
 
 extern float PI2;
 extern DrawSceneBag bag;
@@ -29,6 +32,32 @@ static color sample2(float x, float y) {
     }
     return sum * (1.0f / N);
 }
+
+#ifdef TRACE_POINT
+static void setpixel(int x, int y)
+{
+    const auto pixel = &bag.g_buf[(y * bag.g_width + x) * 4];
+    pixel[0] = 0;
+    pixel[1] = 0;
+    pixel[2] = 0;
+    pixel[3] = 255;
+}
+
+// 画直线
+// Refer: https://zhuanlan.zhihu.com/p/30553006
+// Modified from https://rosettacode.org/wiki/Bitmap/Bresenham%27s_line_algorithm#C
+static void bresenham(int x0, int y0, int x1, int y1) {
+    int dx = abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
+    int dy = abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
+    int err = (dx > dy ? dx : -dy) / 2;
+
+    while (setpixel(x0, y0), x0 != x1 || y0 != y1) {
+        int e2 = err;
+        if (e2 > -dx) { err -= dy; x0 += sx; }
+        if (e2 <  dy) { err += dx; y0 += sy; }
+    }
+}
+#endif
 
 static void DrawScene2(int part)
 {
@@ -56,7 +85,29 @@ static void DrawScene2(int part)
     bag.mtx.lock();
     bag.g_cnt++;
     if (bag.g_cnt == 4)
+    {
         *bag.g_painted = true;
+#ifdef TRACE_POINT
+        const auto _mouse_x = int(g_ui_map["CG-2-MOUSE-X"]);
+        const auto _mouse_y = int(g_ui_map["CG-2-MOUSE-Y"]);
+        const auto mouse_x = 1.0f * _mouse_x / m;
+        const auto mouse_y = 1.0f * _mouse_y / m;
+        if (0 <= mouse_x && 0 <= mouse_y && mouse_x < width && mouse_y < height)
+        {
+            for (auto i = 0; i < TRACE_N; i++) {
+                const auto a = PI2 * (i + float(rand()) / RAND_MAX) / TRACE_N;
+                const auto r = root->sample(vector2(mouse_x, mouse_y), vector2(cosf(a), sinf(a)));
+                if (r.body)
+                {
+                    if (i % 2 == 0)
+                        bresenham(_mouse_x, _mouse_y, int(r.min_pt.position.x * m), int(r.min_pt.position.y * m));
+                    else
+                        bresenham(_mouse_x, _mouse_y, int(r.max_pt.position.x * m), int(r.max_pt.position.y * m));
+                }
+            }
+        }
+#endif
+    }
     bag.mtx.unlock();
 }
 

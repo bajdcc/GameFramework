@@ -29,4 +29,7 @@ extern int ui_music_ctl(lua_State *L);
 
 extern int ui_parse_lyric(lua_State *L);
 
+extern int ui_set_value(lua_State *L);
+extern int ui_get_value(lua_State *L);
+
 #endif

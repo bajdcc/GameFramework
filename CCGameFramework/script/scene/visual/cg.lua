@@ -137,7 +137,17 @@ function M:init_menu(info)
 		padbottom = 60
 	})
 	self:add(bg)
+	UIExt.ui_set_value("CurrentCursorX", -1)
+	UIExt.ui_set_value("CurrentCursorY", -1)
 	self.layers.pe2d = bg:add(PE2D:new())
+	self.layers.pe2d.hit = function(this, evt)
+		if evt == WinEvent.leftbuttonup then
+			if UIExt.refresh(CurrentScene.layers.pe2d, -1) == 0 then return end
+			UIExt.ui_set_value("CG-2-MOUSE-X", CurrentCursorX - CurrentScene.layers.pe2d.left)
+			UIExt.ui_set_value("CG-2-MOUSE-Y", CurrentCursorY - CurrentScene.layers.pe2d.top)
+			UIExt.set_timer(42, 100)
+		end
+	end
 	local menu = LinearLayout:new({
 		row = row,
 		col = col,

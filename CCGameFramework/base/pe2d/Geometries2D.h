@@ -5,21 +5,31 @@
 
 class Geo2DShape;
 
+// 点信息
+struct Geo2DPoint
+{
+    Geo2DPoint();
+    Geo2DPoint(float distance, const vector2& position, const vector2& normal);
+
+    const Geo2DPoint& operator = (const Geo2DPoint& r);
+
+    float distance{ FLT_MAX };
+    vector2 position;
+    vector2 normal;
+};
+
 // 相交测试
 struct Geo2DResult
 {
     Geo2DResult();
-    Geo2DResult(const Geo2DShape* body, bool inside, float distance, float distance2, const vector2& position, const vector2& normal);
+    Geo2DResult(const Geo2DShape* body, bool inside, Geo2DPoint min_pt, Geo2DPoint max_pt);
 
     Geo2DResult(const Geo2DResult& r);
     const Geo2DResult& operator = (const Geo2DResult& r);
 
     const Geo2DShape* body{ nullptr };
     bool inside{ false };
-    float distance{ FLT_MAX };
-    float distance2{ FLT_MAX };
-    vector2 position;
-    vector2 normal;
+    Geo2DPoint min_pt, max_pt;
 };
 
 // 2D平面对象基类

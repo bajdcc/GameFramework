@@ -33,6 +33,8 @@ static const luaL_Reg ui_lib[] = {
     { "play_song", ui_play_song },
     { "music_ctrl", ui_music_ctl },
     { "parse_lyric", ui_parse_lyric },
+    { "ui_set_value", ui_set_value },
+    { "ui_get_value", ui_get_value },
     { nullptr, nullptr }
 };
 

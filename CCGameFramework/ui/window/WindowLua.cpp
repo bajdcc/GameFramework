@@ -2,6 +2,8 @@
 #include "Window.h"
 #include <base64/b64.h>
 #include "utils.h"
+#include "lua_ext/UI.h"
+#include "lua_ext/ext.h"
 
 int ui_clear_scene(lua_State *L)
 {
@@ -666,5 +668,26 @@ int ui_parse_lyric(lua_State *L)
         lua_pushstring(L, y.second.c_str());
         lua_settable(L, -3);
     }
+    return 1;
+}
+
+std::map<std::string, lua_Integer> g_ui_map;
+
+int ui_set_value(lua_State *L)
+{
+    auto key = luaL_checkstring(L, 1);
+    auto value = luaL_checkinteger(L, 2);
+    g_ui_map[key] = value;
+    return 0;
+}
+
+int ui_get_value(lua_State *L)
+{
+    auto key = luaL_checkstring(L, 1);
+    auto value = g_ui_map.find(key);
+    if (value == g_ui_map.end())
+        lua_pushnil(L);
+    else
+        lua_pushinteger(L, value->second);
     return 1;
 }

@@ -1,19 +1,34 @@
 ﻿#include "stdafx.h"
 #include "Geometries2D.h"
 
+Geo2DPoint::Geo2DPoint()
+{
+}
+
+Geo2DPoint::Geo2DPoint(float distance, const vector2& position, const vector2& normal)
+    : distance(distance), position(position), normal(normal)
+{
+}
+
+const Geo2DPoint& Geo2DPoint::operator=(const Geo2DPoint& r)
+{
+    distance = r.distance;
+    position = r.position;
+    normal = r.normal;
+    return *this;
+}
+
 Geo2DResult::Geo2DResult()
 {
 }
 
-Geo2DResult::Geo2DResult(const Geo2DShape* body, bool inside, float distance, float distance2,
-    const vector2& position, const vector2& normal)
-    : body(body), inside(inside), distance(distance), distance2(distance2), position(position), normal(normal)
+Geo2DResult::Geo2DResult(const Geo2DShape* body, bool inside, Geo2DPoint min_pt, Geo2DPoint max_pt)
+    : body(body), inside(inside), min_pt(min_pt), max_pt(max_pt)
 {
 }
 
 Geo2DResult::Geo2DResult(const Geo2DResult& r)
-    : body(r.body), inside(r.inside), distance(r.distance), distance2(r.distance2), position(r.position), normal(r.normal)
-
+    : body(r.body), inside(r.inside), min_pt(r.min_pt), max_pt(r.max_pt)
 {
 }
 
@@ -21,10 +36,8 @@ const Geo2DResult& Geo2DResult::operator=(const Geo2DResult& r)
 {
     body = r.body;
     inside = r.inside;
-    distance = r.distance;
-    distance2 = r.distance2;
-    position = r.position;
-    normal = r.normal;
+    min_pt = r.min_pt;
+    max_pt = r.max_pt;
     return *this;
 }
 
@@ -50,7 +63,7 @@ Geo2DResult Geo2DOper::sample(vector2 ori, vector2 dst) const
     {
         const auto r1 = obj1->sample(ori, dst);
         const auto r2 = obj2->sample(ori, dst);
-        return r1.distance < r2.distance ? r1 : r2;
+        return r1.min_pt.distance < r2.min_pt.distance ? r1 : r2;
     }
     else if (op == t_intersect)
     {
@@ -64,58 +77,88 @@ Geo2DResult Geo2DOper::sample(vector2 ori, vector2 dst) const
                 switch (rd)
                 {
                 case 0: // not(A or B)
-                    if (r1.distance < r2.distance)
+                    if (r1.min_pt.distance < r2.min_pt.distance)
                     {
-                        if (r2.distance > r1.distance2) // AABB
+                        if (r2.min_pt.distance > r1.max_pt.distance) // AABB
                             break;
-                        if (r2.distance2 < r1.distance2) // ABBA
+                        if (r2.max_pt.distance < r1.max_pt.distance) // ABBA
                             return r2;
                         auto r(r2); // ABAB
-                        r.distance2 = r1.distance2;
+                        r.max_pt = r1.max_pt;
                         return r;
 
                     }
-                    if (r2.distance < r1.distance)
+                    if (r2.min_pt.distance < r1.min_pt.distance)
                     {
-                        if (r1.distance > r2.distance2) // BBAA
+                        if (r1.min_pt.distance > r2.max_pt.distance) // BBAA
                             break;
-                        if (r1.distance2 < r2.distance2) // BAAB
+                        if (r1.max_pt.distance < r2.max_pt.distance) // BAAB
                             return r1;
                         auto r(r1); // BABA
-                        r.distance2 = r2.distance2;
+                        r.max_pt = r2.max_pt;
                         return r;
                     }
                     break;
                 case 1: // B
-                    if (r1.distance < r2.distance2) // ABA
+                    if (r1.min_pt.distance < r2.max_pt.distance)
                     {
-                        auto r(r1);
-                        r.distance2 = r2.distance2;
-                        r.inside = false;
-                        return r;
+                        if (r1.max_pt.distance > r2.max_pt.distance) // ABA
+                        {
+                            auto r(r1);
+                            r.max_pt = r2.max_pt;
+                            return r;
+                        }
+                        else // AAB
+                        {
+                            auto r(r1);
+                            r.max_pt = r1.max_pt;
+                            return r;
+                        }
                     }
                     break;
                 case 2: // A
-                    if (r2.distance < r1.distance2) // BAB
+                    if (r2.min_pt.distance < r1.max_pt.distance)
                     {
-                        auto r(r2);
-                        r.distance2 = r1.distance2;
-                        r.inside = false;
-                        return r;
+                        if (r2.max_pt.distance > r1.max_pt.distance) // BAB
+                        {
+                            auto r(r2);
+                            r.max_pt = r1.max_pt;
+                            return r;
+                        }
+                        else // BBA
+                        {
+                            auto r(r2);
+                            r.max_pt = r2.max_pt;
+                            return r;
+                        }
                     }
                     break;
                 case 3: // A and B
-                    if (r1.distance > r2.distance) // BA
+                    if (r1.min_pt.distance > r2.min_pt.distance)
                     {
-                        auto r(r2);
-                        r.distance = r1.distance;
-                        return r;
+                        if (r1.max_pt.distance > r2.max_pt.distance) // BA
+                        {
+                            auto r(r2);
+                            r.min_pt = r1.min_pt;
+                            return r;
+                        }
+                        else // AB
+                        {
+                            return r1;
+                        }
                     }
-                    else // AB
+                    else
                     {
-                        auto r(r1);
-                        r.distance = r2.distance;
-                        return r;
+                        if (r2.max_pt.distance > r1.max_pt.distance) // AB
+                        {
+                            auto r(r1);
+                            r.min_pt = r2.min_pt;
+                            return r;
+                        }
+                        else // AB
+                        {
+                            return r2;
+                        }
                     }
                 default:
                     break;
@@ -135,15 +178,25 @@ Geo2DResult Geo2DOper::sample(vector2 ori, vector2 dst) const
         case 1: // B
             break;
         case 2: // A
-            return r1;
+            if (r1.inside) // AA
+            {
+                if (r2.max_pt.distance == FLT_MAX)
+                    return r1;
+                if (r1.min_pt.distance > r2.max_pt.distance)
+                    return r1;
+                auto r(r1);
+                r.min_pt = r2.max_pt;
+                return r;
+            }
+            else
+                return r1;
         case 3: // A and B
             if (r1.inside && r2.inside)
             {
-                if (r2.distance2 < r1.distance2) // BA
+                if (r2.max_pt.distance < r1.max_pt.distance) // BA
                 {
                     auto r(r1);
-                    r.distance = r2.distance2;
-                    r.distance2 = r1.distance2;
+                    r.min_pt = r2.max_pt;
                     r.inside = false;
                     return r;
                 }
@@ -154,11 +207,11 @@ Geo2DResult Geo2DOper::sample(vector2 ori, vector2 dst) const
             }
             else if (r2.inside)
             {
-                if (r1.distance2 > r2.distance2) // ABA
+                if (r1.max_pt.distance > r2.max_pt.distance) // ABA
                 {
                     auto r(r1);
-                    r.distance = r2.distance2;
-                    r.distance2 = r1.distance2;
+                    r.min_pt = r2.max_pt;
+                    r.inside = false;
                     return r;
                 }
                 else // AAB
@@ -167,31 +220,29 @@ Geo2DResult Geo2DOper::sample(vector2 ori, vector2 dst) const
             else if (r1.inside) // BAB
             {
                 auto r(r1);
-                r.distance = r2.distance2;
-                r.distance2 = r1.distance2;
-                r.inside = true;
+                r.max_pt = r2.min_pt;
                 return r;
             }
             else
             {
-                if (r1.distance < r2.distance)
+                if (r1.min_pt.distance < r2.min_pt.distance)
                 {
-                    if (r2.distance > r1.distance2) // AABB
+                    if (r2.min_pt.distance > r1.max_pt.distance) // AABB
                         return r1;
-                    if (r2.distance2 < r1.distance2) // ABBA
+                    if (r2.max_pt.distance < r1.max_pt.distance) // ABBA
                         return r1;
                     auto r(r1); // ABAB
-                    r.distance2 = r2.distance;
+                    r.max_pt = r2.min_pt;
                     return r;
                 }
                 else
                 {
-                    if (r1.distance > r2.distance2) // BBAA
+                    if (r1.min_pt.distance > r2.max_pt.distance) // BBAA
                         return r1;
-                    if (r1.distance2 < r2.distance2) // BAAB
+                    if (r1.max_pt.distance < r2.max_pt.distance) // BAAB
                         break;
                     auto r(r1); // BABA
-                    r.distance = r2.distance2;
+                    r.min_pt = r2.max_pt;
                     return r;
                 }
             }
@@ -250,9 +301,12 @@ Geo2DResult Geo2DCircle::sample(vector2 ori, vector2 dir) const
             auto distance = -DdotV - sqrtf(discr); // 得出t，即摄影机发出的光线到其与圆的交点距离
             auto distance2 = -DdotV + sqrtf(discr);
             auto position = ori + dir * distance; // 代入直线方程，得出交点位置
+            auto position2 = ori + dir * distance2;
             auto normal = Normalize(position - center); // 法向量 = 光线终点(球面交点) - 球心坐标
-            if (a0 <= 0 || distance >= 0)
-                return Geo2DResult(this, a0 <= 0, distance, distance2, position, normal);
+            auto normal2 = Normalize(position2 - center);
+            return Geo2DResult((a0 <= 0 || distance >= 0) ? this : nullptr, a0 <= 0,
+                Geo2DPoint(distance, position, normal),
+                Geo2DPoint(distance2, position2, normal2));
         }
     }
 
