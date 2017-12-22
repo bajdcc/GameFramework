@@ -6,7 +6,9 @@
 
 #define N 256
 #define TRACE_POINT 1
-#define TRACE_N 256
+#define TRACE_N 64
+#define TRACE_NORMAL_MIN 1
+#define TRACE_NORMAL_SCALE 0.02f
 
 extern float PI;
 extern float PI2;
@@ -107,11 +109,23 @@ static void DrawScene2(int part)
                 if (r.body)
                 {
                     if (mouse_t == 1)
+                    {
                         bresenham(clamp(_mouse_x, 0, width), clamp(_mouse_y, 0, height - 1),
                             clamp(int(r.min_pt.position.x * m), 0, width), clamp(int(r.min_pt.position.y * m), 0, height - 1));
-                    else
+#if TRACE_NORMAL_MIN == 1
+                        bresenham(clamp(int(r.min_pt.position.x * m), 0, width), clamp(int(r.min_pt.position.y * m), 0, height - 1),
+                            clamp(int((r.min_pt.position.x + r.min_pt.normal.x * TRACE_NORMAL_SCALE) * m), 0, width),
+                            clamp(int((r.min_pt.position.y + r.min_pt.normal.y * TRACE_NORMAL_SCALE) * m), 0, height - 1));
+#endif
+                    }
+                    else if (mouse_t == 2)
+                    {
                         bresenham(clamp(_mouse_x, 0, width), clamp(_mouse_y, 0, height - 1),
                             clamp(int(r.max_pt.position.x * m), 0, width), clamp(int(r.max_pt.position.y * m), 0, height - 1));
+                        bresenham(clamp(int(r.max_pt.position.x * m), 0, width), clamp(int(r.max_pt.position.y * m), 0, height - 1),
+                            clamp(int((r.max_pt.position.x + r.max_pt.normal.x * TRACE_NORMAL_SCALE) * m), 0, width),
+                            clamp(int((r.max_pt.position.y + r.max_pt.normal.y * TRACE_NORMAL_SCALE) * m), 0, height - 1));
+                    }
                 }
             }
         }

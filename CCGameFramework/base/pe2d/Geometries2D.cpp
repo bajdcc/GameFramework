@@ -188,6 +188,7 @@ Geo2DResult Geo2DOper::sample(vector2 ori, vector2 dst) const
                     return r1;
                 auto r(r1);
                 r.min_pt = r2.max_pt;
+                r.min_pt.normal = -r.min_pt.normal;
                 return r;
             }
             else
@@ -199,6 +200,7 @@ Geo2DResult Geo2DOper::sample(vector2 ori, vector2 dst) const
                 {
                     auto r(r1);
                     r.min_pt = r2.max_pt;
+                    r.min_pt.normal = -r.min_pt.normal;
                     r.inside = false;
                     return r;
                 }
@@ -209,12 +211,20 @@ Geo2DResult Geo2DOper::sample(vector2 ori, vector2 dst) const
             }
             else if (r2.inside)
             {
-                if (r1.max_pt.distance > r2.max_pt.distance) // ABA
+                if (r1.max_pt.distance > r2.max_pt.distance)
                 {
-                    auto r(r1);
-                    r.min_pt = r2.max_pt;
-                    r.inside = false;
-                    return r;
+                    if (r2.max_pt.distance > r1.min_pt.distance) // ABA
+                    {
+                        auto r(r1);
+                        r.min_pt = r2.max_pt;
+                        r.min_pt.normal = -r.min_pt.normal;
+                        r.inside = false;
+                        return r;
+                    }
+                    else // BAA
+                    {
+                        return r1;
+                    }
                 }
                 else // AAB
                     break;
@@ -235,6 +245,7 @@ Geo2DResult Geo2DOper::sample(vector2 ori, vector2 dst) const
                         return r1;
                     auto r(r1); // ABAB
                     r.max_pt = r2.min_pt;
+                    r.max_pt.normal = -r.max_pt.normal;
                     return r;
                 }
                 else
@@ -245,6 +256,7 @@ Geo2DResult Geo2DOper::sample(vector2 ori, vector2 dst) const
                         break;
                     auto r(r1); // BABA
                     r.min_pt = r2.max_pt;
+                    r.min_pt.normal = -r.min_pt.normal;
                     return r;
                 }
             }
