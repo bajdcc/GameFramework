@@ -540,6 +540,9 @@
     <ClCompile Include="base\pe2d\Render2DScene2.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="base\pe2d\Render2DScene3.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="script\lib\core\scene.lua">

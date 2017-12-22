@@ -141,19 +141,20 @@ function M:init_menu(info)
 	UIExt.ui_set_value("CG-2-MOUSE-X", -1)
 	UIExt.ui_set_value("CG-2-MOUSE-Y", -1)
 	self.layers.pe2d = bg:add(PE2D:new())
+	self.layers.current_id = 42
 	self.layers.pe2d.hit = function(this, evt)
 		if evt == WinEvent.leftbuttonup then
 			if UIExt.refresh(CurrentScene.layers.pe2d, -1) == 0 then return end
 			UIExt.ui_set_value("CG-2-MOUSE-TYPE", 1)
 			UIExt.ui_set_value("CG-2-MOUSE-X", CurrentCursorX - CurrentScene.layers.pe2d.left)
 			UIExt.ui_set_value("CG-2-MOUSE-Y", CurrentCursorY - CurrentScene.layers.pe2d.top)
-			UIExt.set_timer(42, 100)
+			UIExt.set_timer(CurrentScene.layers.current_id, 100)
 		elseif evt == WinEvent.rightbuttonup then
 			if UIExt.refresh(CurrentScene.layers.pe2d, -1) == 0 then return end
 			UIExt.ui_set_value("CG-2-MOUSE-TYPE", 2)
 			UIExt.ui_set_value("CG-2-MOUSE-X", CurrentCursorX - CurrentScene.layers.pe2d.left)
 			UIExt.ui_set_value("CG-2-MOUSE-Y", CurrentCursorY - CurrentScene.layers.pe2d.top)
-			UIExt.set_timer(42, 100)
+			UIExt.set_timer(CurrentScene.layers.current_id, 100)
 		end
 	end
 	local menu = LinearLayout:new({
@@ -206,11 +207,27 @@ function M:init_menu(info)
 		font_size = 16,
 		click = function(this)
 			if UIExt.refresh(CurrentScene.layers.pe2d, -1) == 0 then return end
+			CurrentScene.layers.current_id = 42
 			CurrentScene.layers.text.text = '实体几何'
 			CurrentScene.layers.text:update()
 			CurrentScene.layers.wm.show_self = 0
 			CurrentScene.layers.wm:update()
 			UIExt.set_timer(42, 100)
+		end
+	}):attach(slider)
+	Button:new({
+		text = '反射效果',
+		font_family = '楷体',
+		track_display = 0,
+		font_size = 16,
+		click = function(this)
+			if UIExt.refresh(CurrentScene.layers.pe2d, -1) == 0 then return end
+			CurrentScene.layers.current_id = 43
+			CurrentScene.layers.text.text = '反射效果'
+			CurrentScene.layers.text:update()
+			CurrentScene.layers.wm.show_self = 0
+			CurrentScene.layers.wm:update()
+			UIExt.set_timer(43, 100)
 		end
 	}):attach(slider)
 

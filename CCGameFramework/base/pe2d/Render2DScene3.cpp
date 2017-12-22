@@ -9,6 +9,8 @@
 #define TRACE_N 64
 #define TRACE_NORMAL_MIN 1
 #define TRACE_NORMAL_SCALE 0.02f
+#define MAX_DEPTH 5
+#define BIAS 1e-4f
 
 extern float PI;
 extern float PI2;
@@ -17,21 +19,31 @@ extern DrawSceneBag bag;
 
 static std::shared_ptr<Geo2DObject> root;
 
-static color trace2(float ox, float oy, float dx, float dy) {
-    const auto r = root->sample(vector2(ox, oy), vector2(dx, dy));
+static color trace3(vector2 o, vector2 d, int depth = MAX_DEPTH) {
+    const auto r = root->sample(o, d);
     if (r.body)
     {
-        return r.body->L;
+        auto sum = r.body->L;
+        const auto R = r.body->R;
+        if (depth < MAX_DEPTH && r.body->R.Valid()) {
+            const auto I = d;
+            const auto normal = r.inside ? -r.max_pt.normal : r.min_pt.normal;
+            const auto pos = r.inside ? r.max_pt.position : r.min_pt.position;
+            const auto idotn2 = DotProduct(I, normal) * 2.0f;
+            const auto reflect = I - normal * idotn2;
+            sum.Add(R * trace3(pos + BIAS * normal, reflect, depth + 1));
+        }
+        return sum;
     }
     static color black;
     return black;
 }
 
-static color sample2(float x, float y) {
+static color sample3(float x, float y) {
     color sum;
     for (auto i = 0; i < N; i++) {
         const auto a = PI2 * (i + float(rand()) / RAND_MAX) / N;
-        const auto c = trace2(x, y, cosf(a), sinf(a));
+        const auto c = trace3(vector2(x, y), vector2(cosf(a), sinf(a)));
         sum.Add(c);
     }
     return sum * (1.0f / N);
@@ -68,7 +80,7 @@ static int clamp(int value, int lower, int upper)
     return max(min(value, upper), lower);
 }
 
-static void DrawScene2(int part)
+static void DrawScene3(int part)
 {
     auto buffer = bag.g_buf;
     auto width = bag.g_width;
@@ -80,7 +92,7 @@ static void DrawScene2(int part)
         {
             for (auto x = 0; x < width; x++)
             {
-                const auto color = sample2(float(x) / m, float(y) / m);
+                const auto color = sample3(float(x) / m, float(y) / m);
                 buffer[0] = BYTE(fminf(color.b, 1.0f) * 255.0f);
                 buffer[1] = BYTE(fminf(color.g, 1.0f) * 255.0f);
                 buffer[2] = BYTE(fminf(color.r, 1.0f) * 255.0f);
@@ -135,9 +147,9 @@ static void DrawScene2(int part)
     bag.mtx.unlock();
 }
 
-void PhysicsEngine::Render2DScene2(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
+void PhysicsEngine::Render2DScene3(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
 {
-    scene = DrawScene2;
+    scene = DrawScene3;
 
     // --------------------------------------
     // 场景设置
@@ -152,7 +164,7 @@ void PhysicsEngine::Render2DScene2(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
                     Geo2DSub(
                         Geo2DNewCircle(0.5f, 0.5f, 0.4f, color(1.0f, 1.0f, 2.0f)),
                         Geo2DNewCircle(0.9f, 0.5f, 0.4f, color(1.0f, 1.0f, 2.0f)))),
-                Geo2DNewBox(1.0f, 0.5f, 0.1f, 0.1f, PI*0.25f, color(1.0f, 2.0f, 1.0f)));
+                Geo2DNewBox(1.0f, 0.5f, 0.1f, 0.1f, PI*0.25f, color(0.0f, 0.0f, 0.0f), color(1.0f, 1.0f, 1.0f)));
     }
 
     // --------------------------------------

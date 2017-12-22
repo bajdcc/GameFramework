@@ -86,11 +86,11 @@ public:
         t_capsule,
     };
 
-    Geo2DShape(ShapeType shape, color L);
+    Geo2DShape(ShapeType shape, color L, color R);
     ~Geo2DShape();
 
     ShapeType shape{ t_none };
-    color L;
+    color L, R;
 
     virtual vector2 get_center() const = 0;
 };
@@ -99,7 +99,7 @@ public:
 class Geo2DCircle : public Geo2DShape
 {
 public:
-    Geo2DCircle(float cx, float cy, float r, color L);
+    Geo2DCircle(float cx, float cy, float r, color L, color R);
     ~Geo2DCircle();
 
     Geo2DResult sample(vector2 ori, vector2 dir) const override;
@@ -114,7 +114,7 @@ public:
 class Geo2DBox : public Geo2DShape
 {
 public:
-    Geo2DBox(float cx, float cy, float sx, float sy, float theta, color L);
+    Geo2DBox(float cx, float cy, float sx, float sy, float theta, color L, color R);
     ~Geo2DBox();
 
     Geo2DResult sample(vector2 ori, vector2 dir) const override;
@@ -143,8 +143,8 @@ public:
     static Geo2DObjPtr or(Geo2DObjPtr s1, Geo2DObjPtr s2);
     static Geo2DObjPtr sub(Geo2DObjPtr s1, Geo2DObjPtr s2);
 
-    static Geo2DObjPtr new_circle(float cx, float cy, float r, color L);
-    static Geo2DObjPtr new_box(float cx, float cy, float sx, float sy, float theta, color L);
+    static Geo2DObjPtr new_circle(float cx, float cy, float r, color L, color R = color());
+    static Geo2DObjPtr new_box(float cx, float cy, float sx, float sy, float theta, color L, color R = color());
 };
 
 #endif // GEOMETRIES2D_H

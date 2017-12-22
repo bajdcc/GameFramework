@@ -267,7 +267,7 @@ Geo2DResult Geo2DOper::sample(vector2 ori, vector2 dst) const
     return Geo2DResult();
 }
 
-Geo2DShape::Geo2DShape(ShapeType shape, color L) : shape(shape), L(L)
+Geo2DShape::Geo2DShape(ShapeType shape, color L, color R) : shape(shape), L(L), R(R)
 {
 }
 
@@ -275,8 +275,8 @@ Geo2DShape::~Geo2DShape()
 {
 }
 
-Geo2DCircle::Geo2DCircle(float cx, float cy, float r, color L)
-    : Geo2DShape(t_circle, L), center(cx, cy), r(r), rsq(r*r)
+Geo2DCircle::Geo2DCircle(float cx, float cy, float r, color L, color R)
+    : Geo2DShape(t_circle, L, R), center(cx, cy), r(r), rsq(r*r)
 {
 }
 
@@ -332,8 +332,8 @@ vector2 Geo2DCircle::get_center() const
     return center;
 }
 
-Geo2DBox::Geo2DBox(float cx, float cy, float sx, float sy, float theta, color L)
-    : Geo2DShape(t_circle, L), center(cx, cy), s(sx, sy), theta(theta), costheta(cosf(theta)), sintheta(sinf(theta))
+Geo2DBox::Geo2DBox(float cx, float cy, float sx, float sy, float theta, color L, color R)
+    : Geo2DShape(t_circle, L, R), center(cx, cy), s(sx, sy), theta(theta), costheta(cosf(theta)), sintheta(sinf(theta))
 {
 }
 
@@ -439,12 +439,12 @@ Geo2DFactory::Geo2DObjPtr Geo2DFactory::sub(Geo2DObjPtr s1, Geo2DObjPtr s2)
     return std::make_shared<Geo2DOper>(Geo2DOper::t_subtract, s1, s2);
 }
 
-Geo2DFactory::Geo2DObjPtr Geo2DFactory::new_circle(float cx, float cy, float r, color L)
+Geo2DFactory::Geo2DObjPtr Geo2DFactory::new_circle(float cx, float cy, float r, color L, color R)
 {
-    return std::make_shared<Geo2DCircle>(cx, cy, r, L);
+    return std::make_shared<Geo2DCircle>(cx, cy, r, L, R);
 }
 
-Geo2DFactory::Geo2DObjPtr Geo2DFactory::new_box(float cx, float cy, float sx, float sy, float theta, color L)
+Geo2DFactory::Geo2DObjPtr Geo2DFactory::new_box(float cx, float cy, float sx, float sy, float theta, color L, color R)
 {
-    return std::make_shared<Geo2DBox>(cx, cy, sx, sy, theta, L);
+    return std::make_shared<Geo2DBox>(cx, cy, sx, sy, theta, L, R);
 }
