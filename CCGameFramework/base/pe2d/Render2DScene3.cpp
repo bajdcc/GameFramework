@@ -19,7 +19,7 @@ extern DrawSceneBag bag;
 
 static std::shared_ptr<Geo2DObject> root;
 
-static color trace3(vector2 o, vector2 d, int depth = MAX_DEPTH) {
+static color trace3(vector2 o, vector2 d, int depth = 0) {
     const auto r = root->sample(o, d);
     if (r.body)
     {
@@ -164,7 +164,7 @@ void PhysicsEngine::Render2DScene3(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
                     Geo2DSub(
                         Geo2DNewCircle(0.5f, 0.5f, 0.4f, color(1.0f, 1.0f, 2.0f)),
                         Geo2DNewCircle(0.9f, 0.5f, 0.4f, color(1.0f, 1.0f, 2.0f)))),
-                Geo2DNewBox(1.0f, 0.5f, 0.1f, 0.1f, PI*0.25f, color(0.0f, 0.0f, 0.0f), color(1.0f, 1.0f, 1.0f)));
+                Geo2DNewBox(1.0f, 0.5f, 0.1f, 0.1f, 0.0f, color(0.2f, 0.2f, 0.2f), color(1.0f, 1.0f, 1.0f)));
     }
 
     // --------------------------------------
