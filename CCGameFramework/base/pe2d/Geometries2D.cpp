@@ -267,7 +267,7 @@ Geo2DResult Geo2DOper::sample(vector2 ori, vector2 dst) const
     return Geo2DResult();
 }
 
-Geo2DShape::Geo2DShape(ShapeType shape, color L, color R) : shape(shape), L(L), R(R)
+Geo2DShape::Geo2DShape(ShapeType shape, color L, color R, float eta, color S) : shape(shape), L(L), R(R), eta(eta), S(S)
 {
 }
 
@@ -275,8 +275,8 @@ Geo2DShape::~Geo2DShape()
 {
 }
 
-Geo2DCircle::Geo2DCircle(float cx, float cy, float r, color L, color R)
-    : Geo2DShape(t_circle, L, R), center(cx, cy), r(r), rsq(r*r)
+Geo2DCircle::Geo2DCircle(float cx, float cy, float r, color L, color R, float eta, color S)
+    : Geo2DShape(t_circle, L, R, eta, S), center(cx, cy), r(r), rsq(r*r)
 {
 }
 
@@ -332,8 +332,8 @@ vector2 Geo2DCircle::get_center() const
     return center;
 }
 
-Geo2DBox::Geo2DBox(float cx, float cy, float sx, float sy, float theta, color L, color R)
-    : Geo2DShape(t_circle, L, R), center(cx, cy), s(sx, sy), theta(theta), costheta(cosf(theta)), sintheta(sinf(theta))
+Geo2DBox::Geo2DBox(float cx, float cy, float sx, float sy, float theta, color L, color R, float eta, color S)
+    : Geo2DShape(t_circle, L, R, eta, S), center(cx, cy), s(sx, sy), theta(theta), costheta(cosf(theta)), sintheta(sinf(theta))
 {
 }
 
@@ -392,11 +392,11 @@ Geo2DResult Geo2DBox::sample(vector2 ori, vector2 dir) const
         case 0: // 双反，无交点，在外
             break;
         case 1: // t[1]，有交点，在内
-            return Geo2DResult(this, false,
+            return Geo2DResult(this, true,
                 Geo2DPoint(t[0], p[0], Normalize(pts[m[ids[0]][0]] + pts[m[ids[0]][1]] - center - center)),
                 Geo2DPoint(t[1], p[1], Normalize(pts[m[ids[1]][0]] + pts[m[ids[1]][1]] - center - center)));
         case 2: // t[0]，有交点，在内
-            return Geo2DResult(this, false,
+            return Geo2DResult(this, true,
                 Geo2DPoint(t[1], p[1], Normalize(pts[m[ids[1]][0]] + pts[m[ids[1]][1]] - center - center)),
                 Geo2DPoint(t[0], p[0], Normalize(pts[m[ids[0]][0]] + pts[m[ids[0]][1]] - center - center)));
         case 3: // 双正，有交点，在外
@@ -439,12 +439,12 @@ Geo2DFactory::Geo2DObjPtr Geo2DFactory::sub(Geo2DObjPtr s1, Geo2DObjPtr s2)
     return std::make_shared<Geo2DOper>(Geo2DOper::t_subtract, s1, s2);
 }
 
-Geo2DFactory::Geo2DObjPtr Geo2DFactory::new_circle(float cx, float cy, float r, color L, color R)
+Geo2DFactory::Geo2DObjPtr Geo2DFactory::new_circle(float cx, float cy, float r, color L, color R, float eta, color S)
 {
-    return std::make_shared<Geo2DCircle>(cx, cy, r, L, R);
+    return std::make_shared<Geo2DCircle>(cx, cy, r, L, R, eta, S);
 }
 
-Geo2DFactory::Geo2DObjPtr Geo2DFactory::new_box(float cx, float cy, float sx, float sy, float theta, color L, color R)
+Geo2DFactory::Geo2DObjPtr Geo2DFactory::new_box(float cx, float cy, float sx, float sy, float theta, color L, color R, float eta, color S)
 {
-    return std::make_shared<Geo2DBox>(cx, cy, sx, sy, theta, L, R);
+    return std::make_shared<Geo2DBox>(cx, cy, sx, sy, theta, L, R, eta, S);
 }

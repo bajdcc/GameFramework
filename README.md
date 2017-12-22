@@ -99,6 +99,16 @@ TODO：
 
 ![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/gui_main.png)
 
+**画光系列！！！（算法优化）**
+
+![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/colors_1.png)
+
+![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/colors_2.png)
+
+![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/colors_3.png)
+
+![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/colors_4.png)
+
 **光线追踪入门**
 
 **1. 渐变**
@@ -188,14 +198,6 @@ TODO：
 ![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/color_6.png)
 
 ![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/color_6a.png)
-
-**画光系列（算法优化）**
-
-![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/colors_1.png)
-
-![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/colors_2.png)
-
-![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/colors_3.png)
 
 **画光系列（文字）**
 
