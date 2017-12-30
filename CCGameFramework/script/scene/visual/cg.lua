@@ -245,6 +245,21 @@ function M:init_menu(info)
 			UIExt.set_timer(44, 100)
 		end
 	}):attach(slider)
+	Button:new({
+		text = '色散效果',
+		font_family = '楷体',
+		track_display = 0,
+		font_size = 16,
+		click = function(this)
+			if UIExt.refresh(CurrentScene.layers.pe2d, -1) == 0 then return end
+			CurrentScene.layers.current_id = 45
+			CurrentScene.layers.text.text = '色散效果'
+			CurrentScene.layers.text:update()
+			CurrentScene.layers.wm.show_self = 0
+			CurrentScene.layers.wm:update()
+			UIExt.set_timer(45, 100)
+		end
+	}):attach(slider)
 
 end
 

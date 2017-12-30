@@ -8,7 +8,7 @@ class Geo2DShape;
 // 点信息
 struct Geo2DPoint
 {
-    Geo2DPoint();
+    Geo2DPoint() = default;
     Geo2DPoint(float distance, const vector2& position, const vector2& normal);
 
     const Geo2DPoint& operator = (const Geo2DPoint& r);
@@ -21,7 +21,7 @@ struct Geo2DPoint
 // 相交测试
 struct Geo2DResult
 {
-    Geo2DResult();
+    Geo2DResult() = default;
     Geo2DResult(const Geo2DShape* body, bool inside, Geo2DPoint min_pt, Geo2DPoint max_pt);
 
     Geo2DResult(const Geo2DResult& r);
@@ -36,8 +36,8 @@ struct Geo2DResult
 class Geo2DObject
 {
 public:
-    Geo2DObject();
-    virtual ~Geo2DObject();
+    Geo2DObject() = default;
+    virtual ~Geo2DObject() = default;
 
     virtual Geo2DResult sample(vector2 ori, vector2 dst) const = 0;
 };
@@ -56,7 +56,7 @@ public:
     };
 
     Geo2DOper(OpType op, std::shared_ptr<Geo2DObject> o1, std::shared_ptr<Geo2DObject> o2);
-    ~Geo2DOper();
+    ~Geo2DOper() = default;
 
     /**
      * \brief 采样求交点
@@ -87,11 +87,13 @@ public:
     };
 
     Geo2DShape(ShapeType shape, color L, color R, float eta, color S);
-    ~Geo2DShape();
+    ~Geo2DShape() = default;
 
     ShapeType shape{ t_none };
     color L, R, S;
     float eta;
+    bool angle{ false }; // 角度限制
+    vector2 A1, A2;
 
     virtual vector2 get_center() const = 0;
 };
@@ -101,7 +103,7 @@ class Geo2DCircle : public Geo2DShape
 {
 public:
     Geo2DCircle(float cx, float cy, float r, color L, color R, float eta, color S);
-    ~Geo2DCircle();
+    ~Geo2DCircle() = default;
 
     Geo2DResult sample(vector2 ori, vector2 dir) const override;
 
@@ -116,7 +118,7 @@ class Geo2DBox : public Geo2DShape
 {
 public:
     Geo2DBox(float cx, float cy, float sx, float sy, float theta, color L, color R, float eta, color S);
-    ~Geo2DBox();
+    ~Geo2DBox() =default;
 
     Geo2DResult sample(vector2 ori, vector2 dir) const override;
 
@@ -127,25 +129,47 @@ public:
     float theta, costheta, sintheta;
 };
 
+// 三角形
+class Geo2DTriangle : public Geo2DShape
+{
+public:
+    Geo2DTriangle(vector2 p1, vector2 p2, vector2 p3, color L, color R, float eta, color S);
+    ~Geo2DTriangle() = default;
+
+    Geo2DResult sample(vector2 ori, vector2 dir) const override;
+
+    vector2 get_center() const override;
+
+    vector2 center, p1, p2, p3;
+    vector2 n[3];
+};
+
+#define Geo2DAngle Geo2DFactory::angle
+
 #define Geo2DSub Geo2DFactory::sub
 #define Geo2DOr Geo2DFactory::or
 #define Geo2DAnd Geo2DFactory::and
 
 #define Geo2DNewCircle Geo2DFactory::new_circle
 #define Geo2DNewBox Geo2DFactory::new_box
+#define Geo2DNewTriangle Geo2DFactory::new_triangle
 
 
 class Geo2DFactory
 {
 public:
     using Geo2DObjPtr = std::shared_ptr<Geo2DObject>;
+    using Geo2DShapePtr = std::shared_ptr<Geo2DShape>;
+
+    static Geo2DObjPtr angle(Geo2DShapePtr s, float a1, float a2);
 
     static Geo2DObjPtr and(Geo2DObjPtr s1, Geo2DObjPtr s2);
     static Geo2DObjPtr or(Geo2DObjPtr s1, Geo2DObjPtr s2);
     static Geo2DObjPtr sub(Geo2DObjPtr s1, Geo2DObjPtr s2);
 
-    static Geo2DObjPtr new_circle(float cx, float cy, float r, color L, color R = color(), float eta = 1.0f, color S = color());
-    static Geo2DObjPtr new_box(float cx, float cy, float sx, float sy, float theta, color L, color R = color(), float eta = 1.0f, color S = color());
+    static Geo2DShapePtr new_circle(float cx, float cy, float r, color L, color R = color(), float eta = 1.0f, color S = color());
+    static Geo2DShapePtr new_box(float cx, float cy, float sx, float sy, float theta, color L, color R = color(), float eta = 1.0f, color S = color());
+    static Geo2DShapePtr new_triangle(vector2 p1, vector2 p2, vector2 p3, color L, color R = color(), float eta = 1.0f, color S = color());
 };
 
 #endif // GEOMETRIES2D_H

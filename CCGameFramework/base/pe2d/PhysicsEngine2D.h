@@ -55,6 +55,7 @@ private:
     void Render2DScene2(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
     void Render2DScene3(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
     void Render2DScene4(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
+    void Render2DScene5(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
 
 private:
     static void RenderSimpleIntern(BYTE* buffer, cint width, cint height);

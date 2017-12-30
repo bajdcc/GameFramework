@@ -3,10 +3,6 @@
 
 #define EPSILON 1.0e-6f
 
-Geo2DPoint::Geo2DPoint()
-{
-}
-
 Geo2DPoint::Geo2DPoint(float distance, const vector2& position, const vector2& normal)
     : distance(distance), position(position), normal(normal)
 {
@@ -18,10 +14,6 @@ const Geo2DPoint& Geo2DPoint::operator=(const Geo2DPoint& r)
     position = r.position;
     normal = r.normal;
     return *this;
-}
-
-Geo2DResult::Geo2DResult()
-{
 }
 
 Geo2DResult::Geo2DResult(const Geo2DShape* body, bool inside, Geo2DPoint min_pt, Geo2DPoint max_pt)
@@ -43,19 +35,7 @@ const Geo2DResult& Geo2DResult::operator=(const Geo2DResult& r)
     return *this;
 }
 
-Geo2DObject::Geo2DObject()
-{
-}
-
-Geo2DObject::~Geo2DObject()
-{
-}
-
 Geo2DOper::Geo2DOper(OpType op, std::shared_ptr<Geo2DObject> o1, std::shared_ptr<Geo2DObject> o2) : op(op), obj1(o1), obj2(o2)
-{
-}
-
-Geo2DOper::~Geo2DOper()
 {
 }
 
@@ -271,16 +251,8 @@ Geo2DShape::Geo2DShape(ShapeType shape, color L, color R, float eta, color S) : 
 {
 }
 
-Geo2DShape::~Geo2DShape()
-{
-}
-
 Geo2DCircle::Geo2DCircle(float cx, float cy, float r, color L, color R, float eta, color S)
     : Geo2DShape(t_circle, L, R, eta, S), center(cx, cy), r(r), rsq(r*r)
-{
-}
-
-Geo2DCircle::~Geo2DCircle()
 {
 }
 
@@ -318,6 +290,10 @@ Geo2DResult Geo2DCircle::sample(vector2 ori, vector2 dir) const
             auto position2 = ori + dir * distance2;
             auto normal = Normalize(position - center); // 法向量 = 光线终点(球面交点) - 球心坐标
             auto normal2 = Normalize(position2 - center);
+            if (a0 > 0 && angle && !(A1.x * dir.y < A1.y * dir.x && A2.x * dir.y > A2.y * dir.x))
+            {
+                return Geo2DResult();
+            }
             return Geo2DResult((a0 <= 0 || distance >= 0) ? this : nullptr, a0 <= 0,
                 Geo2DPoint(distance, position, normal),
                 Geo2DPoint(distance2, position2, normal2));
@@ -334,10 +310,6 @@ vector2 Geo2DCircle::get_center() const
 
 Geo2DBox::Geo2DBox(float cx, float cy, float sx, float sy, float theta, color L, color R, float eta, color S)
     : Geo2DShape(t_circle, L, R, eta, S), center(cx, cy), s(sx, sy), theta(theta), costheta(cosf(theta)), sintheta(sinf(theta))
-{
-}
-
-Geo2DBox::~Geo2DBox()
 {
 }
 
@@ -424,12 +396,96 @@ vector2 Geo2DBox::get_center() const
     return center;
 }
 
-Geo2DFactory::Geo2DObjPtr Geo2DFactory::and (Geo2DObjPtr s1, Geo2DObjPtr s2)
+Geo2DTriangle::Geo2DTriangle(vector2 p1, vector2 p2, vector2 p3, color L, color R, float eta, color S)
+    : Geo2DShape(t_triangle, L, R, eta, S), center((p1 + p2 + p3) / 3.0f), p1(p1), p2(p2), p3(p3)
+{
+    // 假定三顶点是顺时针方向
+    const auto p12 = p2 - p1;
+    const auto p13 = p3 - p1;
+    if (p12.x * p13.y - p12.y * p13.x < 0) // 确保点1、2、3是顺时针
+    {
+        const auto tmp = p2;
+        p2 = p3;
+        p3 = tmp;
+    }
+    n[0] = p2 - p1;
+    n[0] = Normalize(vector2(n[0].y, -n[0].x));
+    n[1] = p3 - p2;
+    n[1] = Normalize(vector2(n[1].y, -n[1].x));
+    n[2] = p1 - p3;
+    n[2] = Normalize(vector2(n[2].y, -n[2].x));
+}
+
+Geo2DResult Geo2DTriangle::sample(vector2 ori, vector2 dir) const
+{
+    const vector2 pts[3] = { p1,p2,p3 };
+
+    static int m[3][2] = { { 0,1 },{ 1,2 },{ 2,0 } };
+    float t[2];
+    vector2 p[2];
+    int ids[2];
+    int cnt = 0;
+    for (int i = 0; i < 3 && cnt < 2; i++)
+    {
+        if (IntersectWithLineAB(ori, dir, pts[m[i][0]], pts[m[i][1]], t[cnt], p[cnt]))
+        {
+            ids[cnt++] = i;
+        }
+    }
+    if (cnt == 2)
+    {
+        const auto td = ((t[0] >= 0 ? 1 : 0) << 1) | (t[1] >= 0 ? 1 : 0);
+        switch (td)
+        {
+        case 0: // 双反，无交点，在外
+            break;
+        case 1: // t[1]，有交点，在内
+            return Geo2DResult(this, true,
+                Geo2DPoint(t[0], p[0], n[ids[0]]),
+                Geo2DPoint(t[1], p[1], n[ids[1]]));
+        case 2: // t[0]，有交点，在内
+            return Geo2DResult(this, true,
+                Geo2DPoint(t[1], p[1], n[ids[1]]),
+                Geo2DPoint(t[0], p[0], n[ids[0]]));
+        case 3: // 双正，有交点，在外
+            if (t[0] > t[1])
+            {
+                return Geo2DResult(this, false,
+                    Geo2DPoint(t[1], p[1], n[ids[1]]),
+                    Geo2DPoint(t[0], p[0], n[ids[0]]));
+            }
+            else
+            {
+                return Geo2DResult(this, false,
+                    Geo2DPoint(t[0], p[0], n[ids[0]]),
+                    Geo2DPoint(t[1], p[1], n[ids[1]]));
+            }
+        default:
+            break;
+        }
+    }
+    return Geo2DResult();
+}
+
+vector2 Geo2DTriangle::get_center() const
+{
+    return center;
+}
+
+Geo2DFactory::Geo2DObjPtr Geo2DFactory::angle(Geo2DShapePtr s, float a1, float a2)
+{
+    s->angle = true;
+    s->A1 = vector2(-cosf(a1), sinf(a1));
+    s->A2 = vector2(-cosf(a2), sinf(a2));
+    return s;
+}
+
+Geo2DFactory::Geo2DObjPtr Geo2DFactory::and(Geo2DObjPtr s1, Geo2DObjPtr s2)
 {
     return std::make_shared<Geo2DOper>(Geo2DOper::t_intersect, s1, s2);
 }
 
-Geo2DFactory::Geo2DObjPtr Geo2DFactory::or (Geo2DObjPtr s1, Geo2DObjPtr s2)
+Geo2DFactory::Geo2DObjPtr Geo2DFactory::or(Geo2DObjPtr s1, Geo2DObjPtr s2)
 {
     return std::make_shared<Geo2DOper>(Geo2DOper::t_union, s1, s2);
 }
@@ -439,12 +495,17 @@ Geo2DFactory::Geo2DObjPtr Geo2DFactory::sub(Geo2DObjPtr s1, Geo2DObjPtr s2)
     return std::make_shared<Geo2DOper>(Geo2DOper::t_subtract, s1, s2);
 }
 
-Geo2DFactory::Geo2DObjPtr Geo2DFactory::new_circle(float cx, float cy, float r, color L, color R, float eta, color S)
+Geo2DFactory::Geo2DShapePtr Geo2DFactory::new_circle(float cx, float cy, float r, color L, color R, float eta, color S)
 {
     return std::make_shared<Geo2DCircle>(cx, cy, r, L, R, eta, S);
 }
 
-Geo2DFactory::Geo2DObjPtr Geo2DFactory::new_box(float cx, float cy, float sx, float sy, float theta, color L, color R, float eta, color S)
+Geo2DFactory::Geo2DShapePtr Geo2DFactory::new_box(float cx, float cy, float sx, float sy, float theta, color L, color R, float eta, color S)
 {
     return std::make_shared<Geo2DBox>(cx, cy, sx, sy, theta, L, R, eta, S);
+}
+
+Geo2DFactory::Geo2DShapePtr Geo2DFactory::new_triangle(vector2 p1, vector2 p2, vector2 p3, color L, color R, float eta, color S)
+{
+    return std::make_shared<Geo2DTriangle>(p1, p2, p3, L, R, eta, S);
 }
