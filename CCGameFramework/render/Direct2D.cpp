@@ -21,6 +21,7 @@ static void InitRenderer()
     Base64ImageElementRenderer::Register();
     WireworldAutomatonImageElementRenderer::Register();
     PhysicsEngine2DElementRenderer::Register();
+    X86WindowElementRenderer::Register();
     EditElementRenderer::Register();
 }
 

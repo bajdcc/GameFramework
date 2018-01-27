@@ -106,7 +106,7 @@ function M:init_menu(info)
 		pre_resize = function(this, left, top, right, bottom)
 			local w = left + (right - left) / 2
 			local h = top + (bottom - top) / 2
-			return w - 100, h, w + 100, h + 250
+			return w - 100, h, w + 100, h + 300
 		end
 	})
 	self.layers.menu = self:add(menu)
@@ -123,6 +123,13 @@ function M:init_menu(info)
 		text = '¶¯»­',
 		click = function()
 			FlipScene('Time')
+		end
+	}):attach(menu)
+
+	Button:new({
+		text = 'Ä£Äâ',
+		click = function()
+			FlipScene('X86')
 		end
 	}):attach(menu)
 

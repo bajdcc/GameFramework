@@ -549,6 +549,9 @@
     <ClCompile Include="base\pe2d\Render2DScene5.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="render\Direct2DRenderX86.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="script\lib\core\scene.lua">
@@ -653,6 +656,12 @@
       <Filter>脚本</Filter>
     </None>
     <None Include="script\scene\visual\2dpe.lua">
+      <Filter>脚本</Filter>
+    </None>
+    <None Include="script\scene\simu\x86.lua">
+      <Filter>脚本</Filter>
+    </None>
+    <None Include="script\lib\ui\x86.lua">
       <Filter>脚本</Filter>
     </None>
   </ItemGroup>

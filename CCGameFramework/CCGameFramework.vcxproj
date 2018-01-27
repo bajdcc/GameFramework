@@ -422,6 +422,7 @@ xcopy /r /y /e "$(ProjectDir)dll" "$(TargetDir)"</Command>
     <ClCompile Include="render\Direct2DRenderImage.cpp" />
     <ClCompile Include="render\Direct2DRenderTarget.cpp" />
     <ClCompile Include="lua_ext\UI.cpp" />
+    <ClCompile Include="render\Direct2DRenderX86.cpp" />
     <ClCompile Include="ui\window\WindowLua.cpp" />
     <ClCompile Include="WinMain.cpp" />
     <ClCompile Include="ui\gdi\Color.cpp" />
@@ -537,6 +538,8 @@ xcopy /r /y /e "$(ProjectDir)dll" "$(TargetDir)"</Command>
   </ItemGroup>
   <ItemGroup>
     <None Include="script\lib\ui\2dpe.lua" />
+    <None Include="script\lib\ui\x86.lua" />
+    <None Include="script\scene\simu\x86.lua" />
     <None Include="script\scene\visual\2dpe.lua" />
     <None Include="script\scene\visual\cg.lua" />
   </ItemGroup>

@@ -51,6 +51,8 @@ Window = {
 		-- VISUAL
 		Path = "script.scene.visual.path",
 		WireWorld = "script.scene.visual.wireworld",
+		-- X86
+		X86 = "script.scene.simu.x86",
 	}
 }
 

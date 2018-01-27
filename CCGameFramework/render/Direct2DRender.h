@@ -19,6 +19,7 @@ enum ElementId
     Base64Image = 1101,
     WireworldAutomaton = 1102,
     PhysicsEngine2D = 1103,
+    X86Window = 1104,
     Edit = 1200
 };
 
@@ -758,5 +759,47 @@ private:
 };
 
 #pragma endregion PhysicsEngine2D
+
+#pragma region X86
+
+class X86WindowElement : public GraphicsElement<X86WindowElement>
+{
+public:
+    X86WindowElement();
+    ~X86WindowElement();
+
+    static CString GetElementTypeName();
+
+    cint GetTypeId()override;
+
+    CStringA GetText()const;
+    void SetText(CStringA value);
+    FLOAT GetOpacity()const;
+    void SetOpacity(FLOAT value);
+
+    int Refresh(int arg);
+
+protected:
+    CStringA text;
+    FLOAT opacity;
+};
+
+class X86WindowElementRenderer : public GraphicsImageRenderer<X86WindowElement, X86WindowElementRenderer>
+{
+protected:
+    void CreateImage(std::shared_ptr<Direct2DRenderTarget> renderTarget)override;
+public:
+    void Render(CRect bounds)override;
+    ~X86WindowElementRenderer();
+    int Refresh(int arg);
+private:
+    CComPtr<IWICBitmap> wic;
+    BYTE* buffer{ nullptr };
+    std::vector<byte> data;
+    WICRect rect;
+    D2D1_RECT_U d2dRect;
+};
+
+#pragma endregion X86
 
 #endif

@@ -81,6 +81,9 @@ int ui_add_obj(lua_State *L)
     case PhysicsEngine2D:
         obj = PhysicsEngine2DElement::Create();
         break;
+    case X86Window:
+        obj = X86WindowElement::Create();
+        break;
     case Edit:
         obj = EditElement::Create();
         break;
@@ -259,6 +262,19 @@ int ui_update_obj(lua_State *L)
     {
         auto obj = std::dynamic_pointer_cast<PhysicsEngine2DElement>(o);
         {
+            lua_getfield(L, -1, "opacity");
+            auto opacity = (FLOAT)luaL_checknumber(L, -1); lua_pop(L, 1);
+            obj->SetOpacity(opacity);
+        }
+    }
+    break;
+    case X86Window:
+    {
+        auto obj = std::dynamic_pointer_cast<X86WindowElement>(o);
+        {
+            lua_getfield(L, -1, "text");
+            auto text = luaL_checkstring(L, -1); lua_pop(L, 1);
+            obj->SetText(text);
             lua_getfield(L, -1, "opacity");
             auto opacity = (FLOAT)luaL_checknumber(L, -1); lua_pop(L, 1);
             obj->SetOpacity(opacity);
