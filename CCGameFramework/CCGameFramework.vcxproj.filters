@@ -289,6 +289,117 @@
     <ClInclude Include="base\pe2d\math\vector2.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="base\bochs\bx_debug\debug.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\bochs\gui\siminterface.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\bochs\iodev\iodev.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\bochs\bochs.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\bochs\bxversion.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\bochs\config.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\bochs\extplugin.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\bochs\osdep.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\bochs\param_names.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\bochs\pc_system.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\bochs\plugin.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\bochs\gui\textconfig.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\bochs\cpu\cpu.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\bochs\gui\gui.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\bochs\memory\memory-bochs.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\bochs\instrument.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\bochs\cpudb.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\bochs\gui\paramtree.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\bochs\sim.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\bochs\cpu\decoder\decoder.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\bochs\cpu\i387.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\bochs\cpu\fpu\control_w.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\bochs\cpu\fpu\softfloat.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\bochs\cpu\fpu\status_w.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\bochs\cpu\fpu\tag_w.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\bochs\cpu\decoder\instr.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\bochs\cpu\crregs.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\bochs\cpu\descriptor.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\bochs\cpu\icache.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\bochs\cpu\lazy_flags.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\bochs\cpu\tlb.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\bochs\cpu\apic.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\bochs\cpu\xmm.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\bochs\cpu\decoder\ia_opcodes.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\bochs\cpu\cpuid.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\bochs\cpu\access.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\bochs\gui\win32dialog.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -550,6 +661,33 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="render\Direct2DRenderX86.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\bochs\config.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\bochs\crc.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\bochs\load32bitOShack.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\bochs\logio.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\bochs\main.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\bochs\osdep.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\bochs\pc_system.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\bochs\plugin.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\bochs\sim.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

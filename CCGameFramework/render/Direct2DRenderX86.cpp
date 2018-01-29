@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Direct2DRender.h"
+#include "bochs/sim.h"
 
 #pragma region X86
 
@@ -54,8 +55,9 @@ void X86WindowElementRenderer::CreateImage(std::shared_ptr<Direct2DRenderTarget>
         auto txt = e->GetText();
         if (!buffer)
         {
-            if (txt.IsEmpty())
-                return;
+            {
+                Sim();
+            }
             {
                 int _w, _h;
                 _w = 400, _h = 300;

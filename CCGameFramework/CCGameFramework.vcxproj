@@ -86,7 +86,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;BUILDING_LIBCURL;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;_DEBUG;BUILDING_LIBCURL;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)base</AdditionalIncludeDirectories>
     </ClCompile>
@@ -98,7 +98,8 @@
     <PostBuildEvent>
       <Command>md "$(TargetDir)script"
 xcopy /r /y /e "$(ProjectDir)script" "$(TargetDir)script"
-xcopy /r /y /e "$(ProjectDir)dll" "$(TargetDir)"</Command>
+xcopy /r /y /e "$(ProjectDir)dll" "$(TargetDir)"
+xcopy /r /y /e "$(ProjectDir)img" "$(TargetDir)img"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -127,7 +128,7 @@ xcopy /r /y /e "$(ProjectDir)dll" "$(TargetDir)"</Command>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;BUILDING_LIBCURL;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;NDEBUG;BUILDING_LIBCURL;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)base</AdditionalIncludeDirectories>
     </ClCompile>
@@ -141,7 +142,8 @@ xcopy /r /y /e "$(ProjectDir)dll" "$(TargetDir)"</Command>
     <PostBuildEvent>
       <Command>md "$(TargetDir)script"
 xcopy /r /y /e "$(ProjectDir)script" "$(TargetDir)script"
-xcopy /r /y /e "$(ProjectDir)dll" "$(TargetDir)"</Command>
+xcopy /r /y /e "$(ProjectDir)dll" "$(TargetDir)"
+xcopy /r /y /e "$(ProjectDir)img" "$(TargetDir)img"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -169,6 +171,40 @@ xcopy /r /y /e "$(ProjectDir)dll" "$(TargetDir)"</Command>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="base\base64\b64.h" />
+    <ClInclude Include="base\bochs\bochs.h" />
+    <ClInclude Include="base\bochs\bxversion.h" />
+    <ClInclude Include="base\bochs\config.h" />
+    <ClInclude Include="base\bochs\cpudb.h" />
+    <ClInclude Include="base\bochs\cpu\access.h" />
+    <ClInclude Include="base\bochs\cpu\apic.h" />
+    <ClInclude Include="base\bochs\cpu\cpu.h" />
+    <ClInclude Include="base\bochs\cpu\cpuid.h" />
+    <ClInclude Include="base\bochs\cpu\crregs.h" />
+    <ClInclude Include="base\bochs\cpu\decoder\decoder.h" />
+    <ClInclude Include="base\bochs\cpu\decoder\ia_opcodes.h" />
+    <ClInclude Include="base\bochs\cpu\decoder\instr.h" />
+    <ClInclude Include="base\bochs\cpu\descriptor.h" />
+    <ClInclude Include="base\bochs\cpu\fpu\control_w.h" />
+    <ClInclude Include="base\bochs\cpu\fpu\softfloat.h" />
+    <ClInclude Include="base\bochs\cpu\fpu\status_w.h" />
+    <ClInclude Include="base\bochs\cpu\fpu\tag_w.h" />
+    <ClInclude Include="base\bochs\cpu\i387.h" />
+    <ClInclude Include="base\bochs\cpu\icache.h" />
+    <ClInclude Include="base\bochs\cpu\lazy_flags.h" />
+    <ClInclude Include="base\bochs\cpu\tlb.h" />
+    <ClInclude Include="base\bochs\cpu\xmm.h" />
+    <ClInclude Include="base\bochs\extplugin.h" />
+    <ClInclude Include="base\bochs\gui\gui.h" />
+    <ClInclude Include="base\bochs\gui\paramtree.h" />
+    <ClInclude Include="base\bochs\gui\textconfig.h" />
+    <ClInclude Include="base\bochs\gui\win32dialog.h" />
+    <ClInclude Include="base\bochs\instrument.h" />
+    <ClInclude Include="base\bochs\memory\memory-bochs.h" />
+    <ClInclude Include="base\bochs\osdep.h" />
+    <ClInclude Include="base\bochs\param_names.h" />
+    <ClInclude Include="base\bochs\pc_system.h" />
+    <ClInclude Include="base\bochs\plugin.h" />
+    <ClInclude Include="base\bochs\sim.h" />
     <ClInclude Include="base\curl\curl.h" />
     <ClInclude Include="base\curl\curlbuild.h" />
     <ClInclude Include="base\curl\curlrules.h" />
@@ -219,6 +255,9 @@ xcopy /r /y /e "$(ProjectDir)dll" "$(TargetDir)"</Command>
     <ClInclude Include="base\pe2d\math\vector3.h" />
     <ClInclude Include="base\pe2d\PhysicsEngine2D.h" />
     <ClInclude Include="base\utils.h" />
+    <ClInclude Include="base\bochs\bx_debug\debug.h" />
+    <ClInclude Include="base\bochs\gui\siminterface.h" />
+    <ClInclude Include="base\bochs\iodev\iodev.h" />
     <ClInclude Include="lua\lapi.h" />
     <ClInclude Include="lua\lauxlib.h" />
     <ClInclude Include="lua\lcode.h" />
@@ -261,6 +300,42 @@ xcopy /r /y /e "$(ProjectDir)dll" "$(TargetDir)"</Command>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="base\base64\b64.cpp" />
+    <ClCompile Include="base\bochs\config.cc">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="base\bochs\crc.cc">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="base\bochs\load32bitOShack.cc">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="base\bochs\logio.cc">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="base\bochs\main.cc">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="base\bochs\osdep.cc">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="base\bochs\pc_system.cc">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="base\bochs\plugin.cc">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="base\bochs\sim.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="base\libqrencode\bitstream.c">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
