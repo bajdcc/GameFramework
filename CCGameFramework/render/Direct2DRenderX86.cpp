@@ -1,8 +1,14 @@
 #include "stdafx.h"
 #include "Direct2DRender.h"
 #include "bochs/sim.h"
+#include "bochs/bochs.h"
 
 #pragma region X86
+
+BYTE* X86WindowElementRenderer::g_buffer;
+CSize X86WindowElementRenderer::g_size;
+std::semaphore X86WindowElementRenderer::g_signal;
+BOOL X86WindowElementRenderer::g_error = FALSE;
 
 X86WindowElement::X86WindowElement()
 {
@@ -56,12 +62,8 @@ void X86WindowElementRenderer::CreateImage(std::shared_ptr<Direct2DRenderTarget>
         if (!buffer)
         {
             {
-                Sim();
-            }
-            {
                 int _w, _h;
-                _w = 400, _h = 300;
-                auto line = new char[_w + 1];
+                _w = 480, _h = 320;
                 wic = renderTarget->CreateBitmap(_w, _h);
                 data.resize(_w * _h);
                 rect.X = 0;
@@ -72,17 +74,14 @@ void X86WindowElementRenderer::CreateImage(std::shared_ptr<Direct2DRenderTarget>
                 HRESULT hr = wic->CopyPixels(&rect, rect.Width * 4, rect.Width * rect.Height * 4, buffer);
                 if (FAILED(hr))
                     ATLASSERT(!"CopyPixels failed");
-                BYTE* read = buffer;
-                for (auto i = 0, k = 0; i < _h; i++)
-                {
-                    for (auto j = 0; j < _w; j++)
-                    {
-                        ((DWORD*)read)[0] = 0xFFFFFFFF;
-                        read += 4;
-                    }
-                }
+                DWORD* read = (DWORD*)buffer;
+                for (DWORD *read = (DWORD*)buffer, *read_end = read + (_w * _h); read != read_end; read++)
+                    *read = 0xFF000000;
                 d2dRect = D2D1::RectU(0, 0, rect.Width, rect.Height);
-                delete[] line;
+
+                g_buffer = buffer;
+                g_size.cx = _w, g_size.cy = _h;
+                bochs_thread.reset(new std::thread(Sim));
             }
         }
         if (wic)
@@ -112,18 +111,65 @@ void X86WindowElementRenderer::Render(CRect bounds)
 
 X86WindowElementRenderer::~X86WindowElementRenderer()
 {
+    bx_pc_system.kill_bochs_request = 1;
+    g_error = TRUE;
+    g_signal.signal();
+    bochs_thread->join();
+    bochs_thread.reset();
     if (buffer) delete buffer;
+    g_buffer = nullptr;
+    g_size.cx = g_size.cy = 0;
+    g_error = FALSE;
 }
 
 int X86WindowElementRenderer::Refresh(int arg)
 {
     if (arg == 1) buffer = nullptr;
     if (arg != 0) return -1;
+    if (g_size.cx != rect.Width || g_size.cy != rect.Height)
+    {
+        if (buffer) delete buffer;
+        int _w, _h;
+        _w = g_size.cx, _h = g_size.cy;
+        wic = renderTarget.lock()->CreateBitmap(_w, _h);
+        data.resize(_w * _h);
+        rect.X = 0;
+        rect.Y = 0;
+        rect.Width = _w;
+        rect.Height = _h;
+        buffer = new BYTE[rect.Width * rect.Height * 4];
+        HRESULT hr = wic->CopyPixels(&rect, rect.Width * 4, rect.Width * rect.Height * 4, buffer);
+        if (FAILED(hr))
+            ATLASSERT(!"CopyPixels failed");
+        for (DWORD *read = (DWORD*)buffer, *read_end = read + (_w * _h); read != read_end; read++)
+            *read = 0xFF000000;
+        d2dRect = D2D1::RectU(0, 0, rect.Width, rect.Height);
+
+        g_buffer = buffer;
+        g_signal.signal();
+    }
     if (bitmap)
     {
         bitmap->CopyFromMemory(&d2dRect, buffer, rect.Width * 4);
     }
     return 0;
+}
+
+BYTE* X86WindowElementRenderer::GetBuffer()
+{
+    return g_buffer;
+}
+
+CSize X86WindowElementRenderer::GetSize()
+{
+    return g_size;
+}
+
+BOOL X86WindowElementRenderer::SetSize(CSize size)
+{
+    g_size = size;
+    g_signal.wait();
+    return g_error;
 }
 
 #pragma endregion X86

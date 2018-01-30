@@ -819,7 +819,7 @@ static builtin_plugin_t builtin_plugins[] = {
   BUILTIN_GUI_PLUGIN_ENTRY(vncsrv),
 #endif
 #if BX_WITH_WIN32
-  BUILTIN_GUI_PLUGIN_ENTRY(win32),
+  BUILTIN_GUI_PLUGIN_ENTRY(d2d),
 #endif
 #if BX_WITH_WX
   BUILTIN_GUI_PLUGIN_ENTRY(wx),

@@ -5,6 +5,7 @@
 #include "Direct2D.h"
 #include "Direct2DRenderTarget.h"
 #include <base/pe2d/PhysicsEngine2D.h>
+#include "utils.h"
 
 #pragma region Base
 
@@ -798,6 +799,17 @@ private:
     std::vector<byte> data;
     WICRect rect;
     D2D1_RECT_U d2dRect;
+    std::auto_ptr<std::thread> bochs_thread;
+
+public:
+    static BYTE* GetBuffer();
+    static CSize GetSize();
+    static BOOL SetSize(CSize size);
+private:
+    static BYTE* g_buffer;
+    static CSize g_size;
+    static std::semaphore g_signal;
+    static BOOL g_error;
 };
 
 #pragma endregion X86

@@ -76,9 +76,11 @@ void Sim()
     SAFE_GET_GENLOG();
     plugin_startup();
     bx_init_siminterface();
+    SIM->init_save_restore();
     bx_init_options();
     init_win32_config_interface();
-    PLUG_load_gui_plugin("win32");
+    PLUG_load_gui_plugin("d2d");
+    SIM->set_init_done(0);
     SIM->set_log_viewer(BX_TRUE);
     SIM->set_notify_callback(sim_notify_callback, NULL);
     SIM->get_param_string(BXPN_VGA_ROM_PATH)->set(VGA_PATH);
@@ -101,6 +103,7 @@ void Sim()
     bx_pc_system.Reset(BX_RESET_HARDWARE);
     bx_gui->init_signal_handlers();
     bx_pc_system.start_timers();
+    SIM->set_init_done(1);
     bx_gui->update_drive_status_buttons();
     bx_gui->statusbar_setitem(-1, 0);
     while (1) {
@@ -108,4 +111,5 @@ void Sim()
         if (bx_pc_system.kill_bochs_request)
             break;
     }
+    bx_atexit();
 }

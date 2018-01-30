@@ -349,10 +349,17 @@ int ui_refresh_obj(lua_State *L)
         }
         return 1;
     }
-    break;
     case PhysicsEngine2D:
     {
         auto obj = std::dynamic_pointer_cast<PhysicsEngine2DElement>(o);
+        {
+            lua_pushinteger(L, obj->Refresh(arg));
+        }
+        return 1;
+    }
+    case X86Window:
+    {
+        auto obj = std::dynamic_pointer_cast<X86WindowElement>(o);
         {
             lua_pushinteger(L, obj->Refresh(arg));
         }

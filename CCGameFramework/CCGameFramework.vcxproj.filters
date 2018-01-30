@@ -400,6 +400,9 @@
     <ClInclude Include="base\bochs\gui\win32dialog.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="base\bochs\gui\d2d.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -688,6 +691,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="base\bochs\sim.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\bochs\gui\d2d.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

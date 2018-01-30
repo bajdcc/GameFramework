@@ -194,6 +194,7 @@ xcopy /r /y /e "$(ProjectDir)dll" "$(TargetDir)"</Command>
     <ClInclude Include="base\bochs\cpu\tlb.h" />
     <ClInclude Include="base\bochs\cpu\xmm.h" />
     <ClInclude Include="base\bochs\extplugin.h" />
+    <ClInclude Include="base\bochs\gui\d2d.h" />
     <ClInclude Include="base\bochs\gui\gui.h" />
     <ClInclude Include="base\bochs\gui\paramtree.h" />
     <ClInclude Include="base\bochs\gui\textconfig.h" />
@@ -308,6 +309,7 @@ xcopy /r /y /e "$(ProjectDir)dll" "$(TargetDir)"</Command>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="base\bochs\gui\d2d.cpp" />
     <ClCompile Include="base\bochs\load32bitOShack.cc">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
