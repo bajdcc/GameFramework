@@ -100,9 +100,14 @@ void X86WindowElementRenderer::Render(CRect bounds)
     if (e->flags.self_visible && bitmap)
     {
         CComPtr<ID2D1RenderTarget> d2dRenderTarget = renderTarget.lock()->GetDirect2DRenderTarget();
+        CRect rt(bounds);
+        if (bounds.Width() > rect.Width && bounds.Height() > rect.Height)
+        {
+            rt.DeflateRect((bounds.Width() - rect.Width) / 2, (bounds.Height() - rect.Height) / 2);
+        }
         d2dRenderTarget->DrawBitmap(
             bitmap,
-            D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
+            D2D1::RectF((FLOAT)rt.left, (FLOAT)rt.top, (FLOAT)rt.right, (FLOAT)rt.bottom),
             e->GetOpacity(),
             D2D1_BITMAP_INTERPOLATION_MODE_LINEAR
         );

@@ -148,6 +148,14 @@ std::shared_ptr<Direct2DRenderTarget> Window::GetD2DRenderTarget()
     return d2dRenderTarget;
 }
 
+CSize Window::GetNonClientSize()
+{
+    CRect rtWindow, rtClient;
+    GetWindowRect(handle, &rtWindow);
+    GetClientRect(handle, &rtClient);
+    return rtWindow.Size() - rtClient.Size();
+}
+
 CRect Window::GetBounds()
 {
     CRect rect;
@@ -211,7 +219,7 @@ Window::WindowSizeState Window::GetSizeState()
 
 void Window::SetMinSize(CSize size)
 {
-    minSize = size;
+    minSize = size + GetNonClientSize();
 }
 
 void Window::Show()

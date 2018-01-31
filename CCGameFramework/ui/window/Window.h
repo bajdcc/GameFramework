@@ -124,6 +124,7 @@ public:
     bool HandleMessage(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT& result);
     HWND GetWindowHandle() const;
     std::shared_ptr<Direct2DRenderTarget> GetD2DRenderTarget();
+    CSize GetNonClientSize();
     CRect GetBounds();
     void SetBounds(const CRect& bounds);
     CSize GetClientSize();
