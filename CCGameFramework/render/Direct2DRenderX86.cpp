@@ -132,6 +132,12 @@ X86WindowElementRenderer::~X86WindowElementRenderer()
 int X86WindowElementRenderer::Refresh(int arg)
 {
     if (arg == 1) buffer = nullptr;
+    if (arg == 5)
+    {
+        // TODO: Some work
+        if (SIM->get_init_done())
+            bx_pc_system.Reset(BX_RESET_HARDWARE);
+    }
     if (arg != 0) return -1;
     if (g_size.cx != rect.Width || g_size.cy != rect.Height)
     {

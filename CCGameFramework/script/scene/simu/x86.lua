@@ -154,6 +154,7 @@ function M:init_menu(info)
 		track_display = 0,
 		font_size = 16,
 		click = function()
+			UIExt.refresh(CurrentScene.layers.x86, 5)
 		end
 	}):attach(slider)
 	Button:new({
