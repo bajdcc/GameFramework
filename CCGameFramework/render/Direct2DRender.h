@@ -808,7 +808,7 @@ public:
 private:
     static BYTE* g_buffer;
     static CSize g_size;
-    static std::semaphore g_signal;
+    static std::auto_ptr<std::semaphore> g_signal;
     static BOOL g_error;
 };
 

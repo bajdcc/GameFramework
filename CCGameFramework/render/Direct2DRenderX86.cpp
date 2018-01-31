@@ -7,7 +7,7 @@
 
 BYTE* X86WindowElementRenderer::g_buffer;
 CSize X86WindowElementRenderer::g_size;
-std::semaphore X86WindowElementRenderer::g_signal;
+std::auto_ptr<std::semaphore> X86WindowElementRenderer::g_signal;
 BOOL X86WindowElementRenderer::g_error = FALSE;
 
 X86WindowElement::X86WindowElement()
@@ -79,6 +79,7 @@ void X86WindowElementRenderer::CreateImage(std::shared_ptr<Direct2DRenderTarget>
                     *read = 0xFF000000;
                 d2dRect = D2D1::RectU(0, 0, rect.Width, rect.Height);
 
+                g_signal.reset(new std::semaphore);
                 g_buffer = buffer;
                 g_size.cx = _w, g_size.cy = _h;
                 bochs_thread.reset(new std::thread(Sim));
@@ -113,13 +114,14 @@ X86WindowElementRenderer::~X86WindowElementRenderer()
 {
     bx_pc_system.kill_bochs_request = 1;
     g_error = TRUE;
-    g_signal.signal();
+    g_signal->signal();
     bochs_thread->join();
     bochs_thread.reset();
     if (buffer) delete buffer;
     g_buffer = nullptr;
     g_size.cx = g_size.cy = 0;
     g_error = FALSE;
+    g_signal.reset();
 }
 
 int X86WindowElementRenderer::Refresh(int arg)
@@ -146,7 +148,7 @@ int X86WindowElementRenderer::Refresh(int arg)
         d2dRect = D2D1::RectU(0, 0, rect.Width, rect.Height);
 
         g_buffer = buffer;
-        g_signal.signal();
+        g_signal->signal();
     }
     if (bitmap)
     {
@@ -168,7 +170,7 @@ CSize X86WindowElementRenderer::GetSize()
 BOOL X86WindowElementRenderer::SetSize(CSize size)
 {
     g_size = size;
-    g_signal.wait();
+    g_signal->wait();
     return g_error;
 }
 
