@@ -87,6 +87,27 @@ end
 function M:reset(text)
 	self.text = text
 	self.layers.fg.text = text
+	if self.enable ~= 1 then
+		self.layers.bg.color = self.bgcolor
+		self.layers.fg.color = self.fgcolor_disable
+	end
+	self.layers.bg:update()
+	self.layers.fg:update()
+end
+
+function M:disabled()
+	self.enable = 2
+	self.layers.bg.color = self.bgcolor
+	self.layers.fg.color = self.fgcolor_disable
+	self.layers.bg:update()
+	self.layers.fg:update()
+end
+
+function M:enabled()
+	self.enable = 1
+	self.layers.bg.color = self.bgcolor
+	self.layers.fg.color = self.fgcolor
+	self.layers.bg:update()
 	self.layers.fg:update()
 end
 

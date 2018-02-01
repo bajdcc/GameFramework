@@ -122,6 +122,10 @@ function M:init_event()
 				this.layers.rtstatus.text = string.format("IPS: %d", span)
 			end
 			this.layers.rtstatus:update_and_paint()
+		elseif id == 12 then
+			this.layers.restart_btn:enabled()
+			UIExt.paint()
+			UIExt.kill_timer(12)
 		end
 	end
 	self.handler[self.win_event.keydown] = function(this, code, flags)
@@ -171,8 +175,14 @@ function M:init_menu(info)
 		font_size = 16,
 		click = function()
 			UIExt.refresh(CurrentScene.layers.x86, 5)
+			CurrentScene.layers.restart_btn:disabled()
+			UIExt.set_timer(12, 6000)
+			UIExt.paint()
 		end
 	}):attach(slider)
+	self.layers.restart_btn = slider.children[#slider.children]
+	self.layers.restart_btn:disabled()
+	UIExt.set_timer(12, 6000)
 	Button:new({
 		text = 'ÔÝÍ£/¼ÌÐø',
 		font_family = '¿¬Ìå',
@@ -190,6 +200,7 @@ function M:init_menu(info)
 		end
 	}):attach(slider)
 	self.layers.rtstatus = slider.children[#slider.children]
+	UIExt.paint()
 end
 
 return M
