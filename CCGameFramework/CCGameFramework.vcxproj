@@ -97,6 +97,7 @@
     </Link>
     <PostBuildEvent>
       <Command>md "$(TargetDir)script"
+md "$(TargetDir)img"
 xcopy /r /y /e "$(ProjectDir)script" "$(TargetDir)script"
 xcopy /r /y /e "$(ProjectDir)dll" "$(TargetDir)"
 xcopy /r /y /e "$(ProjectDir)img" "$(TargetDir)img"</Command>
@@ -141,6 +142,7 @@ xcopy /r /y /e "$(ProjectDir)dll" "$(TargetDir)"</Command>
     </Link>
     <PostBuildEvent>
       <Command>md "$(TargetDir)script"
+md "$(TargetDir)img"
 xcopy /r /y /e "$(ProjectDir)script" "$(TargetDir)script"
 xcopy /r /y /e "$(ProjectDir)dll" "$(TargetDir)"
 xcopy /r /y /e "$(ProjectDir)img" "$(TargetDir)img"</Command>

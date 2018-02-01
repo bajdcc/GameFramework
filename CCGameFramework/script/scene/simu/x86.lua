@@ -33,6 +33,8 @@ function M:init()
 	self.minh = 600
 	UIExt.set_minw(self.minw, self.minh)
 
+	UIExt.ui_set_value("X86-TICK", 0)
+	self.tick = 0
 	UIExt.trace('Scene [Simu-X86 Page] init')
 	-- INFO
 	local info = UIExt.info()
@@ -82,6 +84,7 @@ function M:init()
 	self:init_event()
 
 	UIExt.set_timer(8, 500)
+	UIExt.set_timer(10, 1000)
 
 	self.resize(self)
 	UIExt.paint()
@@ -106,6 +109,19 @@ function M:init_event()
 		elseif id == 5 and this.def.state then
 			UIExt.refresh(this.layers.x86, 0)
 			UIExt.paint()
+		elseif id == 10 and this.def.state then
+			UIExt.refresh(this.layers.x86, 10)
+			local tick = UIExt.ui_get_value("X86-TICK")
+			local span = tick - this.tick
+			this.tick = tick
+			if span > 1000000 then
+				this.layers.rtstatus.text = string.format("IPS: %.2fM", span / 1000000)
+			elseif span > 1000 then
+				this.layers.rtstatus.text = string.format("IPS: %.2fK", span / 1000)
+			else
+				this.layers.rtstatus.text = string.format("IPS: %d", span)
+			end
+			this.layers.rtstatus:update_and_paint()
 		end
 	end
 	self.handler[self.win_event.keydown] = function(this, code, flags)
