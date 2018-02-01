@@ -102,10 +102,8 @@ void Window::Center()
 {
     CSize screenSize(GetSystemMetrics(SM_CXFULLSCREEN), GetSystemMetrics(SM_CYFULLSCREEN));
     CRect windowBounds = GetBounds();
-    windowBounds = CRect(windowBounds.TopLeft(), windowBounds.Size().Max(minSize));
+    windowBounds = CRect(windowBounds.TopLeft(), windowBounds.Size().Max(minSize + GetNonClientSize()));
     CSize size = windowBounds.Size();
-    size.cx += GetSystemMetrics(SM_CXDLGFRAME) * 2;
-    size.cy += GetSystemMetrics(SM_CYDLGFRAME) * 2 + GetSystemMetrics(SM_CYCAPTION);
     CPoint topLeft = (screenSize - size) / 2;
     SetWindowPos(handle, HWND_TOPMOST, topLeft.x, topLeft.y, size.cx, size.cy, SWP_NOZORDER);
     SetWindowPos(handle, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
@@ -200,6 +198,13 @@ CSize Window::GetClientWindowSize()
     return minSize.Max(rect.Size());
 }
 
+CSize Window::GetNonClientWindowSize()
+{
+	CRect rect;
+	GetClientRect(handle, &rect);
+	return (minSize + GetNonClientSize()).Max(rect.Size());
+}
+
 CString Window::GetTitle()
 {
     return title;
@@ -219,7 +224,7 @@ Window::WindowSizeState Window::GetSizeState()
 
 void Window::SetMinSize(CSize size)
 {
-    minSize = size + GetNonClientSize();
+	minSize = size;
 }
 
 void Window::Show()
@@ -955,7 +960,7 @@ bool Window::HandleMessageInternal(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM l
 
 void Window::Render()
 {
-    if (window && window->IsVisible() && d2dRenderTarget && !(d2dRenderTarget->CheckWindowState() & D2D1_WINDOW_STATE_OCCLUDED))
+    if (window && IsVisible() && d2dRenderTarget && !(d2dRenderTarget->CheckWindowState() & D2D1_WINDOW_STATE_OCCLUDED))
     {
         bool success = d2dRenderTarget->StartRendering();
         if (!success)
@@ -963,7 +968,7 @@ void Window::Render()
 
         RenderInternal();
         HRESULT result = d2dRenderTarget->StopRendering();
-        //window->RedrawContent();
+        //RedrawContent();
 
         if (FAILED(result))
         {
@@ -1027,8 +1032,8 @@ void Window::Created()
 
 void Window::Moving(CRect& bounds)
 {
-    CRect oldBounds = window->GetBounds();
-    CSize minWindowSize = window->GetClientWindowSize();
+    CRect oldBounds = GetBounds();
+	CSize minWindowSize = GetNonClientWindowSize();
     if (bounds.Width() < minWindowSize.cx)
     {
         bounds.right = bounds.left + minWindowSize.cx;
@@ -1043,7 +1048,7 @@ void Window::Moving(CRect& bounds)
 void Window::Moved()
 {
     root->SetRenderRect(CRect(CPoint(), GetClientWindowSize()));
-    if (d2dRenderTarget && d2dRenderTarget->RecreateRenderTarget(window->GetClientWindowSize()))
+    if (d2dRenderTarget && d2dRenderTarget->RecreateRenderTarget(GetClientWindowSize()))
         Render();
     PostNoArgLuaMsg(L, WE_Moved);
 }
@@ -1117,13 +1122,13 @@ void Window::Destroyed()
     }
     setTimer.clear();
     PostNoArgLuaMsg(L, WE_Destroyed);
-    if (window->zplay)
+    if (zplay)
     {
-        window->zplay->Stop();
-        window->zplay->Release();
-        window->zplay = nullptr;
-        delete window->zplaydata;
-        window->zplaydata = nullptr;
+        zplay->Stop();
+        zplay->Release();
+        zplay = nullptr;
+        delete zplaydata;
+        zplaydata = nullptr;
     }
 }
 

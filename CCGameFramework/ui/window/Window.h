@@ -131,6 +131,7 @@ public:
     void SetClientSize(CSize size);
     CRect GetClientBoundsInScreen();
     CSize GetClientWindowSize();
+	CSize GetNonClientWindowSize();
     CString GetTitle();
     void SetTitle(CString _title);
     WindowSizeState GetSizeState();
