@@ -17,6 +17,25 @@
 - libcurl-7.53.1
 - dkjson(lua)
 
+## 知乎文章列表
+
+- [开篇](https://zhuanlan.zhihu.com/p/25027543)
+- [初见成效](https://zhuanlan.zhihu.com/p/25184604)
+- [有模有样](https://zhuanlan.zhihu.com/p/25284597)
+- [2048](https://zhuanlan.zhihu.com/p/25401920)
+- [诗情画意](https://zhuanlan.zhihu.com/p/25476629)
+- [柳岸花明](https://zhuanlan.zhihu.com/p/25593280)
+- [Wireworld元胞自动机](https://zhuanlan.zhihu.com/p/25593938)
+- [余音袅袅](https://zhuanlan.zhihu.com/p/25717640)
+- [简单的图形学（一）](https://zhuanlan.zhihu.com/p/30864679)
+- [简单的图形学（二）——材质与反射](https://zhuanlan.zhihu.com/p/31012319)
+- [简单的图形学（三）——光源](https://zhuanlan.zhihu.com/p/31015884)
+- [五彩缤纷](https://zhuanlan.zhihu.com/p/31017634)
+- [用C++画光（一）——优化](https://zhuanlan.zhihu.com/p/32150887)
+- [用C++画光（二）——矩形](https://zhuanlan.zhihu.com/p/32251040)
+- [用C++画光（三）——色散](https://zhuanlan.zhihu.com/p/32486185)
+- [嵌入Bochs](https://zhuanlan.zhihu.com/p/33517169)
+
 ## 历程
 
 ### 第一阶段：搭好脚手架
@@ -204,3 +223,9 @@ TODO：
 ![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/font_1.png)
 
 ![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/font_2.png)
+
+### 第四阶段：模拟器
+
+#### Bochs
+
+![](https://pic1.zhimg.com/v2-ef278e000706d563aabe9181d18481f6_r.jpg)
