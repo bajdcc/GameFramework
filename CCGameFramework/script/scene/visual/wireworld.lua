@@ -108,8 +108,6 @@ function M:init_event()
 			UIExt.paint()
 		end
 	end
-	self.handler[self.win_event.keydown] = function(this, code, flags)
-	end
 end
 
 function M:init_menu(info)

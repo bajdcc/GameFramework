@@ -122,8 +122,6 @@ function M:init_event()
 			UIExt.paint()
 		end
 	end
-	self.handler[self.win_event.keydown] = function(this, code, flags)
-	end
 	self.handler[self.win_event.closing] = function(this)
 		return UIExt.refresh(this.layers.pe2d, -1) == 0
 	end

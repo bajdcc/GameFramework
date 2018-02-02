@@ -25,9 +25,9 @@
 #ifndef IODEV_H
 #define IODEV_H
 
-#include "bochs.h"
-#include "plugin.h"
-#include "param_names.h"
+#include "../bochs.h"
+#include "../plugin.h"
+#include "../param_names.h"
 
 /* number of IRQ lines supported.  In an ISA PC there are two
    PIC chips cascaded together.  each has 8 IRQ lines, so there

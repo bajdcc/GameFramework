@@ -800,6 +800,7 @@ private:
     WICRect rect;
     D2D1_RECT_U d2dRect;
     std::auto_ptr<std::thread> bochs_thread;
+    BOOL scaling{ FALSE };
 
 public:
     static BYTE* GetBuffer();

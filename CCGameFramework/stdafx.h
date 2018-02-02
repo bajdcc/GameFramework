@@ -29,6 +29,7 @@
 
 #include <vector>
 #include <list>
+#include <queue>
 #include <map>
 #include <unordered_map>
 #include <set>

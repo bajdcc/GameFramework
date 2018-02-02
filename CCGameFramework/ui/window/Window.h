@@ -25,6 +25,7 @@ struct MouseInfo
 struct KeyInfo
 {
     cint code;
+    cint scan;
     bool ctrl;
     bool shift;
     bool alt;

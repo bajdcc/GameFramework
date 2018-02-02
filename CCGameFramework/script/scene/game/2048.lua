@@ -175,7 +175,7 @@ function M:init_event()
 	end
 	self.handler[self.win_event.timer] = function(this, id)
 	end
-	self.handler[self.win_event.keydown] = function(this, code, flags)
+	self.handler[self.win_event.keydown] = function(this, code, scan, flags)
 		local state = this.gamedef
 		if code == SysKey.left then state.direction = state.direction_type.left
 		elseif code == SysKey.up then state.direction = state.direction_type.up

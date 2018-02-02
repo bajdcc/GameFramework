@@ -117,8 +117,6 @@ function M:init_event()
 			path_calc(this.def)
 		end
 	end
-	self.handler[self.win_event.keydown] = function(this, code, flags)
-	end
 end
 
 function M:init_menu(info)

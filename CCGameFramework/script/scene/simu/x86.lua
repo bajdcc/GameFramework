@@ -83,6 +83,8 @@ function M:init()
 	-- EVENT
 	self:init_event()
 
+	UIExt.ui_set_value("X86-KBD", 0)
+
 	UIExt.set_timer(8, 500)
 	UIExt.set_timer(10, 1000)
 
@@ -128,7 +130,13 @@ function M:init_event()
 			UIExt.kill_timer(12)
 		end
 	end
-	self.handler[self.win_event.keydown] = function(this, code, flags)
+	self.handler[self.win_event.keydown] = function(this, code, scan, flags)
+		UIExt.ui_set_value("X86-KBD", scan)
+		UIExt.refresh(this.layers.x86, 12)
+	end
+	self.handler[self.win_event.keyup] = function(this, code, scan, flags)
+		UIExt.ui_set_value("X86-KBD", scan | 0x80000000)
+		UIExt.refresh(this.layers.x86, 12)
 	end
 end
 
@@ -184,12 +192,12 @@ function M:init_menu(info)
 	self.layers.restart_btn:disabled()
 	UIExt.set_timer(12, 6000)
 	Button:new({
-		text = 'ÔÝÍ£/¼ÌÐø',
+		text = '·ÅËõ',
 		font_family = '¿¬Ìå',
 		track_display = 0,
 		font_size = 16,
 		click = function()
-			CurrentScene.def.state = not CurrentScene.def.state
+			UIExt.refresh(CurrentScene.layers.x86, 14)
 		end
 	}):attach(slider)
 	Text:new({

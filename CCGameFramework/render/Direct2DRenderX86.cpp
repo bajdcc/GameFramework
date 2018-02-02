@@ -2,9 +2,8 @@
 #include "Direct2DRender.h"
 #include "bochs/sim.h"
 #include "bochs/bochs.h"
+#include "bochs/gui/d2d.h"
 #include "lua_ext/ext.h"
-
-#define X86_WINDOW_NO_SCALE 0
 
 #pragma region X86
 
@@ -104,12 +103,12 @@ void X86WindowElementRenderer::Render(CRect bounds)
     {
         CComPtr<ID2D1RenderTarget> d2dRenderTarget = renderTarget.lock()->GetDirect2DRenderTarget();
         CRect rt(bounds);
-#if X86_WINDOW_NO_SCALE
-        if (bounds.Width() > rect.Width && bounds.Height() > rect.Height)
+        if (!scaling && bounds.Width() > rect.Width && bounds.Height() > rect.Height)
         {
             rt.DeflateRect((bounds.Width() - rect.Width) / 2, (bounds.Height() - rect.Height) / 2);
+            rt.right = rt.left + rect.Width;
+            rt.bottom = rt.top + rect.Height;
         }
-#endif
         d2dRenderTarget->DrawBitmap(
             bitmap,
             D2D1::RectF((FLOAT)rt.left, (FLOAT)rt.top, (FLOAT)rt.right, (FLOAT)rt.bottom),
@@ -131,6 +130,7 @@ X86WindowElementRenderer::~X86WindowElementRenderer()
     g_buffer = nullptr;
     g_size.cx = g_size.cy = 0;
     g_error = FALSE;
+    scaling = FALSE;
     g_signal.reset();
 }
 
@@ -148,6 +148,16 @@ int X86WindowElementRenderer::Refresh(int arg)
 		if (SIM->get_init_done())
 			g_ui_map["X86-TICK"] = (lua_Integer)bx_pc_system.time_ticks();
 	}
+    else if (arg == 12)
+    {
+        if (SIM->get_init_done())
+            bx_d2d_gui_c::AddKeyboardEvent((Bit32u)g_ui_map["X86-KBD"]);
+    }
+    else if (arg == 14)
+    {
+        if (SIM->get_init_done())
+            scaling = !scaling;
+    }
     if (arg != 0) return -1;
     if (g_size.cx != rect.Width || g_size.cy != rect.Height)
     {

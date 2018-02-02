@@ -589,6 +589,7 @@ KeyInfo Window::ConvertKey(WPARAM wParam, LPARAM lParam)
 {
     KeyInfo info;
     info.code = wParam;
+    info.scan = HIWORD(lParam) & 0x01FF;
     info.ctrl = IsKeyPressing(VK_CONTROL);
     info.shift = IsKeyPressing(VK_SHIFT);
     info.alt = IsKeyPressing(VK_MENU);
@@ -1229,6 +1230,7 @@ static void PostKeyLuaMsg(lua_State *L, WindowEvent evt, const KeyInfo& info)
     lua_getglobal(L, "PassEventToScene");
     lua_pushinteger(L, evt);
     lua_pushinteger(L, info.code);
+    lua_pushinteger(L, info.scan);
     lua_newtable(L);
 #define LUA_MOUSE_FLAG(name) lua_pushstring(L, #name); lua_pushboolean(L, info.name); lua_settable(L, -3);
     LUA_MOUSE_FLAG(ctrl);
@@ -1236,7 +1238,7 @@ static void PostKeyLuaMsg(lua_State *L, WindowEvent evt, const KeyInfo& info)
     LUA_MOUSE_FLAG(alt);
     LUA_MOUSE_FLAG(capslock);
 #undef LUA_MOUSE_FLAG
-    lua_call(L, 3, 0);
+    lua_call(L, 4, 0);
 }
 
 void Window::KeyDown(const KeyInfo& info)
