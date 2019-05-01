@@ -24,6 +24,7 @@ static void InitRenderer()
     X86WindowElementRenderer::Register();
     EditElementRenderer::Register();
     Clib2DElementRenderer::Register();
+    Parser2DElementRenderer::Register();
 }
 
 Direct2D::Direct2D()

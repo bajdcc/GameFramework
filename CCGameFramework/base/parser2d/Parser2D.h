@@ -1,10 +1,9 @@
-#ifndef CLIB2D_CLIB2D_H
-#define CLIB2D_CLIB2D_H
+#ifndef PARSER2D_PARSER2D_H
+#define PARSER2D_PARSER2D_H
 #include "render/Direct2DAllocator.h"
-#include "c2d.h"
 #include <memory>
 
-class Clib2DEngine
+class Parser2DEngine
 {
 public:
     void RenderByType(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
@@ -16,7 +15,9 @@ public:
 
     int SetType(cint value);
 
-    const clib::BrushBag& GetBrushBag() const;
+    struct BrushBag {
+        Font cmdFont; std::shared_ptr<D2DTextFormatPackage> cmdTF;
+    } brushes;
 
 private:
     void RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
@@ -28,7 +29,14 @@ private:
     CColor logoColor;
     std::shared_ptr<D2DTextFormatPackage> logoTF;
     CComPtr<ID2D1SolidColorBrush> logoBrush;
-    clib::BrushBag brushes;
+
+private:
+    std::chrono::system_clock::time_point last_clock;
+    double dt{ 0 };
+    double dt_inv{ 0 };
+    int cycles{ 0 };
+    double ips{ 0 };
+    bool paused{ false };
 };
 
 #endif

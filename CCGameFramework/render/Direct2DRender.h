@@ -6,6 +6,7 @@
 #include "Direct2DRenderTarget.h"
 #include <base/pe2d/PhysicsEngine2D.h>
 #include <base/clib2d/Clib2D.h>
+#include <base/parser2d/parser2d.h>
 #include "utils.h"
 
 #pragma region Base
@@ -23,6 +24,7 @@ enum ElementId
     PhysicsEngine2D = 1103,
     X86Window = 1104,
     Clib2D = 1105,
+    Parser2D = 1106,
     Edit = 1200
 };
 
@@ -862,5 +864,51 @@ private:
 };
 
 #pragma endregion PhysicsEngine2D
+
+#pragma region Parser2D
+
+class Parser2DElement : public GraphicsElement<Parser2DElement>
+{
+public:
+    Parser2DElement();
+    ~Parser2DElement();
+
+    static CString GetElementTypeName();
+
+    cint GetTypeId()override;
+
+    FLOAT GetOpacity()const;
+    void SetOpacity(FLOAT value);
+
+    cint GetType()const;
+    void SetType(cint value);
+
+    int Refresh(int arg);
+
+protected:
+    CStringA text;
+    FLOAT opacity{ 0 };
+    cint type{ 0 };
+};
+
+class Parser2DElementRenderer : public GraphicsRenderer<Parser2DElement, Parser2DElementRenderer, Direct2DRenderTarget>
+{
+public:
+    void Render(CRect bounds)override;
+    ~Parser2DElementRenderer();
+    int Refresh(int arg);
+
+    void OnElementStateChanged()override;
+
+protected:
+    void InitializeInternal()override;
+    void FinalizeInternal()override;
+    void RenderTargetChangedInternal(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget, std::shared_ptr<Direct2DRenderTarget> newRenderTarget)override;
+
+private:
+    Parser2DEngine engine;
+};
+
+#pragma endregion Parser2D
 
 #endif

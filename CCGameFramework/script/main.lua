@@ -54,6 +54,7 @@ Window = {
 		WireWorld = "script.scene.visual.wireworld",
 		-- X86
 		X86 = "script.scene.simu.x86",
+		Parser2d = "script.scene.visual.parser2d",
 	}
 }
 

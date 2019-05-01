@@ -176,6 +176,12 @@ function M:init_menu(info)
 	end
 	menu.children[8].layers.fg:update()
 
+	menu.children[9]:reset('parser')
+	menu.children[9].click = function()
+		FlipScene('Parser2d')
+	end
+	menu.children[9].layers.fg:update()
+
 	UIExt.paint()
 end
 

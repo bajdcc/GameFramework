@@ -87,6 +87,9 @@ int ui_add_obj(lua_State* L)
     case Clib2D:
         obj = Clib2DElement::Create();
         break;
+    case Parser2D:
+        obj = Parser2DElement::Create();
+        break;
     case Edit:
         obj = EditElement::Create();
         break;
@@ -371,6 +374,14 @@ int ui_refresh_obj(lua_State * L)
     case Clib2D:
     {
         auto obj = std::dynamic_pointer_cast<Clib2DElement>(o);
+        {
+            lua_pushinteger(L, obj->Refresh(arg));
+        }
+        return 1;
+    }
+    case Parser2D:
+    {
+        auto obj = std::dynamic_pointer_cast<Parser2DElement>(o);
         {
             lua_pushinteger(L, obj->Refresh(arg));
         }

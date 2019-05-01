@@ -22,8 +22,8 @@ void Clib2DEngine::Initialize(std::shared_ptr<Direct2DRenderTarget> rt)
     logoFont.bold = false;
     logoFont.italic = false;
     logoFont.underline = false;
-    logoColor.Parse("#007ACC");
-    brushes.static_body_color = CColor(25, 25, 25);
+    logoColor = CColor(255, 255, 255);
+    brushes.static_body_color = CColor(225, 225, 225);
 }
 
 void Clib2DEngine::Finalize(std::shared_ptr<Direct2DRenderTarget> rt)
@@ -37,12 +37,14 @@ void Clib2DEngine::Reset(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget, 
         return;
     if (oldRenderTarget)
     {
+        oldRenderTarget->DestroyDirect2DBrush(bgColor); bg = nullptr;
         oldRenderTarget->DestroyDirect2DTextFormat(logoFont); logoTF = nullptr;
         oldRenderTarget->DestroyDirect2DBrush(logoColor); logoBrush = nullptr;
         oldRenderTarget->DestroyDirect2DBrush(brushes.static_body_color);
     }
     if (newRenderTarget)
     {
+        bg = newRenderTarget->CreateDirect2DBrush(bgColor);
         logoTF = newRenderTarget->CreateDirect2DTextFormat(logoFont);
         logoBrush = newRenderTarget->CreateDirect2DBrush(logoColor);
         brushes.static_body = newRenderTarget->CreateDirect2DBrush(brushes.static_body_color);
@@ -72,6 +74,10 @@ void Clib2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
         clib::c2d_world::dt = min(clib::c2d_world::dt, FRAME_SPAN);
         clib::c2d_world::dt_inv = 1.0 / clib::c2d_world::dt;
         clib::c2d_world::last_clock = now;
+        rt->FillRectangle(
+            D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
+            bg
+        );
         clib::world->step(rt, bounds, brushes);
     }
 
