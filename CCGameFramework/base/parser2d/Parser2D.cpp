@@ -93,6 +93,7 @@ void Parser2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
     if (dt > FRAME) {
         ips = cycles * dt;
         cycles = 0;
+        dt = min(dt, FRAME);
         dt_inv = 1.0 / dt;
         last_clock = now;
         rt->FillRectangle(

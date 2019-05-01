@@ -750,6 +750,41 @@ namespace clib {
         }
         if (c & GUI_SPECIAL_MASK) {
             char C = (char)-9;
+            switch (c & 0xff) {
+            case VK_LEFT:
+                // C = (char) -12;
+                // break;
+                move(true);
+                return;
+            case VK_UP:
+                C = (char)-10;
+                break;
+            case VK_RIGHT:
+                // C = (char) -13;
+                // break;
+                move(false);
+                return;
+            case VK_DOWN:
+                C = (char)-11;
+                break;
+            case VK_HOME:
+                ptr_x = ptr_mx;
+                ptr_y = ptr_my;
+                return;
+            case VK_END:
+                ptr_x = ptr_rx;
+                ptr_y = ptr_ry;
+                return;
+            case 0x71: // SHIFT
+                return;
+            case 0x72: // CTRL
+                return;
+            case 0x74: // ALT
+                return;
+            default:
+                printf("invalid special key: %d\n", c & 0xff);
+                return;
+            }
             cvm::global_state.input_content = input_buffer();
             cvm::global_state.input_content.push_back(C);
             cvm::global_state.input_read_ptr = 0;

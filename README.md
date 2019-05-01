@@ -6,6 +6,8 @@
 
 **已嵌入物理引擎代码[clib2d](https://github.com/bajdcc/clib2d)。**
 
+**已嵌入脚本操作系统代码[clibparser](https://github.com/bajdcc/clibparser)。**
+
 ## 介绍
 
 架构是**C/C++**，渲染用**DirectX**，库用**STL/ATL**。
@@ -238,3 +240,14 @@ TODO：
 #### Bochs
 
 ![](https://pic1.zhimg.com/v2-ef278e000706d563aabe9181d18481f6_r.jpg)
+
+#### 脚本操作系统
+
+- [【Parser系列】实现LR分析——开篇](https://zhuanlan.zhihu.com/p/52478414)
+- [【Parser系列】实现LR分析——生成AST](https://zhuanlan.zhihu.com/p/52528516)
+- [【Parser系列】实现LR分析——支持C语言文法](https://zhuanlan.zhihu.com/p/52812144)
+- [【Parser系列】实现LR分析——完成编译器前端！](https://zhuanlan.zhihu.com/p/53070412)
+- [【Parser系列】实现LR分析——识别变量声明](https://zhuanlan.zhihu.com/p/54716082)
+- [【Parser系列】实现LR分析——解决二义性问题](https://zhuanlan.zhihu.com/p/54766453)
+- [【虚拟机系列】C语言虚拟机诞生！](https://zhuanlan.zhihu.com/p/55319251)
+- [【虚拟机系列】实现Fork！](https://zhuanlan.zhihu.com/p/55613027)

@@ -99,6 +99,9 @@ function M:init_event()
 	self.handler[self.win_event.char] = function(this, code, scan, flags)
 		UIExt.refresh(CurrentScene.layers.pe2d, code)
 	end
+	self.handler[self.win_event.keydown] = function(this, code, scan, flags)
+		if code < 48 then UIExt.refresh(CurrentScene.layers.pe2d, code | 0x1000) end
+	end
 	self.handler[self.win_event.timer] = function(this, id)
 		if id == 8 then
 			UIExt.paint()
