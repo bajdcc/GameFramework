@@ -45,6 +45,7 @@ Window = {
 		Game_2048 = "script.scene.game.2048",
 		PE2D = "script.scene.visual.2dpe",
 		CG = "script.scene.visual.cg",
+		clib2d = "script.scene.visual.clib2d",
 		-- WEB
 		Hitokoto = "script.scene.web.hitokoto",
 		Music = "script.scene.web.music",

@@ -5,7 +5,7 @@
 #include "lua_ext/UI.h"
 #include "lua_ext/ext.h"
 
-int ui_clear_scene(lua_State *L)
+int ui_clear_scene(lua_State* L)
 {
     for (auto& timer : window->setTimer)
     {
@@ -27,7 +27,7 @@ int ui_clear_scene(lua_State *L)
     return 0;
 }
 
-int ui_add_obj(lua_State *L)
+int ui_add_obj(lua_State* L)
 {
     luaL_checktype(L, 1, LUA_TTABLE);
     lua_getfield(L, -1, "type");
@@ -84,6 +84,9 @@ int ui_add_obj(lua_State *L)
     case X86Window:
         obj = X86WindowElement::Create();
         break;
+    case Clib2D:
+        obj = Clib2DElement::Create();
+        break;
     case Edit:
         obj = EditElement::Create();
         break;
@@ -97,7 +100,7 @@ int ui_add_obj(lua_State *L)
     return 1;
 }
 
-int ui_update_obj(lua_State *L)
+int ui_update_obj(lua_State* L)
 {
     luaL_checktype(L, 1, LUA_TTABLE);
     lua_getfield(L, -1, "type");
@@ -305,14 +308,14 @@ int ui_update_obj(lua_State *L)
             obj->SetFont(font);
         }
     }
-        break;
+    break;
     default:
         break;
     }
     return 0;
 }
 
-int ui_refresh_obj(lua_State *L)
+int ui_refresh_obj(lua_State * L)
 {
     auto arg = (cint)luaL_checkinteger(L, 2); lua_pop(L, 1);
     luaL_checktype(L, -1, LUA_TTABLE);
@@ -365,6 +368,14 @@ int ui_refresh_obj(lua_State *L)
         }
         return 1;
     }
+    case Clib2D:
+    {
+        auto obj = std::dynamic_pointer_cast<Clib2DElement>(o);
+        {
+            lua_pushinteger(L, obj->Refresh(arg));
+        }
+        return 1;
+    }
     case Edit:
         break;
     default:
@@ -373,7 +384,7 @@ int ui_refresh_obj(lua_State *L)
     return 0;
 }
 
-int ui_info(lua_State *L)
+int ui_info(lua_State * L)
 {
     lua_newtable(L);
     auto size = window->GetClientWindowSize();
@@ -386,7 +397,7 @@ int ui_info(lua_State *L)
     return 1;
 }
 
-int ui_win_set_minsize(lua_State* L)
+int ui_win_set_minsize(lua_State * L)
 {
     auto w = cint(luaL_checkinteger(L, 1));
     auto h = cint(luaL_checkinteger(L, 2));
@@ -394,13 +405,13 @@ int ui_win_set_minsize(lua_State* L)
     return 0;
 }
 
-int ui_paint(lua_State *L)
+int ui_paint(lua_State * L)
 {
     window->Redraw();
     return 0;
 }
 
-int ui_set_timer(lua_State *L)
+int ui_set_timer(lua_State * L)
 {
     auto id = cint(luaL_checkinteger(L, 1));
     auto elapse = cint(luaL_checkinteger(L, 2));
@@ -408,27 +419,27 @@ int ui_set_timer(lua_State *L)
     return 0;
 }
 
-int ui_kill_timer(lua_State *L)
+int ui_kill_timer(lua_State * L)
 {
     auto id = cint(luaL_checkinteger(L, 1));
     window->KillTimer(id);
     return 0;
 }
 
-int ui_quit(lua_State* L)
+int ui_quit(lua_State * L)
 {
     auto code = cint(luaL_checkinteger(L, 1));
     PostQuitMessage(code);
     return 0;
 }
 
-int ui_play_song(lua_State *L)
+int ui_play_song(lua_State * L)
 {
     auto data = luaL_checkstring(L, 1);
     auto bin = base64_decode(data);
     DWORD dw = MAKELONG(MAKEWORD(bin[0], bin[1]), MAKEWORD(bin[2], bin[3]));
     auto b = (std::vector<byte>*)dw;
-    auto &zplay = window->zplay;
+    auto& zplay = window->zplay;
     if (zplay)
     {
         zplay->Stop();
@@ -452,9 +463,9 @@ int ui_play_song(lua_State *L)
     return 0;
 }
 
-int ui_music_ctl(lua_State *L)
+int ui_music_ctl(lua_State * L)
 {
-    auto &zplay = window->zplay;
+    auto& zplay = window->zplay;
     auto ctlid = (cint)luaL_checkinteger(L, 1);
     switch (ctlid)
     {
@@ -639,7 +650,7 @@ int ui_music_ctl(lua_State *L)
     return 0;
 }
 
-int ui_parse_lyric(lua_State *L)
+int ui_parse_lyric(lua_State * L)
 {
     std::string str = luaL_checkstring(L, 1);
     std::regex e(R"(\[\d*:\d*[.:]\d*\].*)");
@@ -696,7 +707,7 @@ int ui_parse_lyric(lua_State *L)
 
 std::map<std::string, lua_Integer> g_ui_map;
 
-int ui_set_value(lua_State *L)
+int ui_set_value(lua_State * L)
 {
     auto key = luaL_checkstring(L, 1);
     auto value = luaL_checkinteger(L, 2);
@@ -704,7 +715,7 @@ int ui_set_value(lua_State *L)
     return 0;
 }
 
-int ui_get_value(lua_State *L)
+int ui_get_value(lua_State * L)
 {
     auto key = luaL_checkstring(L, 1);
     auto value = g_ui_map.find(key);

@@ -23,6 +23,7 @@ static void InitRenderer()
     PhysicsEngine2DElementRenderer::Register();
     X86WindowElementRenderer::Register();
     EditElementRenderer::Register();
+    Clib2DElementRenderer::Register();
 }
 
 Direct2D::Direct2D()

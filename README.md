@@ -4,6 +4,8 @@
 
 实现一个游戏框架。
 
+**已嵌入物理引擎代码[clib2d](https://github.com/bajdcc/clib2d)。**
+
 ## 介绍
 
 架构是**C/C++**，渲染用**DirectX**，库用**STL/ATL**。
@@ -110,6 +112,13 @@ TODO：
 - [用 C 语言画光（二）：构造实体几何](https://zhuanlan.zhihu.com/p/30748318) **（已完成）**
 - [用 C 语言画光（三）：形状](https://zhuanlan.zhihu.com/p/30816284) **（已完成）**
 - [用 C 语言画光（四）：反射](https://zhuanlan.zhihu.com/p/30961545) **（已完成）**
+
+#### 2D物理引擎
+
+物理引擎系列：
+
+- [开篇](http://zhuanlan.zhihu.com/p/42669063)
+- [创建窗口](http://zhuanlan.zhihu.com/p/42773209)
 
 
 #### 截图

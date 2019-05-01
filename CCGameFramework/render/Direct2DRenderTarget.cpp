@@ -286,5 +286,5 @@ CComPtr<ID2D1Bitmap> Direct2DRenderTarget::GetBitmapFromWIC(CComPtr<IWICBitmap> 
 
 void Direct2DRenderTarget::DestroyDirect2DTextFormat(const Font& font)
 {
-    textFormats.Destroy(font);;
+    textFormats.Destroy(font);
 }

@@ -170,6 +170,12 @@ function M:init_menu(info)
 	end
 	menu.children[7].layers.fg:update()
 
+	menu.children[8]:reset('2d')
+	menu.children[8].click = function()
+		FlipScene('clib2d')
+	end
+	menu.children[8].layers.fg:update()
+
 	UIExt.paint()
 end
 

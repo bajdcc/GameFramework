@@ -403,6 +403,42 @@
     <ClInclude Include="base\bochs\gui\d2d.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="base\clib2d\Clib2D.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\clib2d\c2d.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\clib2d\c2dbody.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\clib2d\c2dcircle.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\clib2d\c2dcollision.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\clib2d\c2dcontact.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\clib2d\c2djoint.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\clib2d\c2dpolygon.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\clib2d\c2drevolute.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\clib2d\c2dworld.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\clib2d\m2.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\clib2d\v2.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -696,6 +732,45 @@
     <ClCompile Include="base\bochs\gui\d2d.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="base\clib2d\Clib2D.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\clib2d\Clib2DRender.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\clib2d\c2d.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\clib2d\c2dbody.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\clib2d\c2dcircle.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\clib2d\c2dcollision.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\clib2d\c2dcontact.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\clib2d\c2djoint.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\clib2d\c2dpolygon.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\clib2d\c2drevolute.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\clib2d\c2dworld.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\clib2d\m2.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\clib2d\v2.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="script\lib\core\scene.lua">
@@ -791,22 +866,26 @@
     <Text Include="script\scene\web\music.lua">
       <Filter>脚本</Filter>
     </Text>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="script\lib\ui\2dpe.lua">
+    <Text Include="script\lib\ui\2dpe.lua">
       <Filter>脚本</Filter>
-    </None>
-    <None Include="script\scene\visual\cg.lua">
+    </Text>
+    <Text Include="script\lib\ui\x86.lua">
       <Filter>脚本</Filter>
-    </None>
-    <None Include="script\scene\visual\2dpe.lua">
+    </Text>
+    <Text Include="script\scene\simu\x86.lua">
       <Filter>脚本</Filter>
-    </None>
-    <None Include="script\scene\simu\x86.lua">
+    </Text>
+    <Text Include="script\scene\visual\2dpe.lua">
       <Filter>脚本</Filter>
-    </None>
-    <None Include="script\lib\ui\x86.lua">
+    </Text>
+    <Text Include="script\scene\visual\cg.lua">
       <Filter>脚本</Filter>
-    </None>
+    </Text>
+    <Text Include="script\lib\ui\clib2d.lua">
+      <Filter>脚本</Filter>
+    </Text>
+    <Text Include="script\scene\visual\clib2d.lua">
+      <Filter>脚本</Filter>
+    </Text>
   </ItemGroup>
 </Project>

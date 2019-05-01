@@ -9,11 +9,9 @@
 #define N 64
 #define MAX_STEP 800
 #define MAX_DISTANCE 5.0f
-#define EPSILON 1e-6f
+//#define EPSILON 1e-6f
 #define BIAS 1e-4f
 #define MAX_DEPTH 3
-
-extern float PI2;
 
 extern float circleSDF(float x, float y, float cx, float cy, float r);
 extern float boxSDF(float x, float y, float cx, float cy, float theta, float sx, float sy);
@@ -119,7 +117,7 @@ static color sample(float x, float y) {
     for (auto i = 0; i < N; i++) {
         // const auto a = PI2 * rand() / RAND_MAX;                  // 均匀采样
         // const auto a = PI2 * i / N;                              // 分层采样
-        const auto a = PI2 * (i + float(rand()) / RAND_MAX) / N;    // 抖动采样
+        float a = float(PI2 * (i + float(rand()) / RAND_MAX) / N);    // 抖动采样
         sum.Add(trace(x, y, cosf(a), sinf(a), 0)); // 追踪 (x,y) 从 随机方向(cos(a),sin(a)) 收集到的光
     }
     return sum * (1.0f / N);

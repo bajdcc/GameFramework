@@ -5,6 +5,7 @@
 #include "Direct2D.h"
 #include "Direct2DRenderTarget.h"
 #include <base/pe2d/PhysicsEngine2D.h>
+#include <base/clib2d/Clib2D.h>
 #include "utils.h"
 
 #pragma region Base
@@ -21,6 +22,7 @@ enum ElementId
     WireworldAutomaton = 1102,
     PhysicsEngine2D = 1103,
     X86Window = 1104,
+    Clib2D = 1105,
     Edit = 1200
 };
 
@@ -814,5 +816,51 @@ private:
 };
 
 #pragma endregion X86
+
+#pragma region Clib2D
+
+class Clib2DElement : public GraphicsElement<Clib2DElement>
+{
+public:
+	Clib2DElement();
+	~Clib2DElement();
+
+	static CString GetElementTypeName();
+
+	cint GetTypeId()override;
+
+	FLOAT GetOpacity()const;
+	void SetOpacity(FLOAT value);
+
+	cint GetType()const;
+	void SetType(cint value);
+
+	int Refresh(int arg);
+
+protected:
+	CStringA text;
+	FLOAT opacity{ 0 };
+	cint type{ 0 };
+};
+
+class Clib2DElementRenderer : public GraphicsRenderer<Clib2DElement, Clib2DElementRenderer, Direct2DRenderTarget>
+{
+public:
+	void Render(CRect bounds)override;
+	~Clib2DElementRenderer();
+	int Refresh(int arg);
+
+	void OnElementStateChanged()override;
+
+protected:
+	void InitializeInternal()override;
+	void FinalizeInternal()override;
+	void RenderTargetChangedInternal(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget, std::shared_ptr<Direct2DRenderTarget> newRenderTarget)override;
+
+private:
+	Clib2DEngine engine;
+};
+
+#pragma endregion PhysicsEngine2D
 
 #endif

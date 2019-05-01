@@ -22,32 +22,32 @@
     <ProjectGuid>{C9E8BB5E-CF29-4D67-BB96-1E8591B05BE0}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>CCGameFramework</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -208,6 +208,18 @@ xcopy /r /y /e "$(ProjectDir)dll" "$(TargetDir)"</Command>
     <ClInclude Include="base\bochs\pc_system.h" />
     <ClInclude Include="base\bochs\plugin.h" />
     <ClInclude Include="base\bochs\sim.h" />
+    <ClInclude Include="base\clib2d\c2d.h" />
+    <ClInclude Include="base\clib2d\c2dbody.h" />
+    <ClInclude Include="base\clib2d\c2dcircle.h" />
+    <ClInclude Include="base\clib2d\c2dcollision.h" />
+    <ClInclude Include="base\clib2d\c2dcontact.h" />
+    <ClInclude Include="base\clib2d\c2djoint.h" />
+    <ClInclude Include="base\clib2d\c2dpolygon.h" />
+    <ClInclude Include="base\clib2d\c2drevolute.h" />
+    <ClInclude Include="base\clib2d\c2dworld.h" />
+    <ClInclude Include="base\clib2d\Clib2D.h" />
+    <ClInclude Include="base\clib2d\m2.h" />
+    <ClInclude Include="base\clib2d\v2.h" />
     <ClInclude Include="base\curl\curl.h" />
     <ClInclude Include="base\curl\curlbuild.h" />
     <ClInclude Include="base\curl\curlrules.h" />
@@ -340,6 +352,19 @@ xcopy /r /y /e "$(ProjectDir)dll" "$(TargetDir)"</Command>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="base\clib2d\c2d.cpp" />
+    <ClCompile Include="base\clib2d\c2dbody.cpp" />
+    <ClCompile Include="base\clib2d\c2dcircle.cpp" />
+    <ClCompile Include="base\clib2d\c2dcollision.cpp" />
+    <ClCompile Include="base\clib2d\c2dcontact.cpp" />
+    <ClCompile Include="base\clib2d\c2djoint.cpp" />
+    <ClCompile Include="base\clib2d\c2dpolygon.cpp" />
+    <ClCompile Include="base\clib2d\c2drevolute.cpp" />
+    <ClCompile Include="base\clib2d\c2dworld.cpp" />
+    <ClCompile Include="base\clib2d\Clib2D.cpp" />
+    <ClCompile Include="base\clib2d\Clib2DRender.cpp" />
+    <ClCompile Include="base\clib2d\m2.cpp" />
+    <ClCompile Include="base\clib2d\v2.cpp" />
     <ClCompile Include="base\libqrencode\bitstream.c">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
@@ -614,13 +639,27 @@ xcopy /r /y /e "$(ProjectDir)dll" "$(TargetDir)"</Command>
     <Text Include="script\scene\web\music.lua">
       <FileType>Document</FileType>
     </Text>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="script\lib\ui\2dpe.lua" />
-    <None Include="script\lib\ui\x86.lua" />
-    <None Include="script\scene\simu\x86.lua" />
-    <None Include="script\scene\visual\2dpe.lua" />
-    <None Include="script\scene\visual\cg.lua" />
+    <Text Include="script\lib\ui\2dpe.lua">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="script\lib\ui\x86.lua">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="script\scene\simu\x86.lua">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="script\scene\visual\2dpe.lua">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="script\scene\visual\cg.lua">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="script\lib\ui\clib2d.lua">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="script\scene\visual\clib2d.lua">
+      <FileType>Document</FileType>
+    </Text>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
