@@ -338,6 +338,42 @@ namespace clib {
         }
     }
 
+    void c2d_world::key(int k) {
+        if (k >= '0' && k <= '9') {
+            scene(k - '0');
+        }
+        else {
+            switch (k) {
+            case ' ':
+                paused = !paused;
+                break;
+            case 'w':
+                world->move(v2(0, 0.1));
+                break;
+            case 'a':
+                world->move(v2(-0.1, 0));
+                break;
+            case 's':
+                world->move(v2(0, -0.1));
+                break;
+            case 'd':
+                world->move(v2(0.1, 0));
+                break;
+            case 'q':
+                world->rotate(0.1);
+                break;
+            case 'e':
+                world->rotate(-0.1);
+                break;
+            case 'g':
+                world->invert_gravity();
+                break;
+            default:
+                break;
+            }
+        }
+    }
+
     void c2d_world::clear() {
         global_id = 1;
         bodies.clear();
@@ -531,5 +567,14 @@ namespace clib {
     FLOAT c2d_world::transform_y(const decimal & v)
     {
         return -(float)v * 0.10f;
+    }
+
+    v2 c2d_world::translate(const CRect& rect, int x, int y)
+    {
+        auto c = v2(rect.left + 0.5f * rect.Width(), rect.top + 0.5f * rect.Height());
+        auto v = v2(x, y) - c;
+        v.x *= 20.0f / rect.Width();
+        v.y *= -10.0f / rect.Height();
+        return v;
     }
 }

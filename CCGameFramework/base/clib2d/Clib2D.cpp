@@ -51,9 +51,49 @@ void Clib2DEngine::Reset(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget, 
     }
 }
 
+// 屏幕坐标到世界坐标的变换
+clib::v2 Clib2DEngine::screen2world(int x, int y) {
+    return clib::c2d_world::translate(rect, x, y); // 没搞明白这个10，先用着
+}
+
 int Clib2DEngine::SetType(cint value)
 {
-    if (clib::world) {
+    if (value & 0x1000)
+    {
+        auto key = value & 0xfff;
+        clib::world->key(key);
+    }
+    else if (value & 0x2000)
+    {
+        auto key = value & 0xfff;
+    }
+    else if (value & 0x4000)
+    {
+        mouseX = value & 0xfff;
+    }
+    else if (value & 0x8000)
+    {
+        mouseY = value & 0xfff;
+    }
+    else if (value & 0x10000)
+    {
+        auto key = value & 0xfff;
+        switch (key)
+        {
+        case 1:
+            clib::world->mouse(screen2world(mouseX, mouseY), 1);
+            break;
+        case 2:
+            clib::world->mouse(screen2world(mouseX, mouseY), 0);
+            break;
+        case 3:
+            clib::world->motion(screen2world(mouseX, mouseY));
+            break;
+        default:
+            break;
+        }
+    }
+    else if (clib::world) {
         clib::world->scene(value);
     }
     return 0;
@@ -79,6 +119,7 @@ void Clib2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
             bg
         );
         clib::world->step(rt, bounds, brushes);
+        rect = bounds;
     }
 
     CString logo(_T("2D物理引擎系列 clib-2d @bajdcc"));

@@ -101,6 +101,33 @@ function M:init_event()
 			UIExt.paint()
 		end
 	end
+	self.handler[self.win_event.char] = function(this, code, scan, flags)
+		UIExt.refresh(CurrentScene.layers.pe2d, code | 0x1000)
+	end
+	self.handler[self.win_event.keydown] = function(this, code, scan, flags)
+		if code < 48 then UIExt.refresh(CurrentScene.layers.pe2d, code | 0x2000) end
+	end
+	self.handler['old_lbd'] = self.handler[self.win_event.leftbuttondown]
+	self.handler[self.win_event.leftbuttondown] = function(this, x, y, flags, wheel)
+		UIExt.refresh(CurrentScene.layers.pe2d, x | 0x4000)
+		UIExt.refresh(CurrentScene.layers.pe2d, y | 0x8000)
+		UIExt.refresh(CurrentScene.layers.pe2d, 0x10001)
+		this.handler['old_lbd'](this, x, y, flags, wheel)
+	end
+	self.handler['old_lbu'] = self.handler[self.win_event.leftbuttonup]
+	self.handler[self.win_event.leftbuttonup] = function(this, x, y, flags, wheel)
+		UIExt.refresh(CurrentScene.layers.pe2d, x | 0x4000)
+		UIExt.refresh(CurrentScene.layers.pe2d, y | 0x8000)
+		UIExt.refresh(CurrentScene.layers.pe2d, 0x10002)
+		this.handler['old_lbu'](this, x, y, flags, wheel)
+	end
+	self.handler['old_mm'] = self.handler[self.win_event.mousemove]
+	self.handler[self.win_event.mousemove] = function(this, x, y, flags, wheel)
+		UIExt.refresh(CurrentScene.layers.pe2d, x | 0x4000)
+		UIExt.refresh(CurrentScene.layers.pe2d, y | 0x8000)
+		UIExt.refresh(CurrentScene.layers.pe2d, 0x10003)
+		this.handler['old_mm'](this, x, y, flags, wheel)
+	end
 end
 
 function M:init_menu(info)

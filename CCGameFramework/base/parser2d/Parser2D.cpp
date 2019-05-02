@@ -90,6 +90,7 @@ void Parser2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
     dt = std::chrono::duration_cast<std::chrono::duration<double>>(now - last_clock).count();
     cycles += clib::cgui::singleton().reset_cycles();
 
+    auto inv = 1.0 / dt;
     if (dt > FRAME) {
         ips = cycles * dt;
         cycles = 0;
@@ -108,7 +109,7 @@ void Parser2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
     rt->DrawText(logo.GetBuffer(0), logo.GetLength(), logoTF->textFormat,
         D2D1::RectF((float)bounds.left + 10, (float)bounds.top + 5, (float)bounds.left + 200, (float)bounds.top + 50), logoBrush);
 
-    logo.Format(_T("IPS: %S FPS: %.1f"), ipsf(ips), dt_inv);
+    logo.Format(_T("IPS: %S FPS: %.1f"), ipsf(ips), inv);
     rt->DrawText(logo.GetBuffer(0), logo.GetLength(), logoTF->textFormat,
         D2D1::RectF((float)bounds.right - 200, (float)bounds.top + 5, (float)bounds.right, (float)bounds.top + 50), logoBrush);
 }

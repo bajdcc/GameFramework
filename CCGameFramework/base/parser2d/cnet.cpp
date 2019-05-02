@@ -27,21 +27,12 @@ namespace clib {
         return "";
     }
 
-    static size_t net_http_get_process(void* data, size_t size, size_t nmemb, string_t& content)
+    static size_t net_http_get_process(void* data, size_t size, size_t nmemb, std::vector<char> * bindata)
     {
         auto sizes = size * nmemb;
-        content += string_t((char*)data, sizes);
-        return sizes;
-    }
-
-    static size_t net_http_get_process_bin(void* data, size_t size, size_t nmemb, std::vector<byte>& content)
-    {
-        auto sizes = size * nmemb;
-        auto bin = (byte*)data;
+        char* d = (char*)data;
         for (size_t i = 0; i < sizes; ++i)
-        {
-            content.push_back(bin[i]);
-        }
+            bindata->push_back(*d++);
         return sizes;
     }
 
@@ -125,9 +116,6 @@ namespace clib {
                 postfield.pop_back();
             }
             params.clear();
-            string_t text;
-            auto bindata = new std::vector<byte>();
-            bindata->reserve(102400);
             curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
             curl_easy_setopt(curl, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36");
             if (post)
@@ -141,41 +129,24 @@ namespace clib {
             curl_easy_setopt(curl, CURLOPT_ACCEPT_ENCODING, "");
             curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, TRUE);
             curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, TRUE);
-            if (!response->b64)
-            {
-                curl_easy_setopt(curl, CURLOPT_WRITEDATA, &text);
-                curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &net_http_get_process);
-            }
-            else
-            {
-                curl_easy_setopt(curl, CURLOPT_WRITEDATA, bindata);
-                curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &net_http_get_process_bin);
-            }
+            std::vector<char> bindata;
+            curl_easy_setopt(curl, CURLOPT_WRITEDATA, &bindata);
+            curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &net_http_get_process);
             auto res = curl_easy_perform(curl);
             curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response->code);
             if (res == CURLE_OK)
             {
                 char* content_type;
                 curl_easy_getinfo(curl, CURLINFO_CONTENT_TYPE, &content_type);
+                string_t text;
+                text.resize(bindata.size());
+                text.assign(bindata.begin(), bindata.end());
                 auto ct = CStringA(content_type);
-                if (response->b64)
-                {
-                    std::vector<byte> b;
-                    DWORD dw = (DWORD)bindata;
-                    b.push_back(LOBYTE(LOWORD(dw)));
-                    b.push_back(HIBYTE(LOWORD(dw)));
-                    b.push_back(LOBYTE(HIWORD(dw)));
-                    b.push_back(HIBYTE(HIWORD(dw)));
-                    response->text = base64_encode(b);
-                }
+                if (ct.Find("UTF-8"))
+                    //TODO: 韩语会显示乱码
+                    response->text = CStringA(cnet::Utf8ToStringT(text.c_str()));
                 else
-                {
-                    if (ct.Find("UTF-8"))
-                        //TODO: 韩语会显示乱码
-                        response->text = CStringA(cnet::Utf8ToStringT(text.c_str()));
-                    else
-                        response->text = text.c_str();
-                }
+                    response->text = text.c_str();
                 auto ev = window->get_event();
                 struct timeval tv;
                 auto evt = evtimer_new(ev, &pass_event, response);

@@ -79,6 +79,7 @@ namespace clib {
         void offset(const v2& pt, const v2& offset);
         void mouse(const v2& pt, bool down);
         void motion(const v2& pt);
+        void key(int k);
 
         // 清除所有物体
         void clear();
@@ -106,6 +107,7 @@ namespace clib {
         static D2D1_POINT_2F transform(const CRect& bounds, const v2& v);
         static FLOAT transform_x(const decimal& v);
         static FLOAT transform_y(const decimal& v);
+        static v2 translate(const CRect& rect, int x, int y);
 
     private:
 
