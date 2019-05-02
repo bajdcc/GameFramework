@@ -110,24 +110,26 @@ void Clib2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
     // 计算每帧时间间隔
     clib::c2d_world::dt = std::chrono::duration_cast<std::chrono::duration<double>>(now - clib::c2d_world::last_clock).count();
 
+    auto inv = 1.0 / clib::c2d_world::dt;
     if (clib::c2d_world::dt > FRAME_SPAN) {
         clib::c2d_world::dt = min(clib::c2d_world::dt, FRAME_SPAN);
         clib::c2d_world::dt_inv = 1.0 / clib::c2d_world::dt;
-        clib::c2d_world::last_clock = now;
-        rt->FillRectangle(
-            D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
-            bg
-        );
-        clib::world->step(rt, bounds, brushes);
-        rect = bounds;
     }
+
+	clib::c2d_world::last_clock = now;
+	rt->FillRectangle(
+		D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
+		bg
+	);
+	clib::world->step(rt, bounds, brushes);
+	rect = bounds;
 
     CString logo(_T("2D物理引擎系列 clib-2d @bajdcc"));
 
     rt->DrawText(logo.GetBuffer(0), logo.GetLength(), logoTF->textFormat,
         D2D1::RectF((float)bounds.left + 10, (float)bounds.top + 5, (float)bounds.left + 200, (float)bounds.top + 50), logoBrush);
 
-    logo.Format(_T("FPS: %.1f"), clib::c2d_world::dt_inv);
+    logo.Format(_T("FPS: %.1f"), inv);
     rt->DrawText(logo.GetBuffer(0), logo.GetLength(), logoTF->textFormat,
         D2D1::RectF((float)bounds.right - 100, (float)bounds.top + 5, (float)bounds.right, (float)bounds.top + 50), logoBrush);
 

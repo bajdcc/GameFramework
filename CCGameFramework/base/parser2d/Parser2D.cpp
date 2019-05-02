@@ -97,12 +97,13 @@ void Parser2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
         dt = min(dt, FRAME);
         dt_inv = 1.0 / dt;
         last_clock = now;
-        rt->FillRectangle(
-            D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
-            bg
-        );
-        clib::cgui::singleton().draw(rt, bounds, brushes, paused, dt_inv * FRAME);
     }
+
+	rt->FillRectangle(
+		D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
+		bg
+	);
+	clib::cgui::singleton().draw(rt, bounds, brushes, paused, dt_inv * FRAME);
 
     CString logo(_T("脚本操作系统 clibparser @bajdcc"));
 
