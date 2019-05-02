@@ -1751,7 +1751,7 @@ namespace clib {
     int cvm::output(int id) {
         if (ctx->output_redirect != -1) {
             if (id == 0) {
-                tasks[ctx->output_redirect].input_queue.push_back((char)ctx->ax._i);
+                tasks[ctx->output_redirect].input_queue.push_back(ctx->ax._c);
             }
             else {
                 auto s = output_fmt(id);
@@ -1760,7 +1760,7 @@ namespace clib {
         }
         else if (global_state.input_lock == -1) {
             if (id == 0) {
-                cgui::singleton().put_char((char)ctx->ax._i);
+                cgui::singleton().put_char(ctx->ax._c);
             }
             else {
                 auto s = output_fmt(id);
@@ -1920,7 +1920,7 @@ namespace clib {
             break;
         case 8:
             if (global_state.input_lock == ctx->id) {
-                cgui::singleton().input_char((char)ctx->ax._i);
+                cgui::singleton().input_char(ctx->ax._c);
             }
             break;
         case 10: {
@@ -2147,6 +2147,11 @@ namespace clib {
             auto h = ctx->ax._i;
             if (ctx->handles.find(h) != ctx->handles.end()) {
                 auto dec = handles[h].data.file;
+                auto c = dec->index();
+                if (c == WAIT_CHAR) {
+                    ctx->pc -= INC_PTR;
+                    return true;
+                }
                 ctx->ax._i = dec->index();
                 if (ctx->ax._i >= 0)
                     dec->advance();

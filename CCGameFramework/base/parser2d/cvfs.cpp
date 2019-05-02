@@ -108,32 +108,6 @@ namespace clib {
         return 0;
     }
 
-    vfs_node_stream_net::vfs_node_stream_net(const vfs_mod_query* mod, vfs_stream_t s, vfs_stream_call* call, const string_t& path) :
-        vfs_node_dec(mod), stream(s), call(call) {
-        content = call->stream_net(stream, path);
-    }
-
-    bool vfs_node_stream_net::available() const {
-        return idx < content.length();
-    }
-
-    int vfs_node_stream_net::index() const {
-        return idx < content.length() ? (content[idx] < 0 ? ' ' : content[idx]) : -1;
-    }
-
-    void vfs_node_stream_net::advance() {
-        if (available())
-            idx++;
-    }
-
-    int vfs_node_stream_net::write(byte c) {
-        return 0;
-    }
-
-    int vfs_node_stream_net::truncate() {
-        return 0;
-    }
-
     // -------------------------------------------
 
     cvfs::cvfs() {

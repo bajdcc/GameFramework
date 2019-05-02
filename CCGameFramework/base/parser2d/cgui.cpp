@@ -187,6 +187,13 @@ namespace clib {
                         (float)bounds.left + x + GUI_FONT_W, (float)bounds.top + y + GUI_FONT_H_2), b);
                     b.Release();
                 }
+                else if (buffer[i * cols + j] < 0) {
+                    rt->CreateSolidColorBrush(D2D1::ColorF(colors_fg[i * cols + j]), &b);
+                    rt->FillRectangle(
+                        D2D1::RectF((float)bounds.left + x, (float)bounds.top + y + GUI_FONT_H_1,
+                        (float)bounds.left + x + GUI_FONT_W, (float)bounds.top + y + GUI_FONT_H_2), b);
+                    b.Release();
+                }
                 x += GUI_FONT_W;
             }
             x = old_x;

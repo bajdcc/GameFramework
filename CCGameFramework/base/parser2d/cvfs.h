@@ -12,6 +12,7 @@
 #include "memory.h"
 
 #define FILE_ROOT "./script/code"
+#define WAIT_CHAR 0x10000
 
 namespace clib {
 
@@ -129,21 +130,6 @@ namespace clib {
     private:
         vfs_stream_t stream{ fss_none };
         vfs_stream_call* call{ nullptr };
-    };
-
-    class vfs_node_stream_net : public vfs_node_dec {
-        friend class cvfs;
-    public:
-        bool available() const override;
-        int index() const override;
-        void advance() override;
-        int write(byte c) override;
-        int truncate() override;
-        explicit vfs_node_stream_net(const vfs_mod_query*, vfs_stream_t, vfs_stream_call*, const string_t& path);
-    private:
-        vfs_stream_t stream{ fss_none };
-        vfs_stream_call* call{ nullptr };
-        string_t content;
     };
 
     class cvfs : public vfs_mod_query {
