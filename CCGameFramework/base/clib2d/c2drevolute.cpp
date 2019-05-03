@@ -52,16 +52,21 @@ namespace clib {
     }
 
     void c2d_revolute_joint::draw(CComPtr<ID2D1RenderTarget>& rt, const CRect& bounds, const clib::BrushBag& brushes) {
+        if (a->statics && b->statics) return;
         auto centerA = a->world();
         auto anchorA = world_anchor_a();
         auto centerB = b->world();
         auto anchorB = world_anchor_b();
 
+        auto str = min(std::log2(1 + p_acc.magnitude()), 10.0) * 0.2;
+        CComPtr<ID2D1SolidColorBrush> line;
+        rt->CreateSolidColorBrush(D2D1::ColorF(1 - str, 0.2, 0.2 + str), &line);
+
         if (!a->statics) {
-            rt->DrawLine(c2d_world::transform(bounds, centerA), c2d_world::transform(bounds, anchorA), brushes.static_body);
+            rt->DrawLine(c2d_world::transform(bounds, centerA), c2d_world::transform(bounds, anchorA), line);
         }
         if (!b->statics) {
-            rt->DrawLine(c2d_world::transform(bounds, centerB), c2d_world::transform(bounds, anchorB), brushes.static_body);
+            rt->DrawLine(c2d_world::transform(bounds, centerB), c2d_world::transform(bounds, anchorB), line);
         }
     }
 

@@ -61,8 +61,26 @@ namespace clib {
         }
     };
 
+    enum c2d_brush_t {
+        b_static,
+        b_sleep,
+        b_normal,
+        b_coll,
+        b_F,
+        b_V,
+        b_D,
+        b_center,
+        b_bounds,
+        b_drag_pt,
+        b_drag_line,
+        b_coll_pt,
+        b_coll_line,
+        b__end,
+    };
+
     struct BrushBag {
-        CComPtr<ID2D1SolidColorBrush> static_body; CColor static_body_color;
+        std::vector<CComPtr<ID2D1SolidColorBrush>> brushes;
+        std::vector<CColor> colors;
     };
 }
 

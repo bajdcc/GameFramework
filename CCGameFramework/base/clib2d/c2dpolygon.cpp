@@ -223,7 +223,7 @@ namespace clib {
         if (statics) { // 画静态物体
             auto k = verticesWorld.back();
             for (auto& v : verticesWorld) {
-                rt->DrawLine(c2d_world::transform(bounds, k), c2d_world::transform(bounds, v), brushes.static_body);
+                rt->DrawLine(c2d_world::transform(bounds, k), c2d_world::transform(bounds, v), brushes.brushes[b_static]);
                 k = v;
             }
             return;
@@ -232,17 +232,31 @@ namespace clib {
         if (sleep) { // 画休眠物体
             auto k = verticesWorld.back();
             for (auto& v : verticesWorld) {
-                rt->DrawLine(c2d_world::transform(bounds, k), c2d_world::transform(bounds, v), brushes.static_body);
+                rt->DrawLine(c2d_world::transform(bounds, k), c2d_world::transform(bounds, v), brushes.brushes[b_sleep]);
                 k = v;
             }
             return;
         }
 #endif
+        rt->DrawRectangle(D2D1::RectF(
+            c2d_world::transform_pt_x(bounds, boundMin.x),
+            c2d_world::transform_pt_y(bounds, boundMax.y),
+            c2d_world::transform_pt_x(bounds, boundMax.x),
+            c2d_world::transform_pt_y(bounds, boundMin.y)), brushes.brushes[b_bounds]);
         auto k = verticesWorld.back();
         for (auto& v : verticesWorld) {
-            rt->DrawLine(c2d_world::transform(bounds, k), c2d_world::transform(bounds, v), brushes.static_body);
+            rt->DrawLine(c2d_world::transform(bounds, k), c2d_world::transform(bounds, v), brushes.brushes[b_normal]);
             k = v;
         }
+        auto p = pos + center;
+        auto v = p + V * 0.2;
+        rt->DrawLine(c2d_world::transform(bounds, p), c2d_world::transform(bounds, v2(
+            p.x + (Fa.x >= 0 ? 0.2 : -0.2) * std::log10(1 + std::abs(Fa.x) * 5),
+            p.y + (Fa.y >= 0 ? 0.2 : -0.2) * std::log10(1 + std::abs(Fa.y) * 5))), brushes.brushes[b_F]);
+        rt->DrawLine(c2d_world::transform(bounds, p), c2d_world::transform(bounds, v), brushes.brushes[b_V]);
+        rt->DrawLine(c2d_world::transform(bounds, p), c2d_world::transform(bounds, v2(
+            p.x + R.x1 * 0.2, p.y + R.x2 * 0.2)), brushes.brushes[b_D]);
+        rt->FillEllipse(D2D1::Ellipse(c2d_world::transform(bounds, p), 1.0f, 1.0f), brushes.brushes[b_center]);
     }
 
     v2 c2d_polygon::edge(size_t idx) const {

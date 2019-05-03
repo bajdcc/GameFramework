@@ -13,6 +13,8 @@ void Clib2DEngine::Render(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
     RenderByType(rt, bounds);
 }
 
+#define MAKE_COLOR(r,g,b) CColor((BYTE)(255 * r), (BYTE)(255 * g), (BYTE)(255 * b))
+
 void Clib2DEngine::Initialize(std::shared_ptr<Direct2DRenderTarget> rt)
 {
     clib::world = new clib::c2d_world();
@@ -23,8 +25,22 @@ void Clib2DEngine::Initialize(std::shared_ptr<Direct2DRenderTarget> rt)
     logoFont.italic = false;
     logoFont.underline = false;
     logoColor = CColor(255, 255, 255);
-    brushes.static_body_color = CColor(225, 225, 225);
+    brushes.colors.push_back(MAKE_COLOR(0.9f, 0.9f, 0.9f));
+    brushes.colors.push_back(MAKE_COLOR(0.3f, 0.3f, 0.3f));
+    brushes.colors.push_back(MAKE_COLOR(0.8f, 0.8f, 0.0f));
+    brushes.colors.push_back(MAKE_COLOR(0.8f, 0.2f, 0.4f));
+    brushes.colors.push_back(MAKE_COLOR(0.8f, 0.2f, 0.2f));
+    brushes.colors.push_back(MAKE_COLOR(0.0f, 1.0f, 0.0f));
+    brushes.colors.push_back(MAKE_COLOR(0.2f, 0.2f, 0.2f));
+    brushes.colors.push_back(MAKE_COLOR(0.0f, 1.0f, 0.0f));
+    brushes.colors.push_back(MAKE_COLOR(0.12f, 0.12f, 0.12f));
+    brushes.colors.push_back(MAKE_COLOR(0.9f, 0.7f, 0.4f));
+    brushes.colors.push_back(MAKE_COLOR(0.6f, 0.6f, 0.6f));
+    brushes.colors.push_back(MAKE_COLOR(1.0f, 0.2f, 0.2f));
+    brushes.colors.push_back(MAKE_COLOR(0.2f, 0.5f, 0.4f));
 }
+
+#undef MAKE_COLOR
 
 void Clib2DEngine::Finalize(std::shared_ptr<Direct2DRenderTarget> rt)
 {
@@ -35,19 +51,24 @@ void Clib2DEngine::Reset(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget, 
 {
     if (oldRenderTarget.get() == newRenderTarget.get())
         return;
+    using namespace clib;
     if (oldRenderTarget)
     {
         oldRenderTarget->DestroyDirect2DBrush(bgColor); bg = nullptr;
         oldRenderTarget->DestroyDirect2DTextFormat(logoFont); logoTF = nullptr;
         oldRenderTarget->DestroyDirect2DBrush(logoColor); logoBrush = nullptr;
-        oldRenderTarget->DestroyDirect2DBrush(brushes.static_body_color);
+        for (int i = b_static; i < b__end; ++i) {
+            oldRenderTarget->DestroyDirect2DBrush(brushes.colors[i]);
+        }
     }
     if (newRenderTarget)
     {
         bg = newRenderTarget->CreateDirect2DBrush(bgColor);
         logoTF = newRenderTarget->CreateDirect2DTextFormat(logoFont);
         logoBrush = newRenderTarget->CreateDirect2DBrush(logoColor);
-        brushes.static_body = newRenderTarget->CreateDirect2DBrush(brushes.static_body_color);
+        for (int i = b_static; i < b__end; ++i) {
+            brushes.brushes.push_back(newRenderTarget->CreateDirect2DBrush(brushes.colors[i]));
+        }
     }
 }
 

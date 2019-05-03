@@ -62,7 +62,7 @@ namespace clib {
         }
 
         // 绘制碰撞情况
-        void draw_collision(const collision& c);
+        void draw_collision(CComPtr<ID2D1RenderTarget>& rt, const CRect& bounds, const clib::BrushBag& brushes, const collision& c);
 
         // https://github.com/erincatto/Box2D/blob/master/Box2D/Dynamics/Contacts/b2ContactSolver.cpp#L324
         // 碰撞计算
@@ -105,6 +105,8 @@ namespace clib {
         static std::string title; // 标题
 
         static D2D1_POINT_2F transform(const CRect& bounds, const v2& v);
+        static FLOAT transform_pt_x(const CRect& bounds, const decimal& v);
+        static FLOAT transform_pt_y(const CRect& bounds, const decimal& v);
         static FLOAT transform_x(const decimal& v);
         static FLOAT transform_y(const decimal& v);
         static v2 translate(const CRect& rect, int x, int y);

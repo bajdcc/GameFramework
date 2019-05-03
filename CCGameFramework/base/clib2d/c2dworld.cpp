@@ -156,7 +156,31 @@ namespace clib {
         }
     }
 
-    void c2d_world::draw_collision(const collision & c) {
+    void c2d_world::draw_collision(CComPtr<ID2D1RenderTarget>& rt, const CRect& bounds, const clib::BrushBag& brushes, const collision & c) {
+        // 绘制A、B经过SAT计算出来的边
+        v2 ptA1, ptA2;
+        const auto typeA = c.bodyA->type();
+        const auto typeB = c.bodyB->type();
+        if (!c.bodyA->statics) {
+            if (typeA == C2D_POLYGON) {
+                auto bodyA = dynamic_cast<c2d_polygon*>(c.bodyA);
+                ptA1 = bodyA->vertex(c.A.polygon.idx);
+                ptA2 = bodyA->vertex(c.A.polygon.idx + 1);
+                rt->DrawLine(c2d_world::transform(bounds, ptA1), c2d_world::transform(bounds, ptA2), brushes.brushes[b_coll_line]);
+            }
+        }
+        if (!c.bodyB->statics) {
+            if (typeB == C2D_POLYGON) {
+                auto bodyB = dynamic_cast<c2d_polygon*>(c.bodyB);
+                auto ptB1 = bodyB->vertex(c.B.polygon.idx);
+                auto ptB2 = bodyB->vertex(c.B.polygon.idx + 1);
+                rt->DrawLine(c2d_world::transform(bounds, ptB1), c2d_world::transform(bounds, ptB2), brushes.brushes[b_coll_line]);
+            }
+        }
+        // 绘制接触点
+        for (auto& contact : c.contacts) {
+            rt->FillEllipse(D2D1::Ellipse(c2d_world::transform(bounds, contact.pos), 1.0f, 1.0f), brushes.brushes[b_coll_pt]);
+        }
     }
 
     void c2d_world::collision_update(collision & c) {
@@ -276,13 +300,18 @@ namespace clib {
             body->draw(rt, bounds, brushes);
         }
         for (auto& col : collisions) {
-            draw_collision(col.second);
+            draw_collision(rt, bounds, brushes, col.second);
         }
         for (auto& joint : joints) {
             joint->draw(rt, bounds, brushes);
         }
 
         if (mouse_drag) {
+            rt->DrawLine(c2d_world::transform(bounds, global_drag),
+                c2d_world::transform(bounds, global_drag + global_drag_offset),
+                brushes.brushes[b_drag_line]);
+            rt->FillEllipse(D2D1::Ellipse(c2d_world::transform(bounds, global_drag), 1.0f, 1.0f), brushes.brushes[b_drag_pt]);
+            rt->FillEllipse(D2D1::Ellipse(c2d_world::transform(bounds, global_drag + global_drag_offset), 1.0f, 1.0f), brushes.brushes[b_drag_pt]);
         }
     }
 
@@ -555,13 +584,22 @@ namespace clib {
 
     D2D1_POINT_2F c2d_world::transform(const CRect & bounds, const v2 & v)
     {
-        return D2D1::Point2F(bounds.left + 0.5f * bounds.Width() + ((float)transform_x(v.x)) * bounds.Width(),
-            bounds.top + 0.5f * bounds.Height() + ((float)transform_y(v.y)) * bounds.Height());
+        return D2D1::Point2F(transform_pt_x(bounds, v.x), transform_pt_y(bounds, v.y));
+    }
+
+    FLOAT c2d_world::transform_pt_x(const CRect& bounds, const decimal& v)
+    {
+        return bounds.left + 0.5f * bounds.Width() + ((float)transform_x(v)) * bounds.Width();
+    }
+
+    FLOAT c2d_world::transform_pt_y(const CRect& bounds, const decimal& v)
+    {
+        return bounds.top + 0.5f * bounds.Height() + ((float)transform_y(v)) * bounds.Height();
     }
 
     FLOAT c2d_world::transform_x(const decimal & v)
     {
-        return (float)v* 0.05f;
+        return (float)v * 0.05f;
     }
 
     FLOAT c2d_world::transform_y(const decimal & v)
