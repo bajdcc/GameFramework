@@ -103,6 +103,19 @@ namespace clib {
         return "";
     }
 
+    void cgui::reset() {
+        if (vm) {
+            vm.reset();
+            gen.reset();
+            running = false;
+            cvm::global_state.input_lock = -1;
+            cvm::global_state.input_content.clear();
+            cvm::global_state.input_waiting_list.clear();
+            cvm::global_state.input_read_ptr = -1;
+            cvm::global_state.input_success = false;
+        }
+    }
+
     void cgui::draw(CComPtr<ID2D1RenderTarget>& rt, const CRect& bounds, const Parser2DEngine::BrushBag& brushes, bool paused, decimal fps) {
         if (!paused) {
             if (cvm::global_state.interrupt) {
@@ -350,8 +363,10 @@ namespace clib {
             std::fill(colors_fg, colors_fg + size, color_fg);
         }
         else {
-            auto end = ptr_rx == cols - 1 && ptr_ry == rows - 1;
-            auto nl = ptr_rx == ptr_x && ptr_rx == cols - 1;
+            auto rx = ptr_rx == -1 ? ptr_x : ptr_rx;
+            auto ry = ptr_ry == -1 ? ptr_y : ptr_ry;
+            auto end = rx == cols - 1 && ry == rows - 1;
+            auto nl = rx == ptr_x && rx == cols - 1;
             if (end) {
                 if (nl) {
                     draw_char(c);

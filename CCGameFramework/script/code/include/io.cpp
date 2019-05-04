@@ -65,17 +65,20 @@ int input_unlock() {
 int input_state() {
     interrupt 13;
 }
+int input_valid() {
+    interrupt 14;
+}
 int input(char *text, int len) {
     int i, c;
     int state = input_lock();
     input_string(text);
-    for (i = 0; i < len && ((c = input_char()) != -1); ++i) {
+    for (i = 0; i < len && ((c = input_valid()) != -1); ++i) {
         if (c <= INPUT_BEGIN) {
             input_unlock();
             text[i] = '\0';
             return c;
         }
-        text[i] = c;
+        text[i] = input_char();
     }
     input_unlock();
     text[i++] = '\0';

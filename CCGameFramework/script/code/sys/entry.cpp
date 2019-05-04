@@ -2,6 +2,7 @@
 #include "/include/shell"
 // WELCOME
 int welcome() {
+    put_string("\f");
     set_fg(0, 240, 240);
     set_bg(10, 10, 10);
     shell("cat /usr/logo.txt");

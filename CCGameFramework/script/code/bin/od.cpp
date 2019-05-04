@@ -3,9 +3,10 @@ char *hex = "0123456789ABCDEF";
 int pipe_x() {
     int c;
     input_lock();
-    while ((c = input_char()) != -1) {
-         put_char(hex[c >> 4]);
-         put_char(hex[c & 0xF]);
+    while ((c = input_valid()) != -1) {
+        c = input_char();
+        put_char(hex[c >> 4]);
+        put_char(hex[c & 0xF]);
     }
     input_unlock();
     return 0;

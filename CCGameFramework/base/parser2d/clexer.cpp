@@ -424,6 +424,7 @@ LEX_T(t) clexer::get_store_##t(int index) const \
     // 参考自：https://github.com/bajdcc/CEval/blob/master/CEval/CEval.cpp#L105
     lexer_t clexer::next_digit() {
         // 假定这里的数字规则是以0-9开头
+        // 0x返回有符号，0X返回无符号
         // 正则：^((?:\d+(\.)?\d*)(?:[eE][+-]?\d+)?)([uU])?([fFdCcSsDiIlL])?$
         // 正则：^0[Xx][0-9A-Fa-f]+$
         // 手动实现atof/atoi，并类型转换
@@ -434,8 +435,8 @@ LEX_T(t) clexer::get_store_##t(int index) const \
         auto i = index;
         auto n = 0ULL, _n = 0ULL;
         auto d = 0.0;
-        if (local() == '0' && (local(1) == 'x' || local(1) == 'x')) {
-            _type = l_uint;
+        if (local() == '0' && (local(1) == 'x' || local(1) == 'X')) {
+            _type = local(1) == 'x' ? l_int : l_uint;
             auto cc = 0;
             // 预先判断十六进制
             for (i += 2; i < length && ((cc = hex2dec(str[i])) != -1); i++) { // 解析整数部分

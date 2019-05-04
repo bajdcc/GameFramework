@@ -62,7 +62,8 @@ void grep(char *rep) {
     string s2 = new_string();
     int *arr = build_next(rep), len = strlen(rep);
     input_lock();
-    while ((c = input_char()) != -1) {
+    while ((c = input_valid()) != -1) {
+        c = input_char();
         if (((char) c) == '\033') {
             append_char(&s, c);
             cmd = 1 - cmd;

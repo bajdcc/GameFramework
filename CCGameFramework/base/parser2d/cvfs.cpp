@@ -47,10 +47,10 @@ namespace clib {
     int vfs_node_solid::index() const {
         auto n = node.lock();
         if (!n)
-            return -2;
+            return READ_EOF + 1;
         if (idx < n->data.size())
             return n->data[idx];
-        return -1;
+        return READ_EOF;
     }
 
     int vfs_node_solid::write(byte c) {
@@ -83,7 +83,7 @@ namespace clib {
     }
 
     int vfs_node_cached::index() const {
-        return idx < cache.length() ? cache[idx] : -1;
+        return idx < cache.length() ? cache[idx] : READ_EOF;
     }
 
     vfs_node_stream::vfs_node_stream(const vfs_mod_query* mod, vfs_stream_t s, vfs_stream_call* call) :

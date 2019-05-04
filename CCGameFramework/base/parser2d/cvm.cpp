@@ -2018,6 +2018,57 @@ namespace clib {
             ctx->ax._i = ctx->input_redirect != -1 ? 0 : 1;
         }
                  break;
+        case 14: {
+            if (ctx->input_redirect != -1) {
+                if (!ctx->input_queue.empty()) {
+                    ctx->ax._i = 0;
+                    break;
+                }
+                else if (!ctx->input_stop) {
+                    ctx->pc -= INC_PTR;
+                    return true;
+                }
+                else {
+                    ctx->input_redirect = -1;
+                }
+            }
+            else if (global_state.input_lock == ctx->id) {
+                if (global_state.input_success) {
+                    if (global_state.input_read_ptr >= (int)global_state.input_content.length()) {
+                        ctx->ax._i = -1;
+                        ctx->pc += INC_PTR;
+                        // INPUT COMPLETE
+                        for (auto& _id : global_state.input_waiting_list) {
+                            if (tasks[_id].flag & CTX_VALID) {
+                                assert(tasks[_id].state == CTS_WAIT);
+                                tasks[_id].state = CTS_RUNNING;
+                            }
+                        }
+                        global_state.input_lock = -1;
+                        global_state.input_waiting_list.clear();
+                        global_state.input_read_ptr = -1;
+                        global_state.input_content.clear();
+                        global_state.input_success = false;
+                        cgui::singleton().input_set(false);
+                        return true;
+                    }
+                    else {
+                        ctx->ax._i = global_state.input_content[global_state.input_read_ptr];
+                        if (ctx->ax._i > 0) {
+                            ctx->ax._i = 0;
+                        }
+                        break;
+                    }
+                }
+                else {
+                    ctx->pc -= INC_PTR;
+                    return true;
+                }
+            }
+            ctx->ax._i = -1;
+            ctx->pc += INC_PTR;
+            return true;
+        }
         case 20: {
             if (global_state.input_lock == -1) {
                 set_resize_id = ctx->id;
@@ -2147,17 +2198,17 @@ namespace clib {
             auto h = ctx->ax._i;
             if (ctx->handles.find(h) != ctx->handles.end()) {
                 auto dec = handles[h].data.file;
-                auto c = dec->index();
-                if (c == WAIT_CHAR) {
+                ctx->ax._i = dec->index();
+                if (ctx->ax._i == WAIT_CHAR) {
                     ctx->pc -= INC_PTR;
                     return true;
                 }
-                ctx->ax._i = dec->index();
-                if (ctx->ax._i >= 0)
+                if (ctx->ax._i < READ_EOF) {
                     dec->advance();
+                }
             }
             else {
-                ctx->ax._i = -3;
+                ctx->ax._i = READ_EOF + 2;
             }
         }
                  break;

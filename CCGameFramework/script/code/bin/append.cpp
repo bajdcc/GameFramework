@@ -5,8 +5,8 @@
 int write_file(int handle) {
     int c, r;
     int state = input_lock();
-    while ((c = input_char()) != -1) {
-        r = write(handle, (char) c);
+    while ((c = input_valid()) != -1) {
+        r = write(handle, (char) input_char());
         if (r < 0) {
             switch (r) {
                 case -1:

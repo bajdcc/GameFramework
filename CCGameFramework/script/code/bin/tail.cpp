@@ -67,7 +67,8 @@ void tail(int n) {
     node *last = (node *) 0;
     string s = new_string();
     input_lock();
-    while ((c = input_char()) != -1) {
+    while ((c = input_valid()) != -1) {
+        c = input_char();
         if (((char) c) == '\033') {
             append_char(&s, c);
             cmd = 1 - cmd;

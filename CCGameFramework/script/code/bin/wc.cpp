@@ -2,7 +2,8 @@
 int wc(int *lines, int *chars) {
     int c;
     input_lock();
-    while ((c = input_char()) != -1) {
+    while ((c = input_valid()) != -1) {
+        c = input_char();
         (*chars)++;
         if (((char) c) == '\n')
             (*lines)++;

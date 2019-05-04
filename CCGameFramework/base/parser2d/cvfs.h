@@ -13,6 +13,7 @@
 
 #define FILE_ROOT "./script/code"
 #define WAIT_CHAR 0x10000
+#define READ_EOF 0x2000
 
 namespace clib {
 

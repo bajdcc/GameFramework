@@ -58,7 +58,8 @@ void head(int n) {
     node *list = (node *) 0;
     string s = new_string();
     input_lock();
-    while ((c = input_char()) != -1) {
+    while ((c = input_valid()) != -1) {
+        c = input_valid();
         if (i < n) {
             if (((char) c) == '\033') {
                 append_char(&s, c);

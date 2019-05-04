@@ -2,9 +2,8 @@
 #include "/include/fs"
 int read_file(int handle) {
     int c;
-    while (c = read(handle), c >= 0) {
-        if (c < 128)
-            put_char((char) c);
+    while (c = read(handle), c < 0x1000) {
+        put_char(c);
     }
     switch (c) {
         case -1:

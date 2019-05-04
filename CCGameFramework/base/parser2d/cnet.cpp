@@ -238,7 +238,7 @@ namespace clib {
 
     int vfs_node_stream_net::index() const {
         if (*received == 0) return WAIT_CHAR;
-        return idx < content.length() ? (content[idx] < 0 ? '\7' : content[idx]) : -1;
+        return idx < content.length() ? content[idx] : READ_EOF;
     }
 
     void vfs_node_stream_net::advance() {

@@ -100,7 +100,7 @@ function M:init_event()
 		UIExt.refresh(CurrentScene.layers.pe2d, code)
 	end
 	self.handler[self.win_event.keydown] = function(this, code, scan, flags)
-		if code < 48 then UIExt.refresh(CurrentScene.layers.pe2d, code | 0x1000) end
+		if code < 48 then UIExt.refresh(CurrentScene.layers.pe2d, code | 0x2000) end
 	end
 	self.handler[self.win_event.timer] = function(this, id)
 		if id == 8 then
@@ -154,6 +154,16 @@ function M:init_menu(info)
 		font_size = 16,
 		click = function(this)
 			UIExt.refresh(CurrentScene.layers.pe2d, -100)
+			UIExt.paint()
+		end
+	}):attach(slider)
+	Button:new({
+		text = 'ÖØÆô',
+		font_family = '¿¬Ìå',
+		track_display = 0,
+		font_size = 16,
+		click = function(this)
+			UIExt.refresh(CurrentScene.layers.pe2d, -101)
 			UIExt.paint()
 		end
 	}):attach(slider)
