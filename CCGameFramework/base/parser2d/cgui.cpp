@@ -172,6 +172,7 @@ namespace clib {
         int x = max((w - width) / 2, 0);
         int y = max((h - height) / 2, 0);
         auto old_x = x;
+        char c;
 
         CComPtr<ID2D1SolidColorBrush> b;
         TCHAR s[2] = { 0 };
@@ -185,22 +186,25 @@ namespace clib {
                         (float)bounds.left + x + GUI_FONT_W, (float)bounds.top + y + GUI_FONT_H_2), b);
                     b.Release();
                 }
-                if (std::isprint(buffer[i * cols + j])) {
-                    rt->CreateSolidColorBrush(D2D1::ColorF(colors_fg[i * cols + j]), &b);
-                    s[0] = buffer[i * cols + j];
-                    rt->DrawText(s, 1, brushes.cmdTF->textFormat,
-                        D2D1::RectF((float)bounds.left + x, (float)bounds.top + y + GUI_FONT_H_1,
-                        (float)bounds.left + x + GUI_FONT_W, (float)bounds.top + y + GUI_FONT_H_2), b);
-                    b.Release();
+                c = buffer[i * cols + j];
+                if (c > 0) {
+                    if (std::isprint(buffer[i * cols + j])) {
+                        rt->CreateSolidColorBrush(D2D1::ColorF(colors_fg[i * cols + j]), &b);
+                        s[0] = c;
+                        rt->DrawText(s, 1, brushes.cmdTF->textFormat,
+                            D2D1::RectF((float)bounds.left + x, (float)bounds.top + y + GUI_FONT_H_1,
+                            (float)bounds.left + x + GUI_FONT_W, (float)bounds.top + y + GUI_FONT_H_2), b);
+                        b.Release();
+                    }
+                    else if (c == '\7') {
+                        rt->CreateSolidColorBrush(D2D1::ColorF(colors_fg[i * cols + j]), &b);
+                        rt->FillRectangle(
+                            D2D1::RectF((float)bounds.left + x, (float)bounds.top + y + GUI_FONT_H_1,
+                            (float)bounds.left + x + GUI_FONT_W, (float)bounds.top + y + GUI_FONT_H_2), b);
+                        b.Release();
+                    }
                 }
-                else if (buffer[i * cols + j] == '\7') {
-                    rt->CreateSolidColorBrush(D2D1::ColorF(colors_fg[i * cols + j]), &b);
-                    rt->FillRectangle(
-                        D2D1::RectF((float)bounds.left + x, (float)bounds.top + y + GUI_FONT_H_1,
-                        (float)bounds.left + x + GUI_FONT_W, (float)bounds.top + y + GUI_FONT_H_2), b);
-                    b.Release();
-                }
-                else if (buffer[i * cols + j] < 0) {
+                else if (c < 0) {
                     rt->CreateSolidColorBrush(D2D1::ColorF(colors_fg[i * cols + j]), &b);
                     rt->FillRectangle(
                         D2D1::RectF((float)bounds.left + x, (float)bounds.top + y + GUI_FONT_H_1,
@@ -256,7 +260,7 @@ namespace clib {
                 }
             }
             catch (const cexception & e) {
-                std::cout << "[SYSTEM] ERR  | RUNTIME ERROR: " << e.message() << std::endl;
+                ATLTRACE("[SYSTEM] ERR  | RUNTIME ERROR: %s\n", e.message().c_str());
                 vm.reset();
                 gen.reset();
                 running = false;
@@ -710,8 +714,7 @@ namespace clib {
         }
         catch (const cexception & e) {
             gen.reset();
-            std::cout << "[SYSTEM] ERR  | PATH: " << new_path << ", ";
-            std::cout << e.message() << std::endl;
+            ATLTRACE("[SYSTEM] ERR  | PATH: %s, %s\n", new_path.c_str(), e.message().c_str());
             return fail_errno;
         }
     }
@@ -751,8 +754,7 @@ namespace clib {
         }
         if (!input_state)
             return;
-        if (!(std::isprint(c) || c == '\b' || c == '\n' || c == '\r' || c == 4 || c == 7 || c == 26 ||
-            c & GUI_SPECIAL_MASK)) {
+        if (!((c & GUI_SPECIAL_MASK) || std::isprint(c) || c == '\b' || c == '\n' || c == '\r' || c == 4 || c == 7 || c == 26)) {
             ATLTRACE("[SYSTEM] GUI  | Input: %d\n", (int)c);
             return;
         }

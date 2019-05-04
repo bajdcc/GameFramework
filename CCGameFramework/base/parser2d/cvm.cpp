@@ -2200,6 +2200,7 @@ namespace clib {
                 ctx->ax._i = dec->index();
                 if (ctx->ax._i == WAIT_CHAR) {
                     ctx->pc -= INC_PTR;
+                    ctx->ax._i = h;
                     return true;
                 }
                 if (ctx->ax._i < READ_EOF) {

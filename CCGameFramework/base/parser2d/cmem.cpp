@@ -100,8 +100,10 @@ namespace clib {
         }
         if (f != memory_used.end()) {
             f++;
-            if (used_addr + used_size == f->first) {
-                next_flag = false;
+            if (f != memory_used.end()) {
+                if (used_addr + used_size == f->first) {
+                    next_flag = false;
+                }
             }
             f--;
         }
