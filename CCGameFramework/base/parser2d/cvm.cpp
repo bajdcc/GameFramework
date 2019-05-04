@@ -1211,7 +1211,6 @@ namespace clib {
             ctx->bp = 0;
 
             auto _argc = args.size();
-            assert(_argc > 0);
             vmm_pushstack(ctx->sp, EXIT);
             vmm_pushstack(ctx->sp, 4);
             vmm_pushstack(ctx->sp, PUSH);

@@ -163,10 +163,10 @@ namespace clib {
 
     unit* cunit::copy(unit * u) {
         if (u->t == u_token) { // copy token unit
-            return &(*nodes.alloc<unit_collection>()).set_child(u).set_t(u_token_ref).init(this);
+            return &(*nodes.alloc<unit_collection>()).set_skip(false).set_child(u).set_t(u_token_ref).init(this);
         }
         if (u->t == u_rule) { // copy rule unit
-            return &(*nodes.alloc<unit_collection>()).set_child(u).set_t(u_rule_ref).init(this);
+            return &(*nodes.alloc<unit_collection>()).set_skip(false).set_child(u).set_t(u_rule_ref).init(this);
         }
         return u;
     }
@@ -426,21 +426,25 @@ namespace clib {
         }
         {
             // INDIRECT LEFT RECURSION DETECTION
-            std::vector<std::vector<bool>> a(dep), b(dep), r(size);
-            for (size_t i = 0; i < size; ++i) {
-                r[i].resize(size);
-            }
+            // 由于VS的vector在DEBUG下性能太慢，因此选择bitset
+            static const int MAX_SIZE = 512;
+            static const int MAX_SIZE_Q = MAX_SIZE * MAX_SIZE;
+            if (size >= MAX_SIZE) error("exceed max dep size");
+            std::bitset<MAX_SIZE_Q> a, b, r;
             for (size_t l = 2; l < size; ++l) {
                 for (size_t i = 0; i < size; ++i) {
                     for (size_t j = 0; j < size; ++j) {
-                        r[i][j] = false;
+                        r.reset(i * size + j);
                         for (size_t k = 0; k < size; ++k) {
-                            r[i][j] = r[i][j] || (a[i][k] && b[k][j]);
+                            if (a.test(i * size + k) && b.test(k * size + j)) {
+                                r.set(i * size + j);
+                                break;
+                            }
                         }
                     }
                 }
                 for (size_t i = 0; i < size; ++i) {
-                    if (r[i][i]) {
+                    if (r.test(i * (size + 1))) {
                         if (rules_list[i]->recursive < 2)
                             rules_list[i]->recursive = l;
                     }
@@ -1017,9 +1021,10 @@ namespace clib {
                                 [o](auto it) { return it.nga == o->edge->end; })->pda,
                             true);
                         edge.data = node;
-                        edge.type = to_ref(node)->skip ? e_pass : e_move;
-                        token_set.insert(to_ref(node)->child);
-                        decltype(token_set) res{ to_ref(node)->child };
+                        auto n = to_ref(node);
+                        edge.type = n->skip ? e_pass : e_move;
+                        token_set.insert(n->child);
+                        decltype(token_set) res{ n->child };
                         LA.insert(std::make_pair(&edge, res));
                     }
                 }

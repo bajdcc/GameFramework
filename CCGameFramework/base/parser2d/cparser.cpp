@@ -15,6 +15,7 @@
 
 #define TRACE_PARSING 0
 #define DUMP_PDA 0
+#define DUMP_PDA_FILE "PDA.txt"
 #define DEBUG_AST 0
 #define CHECK_AST 0
 
@@ -386,7 +387,8 @@ namespace clib {
         declarationList = *declarationList + declaration;
         unit.gen(&compilationUnit);
 #if DUMP_PDA
-        unit.dump(std::cout);
+        std::ofstream of(DUMP_PDA_FILE);
+        unit.dump(of);
 #endif
     }
 

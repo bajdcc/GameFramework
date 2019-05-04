@@ -31,10 +31,10 @@ namespace clib {
     class unit_builder;
 
     struct unit {
-        unit_t t;
-        unit* next;
-        unit* prev;
-        unit_builder* builder;
+        unit_t t{ u_none };
+        unit* next{ nullptr };
+        unit* prev{ nullptr };
+        unit_builder* builder{ nullptr };
 
         unit& operator=(const unit& u);
         unit& operator+(const unit& u);
@@ -46,7 +46,7 @@ namespace clib {
     };
 
     struct unit_token : public unit {
-        lexer_t type;
+        lexer_t type{ l_none };
         union {
             operator_t op;
             keyword_t keyword;
@@ -58,15 +58,15 @@ namespace clib {
     };
 
     struct unit_collection : public unit {
-        bool skip;
-        unit* child;
+        bool skip{ false };
+        unit* child{ nullptr };
 
         unit_collection& set_skip(bool skip);
         unit_collection& set_child(unit* node);
     };
 
     struct unit_rule : public unit_collection {
-        const char* s;
+        const char* s{ nullptr };
         uint32 attr{ 0 };
 
         unit_rule& set_s(const char* str);
@@ -77,9 +77,9 @@ namespace clib {
     struct nga_edge_list;
 
     struct nga_status {
-        const char* label;
-        bool final;
-        nga_edge_list* in, * out;
+        const char* label{ nullptr };
+        bool final{ false };
+        nga_edge_list* in{ nullptr }, * out{ nullptr };
     };
 
     struct pda_status : public nga_status {
@@ -87,9 +87,9 @@ namespace clib {
     };
 
     struct nga_edge {
-        nga_status* begin, * end;
-        bool skip;
-        unit* data;
+        nga_status* begin{ nullptr }, * end{ nullptr };
+        bool skip{ false };
+        unit* data{ nullptr };
     };
 
     enum pda_edge_t {
@@ -104,12 +104,12 @@ namespace clib {
     };
 
     struct pda_edge : public nga_edge {
-        pda_edge_t type;
+        pda_edge_t type{ e_finish };
     };
 
     struct nga_edge_list {
-        nga_edge_list* prev, * next;
-        nga_edge* edge;
+        nga_edge_list* prev{ nullptr }, * next{ nullptr };
+        nga_edge* edge{ nullptr };
     };
 
     unit_rule* to_rule(unit* u);

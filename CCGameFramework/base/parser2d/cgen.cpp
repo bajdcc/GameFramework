@@ -1460,13 +1460,16 @@ namespace clib {
         auto magic = string_t(PE_MAGIC);
         std::copy((byte*)magic.data(), (byte*)magic.data() + magic.size(), std::back_inserter(file));
         auto addr = std::dynamic_pointer_cast<sym_func_t>(entry->second)->addr;
-        std::copy((byte*)& addr, (byte*)& addr + sizeof(entry), std::back_inserter(file));
+        auto size = sizeof(addr);
+        std::copy((byte*)& addr, ((byte*)& addr) + size, std::back_inserter(file));
         auto data_size = data.size() * sizeof(data[0]);
-        std::copy((byte*)& data_size, (byte*)& data_size + sizeof(data_size), std::back_inserter(file));
+        size = sizeof(data_size);
+        std::copy((byte*)& data_size, ((byte*)& data_size) + size, std::back_inserter(file));
         auto text_size = text.size() * sizeof(text[0]);
-        std::copy((byte*)& text_size, (byte*)& text_size + sizeof(text_size), std::back_inserter(file));
+        size = sizeof(text_size);
+        std::copy((byte*)& text_size, ((byte*)& text_size) + size, std::back_inserter(file));
         std::copy(data.begin(), data.end(), std::back_inserter(file));
-        std::copy((byte*)text.data(), (byte*)text.data() + text_size, std::back_inserter(file));
+        std::copy((byte*)text.data(), ((byte*)text.data()) + text_size, std::back_inserter(file));
         return file;
     }
 

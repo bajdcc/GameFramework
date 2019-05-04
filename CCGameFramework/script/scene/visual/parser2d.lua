@@ -81,7 +81,7 @@ function M:init()
 	-- EVENT
 	self:init_event()
 
-	UIExt.set_timer(8, 33)
+	UIExt.set_timer(8, 500)
 
 	self.resize(self)
 	UIExt.paint()
@@ -104,6 +104,9 @@ function M:init_event()
 	end
 	self.handler[self.win_event.timer] = function(this, id)
 		if id == 8 then
+			UIExt.kill_timer(8)
+			UIExt.set_timer(9, 33)
+		elseif id == 9 then
 			UIExt.paint()
 		end
 	end
