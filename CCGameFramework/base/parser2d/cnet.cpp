@@ -64,6 +64,19 @@ namespace clib {
         return s;
     }
 
+    CString cnet::GBKToStringT(LPCSTR str)
+    {
+        _ASSERT(str);
+        USES_CONVERSION;
+        auto length = MultiByteToWideChar(CP_ACP, 0, str, -1, nullptr, 0);
+        CString s;
+        auto buf = s.GetBuffer(length + 1);
+        ZeroMemory(buf, (length + 1) * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, str, -1, buf, length);
+        s.ReleaseBuffer();
+        return s;
+    }
+
     CStringA cnet::StringTToUtf8(CString str)
     {
         USES_CONVERSION;
@@ -142,9 +155,19 @@ namespace clib {
                 text.resize(bindata.size());
                 text.assign(bindata.begin(), bindata.end());
                 auto ct = CStringA(content_type);
-                if (ct.Find("UTF-8"))
-                    //TODO: 韩语会显示乱码
+                if (ct.Find("UTF-8")) {
                     response->text = CStringA(cnet::Utf8ToStringT(text.c_str()));
+                    auto success = true;
+                    for (size_t i = 0; i < text.length() && i < response->text.length(); ++i) {
+                        if (response->text[i] == 63 && text[i] < 0) {
+                            success = false;
+                            break;
+                        }
+                    }
+                    if (!success) {
+                        response->text = text.c_str();
+                    }
+                }
                 else
                     response->text = text.c_str();
                 auto ev = window->get_event();

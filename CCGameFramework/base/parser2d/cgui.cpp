@@ -176,42 +176,74 @@ namespace clib {
 
         CComPtr<ID2D1SolidColorBrush> b;
         TCHAR s[2] = { 0 };
+        char sc[3] = { 0 };
+        bool ascii = true;
 
         for (auto i = 0; i < rows; ++i) {
             for (auto j = 0; j < cols; ++j) {
-                if (colors_bg[i * cols + j]) {
-                    rt->CreateSolidColorBrush(D2D1::ColorF(colors_bg[i * cols + j]), &b);
-                    rt->FillRectangle(
-                        D2D1::RectF((float)bounds.left + x, (float)bounds.top + y + GUI_FONT_H_1,
-                        (float)bounds.left + x + GUI_FONT_W, (float)bounds.top + y + GUI_FONT_H_2), b);
-                    b.Release();
-                }
+                static WORD wd;
+                ascii = true;
                 c = buffer[i * cols + j];
-                if (c > 0) {
-                    if (std::isprint(buffer[i * cols + j])) {
-                        rt->CreateSolidColorBrush(D2D1::ColorF(colors_fg[i * cols + j]), &b);
-                        s[0] = c;
-                        rt->DrawText(s, 1, brushes.cmdTF->textFormat,
+                if (c < 0 && j < cols - 1) {
+                    wd = (((BYTE)c) << 8) | ((BYTE)buffer[i * cols + j + 1]);
+                    if (wd >= 0x8140 && wd <= 0xFEFE) { // GBK
+                        ascii = false;
+                    }
+                }
+                if (ascii) {
+                    if (colors_bg[i * cols + j]) {
+                        rt->CreateSolidColorBrush(D2D1::ColorF(colors_bg[i * cols + j]), &b);
+                        rt->FillRectangle(
                             D2D1::RectF((float)bounds.left + x, (float)bounds.top + y + GUI_FONT_H_1,
                             (float)bounds.left + x + GUI_FONT_W, (float)bounds.top + y + GUI_FONT_H_2), b);
                         b.Release();
                     }
-                    else if (c == '\7') {
+                    if (c > 0) {
+                        if (std::isprint(buffer[i * cols + j])) {
+                            rt->CreateSolidColorBrush(D2D1::ColorF(colors_fg[i * cols + j]), &b);
+                            s[0] = c;
+                            rt->DrawText(s, 1, brushes.cmdTF->textFormat,
+                                D2D1::RectF((float)bounds.left + x, (float)bounds.top + y + GUI_FONT_H_1,
+                                (float)bounds.left + x + GUI_FONT_W, (float)bounds.top + y + GUI_FONT_H_2), b);
+                            b.Release();
+                        }
+                        else if (c == '\7') {
+                            rt->CreateSolidColorBrush(D2D1::ColorF(colors_fg[i * cols + j]), &b);
+                            rt->FillRectangle(
+                                D2D1::RectF((float)bounds.left + x, (float)bounds.top + y + GUI_FONT_H_1,
+                                (float)bounds.left + x + GUI_FONT_W, (float)bounds.top + y + GUI_FONT_H_2), b);
+                            b.Release();
+                        }
+                    }
+                    else if (c < 0) {
                         rt->CreateSolidColorBrush(D2D1::ColorF(colors_fg[i * cols + j]), &b);
                         rt->FillRectangle(
                             D2D1::RectF((float)bounds.left + x, (float)bounds.top + y + GUI_FONT_H_1,
                             (float)bounds.left + x + GUI_FONT_W, (float)bounds.top + y + GUI_FONT_H_2), b);
                         b.Release();
                     }
+                    x += GUI_FONT_W;
                 }
-                else if (c < 0) {
+                else {
+                    if (colors_bg[i * cols + j]) {
+                        rt->CreateSolidColorBrush(D2D1::ColorF(colors_bg[i * cols + j]), &b);
+                        rt->FillRectangle(
+                            D2D1::RectF((float)bounds.left + x, (float)bounds.top + y + GUI_FONT_H_1,
+                            (float)bounds.left + x + GUI_FONT_W * 2, (float)bounds.top + y + GUI_FONT_H_2), b);
+                        b.Release();
+                    }
+                    sc[0] = c;
+                    sc[1] = buffer[i * cols + j + 1];
+                    auto utf = cnet::GBKToStringT(sc);
+                    s[0] = (TCHAR)(utf[0]);
+                    j++;
                     rt->CreateSolidColorBrush(D2D1::ColorF(colors_fg[i * cols + j]), &b);
-                    rt->FillRectangle(
-                        D2D1::RectF((float)bounds.left + x, (float)bounds.top + y + GUI_FONT_H_1,
-                        (float)bounds.left + x + GUI_FONT_W, (float)bounds.top + y + GUI_FONT_H_2), b);
+                    rt->DrawText(s, 1, brushes.cmdTF->textFormat,
+                        D2D1::RectF((float)bounds.left + x + GUI_FONT_W_C1, (float)bounds.top + y + GUI_FONT_H_C1,
+                        (float)bounds.left + x + GUI_FONT_W_C2, (float)bounds.top + y + GUI_FONT_H_C2), b);
                     b.Release();
+                    x += GUI_FONT_W * 2;
                 }
-                x += GUI_FONT_W;
             }
             x = old_x;
             y += GUI_FONT_H;

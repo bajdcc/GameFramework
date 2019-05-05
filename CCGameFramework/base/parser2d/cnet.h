@@ -21,6 +21,7 @@ namespace clib {
         string_t http_get(const string_t& url);
 
         static CString Utf8ToStringT(LPCSTR str);
+        static CString GBKToStringT(LPCSTR str);
         static CStringA StringTToUtf8(CString str);
 
         static int get_id();
