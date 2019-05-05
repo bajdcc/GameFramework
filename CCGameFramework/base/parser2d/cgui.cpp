@@ -178,17 +178,25 @@ namespace clib {
         TCHAR s[2] = { 0 };
         char sc[3] = { 0 };
         bool ascii = true;
+        bool ascii_head = false;
 
         for (auto i = 0; i < rows; ++i) {
             for (auto j = 0; j < cols; ++j) {
                 static WORD wd;
                 ascii = true;
                 c = buffer[i * cols + j];
-                if (c < 0 && j < cols - 1) {
+                if (c < 0) {
                     wd = (((BYTE)c) << 8) | ((BYTE)buffer[i * cols + j + 1]);
                     if (wd >= 0x8140 && wd <= 0xFEFE) { // GBK
-                        ascii = false;
+                        if (j < cols - 1)
+                            ascii = false;
+                        else
+                            ascii_head = true;
                     }
+                }
+                if (j == 0 && ascii_head) {
+                    ascii_head = false;
+                    ascii = true;
                 }
                 if (ascii) {
                     if (colors_bg[i * cols + j]) {

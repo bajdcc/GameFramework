@@ -59,7 +59,7 @@ void head(int n) {
     string s = new_string();
     input_lock();
     while ((c = input_valid()) != -1) {
-        c = input_valid();
+        c = input_char();
         if (i < n) {
             if (((char) c) == '\033') {
                 append_char(&s, c);
