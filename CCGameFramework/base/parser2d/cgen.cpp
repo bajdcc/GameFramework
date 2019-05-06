@@ -257,8 +257,11 @@ namespace clib {
     }
 
     int type_typedef_t::size(sym_size_t t) const {
-        if (t == x_inc)
+        if (t == x_inc) {
+            if (ptr > 0)
+                return sizeof(void*);
             return refer.lock()->size(t);
+        }
         if (ptr > 0)
             return sizeof(void*);
         return refer.lock()->size(t);

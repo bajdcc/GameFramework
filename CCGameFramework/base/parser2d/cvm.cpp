@@ -2227,7 +2227,7 @@ namespace clib {
         }
         case 69: {
             auto h = ctx->ax._i >> 16;
-            auto c = ctx->ax._i & 0xFFFF;
+            auto c = (ctx->ax._i & 0xFFFF) - 0x1000;
             if (ctx->handles.find(h) != ctx->handles.end()) {
                 auto dec = handles[h].data.file;
                 ctx->ax._i = dec->write((byte)c);

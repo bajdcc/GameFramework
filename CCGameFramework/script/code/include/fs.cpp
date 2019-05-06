@@ -42,7 +42,7 @@ int rm(char *s) {
     interrupt 68;
 }
 int write(int handle, char c) {
-    handle << 16 | c;
+    handle << 16 | (c + 0x1000);
     interrupt 69;
 }
 int truncate(int handle) {

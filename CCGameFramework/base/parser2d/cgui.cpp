@@ -246,7 +246,7 @@ namespace clib {
                     s[0] = (TCHAR)(utf[0]);
                     j++;
                     rt->CreateSolidColorBrush(D2D1::ColorF(colors_fg[i * cols + j]), &b);
-                    rt->DrawText(s, 1, brushes.cmdTF->textFormat,
+                    rt->DrawText(s, 1, brushes.gbkTF->textFormat,
                         D2D1::RectF((float)bounds.left + x + GUI_FONT_W_C1, (float)bounds.top + y + GUI_FONT_H_C1,
                         (float)bounds.left + x + GUI_FONT_W_C2, (float)bounds.top + y + GUI_FONT_H_C2), b);
                     b.Release();

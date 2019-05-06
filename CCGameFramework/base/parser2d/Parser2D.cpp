@@ -29,6 +29,11 @@ void Parser2DEngine::Initialize(std::shared_ptr<Direct2DRenderTarget> rt)
     brushes.cmdFont.bold = false;
     brushes.cmdFont.italic = false;
     brushes.cmdFont.underline = false;
+    brushes.gbkFont.size = 16;
+    brushes.gbkFont.fontFamily = "楷体";
+    brushes.gbkFont.bold = false;
+    brushes.gbkFont.italic = false;
+    brushes.gbkFont.underline = false;
     logoColor = CColor(255, 255, 255);
     last_clock = std::chrono::system_clock::now();
     dt = 30;
@@ -49,6 +54,8 @@ void Parser2DEngine::Reset(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget
         oldRenderTarget->DestroyDirect2DBrush(bgColor); bg = nullptr;
         oldRenderTarget->DestroyDirect2DTextFormat(logoFont); logoTF = nullptr;
         oldRenderTarget->DestroyDirect2DBrush(logoColor); logoBrush = nullptr;
+        oldRenderTarget->DestroyDirect2DTextFormat(brushes.cmdFont); brushes.cmdTF = nullptr;
+        oldRenderTarget->DestroyDirect2DTextFormat(brushes.gbkFont); brushes.gbkTF = nullptr;
     }
     if (newRenderTarget)
     {
@@ -56,6 +63,7 @@ void Parser2DEngine::Reset(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget
         logoTF = newRenderTarget->CreateDirect2DTextFormat(logoFont);
         logoBrush = newRenderTarget->CreateDirect2DBrush(logoColor);
         brushes.cmdTF = newRenderTarget->CreateDirect2DTextFormat(brushes.cmdFont);
+        brushes.gbkTF = newRenderTarget->CreateDirect2DTextFormat(brushes.gbkFont);
     }
 }
 
