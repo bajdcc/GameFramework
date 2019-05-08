@@ -10,7 +10,8 @@ int welcome() {
     restore_bg();
     put_string("\n\n");
     set_fg(160, 160, 160);
-    put_string("Welcome to @clibos system by bajdcc!\n\n");
+    put_string("Welcome to @clibos system by bajdcc!\n");
+    put_string("欢迎来到脚本操作系统！\n\n");
     put_string("# Type \"help\" for help.\n\n");
     restore_fg();
 }

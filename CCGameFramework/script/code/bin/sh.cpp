@@ -34,6 +34,18 @@ int exec_single(char *text, int *total) {
     if (strncmp(text, "/sys/", 5) == 0) {
         return -3;
     }
+    if (strncmp(text, "/", 1) != 0) {
+        char* path = malloc(200);
+        pwd(path);
+        strcat(path, "/");
+        strcat(path, text);
+        int pid = exec_sleep(path);
+        free(path);
+        if (pid >= 0) {
+            (*total)++;
+            return pid;
+        }
+    }
     (*total)++;
     return exec_sleep(text);
 }
