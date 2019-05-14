@@ -592,6 +592,10 @@ namespace clib {
         memory.free(old_bg);
     }
 
+    CSize cgui::get_size() const {
+        return { cols * GUI_FONT_W, rows * GUI_FONT_H };
+    }
+
     void cgui::load_dep(string_t & path, std::unordered_set<string_t> & deps) {
         auto f = cache_code.find(path);
         if (f != cache_code.end()) {

@@ -64,6 +64,31 @@ void Parser2DEngine::Reset(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget
         logoBrush = newRenderTarget->CreateDirect2DBrush(logoColor);
         brushes.cmdTF = newRenderTarget->CreateDirect2DTextFormat(brushes.cmdFont);
         brushes.gbkTF = newRenderTarget->CreateDirect2DTextFormat(brushes.gbkFont);
+
+        auto size = clib::cgui::singleton().get_size();
+        auto wic = newRenderTarget->CreateBitmap(size.cx, size.cy);
+        WICRect rect;
+        rect.X = 0;
+        rect.Y = 0;
+        rect.Width = size.cx;
+        rect.Height = size.cy;
+        buffer_mem.resize(rect.Width * rect.Height * sizeof(COLORREF));
+        buffer = buffer_mem.data();
+        auto hr = wic->CopyPixels(&rect, rect.Width * 4, rect.Width * rect.Height * 4, buffer);
+        d2drect = D2D1::RectU(0, 0, rect.Width, rect.Height);
+        bitmap = newRenderTarget->GetBitmapFromWIC(wic);
+        auto b = buffer;
+        for (auto y = 0; y < rect.Height; y++)
+        {
+            for (auto x = 0; x < rect.Width; x++)
+            {
+                b[0] = 128;
+                b[1] = 128;
+                b[2] = 128;
+                b[3] = 255;
+                b += 4;
+            }
+        }
     }
 }
 
@@ -111,12 +136,21 @@ void Parser2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
         last_clock = now;
     }
 
-	rt->FillRectangle(
-		D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
-		bg
-	);
-	clib::cgui::singleton().draw(rt, bounds, brushes, paused, dt_inv * FRAME);
-
+    rt->FillRectangle(
+        D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
+        bg
+    );
+    clib::cgui::singleton().draw(rt, bounds, brushes, paused, dt_inv * FRAME);
+    if (clib::cvm::global_state.gui && buffer)
+    {
+        bitmap->CopyFromMemory(&d2drect, buffer, rect.Width * 4);
+        rt->DrawBitmap(
+            bitmap,
+            D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
+            1.0f,
+            D2D1_BITMAP_INTERPOLATION_MODE_LINEAR
+        );
+    }
     CString logo(_T("脚本操作系统 clibparser @bajdcc"));
 
     rt->DrawText(logo.GetBuffer(0), logo.GetLength(), logoTF->textFormat,

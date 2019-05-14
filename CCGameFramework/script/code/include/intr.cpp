@@ -49,4 +49,6 @@ enum INTR_TABLE {
     INTR_TIMESTAMP = 102,
     // MATH
     INTR_MATH_SQRT = 201,
+    // GUI
+    INTR_GUI_ENABLE = 301,
 };

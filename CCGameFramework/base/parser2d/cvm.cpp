@@ -1897,10 +1897,28 @@ namespace clib {
         return false;
     }
 
+    bool cvm::gui(int id) {
+        switch (id) {
+        case 301:
+            global_state.gui = ctx->ax._i != 0;
+            break;
+        default:
+#if LOG_SYSTEM
+            ATLTRACE("[SYSTEM] ERR  | unknown interrupt: %d\n", ctx->ax._i);
+#endif
+            error("unknown interrupt");
+            break;
+        }
+        ctx->pc += INC_PTR;
+        return false;
+    }
+
     bool cvm::interrupt() {
         auto id = vmm_get(ctx->pc);
         if (id > 200 && id < 300)
             return math(id);
+        if (id >= 300 && id < 400)
+            return gui(id);
         switch (id) {
         case 0:
         case 1:

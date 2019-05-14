@@ -153,6 +153,7 @@ namespace clib {
         int output(int id);
         bool interrupt();
         bool math(int id);
+        bool gui(int id);
         void cast();
 
         void init_fs();
@@ -269,6 +270,7 @@ namespace clib {
             bool input_success{ false };
             int input_read_ptr{ -1 };
             string_t hostname{ "ccos" };
+            bool gui{ false };
         } global_state;
     };
 }

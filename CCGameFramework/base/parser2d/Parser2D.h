@@ -32,6 +32,13 @@ private:
     CComPtr<ID2D1SolidColorBrush> logoBrush;
 
 private:
+    std::vector<BYTE> buffer_mem;
+    BYTE* buffer{ nullptr };
+    CComPtr<ID2D1Bitmap> bitmap;
+    WICRect rect;
+    D2D1_RECT_U d2drect;
+
+private:
     std::chrono::system_clock::time_point last_clock;
     double dt{ 0 };
     double dt_inv{ 0 };

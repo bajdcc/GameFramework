@@ -58,6 +58,7 @@ namespace clib {
         void set_cycle(int cycle);
         void set_ticks(int ticks);
         void resize(int rows, int cols);
+        CSize get_size() const;
 
         void input_set(bool valid);
         void input(int c);
