@@ -449,7 +449,7 @@ LEX_T(t) clexer::get_store_##t(int index) const \
                     n <<= 4;
                     n += cc;
                 }
-                if (_type == l_uint) { // 超过uint范围，转为ulong
+                if (_type == l_uint || _type == l_int) { // 超过uint范围，转为ulong
                     if (n > INT_MAX)
                         _type = l_ulong;
                 }

@@ -17,6 +17,7 @@
 #include "cmem.h"
 #include "cvfs.h"
 #include "cnet.h"
+#include "cui.h"
 
 namespace clib {
 
@@ -249,10 +250,10 @@ namespace clib {
         cnet net;
 
         struct handle_t {
-            handle_type type;
+            handle_type type{ h_none };
             string_t name;
             union {
-                vfs_node_dec* file;
+                vfs_node_dec* file{ nullptr };
             } data;
         };
         int handle_ids{ 0 };
@@ -271,6 +272,7 @@ namespace clib {
             int input_read_ptr{ -1 };
             string_t hostname{ "ccos" };
             bool gui{ false };
+            cgui_op* ui{ nullptr };
         } global_state;
     };
 }

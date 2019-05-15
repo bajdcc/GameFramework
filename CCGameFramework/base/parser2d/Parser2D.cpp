@@ -39,10 +39,12 @@ void Parser2DEngine::Initialize(std::shared_ptr<Direct2DRenderTarget> rt)
     dt = 30;
     dt_inv = 1.0 / dt;
     g_argc = 0;
+    clib::cvm::global_state.ui = this;
 }
 
 void Parser2DEngine::Finalize(std::shared_ptr<Direct2DRenderTarget> rt)
 {
+    clib::cvm::global_state.ui = nullptr;
 }
 
 void Parser2DEngine::Reset(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget, std::shared_ptr<Direct2DRenderTarget> newRenderTarget)
@@ -67,7 +69,6 @@ void Parser2DEngine::Reset(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget
 
         auto size = clib::cgui::singleton().get_size();
         auto wic = newRenderTarget->CreateBitmap(size.cx, size.cy);
-        WICRect rect;
         rect.X = 0;
         rect.Y = 0;
         rect.Width = size.cx;

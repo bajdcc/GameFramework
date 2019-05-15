@@ -1,9 +1,10 @@
 #ifndef PARSER2D_PARSER2D_H
 #define PARSER2D_PARSER2D_H
 #include "render/Direct2DAllocator.h"
+#include "cui.h"
 #include <memory>
 
-class Parser2DEngine
+class Parser2DEngine : public cgui_op
 {
 public:
     void RenderByType(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
@@ -20,8 +21,15 @@ public:
         Font gbkFont; std::shared_ptr<D2DTextFormatPackage> gbkTF;
     } brushes;
 
+    void move_to(int x, int y) override;
+    void line_to(int x, int y) override;
+
 private:
     void RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
+
+    bool check_cord(int x, int y);
+    void bresenham(int x0, int y0, int x1, int y1);
+    bool setpixel(int x, int y);
 
 private:
     CComPtr<ID2D1SolidColorBrush> bg;
@@ -37,6 +45,9 @@ private:
     CComPtr<ID2D1Bitmap> bitmap;
     WICRect rect;
     D2D1_RECT_U d2drect;
+
+    CPoint cur_pt;
+    CColor cur_bursh;
 
 private:
     std::chrono::system_clock::time_point last_clock;

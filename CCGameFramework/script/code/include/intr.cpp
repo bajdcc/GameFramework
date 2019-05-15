@@ -51,4 +51,6 @@ enum INTR_TABLE {
     INTR_MATH_SQRT = 201,
     // GUI
     INTR_GUI_ENABLE = 301,
+    INTR_GUI_LINETO = 302,
+    INTR_GUI_MOVETO = 303,
 };

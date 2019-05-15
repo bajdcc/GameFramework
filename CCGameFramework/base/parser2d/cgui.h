@@ -13,6 +13,7 @@
 #include "cparser.h"
 #include "cgen.h"
 #include "parser2d.h"
+#include "cui.h"
 
 #define GUI_FONT GLUT_BITMAP_9_BY_15
 #define GUI_FONT_W 9

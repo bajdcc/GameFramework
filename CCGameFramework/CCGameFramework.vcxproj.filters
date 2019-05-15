@@ -520,6 +520,9 @@
     <ClInclude Include="base\parser2d\Parser2D.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="base\parser2d\cui.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -852,42 +855,6 @@
     <ClCompile Include="base\clib2d\v2.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="base\parser\cast.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="base\parser\cexception.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="base\parser\cgen.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="base\parser\cgui.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="base\parser\clexer.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="base\parser\cmem.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="base\parser\cnet.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="base\parser\cparser.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="base\parser\cunit.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="base\parser\cvfs.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="base\parser\cvm.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="base\parser\types.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="base\parser2d\cast.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -928,6 +895,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="base\parser2d\Parser2DRender.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\parser2d\cui.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

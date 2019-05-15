@@ -1902,6 +1902,20 @@ namespace clib {
         case 301:
             global_state.gui = ctx->ax._i != 0;
             break;
+        case 302:
+        {
+            auto x = ctx->ax._ui >> 16;
+            auto y = ctx->ax._ui & 0xFFFF;
+            global_state.ui->move_to(x, y);
+        }
+            break;
+        case 303:
+        {
+            auto x = ctx->ax._ui >> 16;
+            auto y = ctx->ax._ui & 0xFFFF;
+            global_state.ui->line_to(x, y);
+        }
+            break;
         default:
 #if LOG_SYSTEM
             ATLTRACE("[SYSTEM] ERR  | unknown interrupt: %d\n", ctx->ax._i);
@@ -2147,8 +2161,8 @@ namespace clib {
             return true;
         }
         case 56: {
-            auto left = ctx->ax._i >> 16;
-            auto right = ctx->ax._i & 0xFFFF;
+            auto left = ctx->ax._ui >> 16;
+            auto right = ctx->ax._ui & 0xFFFF;
             if ((left == ctx->id || ctx->child.find(left) != ctx->child.end()) &&
                 (right == ctx->id || ctx->child.find(right) != ctx->child.end())) {
                 tasks[right].input_redirect = left;
@@ -2244,8 +2258,8 @@ namespace clib {
             ctx->ax._i = fs.rm_safe(trim(vmm_getstr((uint32_t)ctx->ax._i)));
         }
         case 69: {
-            auto h = ctx->ax._i >> 16;
-            auto c = (ctx->ax._i & 0xFFFF) - 0x1000;
+            auto h = ctx->ax._ui >> 16;
+            auto c = (ctx->ax._ui & 0xFFFF) - 0x1000;
             if (ctx->handles.find(h) != ctx->handles.end()) {
                 auto dec = handles[h].data.file;
                 ctx->ax._i = dec->write((byte)c);
