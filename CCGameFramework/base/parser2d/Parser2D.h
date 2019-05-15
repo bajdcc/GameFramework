@@ -23,11 +23,14 @@ public:
 
     void move_to(int x, int y) override;
     void line_to(int x, int y) override;
+    void draw_point(int x, int y) override;
+    int get_width() const override;
+    int get_height() const override;
 
 private:
     void RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
 
-    bool check_cord(int x, int y);
+    bool check_cord(int x, int y) const;
     void bresenham(int x0, int y0, int x1, int y1);
     bool setpixel(int x, int y);
 

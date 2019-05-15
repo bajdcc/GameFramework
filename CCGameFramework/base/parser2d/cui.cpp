@@ -8,7 +8,7 @@
 
 // 光栅化算法
 
-bool Parser2DEngine::check_cord(int x, int y)
+bool Parser2DEngine::check_cord(int x, int y) const
 {
     return x > 0 && y > 0 && x <= rect.Height && y <= rect.Width;
 }
@@ -53,4 +53,21 @@ void Parser2DEngine::line_to(int x, int y)
         cur_pt.x = x;
         cur_pt.y = y;
     }
+}
+
+void Parser2DEngine::draw_point(int x, int y)
+{
+    if (check_cord(x, y)) {
+        setpixel(x, y);
+    }
+}
+
+int Parser2DEngine::get_width() const
+{
+    return rect.Width;
+}
+
+int Parser2DEngine::get_height() const
+{
+    return rect.Height;
 }

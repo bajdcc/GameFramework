@@ -1900,7 +1900,19 @@ namespace clib {
     bool cvm::gui(int id) {
         switch (id) {
         case 301:
-            global_state.gui = ctx->ax._i != 0;
+        {
+            if (ctx->ax._i == 1 || ctx->ax._i == 0)
+            {
+                global_state.gui = ctx->ax._i != 0;
+            }
+            else if (ctx->ax._i == 2 || ctx->ax._i == 3)
+            {
+                if (ctx->ax._i == 2)
+                    ctx->ax._i = global_state.ui->get_width();
+                else
+                    ctx->ax._i = global_state.ui->get_height();
+            }
+        }
             break;
         case 302:
         {
@@ -1916,6 +1928,13 @@ namespace clib {
             global_state.ui->line_to(x, y);
         }
             break;
+        case 304:
+        {
+            auto x = ctx->ax._ui >> 16;
+            auto y = ctx->ax._ui & 0xFFFF;
+            global_state.ui->draw_point(x, y);
+        }
+        break;
         default:
 #if LOG_SYSTEM
             ATLTRACE("[SYSTEM] ERR  | unknown interrupt: %d\n", ctx->ax._i);
