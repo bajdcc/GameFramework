@@ -66,30 +66,7 @@ void Parser2DEngine::Reset(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget
         logoBrush = newRenderTarget->CreateDirect2DBrush(logoColor);
         brushes.cmdTF = newRenderTarget->CreateDirect2DTextFormat(brushes.cmdFont);
         brushes.gbkTF = newRenderTarget->CreateDirect2DTextFormat(brushes.gbkFont);
-
-        auto size = clib::cgui::singleton().get_size();
-        auto wic = newRenderTarget->CreateBitmap(size.cx, size.cy);
-        rect.X = 0;
-        rect.Y = 0;
-        rect.Width = size.cx;
-        rect.Height = size.cy;
-        buffer_mem.resize(rect.Width * rect.Height * sizeof(COLORREF));
-        buffer = buffer_mem.data();
-        auto hr = wic->CopyPixels(&rect, rect.Width * 4, rect.Width * rect.Height * 4, buffer);
-        d2drect = D2D1::RectU(0, 0, rect.Width, rect.Height);
-        bitmap = newRenderTarget->GetBitmapFromWIC(wic);
-        auto b = buffer;
-        for (auto y = 0; y < rect.Height; y++)
-        {
-            for (auto x = 0; x < rect.Width; x++)
-            {
-                b[0] = 128;
-                b[1] = 128;
-                b[2] = 128;
-                b[3] = 255;
-                b += 4;
-            }
-        }
+        d2drt = newRenderTarget;
     }
 }
 
@@ -142,8 +119,36 @@ void Parser2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
         bg
     );
     clib::cgui::singleton().draw(rt, bounds, brushes, paused, dt_inv * FRAME);
-    if (clib::cvm::global_state.gui && buffer)
+    if (clib::cvm::global_state.gui)
     {
+        if (!buffer)
+        {
+            auto size = bounds.Size();
+            if (size.cx == 0 || size.cy == 0)
+                size = clib::cgui::singleton().get_size();
+            auto wic = d2drt.lock()->CreateBitmap(size.cx, size.cy);
+            rect.X = 0;
+            rect.Y = 0;
+            rect.Width = size.cx;
+            rect.Height = size.cy;
+            buffer_mem.resize(rect.Width * rect.Height * sizeof(COLORREF));
+            buffer = buffer_mem.data();
+            auto hr = wic->CopyPixels(&rect, rect.Width * 4, rect.Width * rect.Height * 4, buffer);
+            d2drect = D2D1::RectU(0, 0, rect.Width, rect.Height);
+            bitmap = d2drt.lock()->GetBitmapFromWIC(wic);
+            auto b = buffer;
+            for (auto y = 0; y < rect.Height; y++)
+            {
+                for (auto x = 0; x < rect.Width; x++)
+                {
+                    b[0] = 128;
+                    b[1] = 128;
+                    b[2] = 128;
+                    b[3] = 255;
+                    b += 4;
+                }
+            }
+        }
         bitmap->CopyFromMemory(&d2drect, buffer, rect.Width * 4);
         rt->DrawBitmap(
             bitmap,

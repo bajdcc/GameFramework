@@ -47,6 +47,7 @@ private:
     std::vector<BYTE> buffer_mem;
     BYTE* buffer{ nullptr };
     CComPtr<ID2D1Bitmap> bitmap;
+    std::weak_ptr<Direct2DRenderTarget> d2drt;
     WICRect rect;
     D2D1_RECT_U d2drect;
 
