@@ -13,6 +13,7 @@ public:
     virtual void draw_point(int x, int y) = 0;
     virtual int get_width() const = 0;
     virtual int get_height() const = 0;
+    virtual void set_color(uint c) = 0;
 };
 
 #endif //CPARSER_CUI_H

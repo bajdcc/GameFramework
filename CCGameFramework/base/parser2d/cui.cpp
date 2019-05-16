@@ -10,7 +10,7 @@
 
 bool Parser2DEngine::check_cord(int x, int y) const
 {
-    return x > 0 && y > 0 && x <= rect.Height && y <= rect.Width;
+    return x >= 0 && y >= 0 && x < rect.Width && y < rect.Height;
 }
 
 void Parser2DEngine::move_to(int x, int y)
@@ -23,7 +23,7 @@ void Parser2DEngine::move_to(int x, int y)
 
 // CHECKED X, Y
 bool Parser2DEngine::setpixel(int x, int y) {
-    auto b = &buffer[(x * rect.Width + y) * 4];
+    auto b = &buffer[(y * rect.Width + x) * 4];
     b[0] = cur_bursh.b;
     b[1] = cur_bursh.g;
     b[2] = cur_bursh.r;
@@ -70,4 +70,9 @@ int Parser2DEngine::get_width() const
 int Parser2DEngine::get_height() const
 {
     return rect.Height;
+}
+
+void Parser2DEngine::set_color(uint c)
+{
+    cur_bursh = CColor(c);
 }

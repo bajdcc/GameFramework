@@ -26,6 +26,7 @@ public:
     void draw_point(int x, int y) override;
     int get_width() const override;
     int get_height() const override;
+    void set_color(uint c) override;
 
 private:
     void RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds);

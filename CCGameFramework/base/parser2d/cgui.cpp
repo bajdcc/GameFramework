@@ -13,6 +13,7 @@
 #include "../../ui/gdi/Gdi.h"
 #include "Parser2D.h"
 
+#define REPORT_ERROR 1
 #define LOG_AST 0
 #define LOG_DEP 0
 

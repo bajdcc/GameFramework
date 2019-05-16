@@ -324,16 +324,18 @@ namespace clib {
             assert(op <= EXIT);
             // print debug info
             if (ctx->debug) {
-                ATLTRACE("%04d> [%08X] %02d %.4s", i, ctx->pc, op, INS_STRING((ins_t)op).c_str());
+                CStringA a, b;
+                a.Format("%04d> [%08X] %02d %.4s", i, ctx->pc, op, INS_STRING((ins_t)op).c_str());
                 if ((op >= PUSH && op <= LNT) || op == LOAD || op == SAVE)
-                    ATLTRACE(" %d\n", vmm_get(ctx->pc));
+                    b.Format(" %d\n", vmm_get(ctx->pc));
                 else if (op == IMX)
-                    ATLTRACE(" %08X(%d) %08X(%d)\n", vmm_get(ctx->pc), vmm_get(ctx->pc),
+                    b.Format(" %08X(%d) %08X(%d)\n", vmm_get(ctx->pc), vmm_get(ctx->pc),
                         vmm_get(ctx->pc + INC_PTR), vmm_get(ctx->pc + INC_PTR));
                 else if (op <= ADJ)
-                    ATLTRACE(" %08X(%d)\n", vmm_get(ctx->pc), vmm_get(ctx->pc));
+                    b.Format(" %08X(%d)\n", vmm_get(ctx->pc), vmm_get(ctx->pc));
                 else
-                    ATLTRACE("\n");
+                    b.Format("\n");
+                ATLTRACE((a + b).GetBuffer(0));
             }
 #endif
             switch (op) {
@@ -1113,12 +1115,17 @@ namespace clib {
                 ATLTRACE("\n---------------- STACK BEGIN <<<< \n");
                 ATLTRACE("AX: %08X BX: %08X BP: %08X SP: %08X PC: %08X\n", ctx->ax._u._1, ctx->ax._u._2, ctx->bp, ctx->sp, ctx->pc);
                 auto k = 0;
+                CStringA a;
+                CStringA b;
                 for (uint32_t j = ctx->sp; j < STACK_BASE + PAGE_SIZE; j += 4, ++k) {
-                    ATLTRACE("[%08X]> %08X", j, vmm_get<uint32_t>(j));
-                    if (k % 4 == 3)
-                        ATLTRACE("\n");
+                    b.Format("[%08X]> %08X", j, vmm_get<uint32_t>(j)); a += b;
+                    if (k % 4 == 3) {
+                        a += "\n";
+                        ATLTRACE(a.GetBuffer(0));
+                        a = "";
+                    }
                     else
-                        ATLTRACE("  |  ");
+                        a += "  |  ";
                 }
                 if (k % 4 != 0)
                     ATLTRACE("\n");
@@ -1934,7 +1941,12 @@ namespace clib {
             auto y = ctx->ax._ui & 0xFFFF;
             global_state.ui->draw_point(x, y);
         }
-        break;
+            break;
+        case 305:
+        {
+            global_state.ui->set_color(ctx->ax._ui);
+        }
+            break;
         default:
 #if LOG_SYSTEM
             ATLTRACE("[SYSTEM] ERR  | unknown interrupt: %d\n", ctx->ax._i);

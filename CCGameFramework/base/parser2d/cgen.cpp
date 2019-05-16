@@ -839,8 +839,6 @@ namespace clib {
             exp->gen_rvalue(gen);
             base = exp->base->clone();
             auto size = base->get_cast();
-            auto c = cast_size(size);
-            gen.emit(PUSH, c);
             gen.emit(LNT, size);
         }
                              break;
@@ -2977,7 +2975,8 @@ namespace clib {
                         emit(ADD);
                     }
                     if (type->get_cast() != init->get_cast())
-                        error(init, "allocate: not equal init type");
+                        error(init, "allocate: not equal init type, need: " + type->to_string() +
+                            ", but got: " + init->to_string());
                     emit(SAVE, size);
                 }
             }
