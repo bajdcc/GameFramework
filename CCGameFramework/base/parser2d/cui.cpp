@@ -10,7 +10,12 @@
 
 bool Parser2DEngine::check_cord(int x, int y) const
 {
-    return x >= 0 && y >= 0 && x < rect.Width && y < rect.Height;
+    return buffer && x >= 0 && y >= 0 && x < rect.Width && y < rect.Height;
+}
+
+bool Parser2DEngine::ready() const
+{
+    return buffer != nullptr;
 }
 
 void Parser2DEngine::move_to(int x, int y)

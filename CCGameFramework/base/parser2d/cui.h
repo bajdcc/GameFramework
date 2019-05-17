@@ -8,6 +8,7 @@
 
 class cgui_op {
 public:
+    virtual bool ready() const = 0;
     virtual void move_to(int x, int y) = 0;
     virtual void line_to(int x, int y) = 0;
     virtual void draw_point(int x, int y) = 0;

@@ -21,6 +21,7 @@ public:
         Font gbkFont; std::shared_ptr<D2DTextFormatPackage> gbkTF;
     } brushes;
 
+    bool ready() const override;
     void move_to(int x, int y) override;
     void line_to(int x, int y) override;
     void draw_point(int x, int y) override;

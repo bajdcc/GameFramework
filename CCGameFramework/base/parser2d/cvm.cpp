@@ -1911,6 +1911,12 @@ namespace clib {
             if (ctx->ax._i == 1 || ctx->ax._i == 0)
             {
                 global_state.gui = ctx->ax._i != 0;
+                if (ctx->ax._i == 1) {
+                    if (!global_state.ui->ready()) {
+                        ctx->pc -= INC_PTR;
+                        return true;
+                    }
+                }
             }
             else if (ctx->ax._i == 2 || ctx->ax._i == 3)
             {

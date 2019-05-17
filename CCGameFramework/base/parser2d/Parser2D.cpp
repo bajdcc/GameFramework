@@ -40,6 +40,8 @@ void Parser2DEngine::Initialize(std::shared_ptr<Direct2DRenderTarget> rt)
     dt_inv = 1.0 / dt;
     g_argc = 0;
     clib::cvm::global_state.ui = this;
+    rect.X = 0;
+    rect.Y = 0;
 }
 
 void Parser2DEngine::Finalize(std::shared_ptr<Direct2DRenderTarget> rt)
@@ -112,6 +114,11 @@ void Parser2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
         dt = min(dt, FRAME);
         dt_inv = 1.0 / dt;
         last_clock = now;
+        if (rect.Width == 0 || rect.Height == 0) {
+            auto size = bounds.Size();
+            rect.Width = size.cx;
+            rect.Height = size.cy;
+        }
     }
 
     rt->FillRectangle(
@@ -123,14 +130,7 @@ void Parser2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
     {
         if (!buffer)
         {
-            auto size = bounds.Size();
-            if (size.cx == 0 || size.cy == 0)
-                size = clib::cgui::singleton().get_size();
-            auto wic = d2drt.lock()->CreateBitmap(size.cx, size.cy);
-            rect.X = 0;
-            rect.Y = 0;
-            rect.Width = size.cx;
-            rect.Height = size.cy;
+            auto wic = d2drt.lock()->CreateBitmap(rect.Width, rect.Height);
             buffer_mem.resize(rect.Width * rect.Height * sizeof(COLORREF));
             buffer = buffer_mem.data();
             auto hr = wic->CopyPixels(&rect, rect.Width * 4, rect.Width * rect.Height * 4, buffer);

@@ -17,6 +17,7 @@ int main(int argc, char **argv) {
     gui_power_on();
     waiting(1);
     shell("/usr/gui_3dball"); waiting(2);
+    shell("/usr/gui_heart"); waiting(2);
     gui_power_off();
     put_string("========== [#9 TEST GUI] ==========\n");
     return 0;
