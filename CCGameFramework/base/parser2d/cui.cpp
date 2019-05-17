@@ -28,6 +28,7 @@ void Parser2DEngine::move_to(int x, int y)
 
 // CHECKED X, Y
 bool Parser2DEngine::setpixel(int x, int y) {
+    if (!buffer) return false;
     auto b = &buffer[(y * rect.Width + x) * 4];
     b[0] = cur_bursh.b;
     b[1] = cur_bursh.g;
