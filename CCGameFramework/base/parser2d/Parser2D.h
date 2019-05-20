@@ -28,6 +28,9 @@ public:
     int get_width() const override;
     int get_height() const override;
     void set_color(uint c) override;
+    void clear(uint c) override;
+    void fill_rect(int x, int y) override;
+    int set_fresh(int fresh) override;
 
 private:
     void RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
@@ -54,6 +57,7 @@ private:
 
     CPoint cur_pt;
     CColor cur_bursh;
+    int auto_fresh{ 0 };
 
 private:
     std::chrono::system_clock::time_point last_clock;

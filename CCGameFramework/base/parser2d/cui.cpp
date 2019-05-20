@@ -82,3 +82,37 @@ void Parser2DEngine::set_color(uint c)
 {
     cur_bursh = CColor(c);
 }
+
+void Parser2DEngine::clear(uint c)
+{
+    if (!buffer) return;
+    for (int i = 0; i < rect.Height; ++i)
+    {
+        for (int j = 0; j < rect.Width; ++j)
+        {
+            *((uint *)&buffer[(i * rect.Width + j) * 4]) = c;
+        }
+    }
+}
+
+void Parser2DEngine::fill_rect(int x, int y)
+{
+    if (check_cord(x, y)) {
+        for (int i = cur_pt.x; i <= x; ++i)
+        {
+            for (int j = cur_pt.y; j <= y; ++j)
+            {
+                *((uint*)& buffer[(j * rect.Width + i) * 4]) = cur_bursh.value;
+            }
+        }
+        cur_pt.x = x;
+        cur_pt.y = y;
+    }
+}
+
+int Parser2DEngine::set_fresh(int fresh)
+{
+    if (fresh == -1) return auto_fresh;
+    auto_fresh = fresh;
+    return fresh;
+}

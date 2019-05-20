@@ -1925,6 +1925,18 @@ namespace clib {
                 else
                     ctx->ax._i = global_state.ui->get_height();
             }
+            else if (ctx->ax._i >= 4 && ctx->ax._i <= 7)
+            {
+                if (ctx->ax._i == 7) {
+                    if (global_state.ui->set_fresh(-1) != 0) {
+                        ctx->pc -= INC_PTR;
+                        return true;
+                    }
+                }
+                else {
+                    global_state.ui->set_fresh(ctx->ax._i - 4);
+                }
+            }
         }
             break;
         case 302:
@@ -1951,6 +1963,18 @@ namespace clib {
         case 305:
         {
             global_state.ui->set_color(ctx->ax._ui);
+        }
+            break;
+        case 306:
+        {
+            global_state.ui->clear(ctx->ax._ui);
+        }
+            break;
+        case 307:
+        {
+            auto x = ctx->ax._ui >> 16;
+            auto y = ctx->ax._ui & 0xFFFF;
+            global_state.ui->fill_rect(x, y);
         }
             break;
         default:

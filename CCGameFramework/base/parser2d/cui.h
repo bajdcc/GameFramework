@@ -15,6 +15,9 @@ public:
     virtual int get_width() const = 0;
     virtual int get_height() const = 0;
     virtual void set_color(uint c) = 0;
+    virtual void clear(uint c) = 0;
+    virtual void fill_rect(int x, int y) = 0;
+    virtual int set_fresh(int fresh) = 0;
 };
 
 #endif //CPARSER_CUI_H

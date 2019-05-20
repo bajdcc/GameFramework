@@ -149,7 +149,13 @@ void Parser2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
                 }
             }
         }
-        bitmap->CopyFromMemory(&d2drect, buffer, rect.Width * 4);
+        if (auto_fresh >= 1)
+        {
+            bitmap->CopyFromMemory(&d2drect, buffer, rect.Width * 4);
+        }
+        if (auto_fresh == 2) {
+            auto_fresh = 0;
+        }
         rt->DrawBitmap(
             bitmap,
             D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),

@@ -45,6 +45,12 @@ namespace clib {
         std::fill(colors_fg, colors_fg + size, color_fg);
         color_bg_stack.push_back(color_bg);
         color_fg_stack.push_back(color_fg);
+#if REPORT_ERROR
+        {
+            std::ofstream log("error.log", std::ios::trunc | std::ios::out);
+            log << "";
+        }
+#endif
     }
 
     cgui& cgui::singleton() {
@@ -302,6 +308,12 @@ namespace clib {
             }
             catch (const cexception & e) {
                 ATLTRACE("[SYSTEM] ERR  | RUNTIME ERROR: %s\n", e.message().c_str());
+#if REPORT_ERROR
+                {
+                    std::ofstream log("error.log", std::ios::app | std::ios::out);
+                    log << "[SYSTEM] ERR  | RUNTIME ERROR: " << e.message() << std::endl;
+                }
+#endif
                 vm.reset();
                 gen.reset();
                 running = false;
@@ -760,6 +772,12 @@ namespace clib {
         catch (const cexception & e) {
             gen.reset();
             ATLTRACE("[SYSTEM] ERR  | PATH: %s, %s\n", new_path.c_str(), e.message().c_str());
+#if REPORT_ERROR
+            {
+                std::ofstream log("error.log", std::ios::app | std::ios::out);
+                log << "[SYSTEM] ERR  | PATH: " << new_path << ", " << e.message() << std::endl;
+            }
+#endif
             return fail_errno;
         }
     }
