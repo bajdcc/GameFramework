@@ -6,6 +6,7 @@
 #include "/include/string"
 #include "/include/shell"
 #include "/include/sys"
+#include "/include/gui"
 int process(char *text) {
     char *tmp = malloc(256), c;
     int i = 0, j = 0;
@@ -193,6 +194,7 @@ int main(int argc, char **argv) {
         if (!direct_input)
             break;
         newline();
+        gui_reset();
     }
     free(text);
     free(_whoami);

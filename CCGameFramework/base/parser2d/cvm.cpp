@@ -1937,6 +1937,10 @@ namespace clib {
                     global_state.ui->set_fresh(ctx->ax._i - 4);
                 }
             }
+            else if (ctx->ax._i == 8)
+            {
+                global_state.ui->reset();
+            }
         }
             break;
         case 302:

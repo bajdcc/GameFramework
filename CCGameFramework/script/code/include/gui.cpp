@@ -35,6 +35,9 @@ int gui_fresh() {
     gui_enable(6);
     gui_enable(7);
 }
+int gui_reset() {
+    return gui_enable(8);
+}
 
 int gui_move_to(int x, int y) {
     x << 16 | y;

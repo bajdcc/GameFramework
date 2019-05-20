@@ -31,6 +31,7 @@ public:
     void clear(uint c) override;
     void fill_rect(int x, int y) override;
     int set_fresh(int fresh) override;
+    void reset() override;
 
 private:
     void RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds);

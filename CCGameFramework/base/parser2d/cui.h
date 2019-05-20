@@ -18,6 +18,7 @@ public:
     virtual void clear(uint c) = 0;
     virtual void fill_rect(int x, int y) = 0;
     virtual int set_fresh(int fresh) = 0;
+    virtual void reset() = 0;
 };
 
 #endif //CPARSER_CUI_H

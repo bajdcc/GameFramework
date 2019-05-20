@@ -80,6 +80,7 @@ int Parser2DEngine::SetType(cint value)
     }
     if (value == -101) {
         clib::cgui::singleton().reset();
+        reset();
         return 1;
     }
     clib::cgui::singleton().input(value);

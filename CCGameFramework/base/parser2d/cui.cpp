@@ -5,6 +5,7 @@
 
 #include "stdafx.h"
 #include "parser2d.h"
+#include "cvm.h"
 
 // 光栅化算法
 
@@ -115,4 +116,13 @@ int Parser2DEngine::set_fresh(int fresh)
     if (fresh == -1) return auto_fresh;
     auto_fresh = fresh;
     return fresh;
+}
+
+void Parser2DEngine::reset()
+{
+    auto_fresh = 1;
+    clib::cvm::global_state.gui = false;
+    buffer = nullptr;
+    rect.Width = 0;
+    rect.Height = 0;
 }

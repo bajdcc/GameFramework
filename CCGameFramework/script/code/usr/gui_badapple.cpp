@@ -13,7 +13,7 @@ int hex2char(int n) {
 int x = 0, y = 0;
 int read_file(int handle) {
     int W = 80, H = 25;
-    int scale_w = 10, scale_h = 10;
+    int scale_w = 7, scale_h = 12;
     int width = gui_width(), height = gui_height();
     int start_x = (width - W * scale_w) / 2;
     int start_y = (height - H * scale_h) / 2;
@@ -60,8 +60,8 @@ int read_file(int handle) {
                 x = 0; y = 0;
                 if (p == 1) {
                     for (j = 0; j < px; j++) {
-                        gui_move_to(start_x + ((px + j) % 80) * scale_w, start_y + ((px + j) / 80) * scale_h);
-                        gui_rect(start_x + ((px + j) % 80) * scale_w + scale_w - 1, start_y + ((px + j) / 80) * scale_h + scale_h - 1);
+                        gui_move_to(start_x + ((j) % 80) * scale_w, start_y + ((j) / 80) * scale_h);
+                        gui_rect(start_x + ((j) % 80) * scale_w + scale_w - 1, start_y + ((j) / 80) * scale_h + scale_h - 1);
                     }
                 }
             }
