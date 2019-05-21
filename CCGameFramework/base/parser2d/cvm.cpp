@@ -1917,6 +1917,12 @@ namespace clib {
                         return true;
                     }
                 }
+                else {
+                    if (global_state.ui->ready()) {
+                        ctx->pc -= INC_PTR;
+                        return true;
+                    }
+                }
             }
             else if (ctx->ax._i == 2 || ctx->ax._i == 3)
             {

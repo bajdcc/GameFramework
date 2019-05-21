@@ -33,7 +33,7 @@ function M:init()
 	self.minh = 600
 	UIExt.set_minw(self.minw, self.minh)
 
-	UIExt.trace('Scene [2D Physics Engine] init')
+	UIExt.trace('Scene [Parser 2D Engine] init')
 	-- INFO
 	local info = UIExt.info()
 	-- BG
@@ -47,7 +47,7 @@ function M:init()
 		right = info.width,
 		bottom = info.height
 	}))
-	UIExt.trace('Scene [2D Physics Engine]: create background #' .. self.layers.bg.handle)
+	UIExt.trace('Scene [Parser 2D Engine]: create background #' .. self.layers.bg.handle)
 	-- TEXT
 	local cc = Text:new({
 		color = '#222222',
@@ -63,7 +63,7 @@ function M:init()
 		end
 	})
 	self.layers.cc = self:add(cc)
-	UIExt.trace('Scene [2D Physics Engine]: create text #' .. self.layers.cc.handle)
+	UIExt.trace('Scene [Parser 2D Engine]: create text #' .. self.layers.cc.handle)
 	-- TEXT
 	local text = Text:new({
 		color = '#222222',
@@ -74,7 +74,7 @@ function M:init()
 		end
 	})
 	self.layers.text = self:add(text)
-	UIExt.trace('Scene [2D Physics Engine]: create text #' .. self.layers.text.handle)
+	UIExt.trace('Scene [Parser 2D Engine]: create text #' .. self.layers.text.handle)
 	-- MENU
 	self:init_menu(info)
 
@@ -88,13 +88,13 @@ function M:init()
 end
 
 function M:destroy()
-	UIExt.trace('Scene [2D Physics Engine] destroy')
+	UIExt.trace('Scene [Parser 2D Engine] destroy')
 	UIExt.clear_scene()
 end
 
 function M:init_event()
 	self.handler[self.win_event.created] = function(this)
-		UIExt.trace('Scene [2D Physics Engine] Test created message!')
+		UIExt.trace('Scene [Parser 2D Engine] Test created message!')
 	end
 	self.handler[self.win_event.char] = function(this, code, scan, flags)
 		UIExt.refresh(CurrentScene.layers.pe2d, code)

@@ -342,7 +342,7 @@ namespace clib {
         }
     }
 
-    void cgui::put_char(char c) {
+    void cgui::put_char(int c) {
         if (cmd_state) {
             if (c == '\033') {
                 static string_t pat{ R"([A-Za-z][0-9a-f]{1,8})" };
@@ -395,6 +395,12 @@ namespace clib {
                     colors_fg[ptr_ry * cols + ptr_rx] = color_fg;
                 }
                 forward(ptr_rx, ptr_ry, false);
+            }
+        }
+        else if (c == 0xff) {
+            if (ptr_rx + ptr_ry * cols > ptr_x + ptr_y * cols) {
+                move(false);
+                put_char('\b');
             }
         }
         else if (c == '\u0002') {
@@ -861,6 +867,9 @@ namespace clib {
             case VK_END:
                 ptr_x = ptr_rx;
                 ptr_y = ptr_ry;
+                return;
+            case VK_DELETE:
+                put_char(0xff);
                 return;
             case 0x71: // SHIFT
                 return;
