@@ -58,7 +58,7 @@ private:
 
     CPoint cur_pt;
     CColor cur_bursh;
-    int auto_fresh{ 0 };
+    int auto_fresh{ 1 };
 
 private:
     std::chrono::system_clock::time_point last_clock;
