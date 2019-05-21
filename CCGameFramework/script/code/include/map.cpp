@@ -14,6 +14,7 @@
 // 失败=0
 
 #include "/include/memory"
+#include "/include/io"
 
 struct __rbt_node__ {
     unsigned char color;
@@ -159,7 +160,7 @@ int rbt_insert_balance(__rbt_info__* info, __rbt_node__* node) {
             grandparent->color = 0;
             rbt_right_rotate(info, grandparent);
         }
-        else //若“z的父节点”是“z的祖父节点的右孩子”
+        else //若“父节点”是“祖父节点的右孩子”
         {
             // Case 1条件：叔叔节点是红色
             {
@@ -174,7 +175,7 @@ int rbt_insert_balance(__rbt_info__* info, __rbt_node__* node) {
             }
 
             // Case 2条件：叔叔是黑色，且当前节点是左孩子
-            if (parent->right == node) {
+            if (parent->left == node) {
                 __rbt_node__* tmp;
                 rbt_right_rotate(info, parent);
                 tmp = parent;
@@ -194,21 +195,28 @@ int rbt_insert_balance(__rbt_info__* info, __rbt_node__* node) {
 }
 
 int rbt_insert(__rbt_info__* info, void* key, void* value) {
-    __rbt_node__* x = info->root;
+    __rbt_node__* x = info->root, * y = (void*)0;
     while (x) {
-        if (info->key_cmp(x->key, key) < 0)
+        y = x;if (info->key_cmp(x->key, key) > 0)
             x = x->left;
         else
             x = x->right;
     }
     __rbt_node__* node = malloc(sizeof(__rbt_node__));
     node->key = key;
-    node->right = value;
+    node->value = value;
     node->left = 0;
     node->right = 0;
-    node->parent = x;
+    node->parent = y;
     node->color = 0;
-    if (!info->root)
+    if (y) {
+        if (info->key_cmp(node->key, y->key) < 0)
+            y->left = node;
+        else
+            y->right = node;
+    }
+    else {
         info->root = node;
+    }
     rbt_insert_balance(info, node);
 }
