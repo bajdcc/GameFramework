@@ -15,6 +15,7 @@ int main(int argc, char **argv) {
         case 7: shell("/usr/test_xtoa");
         case 8: shell("/usr/test_vector");
         case 9: shell("/usr/test_gui");
+        case 10: shell("/usr/test_map");
     }
     return 0;
 }

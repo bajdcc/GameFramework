@@ -560,6 +560,28 @@ namespace clib {
         return base->size(t);
     }
 
+    gen_t type_exp_t::gen_invoke(igen& gen, sym_t::ref& list)
+    {
+        assert(list->get_type() == s_list);
+        auto args = std::dynamic_pointer_cast<sym_list_t>(list);
+        auto & exps = args->exps;
+        auto total_size = 0;
+        for (size_t i = 0; i < exps.size(); ++i) {
+            exps[i]->gen_rvalue(gen);
+            auto exp_type = exps[i]->base->get_cast();
+            auto c = exp_type == t_struct ? exps[i]->size(x_size) : cast_size(exp_type);
+            gen.emit(PUSH, c);
+            total_size += c;
+        }
+        gen_rvalue(gen);
+        gen.emit(CALL);
+        if (!exps.empty()) {
+            gen.emit(ADJ, total_size / 4);
+        }
+        base = std::make_shared<type_base_t>(l_int);
+        return g_ok;
+    }
+
     sym_var_t::sym_var_t(const type_t::ref & base, ast_node * node) : type_exp_t(base), node(node) {
         line = node->line;
         column = node->column;

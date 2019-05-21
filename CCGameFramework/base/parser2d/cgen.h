@@ -145,6 +145,7 @@ namespace clib {
         symbol_t get_type() const override;
         symbol_t get_base_type() const override;
         int size(sym_size_t t) const override;
+        gen_t gen_invoke(igen& gen, sym_t::ref& list) override;
         cast_t get_cast() const override;
         type_t::ref base;
     };
