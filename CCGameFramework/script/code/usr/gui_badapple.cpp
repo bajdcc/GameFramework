@@ -12,13 +12,14 @@ int hex2char(int n) {
 }
 int x = 0, y = 0;
 int read_file(int handle) {
+    gui_power_on();
+
     int W = 80, H = 25;
     int scale_w = 7, scale_h = 12;
     int width = gui_width(), height = gui_height();
     int start_x = (width - W * scale_w) / 2;
     int start_y = (height - H * scale_h) / 2;
 
-    gui_power_on();
     int c, flag = 0, num, pixels = W * H, px = 0, j;
     int p;
     set_cycle(1000000);
