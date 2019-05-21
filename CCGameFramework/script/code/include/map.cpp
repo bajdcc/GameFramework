@@ -203,7 +203,7 @@ int rbt_insert(__rbt_info__* info, void* key, void* value) {
     }
     __rbt_node__* node = malloc(sizeof(__rbt_node__));
     node->key = key;
-    node->right = key;
+    node->right = value;
     node->left = 0;
     node->right = 0;
     node->parent = x;

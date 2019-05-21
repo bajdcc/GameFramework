@@ -376,7 +376,10 @@ namespace clib {
             if (_struct) {
                 for (auto& decl : decls) {
                     decl->addr = _size;
-                    *const_cast<int*>(&_size) += decl->size(t);
+                    auto size = decl->size(t);
+                    if ((size & 3) != 0)
+                        size += 4 - (size & 3);
+                    *const_cast<int*>(&_size) += size;
                     decl->addr_end = _size;
                 }
             }

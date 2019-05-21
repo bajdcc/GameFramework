@@ -33,7 +33,7 @@ void case_1() {
     rbt_insert(&m, 3, 3);
     rbt_insert(&m, 4, 4);
     rbt_insert(&m, 2, 2);
-    print(&m);
+    print(m.root);
 }
 int main(int argc, char** argv) {
     put_string("========== [#10 TEST MAP] ==========\n");
