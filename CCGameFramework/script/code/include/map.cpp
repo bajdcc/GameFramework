@@ -14,7 +14,6 @@
 // 失败=0
 
 #include "/include/memory"
-#include "/include/io"
 
 struct __rbt_node__ {
     unsigned char color;
@@ -36,6 +35,7 @@ __rbt_info__ rbt_create(void* key_new, void* value_new, void* key_del, void* val
     info.key_del = key_del;
     info.value_del = value_del;
     info.key_cmp = key_cmp;
+    info.root = 0;
     return info;
 }
 
@@ -219,4 +219,17 @@ int rbt_insert(__rbt_info__* info, void* key, void* value) {
         info->root = node;
     }
     rbt_insert_balance(info, node);
+}
+
+int rbt_destroy_x(__rbt_node__* node) {
+    if (node) {
+        if (node->left) rbt_destroy_x(node->left);
+        if (node->right) rbt_destroy_x(node->right);
+        free(node);
+    }
+}
+
+int rbt_destroy(__rbt_info__* info) {
+    rbt_destroy_x(info->root);
+    info->root = 0;
 }

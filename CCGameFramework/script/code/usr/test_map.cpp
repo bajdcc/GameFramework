@@ -24,6 +24,8 @@ int print(__rbt_node__* node, int n) {
         put_int(node->key);
         put_string(", value= ");
         put_int(node->value);
+        put_string(", ptr= ");
+        put_hex(node);
         put_string("\n");
 
         print(node->right, n + 1);
@@ -44,9 +46,11 @@ void case_1() {
         rbt_insert(&m, a[i] * 10, i);
     print(m.root, 0);
     print_inorder(m.root); put_string("\n");
+    rbt_destroy(&m);
 }
 int main(int argc, char** argv) {
     put_string("========== [#10 TEST MAP] ==========\n");
+    case_1();
     case_1();
     put_string("========== [#10 TEST MAP] ==========\n");
     return 0;
