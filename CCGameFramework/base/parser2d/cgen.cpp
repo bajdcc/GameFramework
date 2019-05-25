@@ -862,7 +862,8 @@ namespace clib {
         }
         case op_logical_not: {
             exp->gen_rvalue(gen);
-            base = exp->base->clone();
+            base.reset();
+            base = std::make_shared<type_base_t>(l_int);
             auto size = base->get_cast();
             gen.emit(LNT, size);
         }
@@ -1262,8 +1263,9 @@ namespace clib {
             exp2->gen_rvalue(gen);
             auto t1 = exp1->base->get_cast();
             auto t2 = exp2->base->get_cast();
-            if (max(t1, t2) >= t_long) {
-                gen.error("logical binop: unsupported cast, exp1= " + exp1->to_string() +
+            if (!(t1 == t_ptr && t2 == t_ptr) && max(t1, t2) >= t_long) {
+                gen.error("logical binop: unsupported cast, op= " + OP_STRING(op->data._op) +
+                    ", exp1= " + exp1->to_string() +
                     ", exp2= " + exp2->to_string());
             }
             base = t1 > t2 ? exp1->base->clone() : exp2->base->clone();
@@ -2061,7 +2063,7 @@ namespace clib {
                 }
                 auto s = std::dynamic_pointer_cast<sym_struct_t>(f->second);
                 if (s->get_type() != s_struct) {
-                    error("need struct type");
+                    error(asts[1], "need struct type");
                 }
                 tmp.back().push_back(s);
                 asts.clear();

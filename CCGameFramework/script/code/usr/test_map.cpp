@@ -48,10 +48,22 @@ void case_1() {
     print_inorder(m.root); put_string("\n");
     rbt_destroy(&m);
 }
+void case_2() {
+    __rbt_info__ m = rbt_create(one, one, one, one, cmp);
+    int i;
+    for (i = 0; i < 9; ++i)
+        rbt_insert(&m, a[i] * 10, i);
+    print_inorder(m.root); put_string("\n");
+    for (i = 0; i < 9; ++i) {
+        put_string("Remove "); put_int(a[i] * 10); put_string(" -> ");
+        rbt_remove(&m, a[i] * 10); print_inorder(m.root); put_string("\n");
+    }
+    rbt_destroy(&m);
+}
 int main(int argc, char** argv) {
     put_string("========== [#10 TEST MAP] ==========\n");
     case_1();
-    case_1();
+    case_2();
     put_string("========== [#10 TEST MAP] ==========\n");
     return 0;
 }

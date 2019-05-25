@@ -39,6 +39,19 @@ __rbt_info__ rbt_create(void* key_new, void* value_new, void* key_del, void* val
     return info;
 }
 
+__rbt_node__* rbt_search(__rbt_info__* info, __rbt_node__* x, void* key)
+{
+    if (!x)
+        return x;
+    int cmp = info->key_cmp(x->key, key);
+    if (cmp == 0)
+        return x;
+    if (cmp > 0)
+        return rbt_search(info, x->left, key);
+    else
+        return rbt_search(info, x->right, key);
+}
+
 /*
  * 对红黑树的节点(x)进行左旋转
  *
@@ -197,7 +210,8 @@ int rbt_insert_balance(__rbt_info__* info, __rbt_node__* node) {
 int rbt_insert(__rbt_info__* info, void* key, void* value) {
     __rbt_node__* x = info->root, * y = (void*)0;
     while (x) {
-        y = x;if (info->key_cmp(x->key, key) > 0)
+        y = x;
+        if (info->key_cmp(x->key, key) > 0)
             x = x->left;
         else
             x = x->right;
@@ -219,6 +233,180 @@ int rbt_insert(__rbt_info__* info, void* key, void* value) {
         info->root = node;
     }
     rbt_insert_balance(info, node);
+}
+
+int rbt_remove_balance(__rbt_info__* info, __rbt_node__* node, __rbt_node__* parent) {
+    __rbt_node__* other;
+
+    while ((!node || node->color == 1) && node != info->root)
+    {
+        if (parent->left == node)
+        {
+            other = parent->right;
+            if (other->color == 0)
+            {
+                // Case 1: x的兄弟w是红色的  
+                other->color == 1;
+                parent->color = 0;
+                rbt_left_rotate(info, parent);
+                other = parent->right;
+            }
+            if ((!other->left || other->left->color == 1) &&
+                (!other->right || other->right->color == 1))
+            {
+                // Case 2: x的兄弟w是黑色，且w的俩个孩子也都是黑色的  
+                other->color = 0;
+                node = parent;
+                parent = node->parent;
+            }
+            else
+            {
+                if (!other->right || other->right->color == 1)
+                {
+                    // Case 3: x的兄弟w是黑色的，并且w的左孩子是红色，右孩子为黑色。  
+                    other->left->color = 1;
+                    other->color = 0;
+                    rbt_right_rotate(info, other);
+                    other = parent->right;
+                }
+                // Case 4: x的兄弟w是黑色的；并且w的右孩子是红色的，左孩子任意颜色。
+                other->color = parent->color;
+                parent->color = 1;
+                other->right->color = 1;
+                rbt_left_rotate(info, parent);
+                node = info->root;
+                break;
+            }
+        }
+        else
+        {
+            other = parent->left;
+            if (other->color == 0)
+            {
+                // Case 1: x的兄弟w是红色的  
+                other->color == 1;
+                parent->color = 0;
+                rbt_right_rotate(info, parent);
+                other = parent->left;
+            }
+            if ((!other->left || other->left->color == 1) &&
+                (!other->right || other->right->color == 1))
+            {
+                // Case 2: x的兄弟w是黑色，且w的俩个孩子也都是黑色的  
+                other->color = 0;
+                node = parent;
+                parent = node->parent;
+            }
+            else
+            {
+                if (!other->left || other->left->color == 1)
+                {
+                    // Case 3: x的兄弟w是黑色的，并且w的左孩子是红色，右孩子为黑色。  
+
+                    other->right->color = 1;
+                    other->color = 0;
+                    rbt_left_rotate(info, other);
+                    other = parent->left;
+                }
+                // Case 4: x的兄弟w是黑色的；并且w的右孩子是红色的，左孩子任意颜色。
+
+                other->color = parent->color;
+                parent->color = 1;
+                other->left->color = 1;
+                rbt_right_rotate(info, parent);
+                node = info->root;
+                break;
+            }
+        }
+    }
+    if (node)
+        node->color = 1;
+}
+
+int rbt_remove_node(__rbt_info__* info, __rbt_node__* node) {
+    __rbt_node__* child, * parent;
+    int color;
+
+    // 被删除节点的“左右孩子都不为空”的情况。
+    if ((node->left) && (node->right)) {
+        // 被删节点的后继节点。(称为“取代节点”)
+        // 用它来取代“被删节点”的位置，然后再将“被删节点”去掉。
+        __rbt_node__* replace = node;
+
+        // 获取后继节点
+        replace = replace->right;
+        while (replace->left)
+            replace = replace->left;
+
+        // “node节点”不是根节点(只有根节点不存在父节点)
+        if (node->parent) {
+            if (node->parent->left == node)
+                node->parent->left = replace;
+            else
+                node->parent->right = replace;
+        }
+        else
+            // “node节点”是根节点，更新根节点。
+            info->root = replace;
+
+        // child是“取代节点”的右孩子，也是需要“调整的节点”。
+        // “取代节点”肯定不存在左孩子！因为它是一个后继节点。
+        child = replace->right;
+        parent = replace->parent;
+        // 保存“取代节点”的颜色
+        color = replace->color;
+
+        // “被删除节点”是“它的后继节点的父节点”
+        if (parent == node) {
+            parent = replace;
+        }
+        else {
+            // child不为空
+            if (child)
+                child->parent = parent;
+            parent->left = child;
+
+            replace->right = node->right;
+            node->right->parent = replace;
+        }
+
+        replace->parent = node->parent;
+        replace->color = node->color;
+        replace->left = node->left;
+        node->left->parent = replace;
+    }
+    else {
+        if (node->left)
+            child = node->left;
+        else
+            child = node->right;
+
+        parent = node->parent;
+        // 保存"取代节点"的颜色
+        color = node->color;
+
+        if (child)
+            child->parent = parent;
+
+        // "node节点"不是根节点
+        if (parent) {
+            if (parent->left == node)
+                parent->left = child;
+            else
+                parent->right = child;
+        }
+        else
+            info->root = child;
+    }
+    if (color == 1)
+        rbt_remove_balance(info, child, parent);
+    free(node);
+}
+
+int rbt_remove(__rbt_info__* info, void* key) {
+    __rbt_node__* node = rbt_search(info, info->root, key);
+    if (node)
+        rbt_remove_node(info, node);
 }
 
 int rbt_destroy_x(__rbt_node__* node) {
