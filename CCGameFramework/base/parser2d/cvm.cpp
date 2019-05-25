@@ -75,6 +75,7 @@ namespace clib {
         fs.as_root(true);
         fs.mkdir("/sys");
         fs.func("/sys/ps", this);
+        fs.func("/sys/mem", this);
         fs.mkdir("/proc");
         fs.mkdir("/dev");
         fs.func("/dev/random", this);
@@ -1589,6 +1590,25 @@ namespace clib {
                             ss << sz << std::endl;
                         }
                     }
+                    return ss.str();
+                }
+                else if (op == "mem") {
+                    std::stringstream ss;
+                    sprintf(sz, "%-18s %d", "Memory Total:", memory.DEFAULT_ALLOC_MEMORY_SIZE); ss << sz << std::endl;
+                    sprintf(sz, "%-18s %d", "Memory Using:", (memory.DEFAULT_ALLOC_BLOCK_SIZE - memory.available()) * memory.BLOCK_SIZE); ss << sz << std::endl;
+                    sprintf(sz, "%-18s %d", "Memory Free:", memory.available() * memory.BLOCK_SIZE); ss << sz << std::endl;
+                    int pages = 0, heaps = 0, heaps_a = 0;
+                    for (auto i = 0; i < TASK_NUM; ++i) {
+                        if (tasks[i].flag & CTX_VALID) {
+                            pages += tasks[i].allocation.size();
+                            heaps += tasks[i].pool->page_size();
+                            heaps_a += tasks[i].pool->available();
+                        }
+                    }
+                    sprintf(sz, "%-18s %d", "Heap Total:", heaps* PAGE_SIZE); ss << sz << std::endl;
+                    sprintf(sz, "%-18s %d", "Heap Using:", heaps * PAGE_SIZE - heaps_a); ss << sz << std::endl;
+                    sprintf(sz, "%-18s %d", "Heap Free:", heaps_a); ss << sz << std::endl;
+                    sprintf(sz, "%-18s %d", "Page Using:", pages); ss << sz << std::endl;
                     return ss.str();
                 }
             }

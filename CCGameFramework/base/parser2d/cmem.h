@@ -29,6 +29,7 @@ namespace clib {
         uint32_t alloc(uint32_t size);
         uint32_t free(uint32_t addr);
         int page_size() const;
+        int available() const;
 
         void copy_from(const cmem& mem);
 

@@ -154,6 +154,10 @@ namespace clib {
     int cmem::page_size() const {
         return (int)memory.size();
     }
+    
+    int cmem::available() const {
+        return (int)available_size;
+    }
 
     uint32_t cmem::new_page(uint32_t size) {
         auto id = memory.size();
