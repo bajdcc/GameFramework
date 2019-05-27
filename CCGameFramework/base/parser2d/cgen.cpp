@@ -862,8 +862,11 @@ namespace clib {
         }
         case op_logical_not: {
             exp->gen_rvalue(gen);
-            base.reset();
-            base = std::make_shared<type_base_t>(l_int);
+            base = exp->base->clone();
+            if (base->ptr > 0) {
+                base.reset();
+                base = std::make_shared<type_base_t>(l_int);
+            }
             auto size = base->get_cast();
             gen.emit(LNT, size);
         }

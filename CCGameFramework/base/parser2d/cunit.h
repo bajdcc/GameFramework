@@ -59,9 +59,11 @@ namespace clib {
 
     struct unit_collection : public unit {
         bool skip{ false };
+        bool marked{ false };
         unit* child{ nullptr };
 
         unit_collection& set_skip(bool skip);
+        unit_collection& set_marked(bool skip);
         unit_collection& set_child(unit* node);
     };
 
@@ -89,6 +91,7 @@ namespace clib {
     struct nga_edge {
         nga_status* begin{ nullptr }, * end{ nullptr };
         bool skip{ false };
+        bool marked{ false };
         unit* data{ nullptr };
     };
 
@@ -148,6 +151,7 @@ namespace clib {
         int status;
         string_t label;
         std::vector<unit*> LA;
+        bool marked;
     };
 
     struct pda_rule {

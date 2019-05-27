@@ -368,7 +368,7 @@ namespace clib {
         compoundStatement = ~_lbrace_ + *blockItemList + ~_rbrace_;
         blockItemList = *blockItemList + blockItem;
         blockItem = statement | declaration;
-        expressionStatement = *expression + ~_semi_;
+        expressionStatement = *expression + ~~_semi_;
         selectionStatement
             = _if_ + ~_lparan_ + expression + ~_rparan_ + statement + *(_else_ + statement)
             | _switch_ + ~_lparan_ + expression + ~_rparan_ + statement;
@@ -447,6 +447,7 @@ namespace clib {
         std::vector<backtrace_t> bks;
         bks.push_back(bk_tmp);
         auto trans_id = -1;
+        auto prev_idx = 0;
         while (!bks.empty()) {
             auto bk = &bks.back();
             if (bk->direction == b_success || bk->direction == b_fail) {
@@ -458,6 +459,10 @@ namespace clib {
                         bks.pop_back();
                         bks.back().direction = b_error;
                         bk = &bks.back();
+                        if (bk->lexer_index < prev_idx) {
+                            bk->direction = b_fail;
+                            continue;
+                        }
                     }
                     else {
                         bk->direction = b_fail;
@@ -502,6 +507,11 @@ namespace clib {
                                 if (valid_trans(cs)) {
                                     trans_ids.push_back(i | pda_edge_priority(cs.type) << 16);
                                 }
+                            }
+                            if (trans.size() == 1 && !trans_ids.empty() &&
+                                (trans[0].type == e_move || trans[0].type == e_pass) &&
+                                trans[0].marked) {
+                                prev_idx = bk->lexer_index;
                             }
                         }
                         if (!trans_ids.empty()) {
