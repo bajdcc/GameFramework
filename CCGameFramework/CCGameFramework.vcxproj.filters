@@ -523,6 +523,18 @@
     <ClInclude Include="base\parser2d\cui.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="base\json\cjast.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\json\cjdom.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\json\cjparser.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\json\cjlexer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -898,6 +910,18 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="base\parser2d\cui.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\json\cjast.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\json\cjdom.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\json\cjparser.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\json\cjlexer.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

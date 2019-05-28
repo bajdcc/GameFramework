@@ -14,6 +14,7 @@
 #include "cexception.h"
 #include "cgui.h"
 #include "cnet.h"
+#include "../json/cjparser.h"
 
 #define LOG_INS 0
 #define LOG_STACK 0
@@ -2018,12 +2019,47 @@ namespace clib {
         return false;
     }
 
+    bool cvm::web(int id) {
+        switch (id) {
+        case 401:
+        {
+            auto json = vmm_getstr(ctx->ax._ui);
+            std::stringstream ss;
+            try {
+                clib::cparser_json p(json);
+                auto root = p.parse();
+                clib::cast_json::print(root, 0, ss);
+            }
+            catch (const std::exception&) {
+#if LOG_SYSTEM
+                ATLTRACE("[SYSTEM] ERR  | JSON PARSE ERROR: %s\n", json.c_str());
+#endif
+                ss << "{\"Error\": \"clibparser::error\"}";
+            }
+            auto s = ss.str();
+            ctx->ax._ui = vmm_malloc(s.length() + 1);
+            vmm_setstr(ctx->ax._ui, s);
+            break;
+        }
+        default:
+#if LOG_SYSTEM
+            ATLTRACE("[SYSTEM] ERR  | unknown interrupt: %d\n", ctx->ax._i);
+#endif
+            error("unknown interrupt");
+            break;
+        }
+        ctx->pc += INC_PTR;
+        return false;
+    }
+
     bool cvm::interrupt() {
         auto id = vmm_get(ctx->pc);
         if (id > 200 && id < 300)
             return math(id);
         if (id >= 300 && id < 400)
             return gui(id);
+        if (id >= 400 && id < 500)
+            return web(id);
         switch (id) {
         case 0:
         case 1:
@@ -2207,16 +2243,16 @@ namespace clib {
         }
         case 30:
             if (ctx->ax._i != 0)
-                ctx->ax._i = vmm_malloc((uint32_t)ctx->ax._i);
+                ctx->ax._i = vmm_malloc(ctx->ax._ui);
             break;
         case 31:
-            ctx->ax._i = vmm_free((uint32_t)ctx->ax._i);
+            ctx->ax._i = vmm_free(ctx->ax._ui);
             break;
         case 40:
             destroy(ctx->id);
             return true;
         case 51:
-            ctx->ax._i = exec_file(vmm_getstr((uint32_t)ctx->ax._i));
+            ctx->ax._i = exec_file(vmm_getstr(ctx->ax._ui));
             ctx->pc += INC_PTR;
             return true;
         case 50:
@@ -2234,7 +2270,7 @@ namespace clib {
         }
                  break;
         case 53: {
-            ctx->ax._i = exec_file(vmm_getstr((uint32_t)ctx->ax._i));
+            ctx->ax._i = exec_file(vmm_getstr(ctx->ax._ui));
             if (ctx->ax._i >= 0 && ctx->ax._i < TASK_NUM)
                 tasks[ctx->ax._i].state = CTS_WAIT;
             break;
@@ -2288,22 +2324,22 @@ namespace clib {
             break;
         }
         case 60:
-            vmm_setstr((uint32_t)ctx->ax._i, fs.get_pwd());
+            vmm_setstr(ctx->ax._ui, fs.get_pwd());
             break;
         case 61:
-            vmm_setstr((uint32_t)ctx->ax._i, fs.get_user());
+            vmm_setstr(ctx->ax._ui, fs.get_user());
             break;
         case 62:
-            ctx->ax._i = fs.cd(trim(vmm_getstr((uint32_t)ctx->ax._i)));
+            ctx->ax._i = fs.cd(trim(vmm_getstr(ctx->ax._ui)));
             break;
         case 63:
-            ctx->ax._i = fs.mkdir(trim(vmm_getstr((uint32_t)ctx->ax._i)));
+            ctx->ax._i = fs.mkdir(trim(vmm_getstr(ctx->ax._ui)));
             break;
         case 64:
-            ctx->ax._i = fs.touch(trim(vmm_getstr((uint32_t)ctx->ax._i)));
+            ctx->ax._i = fs.touch(trim(vmm_getstr(ctx->ax._ui)));
             break;
         case 65: {
-            auto path = trim(vmm_getstr((uint32_t)ctx->ax._i));
+            auto path = trim(vmm_getstr(ctx->ax._ui));
             vfs_node_dec* dec;
             auto s = fs.get(path, &dec, this);
             if (s != 0) {
@@ -2346,7 +2382,7 @@ namespace clib {
         }
                  break;
         case 68: {
-            ctx->ax._i = fs.rm_safe(trim(vmm_getstr((uint32_t)ctx->ax._i)));
+            ctx->ax._i = fs.rm_safe(trim(vmm_getstr(ctx->ax._ui)));
         }
         case 69: {
             auto h = ctx->ax._ui >> 16;

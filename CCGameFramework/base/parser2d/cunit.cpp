@@ -443,26 +443,29 @@ namespace clib {
             static const int MAX_SIZE = 512;
             static const int MAX_SIZE_Q = MAX_SIZE * MAX_SIZE;
             if (size >= MAX_SIZE) error("exceed max dep size");
-            std::bitset<MAX_SIZE_Q> a, b, r;
+            std::unique_ptr<std::bitset<MAX_SIZE_Q>> a, b, r;
+            a = std::make_unique<std::bitset<MAX_SIZE_Q>>();
+            b = std::make_unique<std::bitset<MAX_SIZE_Q>>();
+            r = std::make_unique<std::bitset<MAX_SIZE_Q>>();
             for (size_t l = 2; l < size; ++l) {
                 for (size_t i = 0; i < size; ++i) {
                     for (size_t j = 0; j < size; ++j) {
-                        r.reset(i * size + j);
+                        r->reset(i * size + j);
                         for (size_t k = 0; k < size; ++k) {
-                            if (a.test(i * size + k) && b.test(k * size + j)) {
-                                r.set(i * size + j);
+                            if (a->test(i * size + k) && b->test(k * size + j)) {
+                                r->set(i * size + j);
                                 break;
                             }
                         }
                     }
                 }
                 for (size_t i = 0; i < size; ++i) {
-                    if (r.test(i * (size + 1))) {
+                    if (r->test(i * (size + 1))) {
                         if (rules_list[i]->recursive < 2)
                             rules_list[i]->recursive = l;
                     }
                 }
-                a = r;
+                *a = *r;
             }
             for (size_t i = 0; i < size; ++i) {
                 if (rules_list[i]->recursive > 1) {

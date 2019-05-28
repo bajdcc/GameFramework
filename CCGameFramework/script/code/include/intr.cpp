@@ -57,4 +57,6 @@ enum INTR_TABLE {
     INTR_GUI_COLOR = 305,
     INTR_GUI_CLEAR = 306,
     INTR_GUI_RECT = 307,
+    // WEB
+    INTR_JSON_PARSE = 401,
 };

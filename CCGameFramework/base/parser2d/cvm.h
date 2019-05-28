@@ -155,6 +155,7 @@ namespace clib {
         bool interrupt();
         bool math(int id);
         bool gui(int id);
+        bool web(int id);
         void cast();
 
         void init_fs();

@@ -253,6 +253,10 @@ xcopy /r /y /e "$(ProjectDir)dll" "$(TargetDir)"</Command>
     <ClInclude Include="base\event2\tag_compat.h" />
     <ClInclude Include="base\event2\thread.h" />
     <ClInclude Include="base\event2\util.h" />
+    <ClInclude Include="base\json\cjast.h" />
+    <ClInclude Include="base\json\cjdom.h" />
+    <ClInclude Include="base\json\cjlexer.h" />
+    <ClInclude Include="base\json\cjparser.h" />
     <ClInclude Include="base\libqrencode\bitstream.h" />
     <ClInclude Include="base\libqrencode\config.h" />
     <ClInclude Include="base\libqrencode\mask.h" />
@@ -393,6 +397,10 @@ xcopy /r /y /e "$(ProjectDir)dll" "$(TargetDir)"</Command>
     <ClCompile Include="base\clib2d\Clib2DRender.cpp" />
     <ClCompile Include="base\clib2d\m2.cpp" />
     <ClCompile Include="base\clib2d\v2.cpp" />
+    <ClCompile Include="base\json\cjast.cpp" />
+    <ClCompile Include="base\json\cjdom.cpp" />
+    <ClCompile Include="base\json\cjlexer.cpp" />
+    <ClCompile Include="base\json\cjparser.cpp" />
     <ClCompile Include="base\libqrencode\bitstream.c">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
