@@ -116,6 +116,7 @@ namespace clib {
         vfs_node_dec* stream_create(const vfs_mod_query* mod, vfs_stream_t type, const string_t& path) override;
         int stream_index(vfs_stream_t type) override;
         string_t stream_net(vfs_stream_t type, const string_t& path) override;
+        int stream_write(vfs_stream_t type, byte c) override;
 
     private:
         // 申请页框

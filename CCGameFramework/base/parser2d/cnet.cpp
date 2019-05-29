@@ -270,10 +270,10 @@ namespace clib {
     }
 
     int vfs_node_stream_net::write(byte c) {
-        return 0;
+        return -1;
     }
 
     int vfs_node_stream_net::truncate() {
-        return 0;
+        return -1;
     }
 }

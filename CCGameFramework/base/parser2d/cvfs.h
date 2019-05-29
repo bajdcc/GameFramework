@@ -14,6 +14,7 @@
 #define FILE_ROOT "./script/code"
 #define WAIT_CHAR 0x10000
 #define READ_EOF 0x2000
+#define READ_ERROR (READ_EOF + 1)
 
 namespace clib {
 
@@ -34,6 +35,7 @@ namespace clib {
         fss_random,
         fss_null,
         fss_net,
+        fss_console,
     };
 
     class vfs_node_dec;
@@ -117,6 +119,7 @@ namespace clib {
     public:
         virtual int stream_index(vfs_stream_t type) = 0;
         virtual string_t stream_net(vfs_stream_t type, const string_t& path) = 0;
+        virtual int stream_write(vfs_stream_t type, byte c) = 0;
     };
 
     class vfs_node_stream : public vfs_node_dec {
@@ -128,6 +131,20 @@ namespace clib {
         int write(byte c) override;
         int truncate() override;
         explicit vfs_node_stream(const vfs_mod_query*, vfs_stream_t, vfs_stream_call*);
+    private:
+        vfs_stream_t stream{ fss_none };
+        vfs_stream_call* call{ nullptr };
+    };
+
+    class vfs_node_stream_write : public vfs_node_dec {
+        friend class cvfs;
+    public:
+        bool available() const override;
+        int index() const override;
+        void advance() override;
+        int write(byte c) override;
+        int truncate() override;
+        explicit vfs_node_stream_write(const vfs_mod_query*, vfs_stream_t, vfs_stream_call*);
     private:
         vfs_stream_t stream{ fss_none };
         vfs_stream_call* call{ nullptr };

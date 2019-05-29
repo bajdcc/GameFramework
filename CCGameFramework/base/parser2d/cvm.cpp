@@ -81,6 +81,7 @@ namespace clib {
         fs.mkdir("/dev");
         fs.func("/dev/random", this);
         fs.func("/dev/null", this);
+        fs.func("/dev/console", this);
         fs.magic("/http", this);
         fs.as_root(false);
         fs.load("/usr/logo.txt");
@@ -1529,6 +1530,9 @@ namespace clib {
                 if (op == "null") {
                     return fss_null;
                 }
+                if (op == "console") {
+                    return fss_console;
+                }
             }
         }
         else if (path.substr(0, 5) == "/http") {
@@ -1624,6 +1628,9 @@ namespace clib {
         if (type == fss_net) {
             return new vfs_node_stream_net(mod, type, this, path);
         }
+        if (type == fss_console) {
+            return new vfs_node_stream_write(mod, type, this);
+        }
         if (type != fss_none) {
             return new vfs_node_stream(mod, type, this);
         }
@@ -1658,6 +1665,15 @@ namespace clib {
         }
         error("invalid stream type");
         return "";
+    }
+
+    int cvm::stream_write(vfs_stream_t type, byte c)
+    {
+        if (global_state.input_lock == -1) {
+            cgui::singleton().put_char((char) c);
+            return 0;
+        }
+        return -1;
     }
 
     const char* cvm::state_string(cvm::ctx_state_t type) {
@@ -2367,7 +2383,7 @@ namespace clib {
                 }
             }
             else {
-                ctx->ax._i = READ_EOF + 2;
+                ctx->ax._i = READ_ERROR;
             }
         }
                  break;

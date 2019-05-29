@@ -6,18 +6,12 @@ int read_file(int handle) {
         put_char(c);
     }
     switch (c) {
-        case -1:
+        case 0x2000:
             // put_string("[INFO] Read to the end.");
-            put_string("");
             break;
-        case -2:
+        case 0x2001:
             set_fg(240, 0, 0);
-            put_string("[ERROR] File already deleted.");
-            restore_fg();
-            break;
-        case -3:
-            set_fg(240, 0, 0);
-            put_string("[ERROR] Invalid handle.");
+            put_string("[ERROR] Read error.");
             restore_fg();
             break;
     }
