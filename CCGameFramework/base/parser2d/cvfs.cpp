@@ -101,7 +101,7 @@ namespace clib {
     }
 
     int vfs_node_stream::write(byte c) {
-        return -1;
+        return call->stream_write(stream, c);
     }
 
     int vfs_node_stream::truncate() {

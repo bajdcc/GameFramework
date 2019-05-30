@@ -1669,8 +1669,13 @@ namespace clib {
 
     int cvm::stream_write(vfs_stream_t type, byte c)
     {
-        if (global_state.input_lock == -1) {
-            cgui::singleton().put_char((char) c);
+        if (type == fss_console) {
+            if (global_state.input_lock == -1) {
+                cgui::singleton().put_char((char)c);
+                return 0;
+            }
+        }
+        else if (type == fss_null) {
             return 0;
         }
         return -1;
