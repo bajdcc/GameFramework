@@ -878,7 +878,7 @@ namespace clib {
             case 0x74: // ALT
                 return;
             default:
-                printf("invalid special key: %d\n", c & 0xff);
+                ATLTRACE("[SYSTEM] GUI  | Input invalid special key: %d\n", c & 0xff);
                 return;
             }
             cvm::global_state.input_content = input_buffer();

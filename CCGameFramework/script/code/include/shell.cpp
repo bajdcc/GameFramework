@@ -5,23 +5,88 @@
 
 #include "/include/exec"
 #include "/include/proc"
+#include "/include/fs"
 #include "/include/io"
+#include "/include/string"
+#include "/include/memory"
 
-int intern_pipe() {
-    int c;
-    input_lock();
-    while ((c = input_valid()) != -1) {
-        put_char((char) input_char());
+int process(char* text) {
+    char* tmp = malloc(256), c;
+    int i = 0, j = 0;
+    while (true) {
+        c = text[i];
+        if (c == '>') {
+            i++;
+            if (text[i] == '>') { // append
+                i++;
+                strcpy(tmp + j, "| append ");
+                j += 9;
+            }
+            else { // truncate
+                strcpy(tmp + j, "| write ");
+                j += 8;
+            }
+        }
+        tmp[j++] = text[i++];
+        if (c == (char)0)
+            break;
     }
-    input_unlock();
-    return 0;
+    strcpy(text, tmp);
+}
+int exec_single(char* text, int* total) {
+    while (*text == ' ')
+        text++;
+    if (strncmp(text, "/sys/", 5) == 0) {
+        return -3;
+    }
+    if (strncmp(text, "/", 1) != 0) {
+        char* path = malloc(200);
+        pwd(path);
+        strcat(path, text);
+        int pid = exec_sleep(path);
+        free(path);
+        if (pid >= 0) {
+            (*total)++;
+            return pid;
+        }
+    }
+    (*total)++;
+    return exec_sleep(text);
+}
+int exec_start(char* text, int* total) {
+    char* c = strchr(text, '|');
+    if (c == (char*)0) {
+        return exec_single(text, total);
+    }
+    else {
+        *c++ = '\0';
+        if (*c == '\0')
+            return exec_single(text, total);
+        int right = exec_start(c, total);
+        if (right < 0)
+            return right;
+        int left = exec_single(text, total);
+        exec_connect(left, right);
+        exec_wakeup(right);
+        return left;
+    }
 }
 int shell(char *path) {
-    int pid = exec_sleep(path);
-    if (pid < 0)
+    int len = strlen(path), total = 0, i;
+    char* new_path = malloc(len + 1);
+    strcpy(new_path, path);
+    process(new_path);
+    int pid = exec_start(new_path, &total);
+    free(new_path);
+    if (pid >= 0) {
+        exec_wakeup(pid);
+        for (i = 0; i < total; ++i) {
+            wait();
+        }
+        return 0;
+    }
+    else {
+        exec_kill_children();
         return pid;
-    exec_connect(pid, get_pid());
-    exec_wakeup(pid);
-    intern_pipe();
-    wait();
+    }
 }

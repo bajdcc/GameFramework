@@ -7,66 +7,6 @@
 #include "/include/shell"
 #include "/include/sys"
 #include "/include/gui"
-int process(char *text) {
-    char *tmp = malloc(256), c;
-    int i = 0, j = 0;
-    while (true) {
-        c = text[i];
-        if (c == '>') {
-            i++;
-            if (text[i] == '>') { // append
-                i++;
-                strcpy(tmp + j, "| append ");
-                j += 9;
-            } else { // truncate
-                strcpy(tmp + j, "| write ");
-                j += 8;
-            }
-        }
-        tmp[j++] = text[i++];
-        if (c == (char) 0)
-            break;
-    }
-    strcpy(text, tmp);
-}
-int exec_single(char *text, int *total) {
-    while (*text == ' ')
-        text++;
-    if (strncmp(text, "/sys/", 5) == 0) {
-        return -3;
-    }
-    if (strncmp(text, "/", 1) != 0) {
-        char* path = malloc(200);
-        pwd(path);
-        strcat(path, "/");
-        strcat(path, text);
-        int pid = exec_sleep(path);
-        free(path);
-        if (pid >= 0) {
-            (*total)++;
-            return pid;
-        }
-    }
-    (*total)++;
-    return exec_sleep(text);
-}
-int exec_start(char *text, int *total) {
-    char *c = strchr(text, '|');
-    if (c == (char *) 0) {
-        return exec_single(text, total);
-    } else {
-        *c++ = '\0';
-        if (*c == '\0')
-            return exec_single(text, total);
-        int right = exec_start(c, total);
-        if (right < 0)
-            return right;
-        int left = exec_single(text, total);
-        exec_connect(left, right);
-        exec_wakeup(right);
-        return left;
-    }
-}
 struct node {
     char *text;
     node *prev;
@@ -95,7 +35,7 @@ int print_history(node *head) {
     }
 }
 int main(int argc, char **argv) {
-    int i, j, total, state = 1, direct_input = input_state();
+    int i, j, state = 1, direct_input = input_state();
     char *text = malloc(256);
     char *_whoami = malloc(100);
     char *_hostname = malloc(100);
@@ -103,7 +43,6 @@ int main(int argc, char **argv) {
     node *head;
     node *cur;
     while (state) {
-        total = 0;
         if (direct_input) {
             set_fg(143, 164, 174);
             put_string("[");
@@ -162,32 +101,25 @@ int main(int argc, char **argv) {
         }
         push(&head, text);
         cur = 0;
-        process(text);
         switch_task();
-        int pid = exec_start(text, &total);
-        if (pid >= 0) {
-            exec_wakeup(pid);
-            for (j = 0; j < total; ++j) {
-                wait();
-            }
-        } else {
-            exec_kill_children();
+        int pid = shell(text);
+        if (pid < 0) {
             switch (pid) {
-                case -1:
-                    set_fg(240, 0, 0);
-                    put_string("[ERROR] File not exists.\n");
-                    restore_fg();
-                    break;
-                case -2:
-                    set_fg(240, 0, 0);
-                    put_string("[ERROR] Compile failed.\n");
-                    restore_fg();
-                    break;
-                case -3:
-                    set_fg(240, 0, 0);
-                    put_string("[ERROR] Cannot execute system programs!\n");
-                    restore_fg();
-                    break;
+            case -1:
+                set_fg(240, 0, 0);
+                put_string("[ERROR] File not exists.\n");
+                restore_fg();
+                break;
+            case -2:
+                set_fg(240, 0, 0);
+                put_string("[ERROR] Compile failed.\n");
+                restore_fg();
+                break;
+            case -3:
+                set_fg(240, 0, 0);
+                put_string("[ERROR] Cannot execute system programs!\n");
+                restore_fg();
+                break;
             }
         }
         switch_task();
