@@ -33,7 +33,8 @@ int process(char* text) {
     }
     strcpy(text, tmp);
 }
-int exec_single(char* text, int* total) {
+int exec_single(char* text, int* total, int right) {
+    int pid;
     while (*text == ' ')
         text++;
     if (strncmp(text, "/sys/", 5) == 0) {
@@ -43,7 +44,8 @@ int exec_single(char* text, int* total) {
         char* path = malloc(200);
         pwd(path);
         strcat(path, text);
-        int pid = exec_sleep(path);
+        pid = exec_sleep(path);
+        exec_connect(pid, get_pid());
         free(path);
         if (pid >= 0) {
             (*total)++;
@@ -51,25 +53,35 @@ int exec_single(char* text, int* total) {
         }
     }
     (*total)++;
-    return exec_sleep(text);
+    pid = exec_sleep(text);
+    exec_connect(pid, get_pid());
+    return pid;
 }
 int exec_start(char* text, int* total) {
     char* c = strchr(text, '|');
     if (c == (char*)0) {
-        return exec_single(text, total);
+        return exec_single(text, total, 1);
     }
     else {
         *c++ = '\0';
         if (*c == '\0')
-            return exec_single(text, total);
+            return exec_single(text, total, 1);
         int right = exec_start(c, total);
         if (right < 0)
             return right;
-        int left = exec_single(text, total);
+        int left = exec_single(text, total, 0);
         exec_connect(left, right);
         exec_wakeup(right);
         return left;
     }
+}
+void output() {
+    int i, c;
+    int state = input_lock();
+    while ((c = input_valid()) != -1 && c > INPUT_BEGIN) {
+        put_char(input_char());
+    }
+    input_unlock();
 }
 int shell(char *path) {
     int len = strlen(path), total = 0, i;
@@ -80,6 +92,7 @@ int shell(char *path) {
     free(new_path);
     if (pid >= 0) {
         exec_wakeup(pid);
+        output();
         for (i = 0; i < total; ++i) {
             wait();
         }
