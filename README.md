@@ -251,3 +251,13 @@ TODO：
 - [【Parser系列】实现LR分析——解决二义性问题](https://zhuanlan.zhihu.com/p/54766453)
 - [【虚拟机系列】C语言虚拟机诞生！](https://zhuanlan.zhihu.com/p/55319251)
 - [【虚拟机系列】实现Fork！](https://zhuanlan.zhihu.com/p/55613027)
+
+进度：
+
+- [x] 一切皆文件
+- [x] Shell
+- [x] 红黑树
+- [x] GUI接口
+- [ ] 多窗口管理
+- [ ] 文件权限
+- [ ] 多用户

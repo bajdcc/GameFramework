@@ -137,6 +137,7 @@ void Parser2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
             rt2->GetBitmap(&bitmap);
             if (!cur_bursh)
                 cur_bursh = d2drt.lock()->CreateDirect2DBrush(CColor());
+            clear(0xff000000); // BLACK
         }
         if (auto_fresh >= 1)
         {
