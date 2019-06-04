@@ -11,12 +11,12 @@
 
 bool Parser2DEngine::check_cord(int x, int y) const
 {
-    return buffer && x >= 0 && y >= 0 && x < rect.Width && y < rect.Height;
+    return bitmap && x >= 0 && y >= 0 && x < rect.Width && y < rect.Height;
 }
 
 bool Parser2DEngine::ready() const
 {
-    return buffer != nullptr;
+    return bitmap != nullptr;
 }
 
 void Parser2DEngine::move_to(int x, int y)
@@ -29,12 +29,10 @@ void Parser2DEngine::move_to(int x, int y)
 
 // CHECKED X, Y
 bool Parser2DEngine::setpixel(int x, int y) {
-    if (!buffer) return false;
-    auto b = &buffer[(y * rect.Width + x) * 4];
-    b[0] = cur_bursh.b;
-    b[1] = cur_bursh.g;
-    b[2] = cur_bursh.r;
-    b[3] = cur_bursh.a;
+    if (!bitmap) return false;
+    rt2->BeginDraw();
+    rt2->DrawRectangle(D2D1::RectF((FLOAT)x, (FLOAT)y, (FLOAT)x, (FLOAT)y), cur_bursh);
+    rt2->EndDraw();
     return true;
 }
 
@@ -56,7 +54,10 @@ void Parser2DEngine::bresenham(int x0, int y0, int x1, int y1) {
 void Parser2DEngine::line_to(int x, int y)
 {
     if (check_cord(x, y)) {
-        bresenham(cur_pt.x, cur_pt.y, x, y);
+        rt2->BeginDraw();
+        rt2->DrawLine(D2D1::Point2F((FLOAT)cur_pt.x, (FLOAT)cur_pt.y),
+            D2D1::Point2F((FLOAT)x, (FLOAT)y), cur_bursh);
+        rt2->EndDraw();
         cur_pt.x = x;
         cur_pt.y = y;
     }
@@ -81,31 +82,24 @@ int Parser2DEngine::get_height() const
 
 void Parser2DEngine::set_color(uint c)
 {
-    cur_bursh = CColor(c);
+    if (!bitmap) return;
+    ATLVERIFY(rt2->CreateSolidColorBrush(D2D1::ColorF(c & 0xffffff, ((FLOAT)(c >> 24)) / 255.0f), &cur_bursh));
 }
 
 void Parser2DEngine::clear(uint c)
 {
-    if (!buffer) return;
-    for (int i = 0; i < rect.Height; ++i)
-    {
-        for (int j = 0; j < rect.Width; ++j)
-        {
-            *((uint *)&buffer[(i * rect.Width + j) * 4]) = c;
-        }
-    }
+    if (!bitmap) return;
+    rt2->BeginDraw();
+    rt2->Clear(D2D1::ColorF(c & 0xffffff, ((FLOAT)(c >> 24)) / 255.0f));
+    rt2->EndDraw();
 }
 
 void Parser2DEngine::fill_rect(int x, int y)
 {
     if (check_cord(x, y)) {
-        for (int i = cur_pt.x; i <= x; ++i)
-        {
-            for (int j = cur_pt.y; j <= y; ++j)
-            {
-                *((uint*)& buffer[(j * rect.Width + i) * 4]) = cur_bursh.value;
-            }
-        }
+        rt2->BeginDraw();
+        rt2->FillRectangle(D2D1::RectF((FLOAT)cur_pt.x, (FLOAT)cur_pt.y, (FLOAT)x + 1, (FLOAT)y + 1), cur_bursh);
+        rt2->EndDraw();
         cur_pt.x = x;
         cur_pt.y = y;
     }
@@ -122,7 +116,9 @@ void Parser2DEngine::reset()
 {
     auto_fresh = 1;
     clib::cvm::global_state.gui = false;
-    buffer = nullptr;
+    rt2.Release();
+    bitmap.Release();
     rect.Width = 0;
     rect.Height = 0;
+    cur_bursh.Release();
 }

@@ -70,6 +70,7 @@ void Parser2DEngine::Reset(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget
         brushes.cmdTF = newRenderTarget->CreateDirect2DTextFormat(brushes.cmdFont);
         brushes.gbkTF = newRenderTarget->CreateDirect2DTextFormat(brushes.gbkFont);
         d2drt = newRenderTarget;
+        cur_bursh = newRenderTarget->CreateDirect2DBrush(CColor());
     }
 }
 
@@ -125,35 +126,21 @@ void Parser2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
     clib::cgui::singleton().draw(rt, bounds, brushes, paused, dt_inv * FRAME);
     if (clib::cvm::global_state.gui)
     {
-        if (!buffer)
+        if (!bitmap)
         {
             if (rect.Width == 0 || rect.Height == 0) {
                 auto size = bounds.Size();
                 rect.Width = size.cx;
                 rect.Height = size.cy;
             }
-            auto wic = d2drt.lock()->CreateBitmap(rect.Width, rect.Height);
-            buffer_mem.resize(rect.Width * rect.Height * sizeof(COLORREF));
-            buffer = buffer_mem.data();
-            auto hr = wic->CopyPixels(&rect, rect.Width * 4, rect.Width * rect.Height * 4, buffer);
-            d2drect = D2D1::RectU(0, 0, rect.Width, rect.Height);
-            bitmap = d2drt.lock()->GetBitmapFromWIC(wic);
-            auto b = buffer;
-            for (auto y = 0; y < rect.Height; y++)
-            {
-                for (auto x = 0; x < rect.Width; x++)
-                {
-                    b[0] = 128;
-                    b[1] = 128;
-                    b[2] = 128;
-                    b[3] = 255;
-                    b += 4;
-                }
-            }
+            rt2 = d2drt.lock()->CreateBitmapRenderTarget(D2D1::SizeF((float)rect.Width, (float)rect.Height));
+            rt2->GetBitmap(&bitmap);
+            if (!cur_bursh)
+                cur_bursh = d2drt.lock()->CreateDirect2DBrush(CColor());
         }
         if (auto_fresh >= 1)
         {
-            bitmap->CopyFromMemory(&d2drect, buffer, rect.Width * 4);
+            rt2->GetBitmap(&bitmap);
         }
         if (auto_fresh == 2) {
             auto_fresh = 0;
@@ -165,7 +152,7 @@ void Parser2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
             D2D1_BITMAP_INTERPOLATION_MODE_LINEAR
         );
     }
-    else if (buffer) {
+    else if (bitmap) {
         reset();
     }
     CString logo(_T("脚本操作系统 clibparser @bajdcc"));

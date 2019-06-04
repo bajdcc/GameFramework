@@ -49,15 +49,14 @@ private:
     CComPtr<ID2D1SolidColorBrush> logoBrush;
 
 private:
-    std::vector<BYTE> buffer_mem;
-    BYTE* buffer{ nullptr };
     CComPtr<ID2D1Bitmap> bitmap;
+    CComPtr<ID2D1BitmapRenderTarget> rt2;
     std::weak_ptr<Direct2DRenderTarget> d2drt;
     WICRect rect;
     D2D1_RECT_U d2drect;
 
     CPoint cur_pt;
-    CColor cur_bursh;
+    CComPtr<ID2D1SolidColorBrush> cur_bursh;
     int auto_fresh{ 1 };
 
 private:

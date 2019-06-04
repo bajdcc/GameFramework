@@ -29,6 +29,7 @@ public:
     void DestroyDirect2DLinearBrush(CColor c1, CColor c2);
     std::shared_ptr<D2DTextFormatPackage> CreateDirect2DTextFormat(const Font& font);
     void DestroyDirect2DTextFormat(const Font& font);
+    CComPtr<ID2D1BitmapRenderTarget> CreateBitmapRenderTarget(D2D1_SIZE_F size);
 
     CComPtr<IWICBitmap> CreateBitmap(UINT width, UINT height);
     CComPtr<IWICBitmap> CreateImageFromFile(const CStringA& path, int index = 0);

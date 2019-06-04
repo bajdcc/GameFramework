@@ -288,3 +288,12 @@ void Direct2DRenderTarget::DestroyDirect2DTextFormat(const Font& font)
 {
     textFormats.Destroy(font);
 }
+
+CComPtr<ID2D1BitmapRenderTarget> Direct2DRenderTarget::CreateBitmapRenderTarget(D2D1_SIZE_F size)
+{
+    CComPtr<ID2D1BitmapRenderTarget> rt;
+    HRESULT hr = d2dRenderTarget->CreateCompatibleRenderTarget(size, &rt);
+    if (FAILED(hr))
+        ATLASSERT(!"CreateCompatibleRenderTarget failed");
+    return rt;
+}
