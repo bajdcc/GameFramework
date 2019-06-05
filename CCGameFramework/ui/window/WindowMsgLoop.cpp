@@ -43,10 +43,15 @@ void WindowMsgLoop::Run()
 
 BOOL WindowMsgLoop::Event()
 {
-    if (!PeekMessage(&m_msg, NULL, NULL, NULL, PM_NOREMOVE))
-        return TRUE;
+    for (;;) {
+        if (!PeekMessage(&m_msg, NULL, NULL, NULL, PM_NOREMOVE))
+            return TRUE;
 
-    return PumpMessage();
+        BOOL ret = PumpMessage();
+
+        if (m_msg.message != WM_MOUSEMOVE)
+            return ret;
+    }
 }
 
 BOOL WindowMsgLoop::PumpMessage()
