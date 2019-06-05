@@ -12,6 +12,9 @@ double fun2_h(double x, double z) {
             return y;
     return 0.0;
 }
+int min(int a, int b) {
+    return a > b ? b : a;
+}
 int main(int argc, char **argv) {
     gui_power_on();
     double fovScale = 2.0;
@@ -59,7 +62,6 @@ int main(int argc, char **argv) {
     }
     sleep(2000);
     int step = 4;
-    int x1, y1;
     for (y = start_y; y < stop_y; y += step) {
         double sy = 1.0 - (1.0 * (y - start_y) / height);
         for (x = start_x; x < stop_x; x += step) {
@@ -80,19 +82,13 @@ int main(int argc, char **argv) {
                 if (c > 255) c = 255;
                 if (c < 0) c = 0;
                 gui_rgb(c, 0, 0);
-                for (x1 = x; x1 < x + step && x1 < stop_x; x1++) {
-                    for (y1 = y; y1 < y + step && y1 < stop_y; y1++) {
-                        gui_point(x1, y1);
-                    }
-                }
+                gui_move_to(x, y);
+                gui_rect(min(x + step, stop_x), min(y + step, stop_y));
             }
             else {
                 gui_rgb(0, 0, 0);
-                for (x1 = x; x1 < x + step && x1 < stop_x; x1++) {
-                    for (y1 = y; y1 < y + step && y1 < stop_y; y1++) {
-                        gui_point(x1, y1);
-                    }
-                }
+                gui_move_to(x, y);
+                gui_rect(min(x + step, stop_x), min(y + step, stop_y));
             }
 
         }
