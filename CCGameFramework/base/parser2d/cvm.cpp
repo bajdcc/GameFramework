@@ -1628,16 +1628,16 @@ namespace clib {
 
     vfs_node_dec* cvm::stream_create(const vfs_mod_query * mod, vfs_stream_t type, const string_t & path) {
         if (type == fss_net) {
-            return new vfs_node_stream_net(mod, type, this, path);
+            return vfs_node_stream_net::create(mod, type, this, path);
         }
         if (type == fss_console) {
-            return new vfs_node_stream_write(mod, type, this);
+            return vfs_node_stream_write::create(mod, type, this);
         }
         if (type == fss_music) {
-            return new vfs_node_stream_music(mod, type, this, path);
+            return vfs_node_stream_music::create(mod, type, this, path);
         }
         if (type != fss_none) {
-            return new vfs_node_stream(mod, type, this);
+            return vfs_node_stream::create(mod, type, this);
         }
         error("invalid vfs stream");
         return nullptr;

@@ -22,6 +22,10 @@ namespace clib {
         explicit vfs_node_stream_music(const vfs_mod_query*, vfs_stream_t, vfs_stream_call*, const string_t& path);
         ~vfs_node_stream_music();
 
+        static vfs_node_dec* create(const vfs_mod_query* mod, vfs_stream_t s, vfs_stream_call* call, const string_t& path);
+
+        bool is_success() const;
+
     private:
         bool success{true};
         vfs_stream_t stream{ fss_none };

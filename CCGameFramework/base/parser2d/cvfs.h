@@ -134,6 +134,8 @@ namespace clib {
         int write(byte c) override;
         int truncate() override;
         explicit vfs_node_stream(const vfs_mod_query*, vfs_stream_t, vfs_stream_call*);
+
+        static vfs_node_dec* create(const vfs_mod_query* mod, vfs_stream_t s, vfs_stream_call* call);
     private:
         vfs_stream_t stream{ fss_none };
         vfs_stream_call* call{ nullptr };
@@ -148,6 +150,8 @@ namespace clib {
         int write(byte c) override;
         int truncate() override;
         explicit vfs_node_stream_write(const vfs_mod_query*, vfs_stream_t, vfs_stream_call*);
+
+        static vfs_node_dec* create(const vfs_mod_query* mod, vfs_stream_t s, vfs_stream_call* call);
     private:
         vfs_stream_t stream{ fss_none };
         vfs_stream_call* call{ nullptr };

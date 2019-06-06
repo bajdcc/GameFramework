@@ -239,6 +239,11 @@ namespace clib {
         }
     }
 
+    vfs_node_dec* vfs_node_stream_net::create(const vfs_mod_query* mod, vfs_stream_t s, vfs_stream_call* call, const string_t& path)
+    {
+        return new vfs_node_stream_net(mod, s, call, path);
+    }
+
     string_t vfs_node_stream_net::get_url() const
     {
         return url;

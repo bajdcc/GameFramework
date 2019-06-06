@@ -89,6 +89,11 @@ namespace clib {
     vfs_node_stream::vfs_node_stream(const vfs_mod_query* mod, vfs_stream_t s, vfs_stream_call* call) :
         vfs_node_dec(mod), stream(s), call(call) {}
 
+    vfs_node_dec* vfs_node_stream::create(const vfs_mod_query* mod, vfs_stream_t s, vfs_stream_call* call)
+    {
+        return new vfs_node_stream(mod, s, call);
+    }
+
     bool vfs_node_stream::available() const {
         return true;
     }
@@ -110,6 +115,11 @@ namespace clib {
 
     vfs_node_stream_write::vfs_node_stream_write(const vfs_mod_query* mod, vfs_stream_t s, vfs_stream_call* call) :
         vfs_node_dec(mod), stream(s), call(call) {}
+
+    vfs_node_dec* vfs_node_stream_write::create(const vfs_mod_query* mod, vfs_stream_t s, vfs_stream_call* call)
+    {
+        return new vfs_node_stream_write(mod, s, call);
+    }
 
     bool vfs_node_stream_write::available() const {
         return false;

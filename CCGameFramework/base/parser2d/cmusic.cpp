@@ -41,6 +41,21 @@ namespace clib {
         }
     }
 
+    vfs_node_dec* vfs_node_stream_music::create(const vfs_mod_query* mod, vfs_stream_t s, vfs_stream_call* call, const string_t& path)
+    {
+        vfs_node_stream_music* m = new vfs_node_stream_music(mod, s, call, path);
+        if (!m->is_success()) {
+            delete m;
+            return nullptr;
+        }
+        return m;
+    }
+
+    bool vfs_node_stream_music::is_success() const
+    {
+        return success;
+    }
+
 #define MAKE_TIME(a,b,c) (((a) << 12) | ((b) << 6) | (c))
     bool vfs_node_stream_music::available() const {
         if (success) {
