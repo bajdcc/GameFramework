@@ -182,6 +182,7 @@ namespace clib {
         node->refs = 0;
         node->locked = false;
         node->callback = nullptr;
+        node->magic = fss_none;
         return node;
     }
 
@@ -348,7 +349,7 @@ namespace clib {
         }
         else if (node->type == fs_magic) {
             node->time.access = now();
-            *dec = f->stream_create(this, fss_net, p);
+            *dec = f->stream_create(this, node->magic, p);
             if (*dec == nullptr) {
                 return -1;
             }
@@ -508,9 +509,7 @@ namespace clib {
     string_t cvfs::combine(const string_t & pwd, const string_t & path) const {
         if (path.empty())
             return pwd;
-        if (path[0] == '/')
-            return path;
-        auto res = pwd;
+        auto res = (path[0] == '/') ? "/" : pwd;
         std::vector<string_t> paths;
         split_path(path, paths, '/');
         for (auto& p : paths) {
@@ -579,13 +578,14 @@ namespace clib {
         return -2;
     }
 
-    int cvfs::magic(const string_t & path, vfs_func_t * f) {
+    int cvfs::magic(const string_t & path, vfs_func_t * f, vfs_stream_t magic) {
         auto node = get_node(path);
         if (!node) {
             vfs_node::ref cur;
             auto s = _mkdir(path, cur);
             if (s == 0) { // new dir
                 cur->type = fs_magic;
+                cur->magic = magic;
                 cur->callback = f;
                 return 0;
             }
@@ -605,6 +605,11 @@ namespace clib {
         if (f == string_t::npos)
             return "";
         return path.substr(f + 1);
+    }
+
+    string_t cvfs::get_realpath(const string_t& path)
+    {
+        return FILE_ROOT + combine(pwd, path);
     }
 
     int cvfs::rm(const string_t & path) {

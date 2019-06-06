@@ -36,6 +36,7 @@ namespace clib {
         fss_null,
         fss_net,
         fss_console,
+        fss_music,
     };
 
     class vfs_node_dec;
@@ -65,6 +66,7 @@ namespace clib {
         std::map<string_t, ref> children;
         std::vector<byte> data;
         vfs_func_t* callback;
+        vfs_stream_t magic;
         weak_ref parent;
     };
 
@@ -120,6 +122,7 @@ namespace clib {
         virtual int stream_index(vfs_stream_t type) = 0;
         virtual string_t stream_net(vfs_stream_t type, const string_t& path) = 0;
         virtual int stream_write(vfs_stream_t type, byte c) = 0;
+        virtual string_t stream_path(const string_t& path) = 0;
     };
 
     class vfs_node_stream : public vfs_node_dec {
@@ -167,13 +170,14 @@ namespace clib {
         int mkdir(const string_t& path);
         int touch(const string_t& path);
         int func(const string_t& path, vfs_func_t* f);
-        int magic(const string_t& path, vfs_func_t* f);
+        int magic(const string_t& path, vfs_func_t* f, vfs_stream_t magic);
         int rm(const string_t& path);
         int rm_safe(const string_t& path);
         void load(const string_t& path);
 
         static void split_path(const string_t& path, std::vector<string_t>& args, char c);
         static string_t get_filename(const string_t& path);
+        string_t get_realpath(const string_t& path);
 
     private:
         vfs_node::ref new_node(vfs_file_t type);

@@ -117,6 +117,7 @@ namespace clib {
         int stream_index(vfs_stream_t type) override;
         string_t stream_net(vfs_stream_t type, const string_t& path) override;
         int stream_write(vfs_stream_t type, byte c) override;
+        string_t stream_path(const string_t& path) override;
 
     private:
         // 申请页框

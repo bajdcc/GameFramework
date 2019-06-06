@@ -14,6 +14,7 @@
 #include "cexception.h"
 #include "cgui.h"
 #include "cnet.h"
+#include "cmusic.h"
 #include "../json/cjparser.h"
 
 #define LOG_INS 0
@@ -82,7 +83,8 @@ namespace clib {
         fs.func("/dev/random", this);
         fs.func("/dev/null", this);
         fs.func("/dev/console", this);
-        fs.magic("/http", this);
+        fs.magic("/http", this, fss_net);
+        fs.magic("/music", this, fss_music);
         fs.as_root(false);
         fs.load("/usr/logo.txt");
         fs.load("/usr/badapple.txt");
@@ -1538,6 +1540,9 @@ namespace clib {
         else if (path.substr(0, 5) == "/http") {
             return fss_net;
         }
+        else if (path.substr(0, 6) == "/music") {
+            return fss_music;
+        }
         return fss_none;
     }
 
@@ -1618,9 +1623,6 @@ namespace clib {
                 }
             }
         }
-        else if (path.substr(0, 5) == "/http") {
-            return "346";
-        }
         return "\033FFF0000F0\033[ERROR] File not exists.\033S4\033";
     }
 
@@ -1630,6 +1632,9 @@ namespace clib {
         }
         if (type == fss_console) {
             return new vfs_node_stream_write(mod, type, this);
+        }
+        if (type == fss_music) {
+            return new vfs_node_stream_music(mod, type, this, path);
         }
         if (type != fss_none) {
             return new vfs_node_stream(mod, type, this);
@@ -1679,6 +1684,11 @@ namespace clib {
             return 0;
         }
         return -1;
+    }
+
+    string_t cvm::stream_path(const string_t& path)
+    {
+        return fs.get_realpath(path);
     }
 
     const char* cvm::state_string(cvm::ctx_state_t type) {

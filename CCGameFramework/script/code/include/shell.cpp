@@ -43,6 +43,8 @@ int exec_single(char* text, int* total, int right) {
     if (strncmp(text, "/", 1) != 0) {
         char* path = malloc(200);
         pwd(path);
+        if (strlen(path) != 1)
+            strcat(path, "/");
         strcat(path, text);
         pid = exec_sleep(path);
         exec_connect(pid, get_pid());

@@ -1,0 +1,34 @@
+﻿//
+// Project: CParser
+// Created by bajdcc
+//
+
+#ifndef CPARSER_CMUSIC_H
+#define CPARSER_CMUSIC_H
+
+#include "cvfs.h"
+#include "libzplay/libzplay.h"
+
+namespace clib {
+
+    class vfs_node_stream_music : public vfs_node_dec {
+        friend class cvfs;
+    public:
+        bool available() const override;
+        int index() const override;
+        void advance() override;
+        int write(byte c) override;
+        int truncate() override;
+        explicit vfs_node_stream_music(const vfs_mod_query*, vfs_stream_t, vfs_stream_call*, const string_t& path);
+        ~vfs_node_stream_music();
+
+    private:
+        bool success{true};
+        vfs_stream_t stream{ fss_none };
+        vfs_stream_call* call{ nullptr };
+        static libZPlay::ZPlay* zplay;
+        libZPlay::TStreamInfo info;
+    };
+}
+
+#endif //CPARSER_CMUSIC_H
