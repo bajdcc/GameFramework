@@ -13,6 +13,7 @@
 
 #define FILE_ROOT "./script/code"
 #define WAIT_CHAR 0x10000
+#define DELAY_CHAR 0x10001
 #define READ_EOF 0x2000
 #define READ_ERROR (READ_EOF + 1)
 

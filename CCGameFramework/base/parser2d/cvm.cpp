@@ -2393,6 +2393,12 @@ namespace clib {
                     ctx->ax._i = h;
                     return true;
                 }
+                if (ctx->ax._i == DELAY_CHAR) {
+                    ctx->pc -= INC_PTR;
+                    ctx->ax._i = h;
+                    dec->advance();
+                    return true;
+                }
                 if (ctx->ax._i < READ_EOF) {
                     dec->advance();
                 }

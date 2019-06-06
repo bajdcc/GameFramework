@@ -27,11 +27,18 @@ namespace clib {
         bool is_success() const;
 
     private:
-        bool success{true};
+        bool success{false};
         vfs_stream_t stream{ fss_none };
         vfs_stream_call* call{ nullptr };
         static libZPlay::ZPlay* zplay;
         libZPlay::TStreamInfo info;
+        libZPlay::TStreamTime pos;
+        CStringA text;
+        CStringA all_time;
+        int all{ 0 };
+        int idx{ 0 };
+        int now{ 0 };
+        int last{ -1 };
     };
 }
 
