@@ -74,10 +74,13 @@ namespace clib {
     }
 
     void cvm::init_fs() {
+        global_state.now = std::chrono::system_clock::now();
         fs.as_root(true);
         fs.mkdir("/sys");
         fs.func("/sys/ps", this);
         fs.func("/sys/mem", this);
+        fs.func("/sys/time", this);
+        fs.func("/sys/uptime", this);
         fs.mkdir("/proc");
         fs.mkdir("/dev");
         fs.func("/dev/random", this);
@@ -1620,6 +1623,30 @@ namespace clib {
                     sprintf(sz, "%-18s %d", "Heap Using:", heaps * PAGE_SIZE - heaps_a); ss << sz << std::endl;
                     sprintf(sz, "%-18s %d", "Heap Free:", heaps_a); ss << sz << std::endl;
                     sprintf(sz, "%-18s %d", "Page Using:", pages); ss << sz << std::endl;
+                    return ss.str();
+                }
+                else if (op == "time") {
+                    std::stringstream ss;
+                    auto n = std::chrono::system_clock::now();
+                    auto m = n.time_since_epoch();
+                    auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(m).count();
+                    auto const msecs = diff % 1000;
+                    std::time_t t = std::chrono::system_clock::to_time_t(n);
+                    ss << std::put_time(std::localtime(&t), "%Y/%m/%d %H:%M:%S") << "." << msecs;
+                    return ss.str();
+                }
+                else if (op == "uptime") {
+                    std::stringstream ss;
+                    auto n = std::chrono::system_clock::now();
+                    auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(n - global_state.now).count();
+                    auto const msecs = diff % 1000;
+                    auto const days = diff / 86400000;
+                    auto nn = std::chrono::system_clock::to_time_t(n);
+                    static auto const ll = std::chrono::system_clock::to_time_t(global_state.now);
+                    auto t = std::chrono::system_clock::to_time_t(
+                        std::chrono::system_clock::from_time_t(nn - ll));
+                    ss << days << " " << (days > 0 ? "days" : "day") << ", ";
+                    ss << std::put_time(std::gmtime(&t), "%H:%M:%S") << "." << msecs;
                     return ss.str();
                 }
             }

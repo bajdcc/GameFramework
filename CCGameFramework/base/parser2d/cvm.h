@@ -276,6 +276,7 @@ namespace clib {
             string_t hostname{ "ccos" };
             bool gui{ false };
             cgui_op* ui{ nullptr };
+            decltype(std::chrono::system_clock::now()) now;
         } global_state;
     };
 }
