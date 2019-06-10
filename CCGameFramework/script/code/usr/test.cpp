@@ -1,11 +1,12 @@
 #include "/include/shell"
 #include "/include/xtoa_atoi"
 int main(int argc, char **argv) {
-    int i = 1;
+    int i = 0;
     if (argc > 1) {
         i = atoi32(argv[1]);
     }
     switch (i) {
+        case 0: shell("/usr/test_command");
         case 1: shell("/usr/test_rec");
         case 2: shell("/usr/test_fork");
         case 3: shell("/usr/test_input");

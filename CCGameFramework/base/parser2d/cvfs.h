@@ -184,6 +184,8 @@ namespace clib {
         static string_t get_filename(const string_t& path);
         string_t get_realpath(const string_t& path);
 
+        static void convert_utf8_to_gbk(string_t& str);
+
     private:
         vfs_node::ref new_node(vfs_file_t type);
         vfs_node::ref get_node(const string_t& path) const;

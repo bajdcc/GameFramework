@@ -78,22 +78,7 @@ namespace clib {
             std::stringstream buffer;
             buffer << t.rdbuf();
             auto str = buffer.str();
-            // UTF-8 to GBK
-            {
-                int len = MultiByteToWideChar(CP_UTF8, 0, (LPCCH)str.c_str(), -1, NULL, 0);
-                wchar_t* wszGBK = new wchar_t[len];
-                memset(wszGBK, 0, len);
-                MultiByteToWideChar(CP_UTF8, 0, (LPCCH)str.c_str(), -1, wszGBK, len);
-
-                len = WideCharToMultiByte(CP_ACP, 0, wszGBK, -1, NULL, 0, NULL, NULL);
-                char* szGBK = new char[len + 1];
-                memset(szGBK, 0, len + 1);
-                WideCharToMultiByte(CP_ACP, 0, wszGBK, -1, szGBK, len, NULL, NULL);
-
-                str = szGBK;
-                delete[] szGBK;
-                delete[] wszGBK;
-            }
+            cvfs::convert_utf8_to_gbk(str);
             std::vector<byte> data(str.begin(), str.end());
             vm->as_root(true);
             if (name[0] != '/')

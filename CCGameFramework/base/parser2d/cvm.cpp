@@ -88,6 +88,7 @@ namespace clib {
         fs.as_root(false);
         fs.load("/usr/logo.txt");
         fs.load("/usr/badapple.txt");
+        fs.load("/usr/test_command.txt");
     }
 
     // 虚页映射

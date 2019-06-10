@@ -1,0 +1,30 @@
+echo 【递归调用】
+sleep 1 show
+/usr/test_rec
+echo 【进程Fork】
+sleep 1 show
+/usr/test_fork
+echo 【键盘输入】
+sleep 1 show
+/usr/test_input
+echo 【屏幕大小更改】
+sleep 1 show
+/usr/test_resize
+echo 【内存申请释放】
+sleep 1 show
+/usr/test_malloc
+echo 【结构体】
+sleep 1 show
+/usr/test_struct
+echo 【数字转字符串】
+sleep 1 show
+/usr/test_xtoa
+echo 【动态数组】
+sleep 1 show
+/usr/test_vector
+echo 【用户界面】
+sleep 1 show
+/usr/test_gui
+echo 【红黑树】
+sleep 1 show
+/usr/test_map
