@@ -4,6 +4,7 @@
 //
 
 #include "stdafx.h"
+#include "render/Direct2DRenderTarget.h"
 #include "parser2d.h"
 #include "cvm.h"
 
@@ -121,4 +122,44 @@ void Parser2DEngine::reset()
     rect.Width = 0;
     rect.Height = 0;
     cur_bursh.Release();
+}
+
+void Parser2DEngine::create_font()
+{
+    if (d2drt.lock() && font.size > 0 && !font.fontFamily.IsEmpty()) {
+        auto d = d2drt.lock();
+        d->DestroyDirect2DTextFormat(backup_font);
+        font_format = d->CreateDirect2DTextFormat(font);
+        backup_font.fontFamily = font.fontFamily;
+        backup_font.size = font.size;
+        backup_font.bold = font.bold;
+        backup_font.italic = font.italic;
+        backup_font.underline = font.underline;
+        backup_font.strikeline = font.strikeline;
+        backup_font.antialias = font.antialias;
+        backup_font.verticalAntialias = font.verticalAntialias;
+    }
+}
+
+void Parser2DEngine::set_font_size(int size)
+{
+    if (size > 0 && size < 100)
+        font.size = size;
+}
+
+void Parser2DEngine::set_font_family(const string_t& name)
+{
+    if (!name.empty())
+        font.fontFamily = name.c_str();
+}
+
+void Parser2DEngine::draw_font(const string_t& text)
+{
+    if (!bitmap) return;
+    CString t(CStringA(text.c_str()));
+    rt2->BeginDraw();
+    rt2->DrawText(t.GetBuffer(0), t.GetLength(), font_format->textFormat,
+        D2D1::RectF((float)cur_pt.x, (float)cur_pt.y,
+        (float)rect.Width, (float)rect.Height), cur_bursh);
+    rt2->EndDraw();
 }

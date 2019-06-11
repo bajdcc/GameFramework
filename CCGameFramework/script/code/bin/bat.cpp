@@ -77,6 +77,8 @@ void bat() {
         }
     }
     input_unlock();
+    if (s.length > 0)
+        push(&list, s);
     run(list);
 }
 int main(int argc, char** argv) {

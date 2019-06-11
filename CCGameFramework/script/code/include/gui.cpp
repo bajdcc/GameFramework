@@ -73,3 +73,22 @@ int gui_rect(int x, int y) {
     x << 16 | y;
     interrupt 307;
 }
+
+int gui_font_refresh() {
+    interrupt 308;
+}
+
+int gui_font_size(int size) {
+    size;
+    interrupt 309;
+}
+
+int gui_font_family(char *name) {
+    name;
+    interrupt 310;
+}
+
+int gui_draw_text(char* text) {
+    text;
+    interrupt 311;
+}

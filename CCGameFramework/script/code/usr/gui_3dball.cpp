@@ -78,6 +78,13 @@ int main(int argc, char **argv) {
     }
     width = stop_x - start_x;
     height = stop_y - start_y;
+    gui_clear(0, 0, 0);
+    gui_rgb(255, 0, 0);
+    gui_font_size(32);
+    gui_font_refresh();
+    gui_move_to(start_x, start_y);
+    gui_draw_text("【三维球体-灰度】");
+    gui_rgb(255, 255, 255);
     gui_move_to(start_x, start_y);
     gui_line_to(start_x, stop_y);
     gui_line_to(stop_x, stop_y);
@@ -147,6 +154,18 @@ int main(int argc, char **argv) {
         //sleep(1);
     }
     sleep(5000);
+    gui_clear(0, 0, 0);
+    gui_rgb(255, 0, 0);
+    gui_font_size(32);
+    gui_font_refresh();
+    gui_move_to(start_x, start_y);
+    gui_draw_text("【三维球体-法向量】");
+    gui_rgb(255, 255, 255);
+    gui_move_to(start_x, start_y);
+    gui_line_to(start_x, stop_y);
+    gui_line_to(stop_x, stop_y);
+    gui_line_to(stop_x, start_y);
+    gui_line_to(start_x, start_y);
     for (y = start_y; y < stop_y; y++) {
         double sy = 1.0 - (1.0 * (y - start_y) / height);
         for (x = start_x; x < stop_x; x++) {

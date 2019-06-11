@@ -2028,45 +2028,65 @@ namespace clib {
                 global_state.ui->reset();
             }
         }
-            break;
+        break;
         case 302:
         {
             auto x = ctx->ax._ui >> 16;
             auto y = ctx->ax._ui & 0xFFFF;
             global_state.ui->move_to(x, y);
         }
-            break;
+        break;
         case 303:
         {
             auto x = ctx->ax._ui >> 16;
             auto y = ctx->ax._ui & 0xFFFF;
             global_state.ui->line_to(x, y);
         }
-            break;
+        break;
         case 304:
         {
             auto x = ctx->ax._ui >> 16;
             auto y = ctx->ax._ui & 0xFFFF;
             global_state.ui->draw_point(x, y);
         }
-            break;
+        break;
         case 305:
         {
             global_state.ui->set_color(ctx->ax._ui);
         }
-            break;
+        break;
         case 306:
         {
             global_state.ui->clear(ctx->ax._ui);
         }
-            break;
+        break;
         case 307:
         {
             auto x = ctx->ax._ui >> 16;
             auto y = ctx->ax._ui & 0xFFFF;
             global_state.ui->fill_rect(x, y);
         }
-            break;
+        break;
+        case 308:
+        {
+            global_state.ui->create_font();
+        }
+        break;
+        case 309:
+        {
+            global_state.ui->set_font_size(ctx->ax._i);
+        }
+        break;
+        case 310:
+        {
+            global_state.ui->set_font_family(vmm_getstr(ctx->ax._ui));
+        }
+        break;
+        case 311:
+        {
+            global_state.ui->draw_font(vmm_getstr(ctx->ax._ui));
+        }
+        break;
         default:
 #if LOG_SYSTEM
             ATLTRACE("[SYSTEM] ERR  | unknown interrupt: %d\n", ctx->ax._i);

@@ -32,6 +32,10 @@ public:
     void fill_rect(int x, int y) override;
     int set_fresh(int fresh) override;
     void reset() override;
+    void create_font() override;
+    void set_font_size(int size) override;
+    void set_font_family(const string_t &name) override;
+    void draw_font(const string_t& text) override;
 
 private:
     void RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
@@ -66,6 +70,10 @@ private:
     int cycles{ 0 };
     double ips{ 0 };
     bool paused{ false };
+
+private:
+    std::shared_ptr<D2DTextFormatPackage> font_format;
+    Font font, backup_font;
 };
 
 #endif

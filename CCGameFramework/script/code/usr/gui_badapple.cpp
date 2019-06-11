@@ -25,6 +25,8 @@ int read_file(int handle) {
     set_cycle(1000000);
     sleep(0);
     gui_clear(0, 0, 0);
+    gui_font_size(32);
+    gui_font_refresh();
     gui_disable_fresh();
     while (c = read(handle), c >= 0) {
         if (c == (int) ' ' || c == (int) '\r' || c == (int) '\n') { // skip
@@ -58,6 +60,15 @@ int read_file(int handle) {
                 gui_fresh();
                 sleep(-33);
                 gui_clear(0, 0, 0);
+                gui_rgb(255, 0, 0);
+                gui_move_to(start_x, 10);
+                gui_draw_text("【Badapple 字符动画】");
+                if (p == 1) {
+                    gui_rgb(255, 255, 255);
+                }
+                else {
+                    gui_rgb(0, 0, 0);
+                }
                 x = 0; y = 0;
                 if (p == 1) {
                     for (j = 0; j < px; j++) {

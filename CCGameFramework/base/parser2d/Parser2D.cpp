@@ -42,6 +42,16 @@ void Parser2DEngine::Initialize(std::shared_ptr<Direct2DRenderTarget> rt)
     clib::cvm::global_state.ui = this;
     rect.X = 0;
     rect.Y = 0;
+    font.size = 20;
+    font.fontFamily = "宋体";
+    font.bold = false;
+    font.italic = false;
+    font.underline = false;
+    backup_font.size = 20;
+    backup_font.fontFamily = "宋体";
+    backup_font.bold = false;
+    backup_font.italic = false;
+    backup_font.underline = false;
 }
 
 void Parser2DEngine::Finalize(std::shared_ptr<Direct2DRenderTarget> rt)
@@ -61,6 +71,7 @@ void Parser2DEngine::Reset(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget
         oldRenderTarget->DestroyDirect2DBrush(logoColor); logoBrush = nullptr;
         oldRenderTarget->DestroyDirect2DTextFormat(brushes.cmdFont); brushes.cmdTF = nullptr;
         oldRenderTarget->DestroyDirect2DTextFormat(brushes.gbkFont); brushes.gbkTF = nullptr;
+        oldRenderTarget->DestroyDirect2DTextFormat(backup_font); font_format = nullptr;
     }
     if (newRenderTarget)
     {
@@ -69,6 +80,7 @@ void Parser2DEngine::Reset(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget
         logoBrush = newRenderTarget->CreateDirect2DBrush(logoColor);
         brushes.cmdTF = newRenderTarget->CreateDirect2DTextFormat(brushes.cmdFont);
         brushes.gbkTF = newRenderTarget->CreateDirect2DTextFormat(brushes.gbkFont);
+        font_format = newRenderTarget->CreateDirect2DTextFormat(font);
         d2drt = newRenderTarget;
         cur_bursh = newRenderTarget->CreateDirect2DBrush(CColor());
     }
