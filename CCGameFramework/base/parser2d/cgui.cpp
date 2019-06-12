@@ -105,6 +105,7 @@ namespace clib {
             cvm::global_state.input_waiting_list.clear();
             cvm::global_state.input_read_ptr = -1;
             cvm::global_state.input_success = false;
+            cvm::global_state.input_code = 0;
         }
     }
 
@@ -436,8 +437,7 @@ namespace clib {
     }
 
     void cgui::input_char(char c) {
-        if (c > 0)
-            input(c);
+        input(c);
     }
 
     void cgui::new_line() {
@@ -803,12 +803,17 @@ namespace clib {
                 cvm::global_state.input_content.clear();
                 cvm::global_state.input_read_ptr = 0;
                 cvm::global_state.input_success = true;
+                cvm::global_state.input_code = 0;
                 input_state = false;
             }
             return;
         }
         if (!input_state)
             return;
+        if (c < 0) {
+            put_char(c);
+            return;
+        }
         if (c < 0xffff && c > 0xff) {
             CString s;
             s.AppendChar(c);
@@ -832,6 +837,7 @@ namespace clib {
             cvm::global_state.input_content = input_buffer();
             cvm::global_state.input_read_ptr = 0;
             cvm::global_state.input_success = true;
+            cvm::global_state.input_code = 0;
             input_state = false;
             return;
         }
@@ -879,9 +885,9 @@ namespace clib {
                 return;
             }
             cvm::global_state.input_content = input_buffer();
-            cvm::global_state.input_content.push_back(C);
             cvm::global_state.input_read_ptr = 0;
             cvm::global_state.input_success = true;
+            cvm::global_state.input_code = C;
             input_state = false;
             auto begin = ptr_mx + ptr_my * cols;
             auto end = ptr_x + ptr_y * cols;

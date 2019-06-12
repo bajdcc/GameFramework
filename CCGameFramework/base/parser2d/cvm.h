@@ -273,6 +273,7 @@ namespace clib {
             std::string input_content;
             bool input_success{ false };
             int input_read_ptr{ -1 };
+            int input_code{ 0 };
             string_t hostname{ "ccos" };
             bool gui{ false };
             cgui_op* ui{ nullptr };

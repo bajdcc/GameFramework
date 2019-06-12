@@ -1263,6 +1263,7 @@ namespace clib {
                 global_state.input_read_ptr = -1;
                 global_state.input_content.clear();
                 global_state.input_success = false;
+                global_state.input_code = 0;
                 cgui::singleton().reset_cmd();
             }
             if (set_cycle_id == ctx->id) {
@@ -2211,6 +2212,7 @@ namespace clib {
                         global_state.input_read_ptr = -1;
                         global_state.input_content.clear();
                         global_state.input_success = false;
+                        global_state.input_code = 0;
                         cgui::singleton().input_set(false);
                         return true;
                     }
@@ -2243,6 +2245,7 @@ namespace clib {
                     global_state.input_read_ptr = -1;
                     global_state.input_content.clear();
                     global_state.input_success = false;
+                    global_state.input_code = 0;
                     cgui::singleton().input_set(false);
                 }
             }
@@ -2272,6 +2275,11 @@ namespace clib {
             else if (global_state.input_lock == ctx->id) {
                 if (global_state.input_success) {
                     if (global_state.input_read_ptr >= (int)global_state.input_content.length()) {
+                        if (global_state.input_code != 0) {
+                            ctx->ax._i = global_state.input_code;
+                            global_state.input_code = 0;
+                            break;
+                        }
                         ctx->ax._i = -1;
                         ctx->pc += INC_PTR;
                         // INPUT COMPLETE
