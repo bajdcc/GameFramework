@@ -47,9 +47,9 @@ int exec_single(char* text, int* total, int right) {
             strcat(path, "/");
         strcat(path, text);
         pid = exec_sleep(path);
-        exec_connect(pid, get_pid());
         free(path);
         if (pid >= 0) {
+            exec_connect(pid, get_pid());
             (*total)++;
             return pid;
         }

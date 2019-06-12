@@ -85,6 +85,7 @@ namespace clib {
         std::make_tuple(k_volatile, "volatile"),
         std::make_tuple(k_while, "while"),
         std::make_tuple(k_interrupt, "interrupt"),
+        std::make_tuple(k_pragma, "pragma"),
         std::make_tuple(k__end, "@END"),
     };
 

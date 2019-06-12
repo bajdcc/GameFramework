@@ -102,6 +102,7 @@ namespace clib {
         k_volatile,
         k_while,
         k_interrupt,
+        k_pragma,
         k__end
     };
 
@@ -331,6 +332,7 @@ struct base_lexer_t<obj> \
         c_forDeclaration,
         c_forExpression,
         c_jumpStatement,
+        c_pragmaStatement,
         c_compilationUnit,
         c_translationUnit,
         c_externalDeclaration,

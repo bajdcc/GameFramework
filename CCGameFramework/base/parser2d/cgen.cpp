@@ -1480,6 +1480,7 @@ namespace clib {
         cases.clear();
         ctx.reset();
         cycle.clear();
+        incs.clear();
     }
 
     std::vector<byte> cgen::file() const {
@@ -1854,6 +1855,8 @@ namespace clib {
         case c_forExpression:
             break;
         case c_jumpStatement:
+            break;
+        case c_pragmaStatement:
             break;
         case c_compilationUnit:
             break;
@@ -2555,6 +2558,20 @@ namespace clib {
             }
         }
                               break;
+        case c_pragmaStatement: {
+            auto& m = asts[1];
+            assert(m->flag == ast_string);
+            auto s = string_t(m->data._string);
+            if (s.substr(0, 5) == "note:") { // 代码页名
+                incs.push_back(std::make_tuple(m->line, s.substr(5)));
+            }
+            else {
+                error(m, "invalid pragma: " + s, true);
+            }
+            tmp.back().clear();
+            asts.clear();
+        }
+            break;
         case c_compilationUnit:
             break;
         case c_translationUnit:
@@ -2763,9 +2780,34 @@ namespace clib {
         throw cexception(ex_gen, str);
     }
 
+    bool cgen::get_line(int L, string_t& s, int& line) const
+    {
+        if (incs.empty())
+            return false;
+        for (size_t i = 0; i < incs.size(); i++) {
+            auto& t = incs[i];
+            if (std::get<0>(t) > L) {
+                s = std::get<1>(incs[i - 1]);
+                line = L - std::get<0>(incs[i - 1]);
+                return true;
+            }
+        }
+        s = std::get<1>(incs.back());
+        line = L - std::get<0>(incs.back());
+        return true;
+    }
+
     void cgen::error(ast_node * node, const string_t & str, bool info) const {
         std::stringstream ss;
-        ss << "[" << node->line << ":" << node->column << "] " << str;
+        static string_t page;
+        static int line;
+        if (get_line(node->line, page, line)) {
+            ss << "[" << page << ":" << line << ":" << node->column << "] ";
+        }
+        else {
+            ss << "[" << node->line << ":" << node->column << "] ";
+        }
+        ss << str;
         if (info) {
             cast::print(node, 0, ss);
         }
@@ -2774,7 +2816,15 @@ namespace clib {
 
     void cgen::error(sym_t::ref s, const string_t & str) const {
         std::stringstream ss;
-        ss << "[" << s->line << ":" << s->column << "] " << str;
+        static string_t page;
+        static int line;
+        if (get_line(s->line, page, line)) {
+            ss << "[" << page << ":" << line << ":" << s->column << "] ";
+        }
+        else {
+            ss << "[" << s->line << ":" << s->column << "] ";
+        }
+        ss << str;
         error(ss.str());
     }
 

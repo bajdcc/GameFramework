@@ -6,11 +6,11 @@
 #include "/include/string"
 
 // 启动进程
-int exec(char *path) {
+int exec(char* path) {
     path;
     interrupt 51;
 }
-int exec_sleep(char *path) {
+int exec_sleep(char* path) {
     path;
     interrupt 53;
 }

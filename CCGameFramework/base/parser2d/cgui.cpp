@@ -732,7 +732,8 @@ namespace clib {
 #endif
         std::stringstream ss;
         for (auto& tp : topo) {
-            ss << cache_code[v[tp]];
+            ss << "pragma \"note:" << v[tp] << "\";" << std::endl;
+            ss << cache_code[v[tp]] << std::endl;
         }
         return ss.str();
     }

@@ -380,6 +380,7 @@ namespace clib {
         sym_t::ref find_symbol(const string_t& name);
         sym_var_t::ref primary_node(ast_node* node);
 
+        bool get_line(int, string_t&, int&) const;
         void error(ast_node*, const string_t&, bool info = false) const;
         void error(sym_t::ref s, const string_t&) const;
 
@@ -398,6 +399,7 @@ namespace clib {
         sym_t::weak_ref ctx;
         std::vector<sym_t::ref> ctx_stack;
         int global_id{ 0 };
+        std::vector<std::tuple<int, string_t>> incs;
     };
 }
 
