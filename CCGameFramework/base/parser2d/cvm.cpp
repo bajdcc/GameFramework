@@ -2290,10 +2290,7 @@ namespace clib {
                         return true;
                     }
                     else {
-                        ctx->ax._i = global_state.input_content[global_state.input_read_ptr];
-                        if (ctx->ax._i > 0) {
-                            ctx->ax._i = 0;
-                        }
+                        ctx->ax._i = 0;
                         break;
                     }
                 }

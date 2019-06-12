@@ -809,6 +809,14 @@ namespace clib {
         }
         if (!input_state)
             return;
+        if (c < 0xffff && c > 0xff) {
+            CString s;
+            s.AppendChar(c);
+            CStringA s2(s);
+            put_char(s2[0]);
+            put_char(s2[1]);
+            return;
+        }
         if (!((c & GUI_SPECIAL_MASK) || std::isprint(c) || c == '\b' || c == '\n' || c == '\r' || c == 4 || c == 7 || c == 26)) {
             ATLTRACE("[SYSTEM] GUI  | Input: %d\n", (int)c);
             return;
@@ -856,6 +864,9 @@ namespace clib {
                 return;
             case VK_DELETE:
                 put_char(0xff);
+                return;
+            case VK_RETURN:
+                input('\r');
                 return;
             case 0x71: // SHIFT
                 return;

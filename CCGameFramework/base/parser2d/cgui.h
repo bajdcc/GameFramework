@@ -37,7 +37,7 @@
 #define GUI_TICKS 1
 #define GUI_INPUT_CARET 15
 #define GUI_MEMORY (256 * 1024)
-#define GUI_SPECIAL_MASK 0x2000
+#define GUI_SPECIAL_MASK 0x20000
 
 namespace clib {
 
