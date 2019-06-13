@@ -12,6 +12,7 @@
 #include "cexception.h"
 #include "../../ui/gdi/Gdi.h"
 #include "Parser2D.h"
+#include <ui\window\Window.h>
 
 #define REPORT_ERROR 1
 #define LOG_AST 0
@@ -828,7 +829,7 @@ namespace clib {
             put_char(s2[1]);
             return;
         }
-        if (!((c & GUI_SPECIAL_MASK) || std::isprint(c) || c == '\b' || c == '\n' || c == '\r' || c == 4 || c == 7 || c == 26)) {
+        if (!((c & GUI_SPECIAL_MASK) || std::isprint(c) || c == '\b' || c == '\n' || c == '\r' || c == 4 || c == 7 || c == 26 || c == 22)) {
 #if LOG_VM
             CStringA s; s.Format("[SYSTEM] GUI  | Input: %d\n", (int)c);
             cvm::global_state.log_info.push_back(s.GetBuffer(0));
@@ -918,6 +919,23 @@ namespace clib {
             ptr_y = ptr_my;
             ptr_rx = ptr_mx;
             ptr_ry = ptr_my;
+        }
+        else if (c == 22) { // Ctrl+V
+            OpenClipboard(window->GetWindowHandle());
+            if (IsClipboardFormatAvailable(CF_TEXT))
+            {
+                HGLOBAL hg = GetClipboardData(CF_TEXT);
+                LPCSTR q = (LPCSTR)GlobalLock(hg);
+                if (q != NULL)
+                {
+                    CStringA A(q);
+                    for (auto i = 0; i < A.GetLength(); i++) {
+                        put_char(A[i]);
+                    }
+                }
+                GlobalUnlock(hg);
+            }
+            CloseClipboard();
         }
         else {
             put_char((char)(c & 0xff));

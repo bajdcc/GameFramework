@@ -61,7 +61,7 @@ int main(int argc, char **argv) {
             restore_fg();
         }
         *text = 0;
-        while (true) {
+        while (state) {
             state = input(text, 100);
             if (state > INPUT_BEGIN)
                 break;
