@@ -88,6 +88,9 @@ namespace clib {
         fs.func("/dev/console", this);
         fs.magic("/http", this, fss_net);
         fs.magic("/music", this, fss_music);
+        fs.mkdir("/log");
+        fs.func("/log/info", this);
+        fs.func("/log/err", this);
         fs.as_root(false);
         fs.load("/usr/logo.txt");
         fs.load("/usr/badapple.txt");
@@ -1153,6 +1156,12 @@ namespace clib {
         new_pid();
         ctx->file = file;
 #if LOG_SYSTEM
+#if LOG_VM
+        {
+            CStringA s; s.Format("[SYSTEM] PROC | Create: PID= #%d\n", ctx->id);
+            cvm::global_state.log_info.push_back(s.GetBuffer(0));
+        }
+#endif
         ATLTRACE("[SYSTEM] PROC | Create: PID= #%d\n", ctx->id);
 #endif
         PE* pe = (PE*)file.data();
@@ -1290,6 +1299,12 @@ namespace clib {
             return;
         }
 #if LOG_SYSTEM
+#if LOG_VM
+        {
+            CStringA s; s.Format("[SYSTEM] PROC | Destroy: PID= #%d, Code= %d\n", ctx->id, ctx->ax._i);
+            cvm::global_state.log_info.push_back(s.GetBuffer(0));
+        }
+#endif
         ATLTRACE("[SYSTEM] PROC | Destroy: PID= #%d, Code= %d\n", ctx->id, ctx->ax._i);
 #endif
         ctx->flag = 0;
@@ -1391,6 +1406,12 @@ namespace clib {
             return -1;
         auto new_path = trim(path);
 #if LOG_SYSTEM
+#if LOG_VM
+        {
+            CStringA s; s.Format("[SYSTEM] PROC | Exec: Command= %s\n", new_path.data());
+            cvm::global_state.log_info.push_back(s.GetBuffer(0));
+        }
+#endif
         ATLTRACE("[SYSTEM] PROC | Exec: Command= %s\n", new_path.data());
 #endif
         std::vector<string_t> args;
@@ -1400,6 +1421,12 @@ namespace clib {
             ctx->child.insert(pid);
             tasks[pid].parent = ctx->id;
 #if LOG_SYSTEM
+#if LOG_VM
+            {
+                CStringA s; s.Format("[SYSTEM] PROC | Exec: Parent= #%d, Child= #%d\n", ctx->id, pid);
+                cvm::global_state.log_info.push_back(s.GetBuffer(0));
+            }
+#endif
             ATLTRACE("[SYSTEM] PROC | Exec: Parent= #%d, Child= #%d\n", ctx->id, pid);
 #endif
         }
@@ -1411,6 +1438,12 @@ namespace clib {
         new_pid();
         ctx->file = old_ctx->file;
 #if LOG_SYSTEM
+#if LOG_VM
+        {
+            CStringA s; s.Format("[SYSTEM] PROC | Fork: Parent= #%d, Child= #%d\n", old_ctx->id, ctx->id);
+            cvm::global_state.log_info.push_back(s.GetBuffer(0));
+        }
+#endif
         ATLTRACE("[SYSTEM] PROC | Fork: Parent= #%d, Child= #%d\n", old_ctx->id, ctx->id);
 #endif
         PE* pe = (PE*)ctx->file.data();
@@ -1648,6 +1681,28 @@ namespace clib {
                         std::chrono::system_clock::from_time_t(nn - ll));
                     ss << days << " " << (days > 0 ? "days" : "day") << ", ";
                     ss << std::put_time(std::gmtime(&t), "%H:%M:%S") << "." << msecs;
+                    return ss.str();
+                }
+            }
+        }
+        else if (path.substr(0, 4) == "/log") {
+            static string_t pat{ R"(/log/([a-z_]+))" };
+            static std::regex re(pat);
+            std::smatch res;
+            if (std::regex_match(path, res, re)) {
+                const auto& op = res[1].str();
+                if (op == "info") {
+                    std::stringstream ss;
+                    for (auto& L : global_state.log_info) {
+                        ss << L;
+                    }
+                    return ss.str();
+                }
+                else if (op == "err") {
+                    std::stringstream ss;
+                    for (auto& L : global_state.log_err) {
+                        ss << L;
+                    }
                     return ss.str();
                 }
             }

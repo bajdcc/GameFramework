@@ -95,6 +95,8 @@ namespace clib {
 #define HANDLE_NUM 1024
 #define BIG_DATA_NUM 512
 
+#define LOG_VM 1
+
     class cvm : public imem, public vfs_func_t, public vfs_stream_call {
     public:
         cvm();
@@ -278,6 +280,9 @@ namespace clib {
             bool gui{ false };
             cgui_op* ui{ nullptr };
             decltype(std::chrono::system_clock::now()) now;
+#if LOG_VM
+            std::vector<string_t> log_info, log_err;
+#endif
         } global_state;
     };
 }

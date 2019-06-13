@@ -763,6 +763,12 @@ namespace clib {
         }
         catch (const cexception & e) {
             gen.reset();
+#if LOG_VM
+            {
+                CStringA s; s.Format("[SYSTEM] ERR  | PATH: %s, %s\n", new_path.c_str(), e.message().c_str());
+                cvm::global_state.log_err.push_back(s.GetBuffer(0));
+            }
+#endif
             ATLTRACE("[SYSTEM] ERR  | PATH: %s, %s\n", new_path.c_str(), e.message().c_str());
 #if REPORT_ERROR
             {
@@ -823,6 +829,10 @@ namespace clib {
             return;
         }
         if (!((c & GUI_SPECIAL_MASK) || std::isprint(c) || c == '\b' || c == '\n' || c == '\r' || c == 4 || c == 7 || c == 26)) {
+#if LOG_VM
+            CStringA s; s.Format("[SYSTEM] GUI  | Input: %d\n", (int)c);
+            cvm::global_state.log_info.push_back(s.GetBuffer(0));
+#endif
             ATLTRACE("[SYSTEM] GUI  | Input: %d\n", (int)c);
             return;
         }
@@ -871,6 +881,8 @@ namespace clib {
             case VK_DELETE:
                 put_char(0xff);
                 return;
+            case VK_ESCAPE:
+                return;
             case VK_RETURN:
                 input('\r');
                 return;
@@ -881,6 +893,12 @@ namespace clib {
             case 0x74: // ALT
                 return;
             default:
+#if LOG_VM
+            {
+                CStringA s; s.Format("[SYSTEM] GUI  | Input invalid special key: %d\n", c & 0xff);
+                cvm::global_state.log_err.push_back(s.GetBuffer(0));
+            }
+#endif
                 ATLTRACE("[SYSTEM] GUI  | Input invalid special key: %d\n", c & 0xff);
                 return;
             }

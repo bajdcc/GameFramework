@@ -2,6 +2,7 @@
 #include "Parser2D.h"
 #include "render/Direct2DRenderTarget.h"
 #include "cgui.h"
+#include <ui\window\Window.h>
 
 #define FRAME (1.0 / 30)
 
