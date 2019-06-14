@@ -6,12 +6,13 @@
 
 #define SCAN_N 10
 
-#define N 64
+#define N 1024
 #define MAX_STEP 800
-#define MAX_DISTANCE 5.0f
+#define MAX_DISTANCE 2.0f
 //#define EPSILON 1e-6f
 #define BIAS 1e-4f
-#define MAX_DEPTH 3
+#define MAX_DEPTH 5
+#define DES 0.7f
 
 extern float circleSDF(float x, float y, float cx, float cy, float r);
 extern float boxSDF(float x, float y, float cx, float cy, float theta, float sx, float sy);
@@ -34,15 +35,12 @@ static float g_pixel;
 static int g_max;
 
 static float fontSDF(float x, float y) {
-    const auto j = int(ceil(y * g_m));
-    const auto i = int(ceil(x * g_m));
+    const auto j = int(round(y * g_m));
+    const auto i = int(round(x * g_m));
     if (i < 0 || j < 0 || i >= g_width || j >= g_height)
         return 100.0f;
     const auto idx = j * g_width + i;
-    const auto dist = g_buf[idx];
-    if (dist == 0.0f) return 0.0f;
-    if (dist < 0.1f) return 0.001f;
-    return dist * 0.45f;
+    return g_buf[idx];
 }
 
 extern Result unionOp(Result a, Result b);
@@ -117,7 +115,7 @@ static color sample(float x, float y) {
     for (auto i = 0; i < N; i++) {
         // const auto a = PI2 * rand() / RAND_MAX;                  // 均匀采样
         // const auto a = PI2 * i / N;                              // 分层采样
-        float a = float(PI2 * (i + float(rand()) / RAND_MAX) / N);    // 抖动采样
+        float a = float(PI2 * (i + double(rand()) / RAND_MAX) / N);    // 抖动采样
         sum.Add(trace(x, y, cosf(a), sinf(a), 0)); // 追踪 (x,y) 从 随机方向(cos(a),sin(a)) 收集到的光
     }
     return sum * (1.0f / N);
@@ -168,6 +166,10 @@ static void DrawSceneFont(int part)
 
 void PhysicsEngine::Render2DFont(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
 {
+    if (buf.get()) {
+        RenderSceneIntern(rt, bounds);
+        return;
+    }
     // ---------------------------------------------
     // 渲染字体SDF
     auto _rt = d2drt.lock();
@@ -202,17 +204,17 @@ void PhysicsEngine::Render2DFont(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
     ::SetTextColor(hMem, RGB(255, 255, 255));
 
     auto hFont = ::CreateFont(
-        200/*高度*/, 0/*宽度*/, 0/*不用管*/, 0/*不用管*/, FW_NORMAL/*一般这个值设为400*/,
+        100/*高度*/, 0/*宽度*/, 0/*不用管*/, 0/*不用管*/, FW_NORMAL/*一般这个值设为400*/,
         FALSE/*不带斜体*/, FALSE/*不带下划线*/, FALSE/*不带删除线*/,
         DEFAULT_CHARSET,  //这里我们使用默认字符集，还有其他以 _CHARSET 结尾的常量可用
         OUT_CHARACTER_PRECIS, CLIP_CHARACTER_PRECIS,  //这行参数不用管
-        DEFAULT_QUALITY,  //默认输出质量
+        ANTIALIASED_QUALITY,  //默认输出质量
         FF_DONTCARE,  //不指定字体族*/
-        _T("微软雅黑") //字体名
+        _T("楷体") //字体名
     );
     ::SelectObject(hMem, hFont);
 
-    CString s(_T("bajdcc"));
+    CString s(_T("文字透明效果\nby bajdcc"));
     CRect rect(bounds);
     rect.DeflateRect(100, 10);
     ::DrawText(hMem, s.GetBuffer(0), s.GetLength(), &rect, DT_EDITCONTROL | DT_WORDBREAK | DT_CENTER | DT_NOPREFIX);
@@ -232,6 +234,7 @@ void PhysicsEngine::Render2DFont(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
         {
             struct font_bag
             {
+                WORD x0, y0;
                 WORD x, y;
                 float dist;
             };
@@ -248,12 +251,15 @@ void PhysicsEngine::Render2DFont(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
 
                     if (c != 0) // 字
                     {
-                        Q.push(font_bag{ WORD(nHeight - i), WORD(j), float(0.0f) });
-                        g_buf[(nHeight - i)*nWidth + j] = 0.0f;
+                        Q.push(font_bag{
+                            WORD(nHeight - i), WORD(j), // 起始点
+                            WORD(nHeight - i), WORD(j), // 上一次
+                            float(0.0f) });
+                        g_buf[(nHeight - i)*nWidth + j] = -1.0f;
                     }
                     else
                     {
-                        g_buf[(nHeight - i)*nWidth + j] = -1.0f;
+                        g_buf[(nHeight - i)*nWidth + j] = 0.0f;
                     }
                 }
             }
@@ -262,9 +268,9 @@ void PhysicsEngine::Render2DFont(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
                 for (auto j = 0; j < bm.bmWidth; j++)
                 {
                     if (g_buf[i*nWidth + j] == 0.0f)
-                        buf[i*nWidth + j] = 1;
+                        buf[i*nWidth + j] = 0; // 无字没访问
                     else
-                        buf[i*nWidth + j] = 0;
+                        buf[i*nWidth + j] = 1; // 有字访问过
                 }
             }
 
@@ -279,27 +285,45 @@ void PhysicsEngine::Render2DFont(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
             {
                 const auto front = Q.front();
                 Q.pop();
+                const auto x0 = front.x0;
+                const auto y0 = front.y0;
                 const auto x = front.x;
                 const auto y = front.y;
-                const auto dist = front.dist + 1.0f / m;
                 for (auto i = 0; i < 4; i++)
                 {
                     const auto x1 = x + direction[i][0];
                     const auto y1 = y + direction[i][1];
                     if (x1 >= 0 && y1 >= 0 && x1 < _h && y1 < _w)
                     {
-                        const auto idx = x1 * nWidth + y;
-                        if (buf[idx] == 0)
+                        const auto idx = x1 * nWidth + y1;
+                        const auto dist = (float)((x0 - x1) * (x0 - x1) + (y0 - y1) * (y0 - y1));
+                        if (buf[idx] == 0) // 没访问
                         {
-                            Q.push(font_bag{ WORD(x1), WORD(y1), float(dist) });
+                            Q.push(font_bag{
+                                WORD(x0), WORD(y0),
+                                WORD(x1), WORD(y1),
+                                dist });
                             g_buf[idx] = dist;
-                            buf[idx] = 1;
+                            buf[idx] = 1; // 访问过
                         }
                         else if (g_buf[idx] > 0.0f && g_buf[idx] > dist)
                         {
+                            Q.push(font_bag{
+                                WORD(x0), WORD(y0),
+                                WORD(x1), WORD(y1),
+                                dist });
                             g_buf[idx] = dist;
                         }
                     }
+                }
+            }
+            const auto M = 1.0f / m;
+            for (auto i = 0; i < bm.bmHeight; i++)
+            {
+                for (auto j = 0; j < bm.bmWidth; j++)
+                {
+                    if (g_buf[i * nWidth + j] > 0.0f)
+                        g_buf[i * nWidth + j] = sqrtf(g_buf[i * nWidth + j]) * M * DES;
                 }
             }
         }
@@ -312,5 +336,23 @@ void PhysicsEngine::Render2DFont(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
     // ---------------------------------------------
     g_scene = ::scene_ref;
     scene = DrawSceneFont;
-    RenderSceneIntern(rt, bounds);
+    std::auto_ptr<BYTE> b;
+    {
+        b.reset(new BYTE[_w * _h * 4]);
+        const auto buffer = b.get();
+        auto idx = 0;
+        for (auto i = 0; i < _h; i++)
+        {
+            for (auto j = 0; j < _w; j++)
+            {
+                const int c = g_buf[idx] < 0.0f ? 255 : (int)min(255.0f, (1.0f * DES - g_buf[idx]) * 255.0f);
+                buffer[(idx << 2) + 0] = c;
+                buffer[(idx << 2) + 1] = c;
+                buffer[(idx << 2) + 2] = c;
+                buffer[(idx << 2) + 3] = 255;
+                idx++;
+            }
+        }
+    }
+    RenderSceneIntern(rt, bounds, b.get());
 }

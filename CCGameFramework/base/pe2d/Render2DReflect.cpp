@@ -151,13 +151,13 @@ extern void DrawSceneGlobal(int part)
     bag.mtx.unlock();
 }
 
-void PhysicsEngine::RenderSceneIntern(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
+void PhysicsEngine::RenderSceneIntern(CComPtr<ID2D1RenderTarget> rt, CRect bounds, BYTE* buffer)
 {
+    auto d2dRect = D2D1::RectU(0, 0, rect.Width, rect.Height);
     if (painted || buf.get())
     {
         if (buf.get())
         {
-            auto d2dRect = D2D1::RectU(0, 0, rect.Width, rect.Height);
             bitmap->CopyFromMemory(&d2dRect, buf.get(), rect.Width * 4);
             if (painted)
                 buf.release();
@@ -184,10 +184,12 @@ void PhysicsEngine::RenderSceneIntern(CComPtr<ID2D1RenderTarget> rt, CRect bound
     if (!buf.get())
     {
         buf.reset(new BYTE[rect.Width * rect.Height * 4]);
-        wic->CopyPixels(&rect, rect.Width * 4, rect.Width * rect.Height * 4, buf.get());
+        if (buffer)
+            CopyMemory(buf.get(), buffer, rect.Width * rect.Height * 4);
     }
 
     bitmap = _rt->GetBitmapFromWIC(wic);
+    bitmap->CopyFromMemory(&d2dRect, buf.get(), rect.Width * 4);
     rt->DrawBitmap(
         bitmap,
         D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
