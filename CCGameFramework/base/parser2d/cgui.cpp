@@ -59,18 +59,11 @@ namespace clib {
         return gui;
     }
 
-    string_t cgui::load_file(string_t& name) {
-        static string_t pat_path{ R"((/[A-Za-z0-9_]+)+)" };
-        static std::regex re_path(pat_path);
-        static string_t pat_bin{ R"([A-Za-z0-9_]+)" };
-        static std::regex re_bin(pat_bin);
+    string_t cgui::load_file(const string_t& name) {
         std::smatch res;
         string_t path;
         if (std::regex_match(name, res, re_path)) {
             path = FILE_ROOT + res[0].str() + ".cpp";
-        }
-        else if (std::regex_match(name, res, re_bin)) {
-            path = FILE_ROOT + ("/bin/" + res[0].str()) + ".cpp";
         }
         if (path.empty())
             error("file not exists: " + name);
@@ -82,8 +75,6 @@ namespace clib {
             cvfs::convert_utf8_to_gbk(str);
             std::vector<byte> data(str.begin(), str.end());
             vm->as_root(true);
-            if (name[0] != '/')
-                name = "/bin/" + name;
             vm->write_vfs(name, data);
             vm->as_root(false);
             return str;
@@ -94,6 +85,25 @@ namespace clib {
         }
         error("file not exists: " + name);
         return "";
+    }
+
+    bool cgui::exist_file(const string_t& name) {
+        std::smatch res;
+        string_t path;
+        if (std::regex_match(name, res, re_path)) {
+            path = FILE_ROOT + res[0].str() + ".cpp";
+        }
+        if (path.empty())
+            return false;
+        std::ifstream t(path);
+        if (t) {
+            return true;
+        }
+        std::vector<byte> data;
+        if (vm->read_vfs(name, data)) {
+            return true;
+        }
+        return false;
     }
 
     void cgui::reset() {
@@ -316,7 +326,7 @@ namespace clib {
                         args.emplace_back(g_argv[i]);
                     }
                 }
-                if (compile(ENTRY_FILE, args) != -1) {
+                if (compile(ENTRY_FILE, args, decltype(args)()) != -1) {
                     running = true;
                 }
             }
@@ -739,11 +749,20 @@ namespace clib {
         return ss.str();
     }
 
-    int cgui::compile(const string_t & path, const std::vector<string_t> & args) {
+    int cgui::compile(const string_t & path, const std::vector<string_t> & args, const std::vector<string_t>& paths) {
         if (path.empty())
             return -1;
         auto fail_errno = -1;
         auto new_path = path;
+        if (path[0] != '/') {
+            for (auto& p : paths) {
+                auto pp = p + '/' + path;
+                if (exist_file(pp)) {
+                    new_path = pp;
+                    break;
+                }
+            }
+        }
         try {
             auto c = cache.find(new_path);
             if (c != cache.end()) {

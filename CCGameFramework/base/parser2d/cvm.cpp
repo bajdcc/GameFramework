@@ -1416,10 +1416,11 @@ namespace clib {
 #endif
         std::vector<string_t> args;
         auto file = get_args(new_path, args);
-        auto pid = cgui::singleton().compile(file, args);
+        auto pid = cgui::singleton().compile(file, args, ctx->paths);
         if (pid >= 0) { // SUCCESS
             ctx->child.insert(pid);
             tasks[pid].parent = ctx->id;
+            tasks[pid].paths = ctx->paths;
 #if LOG_SYSTEM
 #if LOG_VM
             {
@@ -1462,6 +1463,7 @@ namespace clib {
         ctx->path = old_ctx->path;
         old_ctx->child.insert(ctx->id);
         ctx->parent = old_ctx->id;
+        ctx->paths = old_ctx->paths;
         /* 映射4KB的代码空间 */
         {
             auto size = PAGE_SIZE / sizeof(int);
@@ -1614,6 +1616,13 @@ namespace clib {
                 }
                 else if (op == "heap_size") {
                     sprintf(sz, "%d", tasks[id].pool->page_size());
+                    return sz;
+                }
+                else if (op == "path") {
+                    std::stringstream ss;
+                    std::copy(tasks[id].paths.begin(), tasks[id].paths.end(),
+                        std::ostream_iterator<string_t>(ss, "\n"));
+                    sprintf(sz, "%s", ss.str().c_str());
                     return sz;
                 }
             }
@@ -1810,7 +1819,7 @@ namespace clib {
                     fs.as_root(true);
                     if (fs.mkdir(dir) == 0) { // '/proc/[pid]'
                         static std::vector<string_t> ps =
-                        { "exe", "parent", "heap_size" };
+                        { "exe", "parent", "heap_size", "path" };
                         dir += "/";
                         for (auto& _ps : ps) {
                             ss.str("");
@@ -2528,6 +2537,7 @@ namespace clib {
                  break;
         case 68: {
             ctx->ax._i = fs.rm_safe(trim(vmm_getstr(ctx->ax._ui)));
+            break;
         }
         case 69: {
             auto h = ctx->ax._ui >> 16;
@@ -2550,6 +2560,19 @@ namespace clib {
             else {
                 ctx->ax._i = -3;
             }
+        }
+                 break;
+        case 71: {
+            auto path = trim(vmm_getstr(ctx->ax._ui));
+            if (std::find(ctx->paths.begin(), ctx->paths.end(), path) == ctx->paths.end())
+                ctx->paths.push_back(path);
+        }
+                 break;
+        case 72: {
+
+            auto path = trim(vmm_getstr(ctx->ax._ui));
+            ctx->paths.erase(std::remove(
+                ctx->paths.begin(), ctx->paths.end(), path), ctx->paths.end());
         }
                  break;
         case 100: {

@@ -247,6 +247,7 @@ namespace clib {
             bool input_stop{ false };
             std::deque<char> input_queue;
             std::unordered_set<int> handles;
+            std::vector<string_t> paths;
         };
         context_t* ctx{ nullptr };
         int available_tasks{ 0 };

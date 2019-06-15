@@ -25,3 +25,12 @@ int exec_connect(int left, int right) {
 int exec_kill_children() {
     interrupt 57;
 }
+
+int path_add(char *path) {
+    path;
+    interrupt 71;
+}
+int path_remove(char* path) {
+    path;
+    interrupt 72;
+}

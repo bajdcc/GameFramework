@@ -42,6 +42,7 @@ int main(int argc, char **argv) {
     char *_pwd = malloc(100);
     node *head;
     node *cur;
+    path_add("/usr");
     while (state) {
         if (direct_input) {
             set_fg(143, 164, 174);

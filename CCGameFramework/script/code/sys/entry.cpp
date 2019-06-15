@@ -16,6 +16,7 @@ int welcome() {
     restore_fg();
 }
 int main(int argc, char **argv) {
+    path_add("/bin");
     welcome();
     exec("sh"); wait();
     return 0;

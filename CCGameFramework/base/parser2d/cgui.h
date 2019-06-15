@@ -9,6 +9,7 @@
 #include <d2d1.h>
 #include <array>
 #include <deque>
+#include <regex>
 #include "types.h"
 #include "cparser.h"
 #include "cgen.h"
@@ -50,7 +51,7 @@ namespace clib {
         cgui& operator=(const cgui&) = delete;
 
         void draw(CComPtr<ID2D1RenderTarget>& rt, const CRect& bounds, const Parser2DEngine::BrushBag& brushes, bool paused, decimal fps);
-        int compile(const string_t& path, const std::vector<string_t>& args);
+        int compile(const string_t& path, const std::vector<string_t>& args, const std::vector<string_t>& paths);
 
         void put_string(const string_t& str);
         void put_char(int c);
@@ -86,7 +87,8 @@ namespace clib {
     public:
         static cgui& singleton();
 
-        string_t load_file(string_t& name);
+        string_t load_file(const string_t& name);
+        bool exist_file(const string_t& name);
         void reset();
 
     private:
@@ -126,6 +128,12 @@ namespace clib {
         int cycle_speed{ 0 };
         int cycle_stable{ 0 };
         bool cycle_set{ false };
+
+    private:
+        const string_t pat_path{ R"((/[A-Za-z0-9_]+)+)" };
+        std::regex re_path{ pat_path };
+        const string_t pat_bin{ R"([A-Za-z0-9_]+)" };
+        std::regex re_bin{ pat_bin };
     };
 }
 
