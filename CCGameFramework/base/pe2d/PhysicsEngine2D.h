@@ -70,7 +70,7 @@ private:
     static void RenderTriLight(BYTE* buffer, cint width, cint height);
     static void RenderLightIntern(World&, const PerspectiveCamera&, BYTE* buffer, cint width, cint height);
 
-    void RenderSceneIntern(CComPtr<ID2D1RenderTarget> rt, CRect bounds, BYTE *buffer = nullptr);
+    void RenderSceneIntern(CComPtr<ID2D1RenderTarget> rt, CRect bounds, BYTE *buffer = nullptr, int size = 4);
 
 private:
     CComPtr<ID2D1SolidColorBrush> bg;

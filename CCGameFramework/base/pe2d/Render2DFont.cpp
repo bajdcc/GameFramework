@@ -6,6 +6,7 @@
 
 #define SCAN_N 10
 
+#define THREADS 4
 #define N 1024
 #define MAX_STEP 800
 #define MAX_DISTANCE 2.0f
@@ -21,7 +22,7 @@ extern float planeSDF(float x, float y, float px, float py, float nx, float ny);
 struct Result
 {
 	float sd;           // 带符号距离（signed distance）
-	color emissive;     // 自发光强度（emissive）
+    color emissive;// 自发光强度（emissive）
 	color reflectivity; // 反射系数
 	float eta;          // 折射率
 	color absorption;   // 吸收率
@@ -33,6 +34,56 @@ static int g_height;
 static int g_m;
 static float g_pixel;
 static int g_max;
+
+#define HSLMAX 240
+#define RGBMAX 255
+#define HSLLIGHT 230
+static int hue2rgb(short n1, short n2, short hue)
+{
+    if (hue < 0)
+        hue += HSLMAX;
+    if (hue > HSLMAX)
+        hue -= HSLMAX;
+
+    if (hue < (HSLMAX / 6))
+        return (n1 + (((n2 - n1) * hue + (HSLMAX / 12)) / (HSLMAX / 6)));
+    if (hue < (HSLMAX / 2))
+        return (n2);
+    if (hue < ((HSLMAX * 2) / 3))
+        return (n1 + (((n2 - n1) * (((HSLMAX * 2) / 3) - hue) + (HSLMAX / 12)) / (HSLMAX / 6)));
+    return (n1);
+}
+static color hsl2rgb(float x, float y) {
+    auto h = short(min(x * 120.0f, 240.0f));
+    auto s = short(180);
+    auto l = short(120);
+
+    short Magic1, Magic2;
+
+    if (0 == s)
+    {
+        static BYTE k;
+        k = ((l * RGBMAX) / HSLMAX);
+        return color(k, k, k);
+    }
+    else
+    {
+        if (l <= (HSLMAX / 2))
+            Magic2 = (l * (HSLMAX + s) + (HSLMAX / 2)) / HSLMAX;
+        else
+            Magic2 = l + s - ((l * s) + (HSLMAX / 2)) / HSLMAX;
+
+        Magic1 = 2 * l - Magic2;
+
+        return color(
+            (BYTE)((hue2rgb(Magic1, Magic2, h + (HSLMAX / 3)) * RGBMAX + (HSLMAX / 2)) / HSLMAX),
+            (BYTE)((hue2rgb(Magic1, Magic2, h) * RGBMAX + (HSLMAX / 2)) / HSLMAX),
+            (BYTE)((hue2rgb(Magic1, Magic2, h - (HSLMAX / 3)) * RGBMAX + (HSLMAX / 2)) / HSLMAX));
+    }
+}
+static color colorSDF(float x, float y) {
+    return hsl2rgb(x, y);
+}
 
 static float fontSDF(float x, float y) {
     const auto j = int(round(y * g_m));
@@ -50,7 +101,7 @@ extern Result subtractOp(Result a, Result b);
 static Result scene_ref(float x, float y)
 {
     //Result c = { circleSDF(x, y, 0.7f, -0.3f, 0.05f), color(10.0f, 10.0f, 0.0f), color(0.0f, 0.0f, 0.0f), 0.0f };
-    Result i = { fontSDF(x, y), color(0.9f, 0.9f, 0.9f), color(0.0f, 0.0f, 0.0f), 0.0f };
+    Result i = { fontSDF(x, y), colorSDF(x, y), color(0.1f, 0.1f, 0.1f), 0.0f, color(4.0f, 4.0f, 4.0f) };
     return i;// unionOp(c, i);
 }
 
@@ -77,7 +128,7 @@ static color trace(float ox, float oy, float dx, float dy, int depth) {
         const auto x = ox + dx * t, y = oy + dy * t;
         auto r = g_scene(x, y);
         if (sign ? (r.sd < EPSILON) : (r.sd > -EPSILON)) {      // 如果线与图形有交点
-            auto sum = r.emissive;                              // 用于累计采样，此处值为除去反射的正常接收光线
+            auto sum = r.emissive;                        // 用于累计采样，此处值为除去反射的正常接收光线
             if (depth < MAX_DEPTH &&
                 (r.reflectivity.Valid() || r.eta > 0.0f)) {     // 在反射深度内，且允许反射
                 float nx, ny, rx, ry;
@@ -131,7 +182,7 @@ static void DrawSceneFont(int part)
     auto m = min(width, height);
     for (auto y = 0; y < height; y++)
     {
-        if (y % 4 == part)
+        if (y % THREADS == part)
         {
             for (auto x = 0; x < width; x++)
             {
@@ -159,7 +210,7 @@ static void DrawSceneFont(int part)
     }
     bag.mtx.lock();
     bag.g_cnt++;
-    if (bag.g_cnt == 4)
+    if (bag.g_cnt == THREADS)
         *bag.g_painted = true;
     bag.mtx.unlock();
 }
@@ -236,7 +287,6 @@ void PhysicsEngine::Render2DFont(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
             {
                 WORD x0, y0;
                 WORD x, y;
-                float dist;
             };
 
             std::queue<font_bag> Q;
@@ -254,8 +304,8 @@ void PhysicsEngine::Render2DFont(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
                         Q.push(font_bag{
                             WORD(nHeight - i), WORD(j), // 起始点
                             WORD(nHeight - i), WORD(j), // 上一次
-                            float(0.0f) });
-                        g_buf[(nHeight - i)*nWidth + j] = -1.0f;
+                            });
+                        g_buf[(nHeight - i)*nWidth + j] = -1e8;
                     }
                     else
                     {
@@ -301,8 +351,8 @@ void PhysicsEngine::Render2DFont(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
                         {
                             Q.push(font_bag{
                                 WORD(x0), WORD(y0),
-                                WORD(x1), WORD(y1),
-                                dist });
+                                WORD(x1), WORD(y1)
+                                });
                             g_buf[idx] = dist;
                             buf[idx] = 1; // 访问过
                         }
@@ -310,13 +360,68 @@ void PhysicsEngine::Render2DFont(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
                         {
                             Q.push(font_bag{
                                 WORD(x0), WORD(y0),
-                                WORD(x1), WORD(y1),
-                                dist });
+                                WORD(x1), WORD(y1)
+                                });
                             g_buf[idx] = dist;
                         }
                     }
                 }
             }
+
+            // 计算内距离
+            for (auto i = 0; i < bm.bmHeight; i++)
+            {
+                for (auto j = 0; j < bm.bmWidth; j++)
+                {
+                    if (g_buf[i * nWidth + j] < 0.0f)
+                        buf[i * nWidth + j] = 0; // 有字没访问
+                    else {
+                        buf[i * nWidth + j] = 1; // 无字访问过
+                        Q.push(font_bag{
+                            WORD(i), WORD(j), // 起始点
+                            WORD(i), WORD(j), // 上一次
+                            });
+                    }
+                }
+            }
+            // BFS
+            while (!Q.empty())
+            {
+                const auto front = Q.front();
+                Q.pop();
+                const auto x0 = front.x0;
+                const auto y0 = front.y0;
+                const auto x = front.x;
+                const auto y = front.y;
+                for (auto i = 0; i < 4; i++)
+                {
+                    const auto x1 = x + direction[i][0];
+                    const auto y1 = y + direction[i][1];
+                    if (x1 >= 0 && y1 >= 0 && x1 < _h && y1 < _w)
+                    {
+                        const auto idx = x1 * nWidth + y1;
+                        const auto dist = -(float)((x0 - x1) * (x0 - x1) + (y0 - y1) * (y0 - y1));
+                        if (buf[idx] == 0) // 没访问
+                        {
+                            Q.push(font_bag{
+                                WORD(x0), WORD(y0),
+                                WORD(x1), WORD(y1),
+                                });
+                            g_buf[idx] = dist;
+                            buf[idx] = 1; // 访问过
+                        }
+                        else if (g_buf[idx] < 0.0f && g_buf[idx] < dist)
+                        {
+                            Q.push(font_bag{
+                                WORD(x0), WORD(y0),
+                                WORD(x1), WORD(y1),
+                                });
+                            g_buf[idx] = dist;
+                        }
+                    }
+                }
+            }
+
             const auto M = 1.0f / m;
             for (auto i = 0; i < bm.bmHeight; i++)
             {
@@ -324,6 +429,8 @@ void PhysicsEngine::Render2DFont(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
                 {
                     if (g_buf[i * nWidth + j] > 0.0f)
                         g_buf[i * nWidth + j] = sqrtf(g_buf[i * nWidth + j]) * M * DES;
+                    else
+                        g_buf[i * nWidth + j] = -sqrtf(-g_buf[i * nWidth + j]) * M * DES;
                 }
             }
         }
@@ -345,7 +452,9 @@ void PhysicsEngine::Render2DFont(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
         {
             for (auto j = 0; j < _w; j++)
             {
-                const int c = g_buf[idx] < 0.0f ? 255 : (int)min(255.0f, (1.0f * DES - g_buf[idx]) * 255.0f);
+                const int c = g_buf[idx] < 0.0f ?
+                    max(0, (int)min(255.0f, (DES + g_buf[idx] * 10.0f) * 255.0f)) :
+                    max(0, (int)min(255.0f, (DES - g_buf[idx]) * 255.0f));
                 buffer[(idx << 2) + 0] = c;
                 buffer[(idx << 2) + 1] = c;
                 buffer[(idx << 2) + 2] = c;
@@ -354,5 +463,5 @@ void PhysicsEngine::Render2DFont(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
             }
         }
     }
-    RenderSceneIntern(rt, bounds, b.get());
+    RenderSceneIntern(rt, bounds, b.get(), THREADS);
 }

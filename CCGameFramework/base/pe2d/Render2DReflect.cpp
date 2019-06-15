@@ -151,7 +151,7 @@ extern void DrawSceneGlobal(int part)
     bag.mtx.unlock();
 }
 
-void PhysicsEngine::RenderSceneIntern(CComPtr<ID2D1RenderTarget> rt, CRect bounds, BYTE* buffer)
+void PhysicsEngine::RenderSceneIntern(CComPtr<ID2D1RenderTarget> rt, CRect bounds, BYTE* buffer, int size)
 {
     auto d2dRect = D2D1::RectU(0, 0, rect.Width, rect.Height);
     if (painted || buf.get())
@@ -204,14 +204,11 @@ void PhysicsEngine::RenderSceneIntern(CComPtr<ID2D1RenderTarget> rt, CRect bound
     bag.g_cnt = 0;
     // ----------------------------------------------------
     // 位图渲染开始
-    std::thread th0(scene, 0);
-    th0.detach();
-    std::thread th1(scene, 1);
-    th1.detach();
-    std::thread th2(scene, 2);
-    th2.detach();
-    std::thread th3(scene, 3);
-    th3.detach();
+    std::vector<std::thread> ts;
+    for (int i = 0; i < size; i++) {
+        ts.push_back(std::thread(scene, i));
+        ts.back().detach();
+    }
     // ----------------------------------------------------
 }
 
