@@ -73,6 +73,7 @@ function M:init()
 	local text = Text:new({
 		color = '#EEEEEE',
 		text = '在线听歌',
+		family = '楷体',
 		pre_resize = function(this, left, top, right, bottom)
 			return left, top, right, top + 120
 		end
@@ -217,6 +218,9 @@ function M:init_event()
 			this.singer = song.artists[1]['name']
 			this.pic_url = song['album']['picUrl']
 			this.song_id = song['id']
+			if url == nil then
+				url = 'http://music.163.com/song/media/outer/url?id=' .. this.song_id .. '.mp3'
+			end
 			if url ~= nil and url ~= '' then
 				Web.getb(url, 10)
 				this.layers.pic.url = this.pic_url
@@ -357,7 +361,7 @@ function M:init_menu(info)
 		color = '#EEEEEE',
 		text = '',
 		family = '楷体',
-		size = 20,
+		size = 32,
 		pre_resize = function(this, left, top, right, bottom)
 			return left, top + 130, right, top + 160
 		end
