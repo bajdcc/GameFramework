@@ -82,6 +82,7 @@ namespace clib {
         fs.func("/sys/time", this);
         fs.func("/sys/uptime", this);
         fs.mkdir("/proc");
+        fs.mkdir("/handle");
         fs.mkdir("/dev");
         fs.func("/dev/random", this);
         fs.func("/dev/null", this);
@@ -1604,7 +1605,7 @@ namespace clib {
             if (std::regex_match(path, res, re)) {
                 auto id = std::stoi(res[1].str());
                 if (!(tasks[id].flag & CTX_VALID)) {
-                    return "\033FFF0000F0\033[ERROR] Invalid pid\033S4\033";
+                    return "\033FFFF00000\033[ERROR] Invalid pid.\033S4\033";
                 }
                 const auto& op = res[2].str();
                 if (op == "exe") {
@@ -1716,7 +1717,25 @@ namespace clib {
                 }
             }
         }
-        return "\033FFF0000F0\033[ERROR] File not exists.\033S4\033";
+        else if (path.substr(0, 7) == "/handle") {
+            static string_t pat{ R"(/handle/(\d+)/([a-z_]+))" };
+            static std::regex re(pat);
+            std::smatch res;
+            if (std::regex_match(path, res, re)) {
+                auto id = std::stoi(res[1].str());
+                if (handles[id].type == h_none) {
+                    return "\033FFFF00000\033[ERROR] Invalid handle.\033S4\033";
+                }
+                const auto& op = res[2].str();
+                if (op == "type") {
+                    return handle_typename(handles[id].type);
+                }
+                else if (op == "name") {
+                    return handles[id].name;
+                }
+            }
+        }
+        return "\033FFFF00000\033[ERROR] File not exists.\033S4\033";
     }
 
     vfs_node_dec* cvm::stream_create(const vfs_mod_query * mod, vfs_stream_t type, const string_t & path) {
@@ -1847,11 +1866,39 @@ namespace clib {
                 handle_ids = (j + 1) % HANDLE_NUM;
                 available_handles++;
                 ctx->handles.insert(j);
+                {
+                    std::stringstream ss;
+                    ss << "/handle/" << j;
+                    auto dir = ss.str();
+                    fs.as_root(true);
+                    if (fs.mkdir(dir) == 0) { // '/handle/[hid]'
+                        static std::vector<string_t> ps =
+                        { "type", "name" };
+                        dir += "/";
+                        for (auto& _ps : ps) {
+                            ss.str("");
+                            ss << dir << _ps;
+                            fs.func(ss.str(), this);
+                        }
+                    }
+                    fs.as_root(false);
+                }
                 return j;
             }
         }
         error("max handle num!");
         return -1;
+    }
+
+    string_t cvm::handle_typename(handle_type t)
+    {
+        static std::tuple<handle_type, string_t> handle_typename_list[] = {
+            std::make_tuple(h_none, "none"),
+            std::make_tuple(h_file, "file"),
+            std::make_tuple(h__end, "end"),
+        };
+        assert(t >= h_none && t < h__end);
+        return std::get<1>(handle_typename_list[t]);
     }
 
     void cvm::destroy_handle(int handle) {
@@ -1865,6 +1912,11 @@ namespace clib {
             h->type = h_none;
             ctx->handles.erase(handle);
             available_handles--;
+            {
+                std::stringstream ss;
+                ss << "/handle/" << handle;
+                fs.rm(ss.str());
+            }
         }
         else {
             error("destroy handle failed!");

@@ -167,10 +167,12 @@ namespace clib {
         enum handle_type {
             h_none,
             h_file,
+            h__end,
         };
 
         int new_pid();
         int new_handle(handle_type);
+        string_t handle_typename(handle_type);
         void destroy_handle(int handle);
 
     private:
