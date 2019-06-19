@@ -28,3 +28,6 @@ sleep 1 show
 echo 【红黑树】
 sleep 1 show
 /usr/test_map
+echo 【管道】
+sleep 1 show
+/usr/test_pipe

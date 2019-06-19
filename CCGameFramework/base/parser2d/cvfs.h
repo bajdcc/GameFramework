@@ -38,6 +38,13 @@ namespace clib {
         fss_net,
         fss_console,
         fss_music,
+        fss_pipe,
+    };
+
+    enum vfs_op_t {
+        v_none,
+        v_read,
+        v_write,
     };
 
     class vfs_node_dec;
@@ -66,9 +73,11 @@ namespace clib {
         string_t name;
         std::map<string_t, ref> children;
         std::vector<byte> data;
+        std::queue<byte> pipe;
         vfs_func_t* callback;
         vfs_stream_t magic;
         weak_ref parent;
+        std::unordered_map<int, vfs_op_t> handles;
     };
 
     struct vfs_user {
@@ -88,6 +97,9 @@ namespace clib {
         virtual void advance();
         virtual int write(byte c);
         virtual int truncate();
+        virtual void add_handle(int handle, vfs_op_t type);
+        virtual vfs_op_t get_handle(int handle);
+        virtual void remove_handle(int handle);
         virtual ~vfs_node_dec() = default;
     protected:
         explicit vfs_node_dec(const vfs_mod_query*);
@@ -103,9 +115,25 @@ namespace clib {
         int index() const override;
         int write(byte c) override;
         int truncate() override;
-    private:
+        void add_handle(int handle, vfs_op_t type) override;
+        vfs_op_t get_handle(int handle) override;
+        void remove_handle(int handle) override;
+    protected:
         explicit vfs_node_solid(const vfs_mod_query*, const vfs_node::ref& ref);
         vfs_node::weak_ref node;
+    };
+
+    class vfs_node_pipe : public vfs_node_solid {
+        friend class cvfs;
+    public:
+        ~vfs_node_pipe() override;
+        bool available() const override;
+        int index() const override;
+        int write(byte c) override;
+        int truncate() override;
+    private:
+        explicit vfs_node_pipe(const vfs_mod_query*, const vfs_node::ref& ref);
+        int count(vfs_op_t) const;
     };
 
     class vfs_node_cached : public vfs_node_dec {

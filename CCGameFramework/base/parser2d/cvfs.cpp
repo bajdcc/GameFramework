@@ -26,6 +26,21 @@ namespace clib {
         return -1;
     }
 
+    void vfs_node_dec::add_handle(int handle, vfs_op_t type)
+    {
+
+    }
+
+    vfs_op_t vfs_node_dec::get_handle(int handle)
+    {
+        return v_none;
+    }
+
+    void vfs_node_dec::remove_handle(int handle)
+    {
+
+    }
+
     vfs_node_dec::vfs_node_dec(const vfs_mod_query* mod) : mod(mod) {}
 
     vfs_node_solid::vfs_node_solid(const vfs_mod_query* mod, const vfs_node::ref& ref) :
@@ -74,6 +89,94 @@ namespace clib {
         idx = 0;
         return 0;
     }
+
+    void vfs_node_solid::add_handle(int handle, vfs_op_t type)
+    {
+        auto n = node.lock();
+        assert(n->handles.find(handle) == n->handles.end());
+        n->handles.insert(std::make_pair(handle, type));
+    }
+
+    vfs_op_t vfs_node_solid::get_handle(int handle)
+    {
+        auto n = node.lock();
+        auto f = n->handles.find(handle);
+        if (f == n->handles.end())
+            return v_none;
+        return f->second;
+    }
+
+    void vfs_node_solid::remove_handle(int handle)
+    {
+        auto n = node.lock();
+        assert(n->handles.find(handle) != n->handles.end());
+        n->handles.erase(handle);
+    }
+
+    // -----------------------------------------
+
+    vfs_node_pipe::vfs_node_pipe(const vfs_mod_query* mod, const vfs_node::ref& ref) :
+        vfs_node_solid(mod, ref) {
+    }
+
+    int vfs_node_pipe::count(vfs_op_t t) const
+    {
+        auto n = node.lock();
+        int cnt = 0;
+        for (auto& h : n->handles) {
+            if (h.second == t)
+                cnt++;
+        }
+        return cnt;
+    }
+
+    vfs_node_pipe::~vfs_node_pipe() {
+    }
+
+    bool vfs_node_pipe::available() const {
+        auto n = node.lock();
+        if (!n)
+            return false;
+        return true;
+    }
+
+    int vfs_node_pipe::index() const {
+        auto n = node.lock();
+        if (!n)
+            return READ_ERROR;
+        if (n->pipe.empty()) {
+            if (count(v_write) == 0)
+                return READ_EOF;
+            return DELAY_CHAR;
+        }
+        auto c = n->pipe.front();
+        n->pipe.pop();
+        return c;
+    }
+
+    int vfs_node_pipe::write(byte c) {
+        auto n = node.lock();
+        if (!n)
+            return -1;
+        if (!mod->can_mod(n, 1))
+            return -2;
+        n->pipe.push(c);
+        return 0;
+    }
+
+    int vfs_node_pipe::truncate() {
+        auto n = node.lock();
+        if (!n)
+            return -1;
+        if (!mod->can_mod(n, 1))
+            return -2;
+        while (!n->pipe.empty()) {
+            n->pipe.pop();
+        }
+        return 0;
+    }
+
+    // -----------------------------------------
 
     vfs_node_cached::vfs_node_cached(const vfs_mod_query* mod, const string_t& str) :
         vfs_node_dec(mod), cache(str) {}
@@ -330,8 +433,15 @@ namespace clib {
             if (node->locked)
                 return -3;
             node->time.access = now();
-            if (dec)
-                * dec = new vfs_node_solid(this, node);
+            if (dec) {
+                if (path.substr(0, 6) == "/pipe/") {
+                    node->magic = fss_pipe;
+                    *dec = new vfs_node_pipe(this, node);
+                }
+                else {
+                    *dec = new vfs_node_solid(this, node);
+                }
+            }
             return 0;
         }
         else if (node->type == fs_func) {

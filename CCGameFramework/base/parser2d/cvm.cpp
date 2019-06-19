@@ -1598,7 +1598,7 @@ namespace clib {
 
     string_t cvm::stream_callback(const string_t & path) {
         static char sz[256];
-        if (path.substr(0, 5) == "/proc") {
+        if (path.substr(0, 6) == "/proc/") {
             static string_t pat{ R"(/proc/(\d+)/([a-z_]+))" };
             static std::regex re(pat);
             std::smatch res;
@@ -1628,7 +1628,7 @@ namespace clib {
                 }
             }
         }
-        else if (path.substr(0, 4) == "/sys") {
+        else if (path.substr(0, 5) == "/sys/") {
             static string_t pat{ R"(/sys/([a-z_]+))" };
             static std::regex re(pat);
             std::smatch res;
@@ -1695,7 +1695,7 @@ namespace clib {
                 }
             }
         }
-        else if (path.substr(0, 4) == "/log") {
+        else if (path.substr(0, 5) == "/log/") {
             static string_t pat{ R"(/log/([a-z_]+))" };
             static std::regex re(pat);
             std::smatch res;
@@ -1717,7 +1717,7 @@ namespace clib {
                 }
             }
         }
-        else if (path.substr(0, 7) == "/handle") {
+        else if (path.substr(0, 8) == "/handle/") {
             static string_t pat{ R"(/handle/(\d+)/([a-z_]+))" };
             static std::regex re(pat);
             std::smatch res;
@@ -1919,7 +1919,8 @@ namespace clib {
             }
         }
         else {
-            error("destroy handle failed!");
+            // TODO: FORK BUG
+            // error("destroy handle failed!");
         }
     }
 
@@ -2556,6 +2557,13 @@ namespace clib {
             auto h = ctx->ax._i;
             if (ctx->handles.find(h) != ctx->handles.end()) {
                 auto dec = handles[h].data.file;
+                auto t = dec->get_handle(h);
+                if (t == v_none)
+                    dec->add_handle(h, v_read);
+                else if (t != v_read) {
+                    ctx->ax._i = READ_ERROR;
+                    break;
+                }
                 ctx->ax._i = dec->index();
                 if (ctx->ax._i == WAIT_CHAR) {
                     ctx->pc -= INC_PTR;
@@ -2580,6 +2588,8 @@ namespace clib {
         case 67: {
             auto h = ctx->ax._i;
             if (ctx->handles.find(h) != ctx->handles.end()) {
+                auto dec = handles[h].data.file;
+                dec->remove_handle(h);
                 destroy_handle(h);
             }
             else {
@@ -2596,6 +2606,13 @@ namespace clib {
             auto c = (ctx->ax._ui & 0xFFFF) - 0x1000;
             if (ctx->handles.find(h) != ctx->handles.end()) {
                 auto dec = handles[h].data.file;
+                auto t = dec->get_handle(h);
+                if (t == v_none)
+                    dec->add_handle(h, v_write);
+                else if (t != v_write) {
+                    ctx->ax._i = READ_ERROR;
+                    break;
+                }
                 ctx->ax._i = dec->write((byte)c);
             }
             else {
@@ -2607,6 +2624,13 @@ namespace clib {
             auto h = ctx->ax._i;
             if (ctx->handles.find(h) != ctx->handles.end()) {
                 auto dec = handles[h].data.file;
+                auto t = dec->get_handle(h);
+                if (t == v_none)
+                    dec->add_handle(h, v_write);
+                else if (t != v_write) {
+                    ctx->ax._i = READ_ERROR;
+                    break;
+                }
                 ctx->ax._i = dec->truncate();
             }
             else {
@@ -2621,7 +2645,6 @@ namespace clib {
         }
                  break;
         case 72: {
-
             auto path = trim(vmm_getstr(ctx->ax._ui));
             ctx->paths.erase(std::remove(
                 ctx->paths.begin(), ctx->paths.end(), path), ctx->paths.end());

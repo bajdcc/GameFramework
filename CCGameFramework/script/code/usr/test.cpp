@@ -18,6 +18,7 @@ int main(int argc, char **argv) {
         case 8: shell("test_vector");
         case 9: shell("test_gui");
         case 10: shell("test_map");
+        case 11: shell("test_pipe");
     }
     return 0;
 }
