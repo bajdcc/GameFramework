@@ -2104,6 +2104,13 @@ namespace clib {
         case 201:
             ctx->ax._d = std::sqrt(std::abs(ctx->ax._d));
             break;
+        case 202:
+        {
+            std::default_random_engine e((uint32_t)time(nullptr));
+            std::uniform_int_distribution<int> dist{ 0, std::abs(ctx->ax._i) };
+            ctx->ax._i = dist(e);
+        }
+        break;
         default:
 #if LOG_SYSTEM
             ATLTRACE("[SYSTEM] ERR  | unknown interrupt: %d\n", ctx->ax._i);
@@ -2575,11 +2582,26 @@ namespace clib {
             break;
         case 65: {
             auto path = trim(vmm_getstr(ctx->ax._ui));
-            vfs_node_dec* dec;
-            auto s = fs.get(path, &dec, this);
-            if (s != 0) {
-                ctx->ax._i = s;
-                break;
+            vfs_node_dec* dec = nullptr;
+            if (path[0] != '/') {
+                auto s = 0;
+                for (auto& p : ctx->paths) {
+                    auto pp = p + '/' + path;
+                    s = fs.get(pp, &dec, this);
+                    if (s == 0)
+                        break;
+                }
+                if (s != 0) {
+                    ctx->ax._i = s;
+                    break;
+                }
+            }
+            else {
+                auto s = fs.get(path, &dec, this);
+                if (s != 0) {
+                    ctx->ax._i = s;
+                    break;
+                }
             }
             auto h = new_handle(h_file);
             handles[h].name = path;

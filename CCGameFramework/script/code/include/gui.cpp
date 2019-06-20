@@ -97,3 +97,42 @@ int gui_lua(char* text) {
     text;
     interrupt 350;
 }
+
+int gui_hue2rgb(int n1, int n2, int hue)
+{
+    if (hue < 0)
+        hue += 240;
+    if (hue > 240)
+        hue -= 240;
+    if (hue < 60)
+        return n1 + ((n2 - n1) * hue + 20) / 40;
+    if (hue < 120)
+        return n2;
+    if (hue < 160)
+        return n1 + ((n2 - n1) * (160 - hue) + 20) / 40;
+    return n1;
+}
+int gui_hsl2rgb(int h, int s, int l) {
+    int Magic1, Magic2;
+
+    if (0 == s)
+    {
+        int k = (l * 255) / 240;
+        return k | k << 8 | k << 16;
+    }
+    else
+    {
+        if (l <= 120)
+            Magic2 = (l * (240 + s) + 120) / 240;
+        else
+            Magic2 = l + s - ((l * s) + 120) / 240;
+
+        Magic1 = 2 * l - Magic2;
+
+        int r = (gui_hue2rgb(Magic1, Magic2, h + 80) * 255 + 120) / 240;
+        int g = (gui_hue2rgb(Magic1, Magic2, h) * 255 + 120) / 240;
+        int b = (gui_hue2rgb(Magic1, Magic2, h - 80) * 255 + 120) / 240;
+
+        return r << 16 | g << 8 | b;
+    }
+}
