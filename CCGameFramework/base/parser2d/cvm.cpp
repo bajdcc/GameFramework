@@ -84,6 +84,7 @@ namespace clib {
         fs.mkdir("/proc");
         fs.mkdir("/handle");
         fs.mkdir("/dev");
+        fs.mkdir("/pipe");
         fs.func("/dev/random", this);
         fs.func("/dev/null", this);
         fs.func("/dev/console", this);
@@ -1417,7 +1418,10 @@ namespace clib {
 #endif
         std::vector<string_t> args;
         auto file = get_args(new_path, args);
-        auto pid = cgui::singleton().compile(file, args, ctx->paths);
+        decltype(ctx->paths) pt(ctx->paths.size() + 1);
+        pt[0] = fs.get_pwd();
+        std::copy(ctx->paths.begin(), ctx->paths.end(), pt.begin() + 1);
+        auto pid = cgui::singleton().compile(file, args, pt);
         if (pid >= 0) { // SUCCESS
             ctx->child.insert(pid);
             tasks[pid].parent = ctx->id;

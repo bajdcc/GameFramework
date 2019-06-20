@@ -40,20 +40,6 @@ int exec_single(char* text, int* total, int right) {
     if (strncmp(text, "/sys/", 5) == 0) {
         return -3;
     }
-    if (strncmp(text, "/", 1) != 0) {
-        char* path = malloc(200);
-        pwd(path);
-        if (strlen(path) != 1)
-            strcat(path, "/");
-        strcat(path, text);
-        pid = exec_sleep(path);
-        free(path);
-        if (pid >= 0) {
-            exec_connect(pid, get_pid());
-            (*total)++;
-            return pid;
-        }
-    }
     (*total)++;
     pid = exec_sleep(text);
     exec_connect(pid, get_pid());
