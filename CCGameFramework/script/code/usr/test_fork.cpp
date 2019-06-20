@@ -1,6 +1,8 @@
 #include "/include/io"
 #include "/include/proc"
-int main(int argc, char **argv) {
+#include "/include/memory"
+#include "/include/string"
+int main(int argc, char** argv) {
     int i;
     put_string("========== [#2 TEST FORK] ==========\n");
     put_string("Command:");
@@ -9,13 +11,16 @@ int main(int argc, char **argv) {
         put_string(argv[i]);
     }
     put_string("\n");
+    char* str = malloc(100); strcpy(str, "Child: fork return ");
+    char* str2 = malloc(100); strcpy(str2, "Parent: fork return ");
     i = fork();
     if (i == -1) {
-        put_string("Child: fork return "); put_int(i); put_string("\n");
-    } else {
-        wait();
         sleep(500);
-        put_string("Parent: fork return "); put_int(i); put_string("\n");
+        put_string(str); put_int(i); put_string("\n");
+    }
+    else {
+        wait();
+        put_string(str2); put_int(i); put_string("\n");
         put_string("========== [#2 TEST FORK] ==========\n");
     }
     return 0;

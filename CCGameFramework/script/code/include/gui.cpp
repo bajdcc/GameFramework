@@ -92,3 +92,8 @@ int gui_draw_text(char* text) {
     text;
     interrupt 311;
 }
+
+int gui_lua(char* text) {
+    text;
+    interrupt 350;
+}

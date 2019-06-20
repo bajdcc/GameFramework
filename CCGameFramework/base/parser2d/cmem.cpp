@@ -203,9 +203,13 @@ namespace clib {
     void cmem::copy_from(const cmem & mem) {
         available_size = mem.available_size;
         m = mem.m;
-        memory = mem.memory;
+        memory.resize(mem.memory.size());
         for (uint32_t i = 0; i < memory.size(); ++i) {
-            memory_page.push_back(PAGE_ALIGN_UP((uint32_t)memory[i].data()));
+            memory[i].resize(mem.memory[i].size());
+            auto m1 = PAGE_ALIGN_UP((uint32_t)memory[i].data());
+            auto m2 = PAGE_ALIGN_UP((uint32_t)mem.memory[i].data());
+            CopyMemory((char*)m1, (char*)m2, PAGE_SIZE);
+            memory_page.push_back(m1);
             m->map_page(memory_page.back(), i);
         }
         memory_free = mem.memory_free;

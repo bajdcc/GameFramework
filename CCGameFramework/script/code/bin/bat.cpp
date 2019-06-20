@@ -4,6 +4,7 @@
 #include "/include/string"
 #include "/include/xtoa_atoi"
 #include "/include/shell"
+int async = 0;
 struct string {
     char *text;
     int capacity;
@@ -48,7 +49,15 @@ void run(node *list) {
         list = list->next;
     }
     while (prev) {
-        shell((prev->text).text);
+        if (async == 0)
+            shell((prev->text).text);
+        else {
+            int i = fork();
+            if (i == -1) {
+                shell((prev->text).text);
+                return;
+            }
+        }
         newline();
         prev = prev->prev;
     }
@@ -82,6 +91,9 @@ void bat() {
     run(list);
 }
 int main(int argc, char** argv) {
+    if (argc == 2 && strcmp(argv[1], "async") == 0) {
+        async = 1;
+    }
     bat();
     return 0;
 }

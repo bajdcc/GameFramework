@@ -16,6 +16,7 @@
 #include "cnet.h"
 #include "cmusic.h"
 #include "../json/cjparser.h"
+#include <ui\window\Window.h>
 
 #define LOG_INS 0
 #define LOG_STACK 0
@@ -97,6 +98,7 @@ namespace clib {
         fs.load("/usr/logo.txt");
         fs.load("/usr/badapple.txt");
         fs.load("/usr/test_command.txt");
+        fs.load("/init/init.txt");
     }
 
     // 虚页映射
@@ -1529,8 +1531,8 @@ namespace clib {
         ctx->bp = old_ctx->bp;
         ctx->debug = old_ctx->debug;
         ctx->waiting_ms = 0;
-        ctx->input_redirect = old_ctx->input_redirect;
-        ctx->output_redirect = old_ctx->output_redirect;
+        ctx->input_redirect = -1;
+        ctx->output_redirect = -1;
         ctx->input_stop = old_ctx->input_stop;
         ctx->handles = old_ctx->handles;
         for (auto& h : ctx->handles) {
@@ -2113,6 +2115,15 @@ namespace clib {
         return false;
     }
 
+    void exec_lua(evutil_socket_t fd, short event, void* arg)
+    {
+        auto s = (string_t*)arg;
+        auto L = window->get_state();
+        luaL_loadstring(L, s->c_str());
+        lua_call(L, 0, 0);
+        delete s;
+    }
+
     bool cvm::gui(int id) {
         switch (id) {
         case 301:
@@ -2214,6 +2225,18 @@ namespace clib {
         case 311:
         {
             global_state.ui->draw_font(vmm_getstr(ctx->ax._ui));
+        }
+        break;
+        case 350:
+        {
+            auto s = vmm_getstr(ctx->ax._ui);
+            auto ev = window->get_event();
+            struct timeval tv;
+            auto evt = evtimer_new(ev, &exec_lua, new string_t(s));
+            evutil_timerclear(&tv);
+            tv.tv_sec = 0;
+            tv.tv_usec = 10;
+            evtimer_add(evt, &tv);
         }
         break;
         default:
