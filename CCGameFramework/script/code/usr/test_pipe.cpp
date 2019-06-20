@@ -14,6 +14,9 @@ int main(int argc, char **argv) {
         shell("echo pipe designed by bajdcc > /pipe/__test_pipe__");
         sleep(500);
         shell("echo , yeah! >> /pipe/__test_pipe__");
+        shell("newline >> /pipe/__test_pipe__");
+        sleep(500);
+        shell("api_hitokoto >> /pipe/__test_pipe__");
         close(handle);
     } else {
         // PARENT

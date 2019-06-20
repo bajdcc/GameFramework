@@ -1529,6 +1529,9 @@ namespace clib {
         ctx->output_redirect = old_ctx->output_redirect;
         ctx->input_stop = old_ctx->input_stop;
         ctx->handles = old_ctx->handles;
+        for (auto& h : ctx->handles) {
+            handles[h].refs++;
+        }
         available_tasks++;
         auto pid = ctx->id;
         ctx = old_ctx;
@@ -1863,6 +1866,7 @@ namespace clib {
             auto j = i % HANDLE_NUM;
             if (handles[j].type == h_none) {
                 handles[j].type = type;
+                handles[j].refs = 1;
                 handle_ids = (j + 1) % HANDLE_NUM;
                 available_handles++;
                 ctx->handles.insert(j);
@@ -1905,6 +1909,10 @@ namespace clib {
         if (handle < 0 || handle >= HANDLE_NUM)
             error("invalid handle");
         if (handles[handle].type != h_none) {
+            if (handles[handle].refs > 0) {
+                handles[handle].refs--;
+                return;
+            }
             auto h = &handles[handle];
             if (h->type == h_file) {
                 delete h->data.file;
@@ -1919,8 +1927,7 @@ namespace clib {
             }
         }
         else {
-            // TODO: FORK BUG
-            // error("destroy handle failed!");
+            error("destroy handle failed!");
         }
     }
 

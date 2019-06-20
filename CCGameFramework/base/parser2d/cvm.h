@@ -259,6 +259,7 @@ namespace clib {
 
         struct handle_t {
             handle_type type{ h_none };
+            int refs{ 0 };
             string_t name;
             union {
                 vfs_node_dec* file{ nullptr };
