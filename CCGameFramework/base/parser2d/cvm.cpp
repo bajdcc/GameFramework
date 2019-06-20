@@ -1645,14 +1645,14 @@ namespace clib {
                 const auto& op = res[1].str();
                 if (op == "ps") {
                     std::stringstream ss;
-                    ss << "\033FFFA0A0A0\033[STATE] \033S4\033[PID] [PPID]\033FFFB3B920\033 [COMMAND LINE] \033FFF51C2A8\033[PAGE]\033S4\033" << std::endl;
+                    ss << "\033FFFA0A0A0\033[STATE] \033S4\033[PID] [PPID]\033FFFB3B920\033 [COMMAND LINE]     \033FFF51C2A8\033[PAGE]\033S4\033" << std::endl;
                     for (auto i = 0; i < TASK_NUM; ++i) {
                         if (tasks[i].flag & CTX_VALID) {
-                            sprintf(sz, "\033FFFA0A0A0\033%7s \033S4\033 %4d   %4d \033FFFB3B920\033%-14s \033FFF51C2A8\033  %4d\033S4\033",
+                            sprintf(sz, "\033FFFA0A0A0\033%7s \033S4\033 %4d   %4d \033FFFB3B920\033%-18s \033FFF51C2A8\033  %4d\033S4\033",
                                 state_string(tasks[i].state),
                                 i,
                                 tasks[i].parent,
-                                limit_string(tasks[i].path, 14).c_str(),
+                                limit_string(tasks[i].path, 18).c_str(),
                                 ctx->allocation.size());
                             ss << sz << std::endl;
                         }

@@ -1,1 +1,1 @@
-﻿color_title
+color_title

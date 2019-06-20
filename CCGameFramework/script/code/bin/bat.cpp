@@ -13,6 +13,7 @@ struct string {
 string new_string() {
     string s;
     s.text = malloc(16);
+    s.text[0] = '\0';
     s.capacity = 16;
     s.length = 0;
     return s;
@@ -49,8 +50,10 @@ void run(node *list) {
         list = list->next;
     }
     while (prev) {
-        if (async == 0)
+        if (async == 0) {
             shell((prev->text).text);
+            newline();
+        }
         else {
             int i = fork();
             if (i == -1) {
@@ -58,7 +61,6 @@ void run(node *list) {
                 return;
             }
         }
-        newline();
         prev = prev->prev;
     }
 }
