@@ -303,7 +303,9 @@ namespace clib {
             global_state.interrupt = false;
             std::vector<int> foreground_pids;
             for (int i = 1; i < TASK_NUM; ++i) {
-                if ((tasks[i].flag & CTX_VALID) && (tasks[i].flag & CTX_FOREGROUND) &&
+                if ((tasks[i].flag & CTX_VALID) &&
+                    !(tasks[i].flag & CTX_SERVICE) &&
+                    (tasks[i].flag & CTX_FOREGROUND) &&
                     tasks[i].parent != 0)
                     foreground_pids.push_back(i);
             }
@@ -1254,7 +1256,13 @@ namespace clib {
             }
             vmm_pushstack(ctx->sp, tmp);
         }
-        ctx->flag |= CTX_USER_MODE | CTX_FOREGROUND;
+        ctx->flag |= CTX_USER_MODE;
+        if (old_ctx) {
+            if (old_ctx->flag & CTX_SERVICE)
+                ctx->flag |= CTX_SERVICE;
+            else
+                ctx->flag |= CTX_FOREGROUND;
+        }
         ctx->debug = false;
         ctx->waiting_ms = 0;
         ctx->input_redirect = -1;
@@ -1645,11 +1653,12 @@ namespace clib {
                 const auto& op = res[1].str();
                 if (op == "ps") {
                     std::stringstream ss;
-                    ss << "\033FFFA0A0A0\033[STATE] \033S4\033[PID] [PPID]\033FFFB3B920\033 [COMMAND LINE]     \033FFF51C2A8\033[PAGE]\033S4\033" << std::endl;
+                    ss << "\033FFFA0A0A0\033[STATE] \033S4\033[FLAG] [PID] [PPID]\033FFFB3B920\033 [COMMAND LINE]     \033FFF51C2A8\033[PAGE]\033S4\033" << std::endl;
                     for (auto i = 0; i < TASK_NUM; ++i) {
                         if (tasks[i].flag & CTX_VALID) {
-                            sprintf(sz, "\033FFFA0A0A0\033%7s \033S4\033 %4d   %4d \033FFFB3B920\033%-18s \033FFF51C2A8\033  %4d\033S4\033",
+                            sprintf(sz, "\033FFFA0A0A0\033%7s \033S4\033 %04X   %4d   %4d \033FFFB3B920\033%-18s \033FFF51C2A8\033  %4d\033S4\033",
                                 state_string(tasks[i].state),
+                                tasks[i].flag,
                                 i,
                                 tasks[i].parent,
                                 limit_string(tasks[i].path, 18).c_str(),
@@ -2704,6 +2713,15 @@ namespace clib {
             auto path = trim(vmm_getstr(ctx->ax._ui));
             ctx->paths.erase(std::remove(
                 ctx->paths.begin(), ctx->paths.end(), path), ctx->paths.end());
+        }
+                 break;
+        case 73: {
+            ctx->ax._i = exec_file(vmm_getstr(ctx->ax._ui));
+            if (ctx->ax._i >= 0 && ctx->ax._i < TASK_NUM) {
+                tasks[ctx->ax._i].flag |= CTX_SERVICE;
+                tasks[ctx->ax._i].flag &= ~CTX_FOREGROUND;
+            }
+            break;
         }
                  break;
         case 100: {

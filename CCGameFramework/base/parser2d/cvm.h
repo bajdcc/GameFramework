@@ -191,6 +191,7 @@ namespace clib {
             CTX_KERNEL = 1 << 1,
             CTX_USER_MODE = 1 << 2,
             CTX_FOREGROUND = 1 << 3,
+            CTX_SERVICE = 1 << 4,
         };
 
         enum ctx_state_t {

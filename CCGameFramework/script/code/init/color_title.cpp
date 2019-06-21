@@ -3,6 +3,7 @@
 #include "/include/string"
 #include "/include/math"
 #include "/include/shell"
+#include "/include/proc"
 void set_title(char* s, char* color) {
     strcpy(s, "CurrentScene.layers.text.color = '#");
     strcat(s, color);

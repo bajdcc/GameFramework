@@ -18,7 +18,7 @@ int welcome() {
 int main(int argc, char **argv) {
     path_add("/bin");
     welcome();
-    exec("/init/init");
+    exec_service("/init/init");
     exec("sh"); wait();
     return 0;
 }
