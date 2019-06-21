@@ -149,7 +149,7 @@ function M:init_event()
 	end
 	self.handler[self.win_event.httpget] = function(this, id, code, text)
 		if id == 10 then
-			if code ~= 200 then
+			if code ~= 200 or this.singer == nil then
 				music_set_text(this.layers.rtstatus, '¸èÇúÏÂÔØÊ§°Ü')
 				return
 			end

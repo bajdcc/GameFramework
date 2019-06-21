@@ -121,6 +121,10 @@ public:
 
     struct event_base *get_event();
     struct lua_State *get_state();
+    void add_event(struct event* evt);
+    void remove_event(struct event* evt);
+    bool has_event(struct event* evt) const;
+    void cancel_event();
 
     bool HandleMessage(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT& result);
     HWND GetWindowHandle() const;
@@ -263,6 +267,7 @@ private:
     lua_State *L;
     CSize minSize{ 200, 200 };
     struct event_base *evbase;
+    std::unordered_set<struct event*> evts;
 };
 
 extern Window *window;

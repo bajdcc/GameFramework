@@ -47,6 +47,29 @@ struct lua_State* Window::get_state()
     return L;
 }
 
+void Window::add_event(event* evt)
+{
+    evts.insert(evt);
+}
+
+void Window::remove_event(event* evt)
+{
+    evts.erase(evt);
+}
+
+bool Window::has_event(event* evt) const
+{
+    return evts.find(evt) != evts.end();
+}
+
+void Window::cancel_event()
+{
+    for (auto& e : evts) {
+        delete e->ev_arg;
+        evtimer_del(e);
+    }
+}
+
 Window *window;
 
 static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)

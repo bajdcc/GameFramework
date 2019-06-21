@@ -1,2 +1,7 @@
 echo 准备播放音乐……
 gui_play 1 Take me hand
+gui_play 1 Faded
+gui_play 1 Nevada
+gui_play 2 New World
+gui_play 1 Friendships
+gui_play 1 Closer

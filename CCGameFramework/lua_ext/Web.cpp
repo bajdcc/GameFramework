@@ -31,6 +31,7 @@ struct web_http_request
     bool b64;
     bool post;
     std::string postfield;
+    struct event* evt;
 };
 
 struct web_http_response
@@ -40,6 +41,7 @@ struct web_http_response
     std::string text;
     bool b64;
     bool post;
+    struct event* evt;
 };
 
 static size_t http_get_process(void *data, size_t size, size_t nmemb, std::string &content)
@@ -63,6 +65,10 @@ static size_t http_get_process_bin(void *data, size_t size, size_t nmemb, std::v
 void pass_event(evutil_socket_t fd, short event, void *arg)
 {
     auto response = (web_http_response*)arg;
+    if (!window->has_event(response->evt)) {
+        delete response;
+        return;
+    }
     auto L = window->get_state();
     lua_getglobal(L, "PassEventToScene");
     if (!response->post)
@@ -73,6 +79,7 @@ void pass_event(evutil_socket_t fd, short event, void *arg)
     lua_pushinteger(L, response->code);
     lua_pushstring(L, response->text.c_str());
     lua_call(L, 4, 0);
+    window->remove_event(response->evt);
     delete response;
 }
 
@@ -190,7 +197,9 @@ void http_thread(web_http_request *request)
             auto evt = evtimer_new(ev, &pass_event, response);
             evutil_timerclear(&tv);
             tv.tv_sec = 0;
-            tv.tv_usec = 100;
+            tv.tv_usec = 10;
+            response->evt = evt;
+            window->add_event(evt);
             evtimer_add(evt, &tv);
         }
         curl_easy_cleanup(curl);
@@ -199,6 +208,7 @@ void http_thread(web_http_request *request)
 
 void start_thread(evutil_socket_t fd, short event, void *arg)
 {
+    window->remove_event(((web_http_request*)arg)->evt);
     std::thread th(http_thread, (web_http_request*)arg);
     th.detach();
 }
@@ -219,7 +229,9 @@ int web_http_get_internal(lua_State* L, bool b64 = false, bool post = false, std
     auto evt = evtimer_new(ev, &start_thread, request);
     evutil_timerclear(&tv);
     tv.tv_sec = 0;
-    tv.tv_usec = 100;
+    tv.tv_usec = 10;
+    request->evt = evt;
+    window->add_event(evt);
     evtimer_add(evt, &tv);
     return 0;
 }

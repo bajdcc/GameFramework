@@ -14,6 +14,7 @@ int ui_clear_scene(lua_State* L)
     window->ptrEle = 0;
     window->mapEle.clear();
     window->setTimer.clear();
+    window->cancel_event();
     window->root->GetRenderer()->SetRenderTarget(nullptr);
     window->root->GetChildren().clear();
     if (window->zplay)
@@ -469,6 +470,7 @@ int ui_play_song(lua_State * L)
         window->zplaydata = nullptr;
         zplay->Release();
         zplay = nullptr;
+        return 0;
     }
     zplay->Play();
     return 0;
