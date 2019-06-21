@@ -63,6 +63,11 @@ function M:init()
 		end,
 		hit = function(this, evt)
 			if evt == WinEvent.leftbuttondown then
+				if MusicSceneReturn ~= nil then
+					FlipScene(MusicSceneReturn)
+					MusicSceneReturn = nil
+					return
+				end
 				FlipScene('Button')
 			end
 		end
@@ -133,6 +138,11 @@ function M:init_event()
 			UIExt.paint()
 		elseif id == 20 then
 			UIExt.paint()
+			if MusicSceneReturn ~= nil then
+				FlipScene(MusicSceneReturn)
+				MusicSceneReturn = nil
+				return
+			end
 			UIExt.music_ctrl(MusicCtrl.play_loop)
 			UIExt.set_timer(18, 100)
 		end
@@ -193,6 +203,10 @@ function M:init_event()
 			local btns = this.layers.btns.children
 			for i,v in ipairs(obj.result.songs) do
 				btns[i]:reset(UIExt.limit_str(v.name, 25))
+			end
+			if MusicSceneId ~= nil then
+				btns[MusicSceneId]:click()
+				MusicSceneId = nil
 			end
 			UIExt.paint()
 		elseif id == 9 then
@@ -371,13 +385,18 @@ function M:init_menu(info)
 	
 	-- MENU BUTTON
 	Edit:new({
-		text = '',
+		text = MusicSceneName or '',
 		char_return = function (text)
 		end,
 		char_input = function (text)
 			Web.post('http://music.163.com/api/search/suggest/web', 8, 's=' .. text)
 		end
 	}):attach(menu)
+
+	if MusicSceneName ~= nil then
+		Web.post('http://music.163.com/api/search/suggest/web', 8, 's=' .. MusicSceneName)
+		MusicSceneName = nil
+	end
 
 	Empty:new():attach(menu)
 

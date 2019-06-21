@@ -31,3 +31,6 @@ sleep 1 show
 echo 【管道】
 sleep 1 show
 /usr/test_pipe
+echo 【脚本】
+sleep 1 show
+/usr/test_lua

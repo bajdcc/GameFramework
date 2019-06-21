@@ -98,6 +98,7 @@ namespace clib {
         fs.load("/usr/logo.txt");
         fs.load("/usr/badapple.txt");
         fs.load("/usr/test_command.txt");
+        fs.load("/usr/test_lua.txt");
         fs.load("/init/init.txt");
     }
 
