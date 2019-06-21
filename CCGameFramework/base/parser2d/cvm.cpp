@@ -86,6 +86,8 @@ namespace clib {
         fs.mkdir("/handle");
         fs.mkdir("/dev");
         fs.mkdir("/pipe");
+        fs.mkdir("/semaphore");
+        fs.mkdir("/mutex");
         fs.func("/dev/random", this);
         fs.func("/dev/null", this);
         fs.func("/dev/console", this);
@@ -1925,16 +1927,19 @@ namespace clib {
         if (handle < 0 || handle >= HANDLE_NUM)
             error("invalid handle");
         if (handles[handle].type != h_none) {
-            if (handles[handle].refs > 0) {
+            ctx->handles.erase(handle);
+            if (handles[handle].refs > 1) {
                 handles[handle].refs--;
                 return;
             }
+            handles[handle].refs = 0;
             auto h = &handles[handle];
             if (h->type == h_file) {
+                auto dec = h->data.file;
+                dec->remove_handle(handle);
                 delete h->data.file;
             }
             h->type = h_none;
-            ctx->handles.erase(handle);
             available_handles--;
             {
                 std::stringstream ss;
@@ -2654,8 +2659,6 @@ namespace clib {
         case 67: {
             auto h = ctx->ax._i;
             if (ctx->handles.find(h) != ctx->handles.end()) {
-                auto dec = handles[h].data.file;
-                dec->remove_handle(h);
                 destroy_handle(h);
             }
             else {

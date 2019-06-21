@@ -34,3 +34,6 @@ sleep 1 show
 echo 【脚本】
 sleep 1 show
 /usr/test_lua
+echo 【互斥】
+sleep 1 show
+/usr/test_mutex

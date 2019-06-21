@@ -11,17 +11,22 @@ int main(int argc, char **argv) {
     i = fork();
     if (i == -1) {
         // CHILD
+        sleep(100);
         shell("echo pipe designed by bajdcc > /pipe/__test_pipe__");
-        sleep(500);
+        sleep(100);
         shell("echo , yeah! >> /pipe/__test_pipe__");
         shell("newline >> /pipe/__test_pipe__");
-        sleep(500);
+        sleep(100);
         shell("api_hitokoto >> /pipe/__test_pipe__");
         close(handle);
     } else {
         // PARENT
+        close(handle);
         shell("cat /pipe/__test_pipe__");
         wait();
+        newline();
+        shell("rm /pipe/__test_pipe__");
+        put_string("========== [#11 TEST PIPE] ==========\n");
     }
     return 0;
 }

@@ -39,6 +39,8 @@ namespace clib {
         fss_console,
         fss_music,
         fss_pipe,
+        fss_semaphore,
+        fss_mutex,
     };
 
     enum vfs_op_t {
@@ -60,24 +62,25 @@ namespace clib {
     struct vfs_node {
         using ref = std::shared_ptr<vfs_node>;
         using weak_ref = std::weak_ptr<vfs_node>;
-        vfs_file_t type;
+        vfs_file_t type{ fs_file };
         vfs_mod mod[3];
-        int owner;
+        int owner{ -1 };
         struct {
-            time_t create;
-            time_t access;
-            time_t modify;
+            time_t create{ 0 };
+            time_t access{ 0 };
+            time_t modify{ 0 };
         } time;
-        int refs;
-        bool locked;
+        int refs{ 0 };
+        bool locked{ false };
         string_t name;
         std::map<string_t, ref> children;
         std::vector<byte> data;
-        std::queue<byte> pipe;
-        vfs_func_t* callback;
-        vfs_stream_t magic;
+        std::unique_ptr<std::queue<byte>> pipe;
+        vfs_func_t* callback{ nullptr };
+        vfs_stream_t magic{ fss_none };
         weak_ref parent;
         std::unordered_map<int, vfs_op_t> handles;
+        std::list<int> handles_write, handles_read;
     };
 
     struct vfs_user {
@@ -121,6 +124,7 @@ namespace clib {
     protected:
         explicit vfs_node_solid(const vfs_mod_query*, const vfs_node::ref& ref);
         vfs_node::weak_ref node;
+        int this_handle{ -1 };
     };
 
     class vfs_node_pipe : public vfs_node_solid {
@@ -131,9 +135,34 @@ namespace clib {
         int index() const override;
         int write(byte c) override;
         int truncate() override;
-    private:
+    protected:
         explicit vfs_node_pipe(const vfs_mod_query*, const vfs_node::ref& ref);
         int count(vfs_op_t) const;
+    };
+
+    class vfs_node_semaphore : public vfs_node_pipe {
+        friend class cvfs;
+    public:
+        ~vfs_node_semaphore() override;
+        bool available() const override;
+        int index() const override;
+        int write(byte c) override;
+        int truncate() override;
+    private:
+        explicit vfs_node_semaphore(const vfs_mod_query*, const vfs_node::ref& ref);
+    };
+
+    class vfs_node_mutex : public vfs_node_pipe {
+        friend class cvfs;
+    public:
+        ~vfs_node_mutex() override;
+        bool available() const override;
+        int index() const override;
+        int write(byte c) override;
+        int truncate() override;
+    private:
+        explicit vfs_node_mutex(const vfs_mod_query*, const vfs_node::ref& ref);
+        bool entered{ false };
     };
 
     class vfs_node_cached : public vfs_node_dec {

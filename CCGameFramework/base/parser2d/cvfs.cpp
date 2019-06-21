@@ -92,9 +92,15 @@ namespace clib {
 
     void vfs_node_solid::add_handle(int handle, vfs_op_t type)
     {
+        assert(this_handle == -1);
+        this_handle = handle;
         auto n = node.lock();
         assert(n->handles.find(handle) == n->handles.end());
         n->handles.insert(std::make_pair(handle, type));
+        if (type == v_write)
+            n->handles_write.push_back(handle);
+        else if (type == v_read)
+            n->handles_read.push_back(handle);
     }
 
     vfs_op_t vfs_node_solid::get_handle(int handle)
@@ -109,14 +115,21 @@ namespace clib {
     void vfs_node_solid::remove_handle(int handle)
     {
         auto n = node.lock();
-        assert(n->handles.find(handle) != n->handles.end());
+        auto f = n->handles.find(handle);
+        assert(f != n->handles.end());
         n->handles.erase(handle);
+        if (f->second == v_write)
+            n->handles_write.remove(handle);
+        else if (f->second == v_read)
+            n->handles_read.remove(handle);
     }
 
     // -----------------------------------------
 
     vfs_node_pipe::vfs_node_pipe(const vfs_mod_query* mod, const vfs_node::ref& ref) :
         vfs_node_solid(mod, ref) {
+        auto n = node.lock();
+        n->pipe = std::make_unique<std::queue<byte>>();
     }
 
     int vfs_node_pipe::count(vfs_op_t t) const
@@ -144,13 +157,13 @@ namespace clib {
         auto n = node.lock();
         if (!n)
             return READ_ERROR;
-        if (n->pipe.empty()) {
+        if (n->pipe->empty()) {
             if (count(v_write) == 0)
                 return READ_EOF;
             return DELAY_CHAR;
         }
-        auto c = n->pipe.front();
-        n->pipe.pop();
+        auto c = n->pipe->front();
+        n->pipe->pop();
         return c;
     }
 
@@ -160,7 +173,7 @@ namespace clib {
             return -1;
         if (!mod->can_mod(n, 1))
             return -2;
-        n->pipe.push(c);
+        n->pipe->push(c);
         return 0;
     }
 
@@ -170,10 +183,72 @@ namespace clib {
             return -1;
         if (!mod->can_mod(n, 1))
             return -2;
-        while (!n->pipe.empty()) {
-            n->pipe.pop();
+        while (!n->pipe->empty()) {
+            n->pipe->pop();
         }
         return 0;
+    }
+
+    // -----------------------------------------
+
+    vfs_node_semaphore::vfs_node_semaphore(const vfs_mod_query* mod, const vfs_node::ref& ref) :
+        vfs_node_pipe(mod, ref) {
+    }
+
+    vfs_node_semaphore::~vfs_node_semaphore() {
+    }
+
+    bool vfs_node_semaphore::available() const {
+        return true;
+    }
+
+    int vfs_node_semaphore::index() const {
+        return READ_EOF;
+    }
+
+    int vfs_node_semaphore::write(byte c) {
+        return -1;
+    }
+
+    int vfs_node_semaphore::truncate() {
+        return -1;
+    }
+
+    // -----------------------------------------
+
+    vfs_node_mutex::vfs_node_mutex(const vfs_mod_query* mod, const vfs_node::ref& ref) :
+        vfs_node_pipe(mod, ref) {
+    }
+
+    vfs_node_mutex::~vfs_node_mutex() {
+    }
+
+    bool vfs_node_mutex::available() const {
+        return !entered;
+    }
+
+    int vfs_node_mutex::index() const {
+        if (entered) {
+            return READ_EOF;
+        }
+        else {
+            auto n = node.lock();
+            if (this_handle == n->handles_read.front()) { // ENTER
+                *const_cast<bool*>(&entered) = true;
+                return 'A';
+            }
+            else {
+                return WAIT_CHAR;
+            }
+        }
+    }
+
+    int vfs_node_mutex::write(byte c) {
+        return -1;
+    }
+
+    int vfs_node_mutex::truncate() {
+        return -1;
     }
 
     // -----------------------------------------
@@ -437,6 +512,14 @@ namespace clib {
                 if (path.substr(0, 6) == "/pipe/") {
                     node->magic = fss_pipe;
                     *dec = new vfs_node_pipe(this, node);
+                }
+                else if (path.substr(0, 11) == "/semaphore/") {
+                    node->magic = fss_semaphore;
+                    *dec = new vfs_node_semaphore(this, node);
+                }
+                else if (path.substr(0, 7) == "/mutex/") {
+                    node->magic = fss_mutex;
+                    *dec = new vfs_node_mutex(this, node);
                 }
                 else {
                     *dec = new vfs_node_solid(this, node);

@@ -20,6 +20,7 @@ int main(int argc, char **argv) {
         case 10: shell("test_map");
         case 11: shell("test_pipe");
         case 12: shell("test_lua");
+        case 13: shell("test_mutex");
     }
     return 0;
 }
