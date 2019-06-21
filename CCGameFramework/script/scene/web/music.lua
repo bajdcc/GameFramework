@@ -138,7 +138,7 @@ function M:init_event()
 			UIExt.paint()
 		elseif id == 20 then
 			UIExt.paint()
-			if MusicSceneReturn ~= nil then
+			if not UIExt.music_ctrl(MusicCtrl.playing) and MusicSceneReturn ~= nil then
 				FlipScene(MusicSceneReturn)
 				MusicSceneReturn = nil
 				return
