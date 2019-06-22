@@ -191,19 +191,32 @@ namespace clib {
 
     // -----------------------------------------
 
-    vfs_node_semaphore::vfs_node_semaphore(const vfs_mod_query* mod, const vfs_node::ref& ref) :
-        vfs_node_pipe(mod, ref) {
+    vfs_node_semaphore::vfs_node_semaphore(const vfs_mod_query* mod, const vfs_node::ref& ref, int count) :
+        vfs_node_pipe(mod, ref), count(count) {
     }
 
     vfs_node_semaphore::~vfs_node_semaphore() {
     }
 
     bool vfs_node_semaphore::available() const {
-        return true;
+        return !entered;
     }
 
     int vfs_node_semaphore::index() const {
-        return READ_EOF;
+        if (entered) { // LEAVE
+            return READ_EOF;
+        }
+        else {
+            auto n = node.lock();
+            auto i = n->handles_read.begin();
+            for (int j = 0; i != n->handles_read.end() && j < count; i++, j++) {
+                if (this_handle == *i) { // ENTER
+                    *const_cast<bool*>(&entered) = true;
+                    return 'A';
+                }
+            }
+            return WAIT_CHAR;
+        }
     }
 
     int vfs_node_semaphore::write(byte c) {
@@ -211,43 +224,6 @@ namespace clib {
     }
 
     int vfs_node_semaphore::truncate() {
-        return -1;
-    }
-
-    // -----------------------------------------
-
-    vfs_node_mutex::vfs_node_mutex(const vfs_mod_query* mod, const vfs_node::ref& ref) :
-        vfs_node_pipe(mod, ref) {
-    }
-
-    vfs_node_mutex::~vfs_node_mutex() {
-    }
-
-    bool vfs_node_mutex::available() const {
-        return !entered;
-    }
-
-    int vfs_node_mutex::index() const {
-        if (entered) {
-            return READ_EOF;
-        }
-        else {
-            auto n = node.lock();
-            if (this_handle == n->handles_read.front()) { // ENTER
-                *const_cast<bool*>(&entered) = true;
-                return 'A';
-            }
-            else {
-                return WAIT_CHAR;
-            }
-        }
-    }
-
-    int vfs_node_mutex::write(byte c) {
-        return -1;
-    }
-
-    int vfs_node_mutex::truncate() {
         return -1;
     }
 
@@ -514,12 +490,26 @@ namespace clib {
                     *dec = new vfs_node_pipe(this, node);
                 }
                 else if (path.substr(0, 11) == "/semaphore/") {
-                    node->magic = fss_semaphore;
-                    *dec = new vfs_node_semaphore(this, node);
+                    if (m.size() > 1) {
+                        static string_t pat{ R"(^\d+$)" };
+                        static std::regex re(pat);
+                        std::smatch res;
+                        if (std::regex_match(m[1], res, re)) {
+                            node->magic = fss_semaphore;
+                            *dec = new vfs_node_semaphore(this, node, std::atoi(m[1].c_str()));
+                        }
+                        else {
+                            return -1;
+                        }
+                    }
+                    else {
+                        node->magic = fss_semaphore;
+                        *dec = new vfs_node_semaphore(this, node, 1);
+                    }
                 }
                 else if (path.substr(0, 7) == "/mutex/") {
                     node->magic = fss_mutex;
-                    *dec = new vfs_node_mutex(this, node);
+                    *dec = new vfs_node_semaphore(this, node, 1);
                 }
                 else {
                     *dec = new vfs_node_solid(this, node);

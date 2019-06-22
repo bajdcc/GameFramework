@@ -149,20 +149,9 @@ namespace clib {
         int write(byte c) override;
         int truncate() override;
     private:
-        explicit vfs_node_semaphore(const vfs_mod_query*, const vfs_node::ref& ref);
-    };
-
-    class vfs_node_mutex : public vfs_node_pipe {
-        friend class cvfs;
-    public:
-        ~vfs_node_mutex() override;
-        bool available() const override;
-        int index() const override;
-        int write(byte c) override;
-        int truncate() override;
-    private:
-        explicit vfs_node_mutex(const vfs_mod_query*, const vfs_node::ref& ref);
+        explicit vfs_node_semaphore(const vfs_mod_query*, const vfs_node::ref& ref, int count = 1);
         bool entered{ false };
+        int count{ 1 };
     };
 
     class vfs_node_cached : public vfs_node_dec {

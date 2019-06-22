@@ -37,3 +37,6 @@ sleep 1 show
 echo 【互斥】
 sleep 1 show
 /usr/test_mutex
+echo 【信号量】
+sleep 1 show
+/usr/test_semaphore
