@@ -18,6 +18,9 @@
 #include "../json/cjparser.h"
 #include <ui\window\Window.h>
 
+#define REPORT_ERROR 1
+#define REPORT_ERROR_FILE "error.log"
+
 #define LOG_INS 0
 #define LOG_STACK 0
 #define LOG_SYSTEM 1
@@ -36,6 +39,7 @@ namespace clib {
             memory_kernel.emplace_back();
             memory_kernel.back().resize(PAGE_SIZE * 2);
             std::fill(memory_kernel.back().begin(), memory_kernel.back().end(), 0);
+            kernel_pages++;
             return PAGE_ALIGN_UP((uint32)memory_kernel.back().data());
         }
         auto ptr = (uint32_t)memory.alloc_array<byte>(PAGE_SIZE * 2);
@@ -129,11 +133,11 @@ namespace clib {
             }
         }
         else { // pte存在
+            assert(!pte[pte_idx]);
             pte[pte_idx] = (pa & PAGE_MASK) | PTE_P | flags; // 设置页表项
         }
-
-#if 0
-        ATLTRACE("MEMMAP> V=%08X P=%08X\n", va, pa);
+#if LOG_SYSTEM
+        ATLTRACE("[SYSTEM] MEM  | MAP: PA= %p, VA= %p\n", (void*)pa, (void*)va);
 #endif
     }
 
@@ -145,11 +149,14 @@ namespace clib {
         pte_t* pte = (pte_t*)(pgdir[pde_idx] & PAGE_MASK);
 
         if (!pte) {
+#if LOG_SYSTEM
+            ATLTRACE("[SYSTEM] MEM  | UNMAP: VA= %p (EMPTY PTE)\n", (void*)va);
+#endif
             return;
         }
 
-#if 0
-        ATLTRACE("MEMUNMAP> V=%08X\n", va);
+#if LOG_SYSTEM
+        ATLTRACE("[SYSTEM] MEM  | UNMAP: VA= %p\n", (void*)va);
 #endif
         pte[pte_idx] = 0; // 清空页表项，此时有效位为零
     }
@@ -193,6 +200,19 @@ namespace clib {
 #endif
         error("vmm::get error");
         return vmm_get<T>(va);
+    }
+
+    template<class T>
+    bool cvm::vmm_valid(uint32_t va) const {
+        if (va == 0)
+            return false;
+        if (!(ctx->flag & CTX_KERNEL))
+            va |= ctx->mask;
+        uint32_t pa;
+        if (vmm_ismap(va, &pa)) {
+            return true;
+        }
+        return false;
     }
 
     template<class T>
@@ -1178,6 +1198,35 @@ namespace clib {
     }
 
     void cvm::error(const string_t & str) const {
+#if REPORT_ERROR
+        {
+            std::ofstream log(REPORT_ERROR_FILE, std::ios::app | std::ios::out);
+            log << std::endl << "---------------- STACK BEGIN <<<< " << std::endl;
+            CStringA a, b;
+            a.Format("AX: %08X BX: %08X BP: %08X SP: %08X PC: %08X", ctx->ax._u._1, ctx->ax._u._2, ctx->bp, ctx->sp, ctx->pc);
+            log << a.GetBuffer(0) << std::endl;
+            a = "";
+            auto k = 0;
+            for (uint32_t j = ctx->sp; j < STACK_BASE + PAGE_SIZE; j += 4, ++k) {
+                if (vmm_valid<uint32_t>(j)) {
+                    b.Format("[%08X]> %08X", j, vmm_get<uint32_t>(j)); a += b;
+                }
+                else {
+                    b.Format("[%08X]> ????????", j); a += b;
+                }
+                if (k % 4 == 3) {
+                    a += "\n";
+                    log << (a.GetBuffer(0));
+                    a = "";
+                }
+                else
+                    a += "  |  ";
+            }
+            if (k % 4 != 0)
+                log << std::endl;
+            log << "---------------- STACK END >>>>" << std::endl << std::endl;
+        }
+#endif
         throw cexception(ex_vm, str + ", PATH: " + ctx->path + ", SOURCE: " + source());
     }
 
@@ -1490,12 +1539,12 @@ namespace clib {
         // TODO: VALID PE FILE
         uint32_t pa;
         ctx->poolsize = PAGE_SIZE;
-        ctx->mask = ((uint)(ctx->id << 16) & 0x00ff0000);
+        ctx->mask = U2K(ctx->id);
         ctx->entry = old_ctx->entry;
-        ctx->stack = old_ctx->stack | ctx->mask;
-        ctx->data = old_ctx->data | ctx->mask;
-        ctx->base = old_ctx->base | ctx->mask;
-        ctx->heap = old_ctx->heap | ctx->mask;
+        ctx->stack = STACK_BASE | ctx->mask;
+        ctx->data = DATA_BASE | ctx->mask;
+        ctx->base = USER_BASE | ctx->mask;
+        ctx->heap = HEAP_BASE | ctx->mask;
         ctx->pool = std::make_unique<cmem>(this);
         ctx->flag |= CTX_KERNEL;
         ctx->state = CTS_RUNNING;
@@ -1708,7 +1757,8 @@ namespace clib {
                     sprintf(sz, "%-18s %d", "Heap Total:", heaps* PAGE_SIZE); ss << sz << std::endl;
                     sprintf(sz, "%-18s %d", "Heap Using:", heaps * PAGE_SIZE - heaps_a); ss << sz << std::endl;
                     sprintf(sz, "%-18s %d", "Heap Free:", heaps_a); ss << sz << std::endl;
-                    sprintf(sz, "%-18s %d", "Page Using:", pages); ss << sz << std::endl;
+                    sprintf(sz, "%-18s %d", "Kernel Page:", kernel_pages); ss << sz << std::endl;
+                    sprintf(sz, "%-18s %d", "User Page:", pages); ss << sz << std::endl;
                     return ss.str();
                 }
                 else if (op == "time") {
@@ -1718,7 +1768,7 @@ namespace clib {
                     auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(m).count();
                     auto const msecs = diff % 1000;
                     std::time_t t = std::chrono::system_clock::to_time_t(n);
-                    ss << std::put_time(std::localtime(&t), "%Y/%m/%d %H:%M:%S") << "." << msecs;
+                    ss << std::put_time(std::localtime(&t), "%Y/%m/%d %H:%M:%S") << "." << std::setw(3) << std::setfill('0') << msecs;
                     return ss.str();
                 }
                 else if (op == "uptime") {

@@ -135,6 +135,8 @@ namespace clib {
 
         template<class T = int>
         T vmm_get(uint32_t va) const;
+        template<class T = int>
+        bool vmm_valid(uint32_t va) const;
         string_t vmm_getstr(uint32_t va) const;
         template<class T = int>
         T vmm_set(uint32_t va, T);
@@ -274,6 +276,7 @@ namespace clib {
         int set_cycle_id{ -1 };
         int set_resize_id{ -1 };
         std::array<handle_t, HANDLE_NUM> handles;
+        int kernel_pages{ 0 };
 
     public:
         static struct global_state_t {

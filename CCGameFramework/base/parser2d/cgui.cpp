@@ -15,6 +15,7 @@
 #include <ui\window\Window.h>
 
 #define REPORT_ERROR 1
+#define REPORT_ERROR_FILE "error.log"
 #define LOG_AST 0
 #define LOG_DEP 0
 
@@ -48,7 +49,7 @@ namespace clib {
         color_fg_stack.push_back(color_fg);
 #if REPORT_ERROR
         {
-            std::ofstream log("error.log", std::ios::trunc | std::ios::out);
+            std::ofstream log(REPORT_ERROR_FILE, std::ios::trunc | std::ios::out);
             log << "";
         }
 #endif
@@ -307,7 +308,7 @@ namespace clib {
                 ATLTRACE("[SYSTEM] ERR  | RUNTIME ERROR: %s\n", e.message().c_str());
 #if REPORT_ERROR
                 {
-                    std::ofstream log("error.log", std::ios::app | std::ios::out);
+                    std::ofstream log(REPORT_ERROR_FILE, std::ios::app | std::ios::out);
                     log << "[SYSTEM] ERR  | RUNTIME ERROR: " << e.message() << std::endl;
                 }
 #endif
@@ -792,7 +793,7 @@ namespace clib {
             ATLTRACE("[SYSTEM] ERR  | PATH: %s, %s\n", new_path.c_str(), e.message().c_str());
 #if REPORT_ERROR
             {
-                std::ofstream log("error.log", std::ios::app | std::ios::out);
+                std::ofstream log(REPORT_ERROR_FILE, std::ios::app | std::ios::out);
                 log << "[SYSTEM] ERR  | PATH: " << new_path << ", " << e.message() << std::endl;
             }
 #endif
