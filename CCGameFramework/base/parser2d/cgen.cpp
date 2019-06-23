@@ -288,7 +288,10 @@ namespace clib {
     }
 
     sym_id_t::sym_id_t(const type_t::ref & base, const string_t & id)
-        : base(base), id(id) {}
+        : base(base), id(id) {
+        line = base->line;
+        column = base->column;
+    }
 
     symbol_t sym_id_t::get_type() const {
         return s_id;
@@ -410,7 +413,10 @@ namespace clib {
         return t_struct;
     }
 
-    sym_func_t::sym_func_t(const type_t::ref & base, const string_t & id) : sym_id_t(base, id) {}
+    sym_func_t::sym_func_t(const type_t::ref & base, const string_t & id) : sym_id_t(base, id) {
+        line = base->line;
+        column = base->column;
+    }
 
     symbol_t sym_func_t::get_type() const {
         return s_function;
@@ -712,7 +718,10 @@ namespace clib {
         return id.lock()->get_cast();
     }
 
-    sym_cast_t::sym_cast_t(const type_exp_t::ref & exp, const type_t::ref & base) : type_exp_t(base), exp(exp) {}
+    sym_cast_t::sym_cast_t(const type_exp_t::ref & exp, const type_t::ref & base) : type_exp_t(base), exp(exp) {
+        line = base->line;
+        column = base->column;
+    }
 
     symbol_t sym_cast_t::get_type() const {
         return s_cast;
@@ -1483,25 +1492,58 @@ namespace clib {
         incs.clear();
     }
 
+    template <class T>
+    static void bit_write(std::vector<byte>& v, const T& n) {
+        std::copy((byte*)& n, ((byte*)& n) + sizeof(n), std::back_inserter(v));
+    }
+
     std::vector<byte> cgen::file() const {
         std::vector<byte> file;
         auto entry = symbols[0].find("main");
         if (entry == symbols[0].end()) {
             error("main() not defined");
         }
+        // MAGIC
         auto magic = string_t(PE_MAGIC);
         std::copy((byte*)magic.data(), (byte*)magic.data() + magic.size(), std::back_inserter(file));
-        auto addr = std::dynamic_pointer_cast<sym_func_t>(entry->second)->addr;
-        auto size = sizeof(addr);
-        std::copy((byte*)& addr, ((byte*)& addr) + size, std::back_inserter(file));
-        auto data_size = data.size() * sizeof(data[0]);
-        size = sizeof(data_size);
-        std::copy((byte*)& data_size, ((byte*)& data_size) + size, std::back_inserter(file));
-        auto text_size = text.size() * sizeof(text[0]);
-        size = sizeof(text_size);
-        std::copy((byte*)& text_size, ((byte*)& text_size) + size, std::back_inserter(file));
+        // ENTRY ADDR
+        bit_write(file, std::dynamic_pointer_cast<sym_func_t>(entry->second)->addr);
+        // DATA SIZE
+        bit_write(file, data.size() * sizeof(data[0]));
+        // TEXT SIZE
+        bit_write(file, text.size() * sizeof(text[0]));
+        // PDB SIZE
+        std::vector<byte> pdb_data;
+        {
+            bit_write(pdb_data, pdbs.size());
+            auto tmp_idx = pdb_data.size();
+            for (auto& p : pdbs) {
+                // INDEX
+                bit_write(pdb_data, std::get<0>(p));
+                // ADDR
+                bit_write(pdb_data, 0);
+            }
+            // CODE
+            auto code_idx = pdb_data.size();
+            int i = 0;
+            for (auto& p : pdbs) {
+                // ADDR
+                auto addr = (PDB_ADDR*)(pdb_data.data() + tmp_idx) + i++;
+                addr->addr = pdb_data.size() - code_idx;
+                // CODE
+                for (auto& s : std::get<1>(p)) {
+                    pdb_data.push_back((byte)s);
+                }
+                pdb_data.push_back(0);
+            }
+        }
+        bit_write(file, pdb_data.size());
+        // DATA
         std::copy(data.begin(), data.end(), std::back_inserter(file));
-        std::copy((byte*)text.data(), ((byte*)text.data()) + text_size, std::back_inserter(file));
+        // TEXT
+        std::copy((byte*)text.data(), ((byte*)text.data()) + text.size() * sizeof(text[0]), std::back_inserter(file));
+        // PDB
+        std::copy(pdb_data.begin(), pdb_data.end(), std::back_inserter(file));
         return file;
     }
 
@@ -2467,7 +2509,18 @@ namespace clib {
             break;
         case c_statement: {
             if (!tmp.back().empty()) {
+                CStringA s;
+                string_t page;
+                int line;
                 for (auto& _t : tmp.back()) {
+                    auto j = _t->to_string();
+                    if (get_line(_t->line, page, line)) {
+                        s.Format("LOC: [%s:%d:%d], CODE: %s", page.c_str(), line, _t->column, _t->to_string().c_str());
+                    }
+                    else {
+                        s.Format("LOC: [%d:%d], CODE: %s", _t->line, _t->column, _t->to_string().c_str());
+                    }
+                    pdbs.push_back(std::make_tuple(text.size(), s.GetBuffer(0)));
                     _t->gen_rvalue(*this);
                 }
             }

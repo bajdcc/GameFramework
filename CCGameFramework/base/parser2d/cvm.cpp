@@ -32,11 +32,16 @@ namespace clib {
     cvm::global_state_t cvm::global_state;
 
     uint32_t cvm::pmm_alloc(bool reusable) {
+        if (!reusable) {
+            memory_kernel.emplace_back();
+            memory_kernel.back().resize(PAGE_SIZE * 2);
+            std::fill(memory_kernel.back().begin(), memory_kernel.back().end(), 0);
+            return PAGE_ALIGN_UP((uint32)memory_kernel.back().data());
+        }
         auto ptr = (uint32_t)memory.alloc_array<byte>(PAGE_SIZE * 2);
         if (!ptr)
             error("alloc page failed");
-        if (reusable)
-            ctx->allocation.push_back(ptr);
+        ctx->allocation.push_back(ptr);
         auto page = PAGE_ALIGN_UP(ptr);
         memset((void*)page, 0, PAGE_SIZE);
         return page;
@@ -1156,8 +1161,24 @@ namespace clib {
         }
     }
 
+    string_t cvm::source() const
+    {
+        auto pe = (PE*)ctx->file.data();
+        auto pdb = (PDB*)(&pe->data + pe->data_len + pe->text_len);
+        auto len = pdb->code_len;
+        auto addr = (PDB_ADDR*)& pdb->data;
+        auto code = (char*)(addr + len);
+        auto pc = K2U(ctx->pc) / INC_PTR;
+        for (uint i = 0; i < len; i++, addr++) {
+            if (addr->idx > pc) {
+                return code + (addr - 1)->addr;
+            }
+        }
+        return code + (addr - 1)->addr;
+    }
+
     void cvm::error(const string_t & str) const {
-        throw cexception(ex_vm, str);
+        throw cexception(ex_vm, str + ", PATH: " + ctx->path + ", SOURCE: " + source());
     }
 
     int cvm::load(const string_t & path, const std::vector<byte> & file, const std::vector<string_t> & args) {

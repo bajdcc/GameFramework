@@ -336,14 +336,26 @@ namespace clib {
         int addr;
     };
 
+    struct PDB_ADDR {
+        uint idx;
+        uint addr;
+    };
+
+    struct PDB {
+        uint code_len;
+        char* data;
+    };
+
     struct PE {
         char magic[4];
         uint entry;
         uint data_len;
         uint text_len;
+        uint pdb_len;
         byte data;
         // byte *data;
         // byte *text;
+        // PDB pdb;
     };
 
     // 生成虚拟机指令
@@ -400,6 +412,7 @@ namespace clib {
         std::vector<sym_t::ref> ctx_stack;
         int global_id{ 0 };
         std::vector<std::tuple<int, string_t>> incs;
+        std::vector<std::tuple<int, string_t>> pdbs;
     };
 }
 

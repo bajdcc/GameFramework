@@ -48,7 +48,7 @@ int main(int argc, char **argv) {
         wait();
     }
     shell("rm /pipe/__test_semaphore__");
-    shell("rm /mutex/__test_semaphore__");
+    shell("rm /semaphore/__test_semaphore__");
     put_string("========== [#14 TEST SEMAPHORE] ==========\n");
     return 0;
 }

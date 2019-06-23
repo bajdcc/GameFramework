@@ -117,11 +117,11 @@ namespace clib {
         auto n = node.lock();
         auto f = n->handles.find(handle);
         assert(f != n->handles.end());
-        n->handles.erase(handle);
         if (f->second == v_write)
             n->handles_write.remove(handle);
         else if (f->second == v_read)
             n->handles_read.remove(handle);
+        n->handles.erase(handle);
     }
 
     // -----------------------------------------

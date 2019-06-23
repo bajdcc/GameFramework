@@ -148,6 +148,7 @@ namespace clib {
         template<class T = int>
         T vmm_popstack(uint32_t & sp);
 
+        string_t source() const;
         void error(const string_t&) const;
         void exec(int cycle, int& cycles);
         void destroy(int id);
@@ -184,6 +185,8 @@ namespace clib {
         memory_pool<PHY_MEM> memory;
         /* 页表 */
         pde_t* pgdir{ nullptr };
+        /* 内核页表内存 */
+        std::vector<std::vector<byte>> memory_kernel;
         int pids{ 0 };
 
         enum ctx_flag_t {
