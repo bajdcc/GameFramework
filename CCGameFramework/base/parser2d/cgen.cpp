@@ -1490,6 +1490,8 @@ namespace clib {
         ctx.reset();
         cycle.clear();
         incs.clear();
+        pdbs.clear();
+        pdbs.push_back(std::make_tuple(0, "error"));
     }
 
     template <class T>

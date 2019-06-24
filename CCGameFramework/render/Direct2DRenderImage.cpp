@@ -2,6 +2,7 @@
 #include "Direct2DRender.h"
 #include <base/libqrencode/qrencode.h>
 #include "base64/b64.h"
+#include "../ui/window/Window.h"
 
 #pragma region Image
 
@@ -209,13 +210,13 @@ void Base64ImageElementRenderer::CreateImage(std::shared_ptr<Direct2DRenderTarge
             if (b->empty())
             {
                 //TODO: ´Ë´¦ÓÐbug
-                //delete b;
+                window->remove_lua_ptr(b);
                 return;
             }
             wic = renderTarget->CreateImageFromMemory(b->data(), b->size());
             url = e->GetUrl();
             text = txt;
-            delete b;
+            window->remove_lua_ptr(b);
         }
         if (wic)
             bitmap = renderTarget->GetBitmapFromWIC(wic);

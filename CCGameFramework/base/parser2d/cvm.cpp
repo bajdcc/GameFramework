@@ -1189,12 +1189,22 @@ namespace clib {
         auto addr = (PDB_ADDR*)& pdb->data;
         auto code = (char*)(addr + len);
         auto pc = K2U(ctx->pc) / INC_PTR;
+        uint idx = 0;
+        auto found = false;
         for (uint i = 0; i < len; i++, addr++) {
             if (addr->idx > pc) {
-                return code + (addr - 1)->addr;
+                idx = (addr - 1)->addr;
+                found = true;
+                break;
             }
         }
-        return code + (addr - 1)->addr;
+        if (!found) {
+            idx = (addr - 1)->addr;
+        }
+        if (idx < pe->pdb_len) {
+            return code + idx;
+        }
+        return code + ((PDB_ADDR*)& pdb->data)->addr;
     }
 
     void cvm::error(const string_t & str) const {

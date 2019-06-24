@@ -142,8 +142,10 @@ void http_thread(web_http_request *request)
         }
         params.clear();
         std::string text;
-        auto bindata = new std::vector<byte>();
-        bindata->reserve(102400);
+        std::vector<byte>* bindata = nullptr;
+        ATLTRACE(atlTraceWindowing, 0,
+            "LUA WEB HTTP: url= '%s', method= %s, base64= %s\n",
+            url.c_str(), post ? "POST" : "GET", response->b64 ? "true" : "false");
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
         curl_easy_setopt(curl, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36");
         if (post)
@@ -164,6 +166,8 @@ void http_thread(web_http_request *request)
         }
         else
         {
+            bindata = window->add_lua_ptr();
+            bindata->reserve(102400);
             curl_easy_setopt(curl, CURLOPT_WRITEDATA, bindata);
             curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &http_get_process_bin);
         }

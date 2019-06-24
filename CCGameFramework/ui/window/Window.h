@@ -125,6 +125,8 @@ public:
     void remove_event(struct event* evt);
     bool has_event(struct event* evt) const;
     void cancel_event();
+    std::vector<byte>* add_lua_ptr();
+    void remove_lua_ptr(std::vector<byte>* b);
 
     bool HandleMessage(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT& result);
     HWND GetWindowHandle() const;
@@ -268,6 +270,8 @@ private:
     CSize minSize{ 200, 200 };
     struct event_base *evbase;
     std::unordered_set<struct event*> evts;
+    std::unordered_set<std::vector<byte>*> lua_ptrs;
+    std::mutex lua_ptrs_mutex;
 };
 
 extern Window *window;

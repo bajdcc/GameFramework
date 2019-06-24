@@ -22,7 +22,7 @@ int ui_clear_scene(lua_State* L)
         window->zplay->Stop();
         window->zplay->Release();
         window->zplay = nullptr;
-        delete window->zplaydata;
+        window->remove_lua_ptr(window->zplaydata);
         window->zplaydata = nullptr;
     }
     return 0;
@@ -456,7 +456,7 @@ int ui_play_song(lua_State * L)
     {
         zplay->Stop();
         zplay->Release();
-        delete window->zplaydata;
+        window->remove_lua_ptr(window->zplaydata);
     }
     zplay = libZPlay::CreateZPlay();
     window->zplaydata = b;
@@ -466,7 +466,7 @@ int ui_play_song(lua_State * L)
     if (result == 0)
     {
         ATLTRACE(atlTraceWindowing, 0, "libzplay error: %s\n", zplay->GetError());
-        delete window->zplaydata;
+        window->remove_lua_ptr(window->zplaydata);
         window->zplaydata = nullptr;
         zplay->Release();
         zplay = nullptr;

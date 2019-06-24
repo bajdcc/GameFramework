@@ -4,6 +4,7 @@
 #include <lua_ext/ext.h>
 #include <event2/event.h>
 #include <curl/curl.h>
+#include <cassert>
 
 static bool IsKeyPressing(cint code)
 {
@@ -68,6 +69,24 @@ void Window::cancel_event()
         delete e->ev_arg;
         evtimer_del(e);
     }
+}
+
+std::vector<byte>* Window::add_lua_ptr()
+{
+    std::lock_guard<std::mutex> lock(lua_ptrs_mutex);
+    auto b = new std::vector<byte>();
+    lua_ptrs.insert(b);
+    ATLTRACE(atlTraceWindowing, 0, "LUA PTR ADD: ptr= %p\n", b);
+    return b;
+}
+
+void Window::remove_lua_ptr(std::vector<byte>* b)
+{
+    std::lock_guard<std::mutex> lock(lua_ptrs_mutex);
+    assert(lua_ptrs.find(b) != lua_ptrs.end());
+    ATLTRACE(atlTraceWindowing, 0, "LUA PTR DEL: ptr= %p, size=%d\n", b, b->size());
+    lua_ptrs.erase(b);
+    delete b;
 }
 
 Window *window;
@@ -1151,7 +1170,7 @@ void Window::Destroyed()
         zplay->Stop();
         zplay->Release();
         zplay = nullptr;
-        delete zplaydata;
+        remove_lua_ptr(zplaydata);
         zplaydata = nullptr;
     }
 }
