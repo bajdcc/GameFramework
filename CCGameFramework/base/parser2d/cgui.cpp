@@ -14,8 +14,6 @@
 #include "Parser2D.h"
 #include <ui\window\Window.h>
 
-#define REPORT_ERROR 1
-#define REPORT_ERROR_FILE "error.log"
 #define LOG_AST 0
 #define LOG_DEP 0
 
@@ -47,12 +45,6 @@ namespace clib {
         std::fill(colors_fg, colors_fg + size, color_fg);
         color_bg_stack.push_back(color_bg);
         color_fg_stack.push_back(color_fg);
-#if REPORT_ERROR
-        {
-            std::ofstream log(REPORT_ERROR_FILE, std::ios::trunc | std::ios::out);
-            log << "";
-        }
-#endif
     }
 
     cgui& cgui::singleton() {

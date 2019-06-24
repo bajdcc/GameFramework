@@ -6,6 +6,9 @@
 #include <curl/curl.h>
 #include <cassert>
 
+#define REPORT_ERROR 1
+#define REPORT_ERROR_FILE "error.log"
+
 static bool IsKeyPressing(cint code)
 {
     return (GetKeyState((int)code) & 0xF0) != 0;
@@ -1054,6 +1057,16 @@ static void PostNoArgLuaMsg(lua_State *L, WindowEvent evt)
 static int LuaPanicHandler(lua_State *L)
 {
     ATLTRACE(atlTraceLua, 0, "Error %s\n", lua_tostring(L, -1));
+#if REPORT_ERROR
+    {
+        std::ofstream log(REPORT_ERROR_FILE, std::ios::app | std::ios::out);
+        log << "LUA ERROR: " << lua_tostring(L, -1) << std::endl;
+        lua_getglobal(L, "debug");
+        lua_getfield(L, -1, "traceback");
+        lua_pcall(L, 0, 1, 0);
+        log << "LUA TRACEBACK: " << std::endl << lua_tostring(L, -1) << std::endl;
+    }
+#endif
     ATLASSERT(!"Lua failed!");
     return 0;
 }

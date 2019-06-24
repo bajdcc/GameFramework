@@ -80,7 +80,7 @@ function M:init()
 		text = '在线听歌',
 		family = '楷体',
 		pre_resize = function(this, left, top, right, bottom)
-			return left, top, right, top + 120
+			return left, top, right, top + 100
 		end
 	})
 	self.layers.text = self:add(text)
@@ -127,13 +127,28 @@ function M:init_event()
 			UIExt.paint()
 		elseif id == 18 then
 			if UIExt.music_ctrl(MusicCtrl.playing) and this.lyric ~= nil then
-				local ly = this.lyric[UIExt.music_ctrl(MusicCtrl.get_sec)]
-				if ly then
-					music_set_text(this.layers.lyric, ly)
+				local now = UIExt.music_ctrl(MusicCtrl.get_sec)
+				local ly = this.lyric[now]
+				if ly and ly ~= '' then
+					if ly ~= this.layers.lyrics.children[2].text then
+						music_set_text(this.layers.lyrics.children[1], this.layers.lyrics.children[2].text)
+						music_set_text(this.layers.lyrics.children[2], ly)
+					end
+					local success = false
+					for i = 1, 10, 1 do
+						if this.lyric[now + i] and this.lyric[now + i] ~= '' and this.layers.lyrics.children[3] ~= this.lyric[now + i] then
+							music_set_text(this.layers.lyrics.children[3], this.lyric[now + i])
+							success = true
+							break
+						end
+					end
+					if not success then
+						music_set_text(this.layers.lyrics.children[3], '')
+					end
 				end
 			else
 				UIExt.kill_timer(18)
-				music_set_text(this.layers.lyric, '')
+				music_set_text(this.layers.lyrics.children[2], '')
 			end
 			UIExt.paint()
 		elseif id == 20 then
@@ -163,7 +178,7 @@ function M:init_event()
 
 			music_set_text(this.layers.ctrl.children[2], this.song_name .. ' - ' .. this.singer)
 			music_set_text(this.layers.idstatus, 'ID：' .. this.song_id )
-			music_set_text(this.layers.lyric, '')
+			music_set_text(this.layers.lyrics.children[2], '')
 
 			UIExt.play_song(text)
 
@@ -186,7 +201,9 @@ function M:init_event()
 			end
 			music_set_text(this.layers.rtstatus, '歌词加载成功')
 			this.lyric = UIExt.parse_lyric(obj.lyric)
-			music_set_text(this.layers.lyric, '正在播放歌曲：' .. this.song_name)
+			music_set_text(this.layers.lyrics.children[2], '正在播放歌曲：' .. this.song_name)
+			music_set_text(this.layers.lyrics.children[1], '')
+			music_set_text(this.layers.lyrics.children[3], '')
 			UIExt.paint()
 		end
 	end
@@ -371,17 +388,24 @@ function M:init_menu(info)
 	self.layers.pic = self:add(b64)
 
 	-- LYRIC
-	local lyric = Text:new({
-		color = '#EEEEEE',
-		text = '',
-		family = '楷体',
-		size = 32,
+	local lyrics = LinearLayout:new({
+		align = 2,
 		pre_resize = function(this, left, top, right, bottom)
-			return left, top + 130, right, top + 160
+			local h = top + (bottom - top) / 2
+			return left, top + 100, right, h - 130
 		end
 	})
-	self.layers.lyric = self:add(lyric)
-	UIExt.trace('Scene [Music page]: create lyric #' .. self.layers.lyric.handle)
+	self.layers.lyrics = self:add(lyrics)
+	local lyric_colors = {'#777777', '#EEEEEE', '#777777'}
+	for i = 1, 3, 1 do
+		local lyric = Text:new({
+			color = lyric_colors[i],
+			text = '',
+			family = '楷体',
+			size = 28
+		})
+		self.layers.lyrics:add(lyric)
+	end
 	
 	-- MENU BUTTON
 	Edit:new({
