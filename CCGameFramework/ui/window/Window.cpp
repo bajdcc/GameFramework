@@ -1097,13 +1097,17 @@ void Window::Moving(CRect& bounds)
 
 void Window::Moved()
 {
+    static CSize size;
     root->SetRenderRect(CRect(CPoint(), GetClientWindowSize()));
     if (d2dRenderTarget) {
-        d2dRenderTarget = nullptr;
-        Direct2D::Singleton().Init();
-        d2dRenderTarget = std::make_shared<Direct2DRenderTarget>(shared_from_this());
-        d2dRenderTarget->Init();
-        Render();
+        if (size != GetClientWindowSize()) {
+            size = GetClientWindowSize();
+            d2dRenderTarget = nullptr;
+            Direct2D::Singleton().Init();
+            d2dRenderTarget = std::make_shared<Direct2DRenderTarget>(shared_from_this());
+            d2dRenderTarget->Init();
+            Render();
+        }
     }
     PostNoArgLuaMsg(L, WE_Moved);
 }

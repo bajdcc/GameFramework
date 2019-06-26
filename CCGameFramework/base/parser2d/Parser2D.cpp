@@ -155,6 +155,7 @@ void Parser2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
         }
         if (auto_fresh >= 1)
         {
+            bitmap = nullptr;
             rt2->GetBitmap(&bitmap);
         }
         if (auto_fresh == 2) {
@@ -169,7 +170,7 @@ void Parser2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
             dev->DrawImage(
                 gaussianBlurEffect.p,
                 D2D1::Point2F((FLOAT)bounds.left, (FLOAT)bounds.top),
-                D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
+                D2D1::RectF(0.0f, 0.0f, (FLOAT)bounds.Width(), (FLOAT)bounds.Height()),
                 D2D1_INTERPOLATION_MODE_LINEAR
             );
         }

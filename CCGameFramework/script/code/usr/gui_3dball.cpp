@@ -145,11 +145,11 @@ int main(int argc, char **argv) {
                 }
             }
 
-            if (!suc) {
+            //if (!suc) {
                 // 没有接触，就是背景色
-                gui_rgb(0, 0, 0);
-                gui_point(x, y);
-            }
+                //gui_rgb(0, 0, 0);
+                //gui_point(x, y);
+            //}
         }
         //sleep(1);
     }
@@ -223,11 +223,11 @@ int main(int argc, char **argv) {
                 }
             }
 
-            if (!suc) {
+            //if (!suc) {
                 // 没有接触，就是背景色
-                gui_rgb(0, 0, 0);
-                gui_point(x, y);
-            }
+            //    gui_rgb(0, 0, 0);
+            //    gui_point(x, y);
+            //}
         }
         //sleep(1);
     }

@@ -84,7 +84,10 @@ int Parser2DEngine::get_height() const
 void Parser2DEngine::set_color(uint c)
 {
     if (!bitmap) return;
-    ATLVERIFY(rt2->CreateSolidColorBrush(D2D1::ColorF(c & 0xffffff, ((FLOAT)(c >> 24)) / 255.0f), &cur_bursh));
+    cur_bursh = nullptr;
+    auto hr = rt2->CreateSolidColorBrush(D2D1::ColorF(c & 0xffffff, ((FLOAT)(c >> 24)) / 255.0f), &cur_bursh);
+    if (FAILED(hr))
+        ATLVERIFY(!"CreateSolidColorBrush failed");
 }
 
 void Parser2DEngine::clear(uint c)

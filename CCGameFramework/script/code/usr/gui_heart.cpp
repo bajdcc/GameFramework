@@ -59,10 +59,10 @@ int main(int argc, char **argv) {
                 gui_rgb(255, 0, 0);
                 gui_point(x, y);
             }
-            else {
-                gui_rgb(0, 0, 0);
-                gui_point(x, y);
-            }
+            //else {
+                //gui_rgb(0, 0, 0);
+                //gui_point(x, y);
+            //}
 
         }
         //sleep(1);
