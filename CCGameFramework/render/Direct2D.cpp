@@ -51,7 +51,7 @@ Direct2D::Direct2D()
 
 void Direct2D::Init()
 {
-    ID2D1Factory2* d2d1;
+    ID2D1Factory1* d2d1;
     // create the Direct2D factory
     D2D1_FACTORY_OPTIONS options;
 #ifdef DEBUG
@@ -59,7 +59,7 @@ void Direct2D::Init()
 #else
     options.debugLevel = D2D1_DEBUG_LEVEL_NONE;
 #endif
-    auto hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, __uuidof(ID2D1Factory2), &options, (void**)& d2d1);
+    auto hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, __uuidof(ID2D1Factory1), &options, (void**)& d2d1);
     if (SUCCEEDED(hr))
         D2D1Factory.Attach(d2d1);
     else

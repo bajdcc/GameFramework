@@ -104,6 +104,26 @@ void PhysicsEngine::Reset(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget,
     if (newRenderTarget)
     {
         bg = newRenderTarget->CreateDirect2DBrush(bgColor);
+        if (bitmap) {
+            bitmap = nullptr;
+            auto d2dRect = D2D1::RectU(0, 0, 1, 1);
+            auto wic = newRenderTarget->CreateBitmap(1, 1);
+            bitmap = newRenderTarget->GetBitmapFromWIC(wic);
+            auto buffer = new BYTE[1 * 1 * 4];
+            auto hr = wic->CopyPixels(&rect, 1 * 4, 1 * 1 * 4, buffer);
+            bitmap->CopyFromMemory(&d2dRect, buffer, 1 * 4);
+            delete[]buffer;
+        }
+        if (bitmap2) {
+            bitmap2 = nullptr;
+            auto d2dRect = D2D1::RectU(0, 0, 1, 1);
+            auto wic = newRenderTarget->CreateBitmap(1, 1);
+            bitmap2 = newRenderTarget->GetBitmapFromWIC(wic);
+            auto buffer = new BYTE[1 * 1 * 4];
+            auto hr = wic->CopyPixels(&rect, 1 * 4, 1 * 1 * 4, buffer);
+            bitmap2->CopyFromMemory(&d2dRect, buffer, 1 * 4);
+            delete[]buffer;
+        }
     }
 }
 
@@ -160,6 +180,8 @@ void PhysicsEngine::RenderSingleBitmap(CComPtr<ID2D1RenderTarget> rt, CRect boun
     }
     auto _rt = d2drt.lock();
     auto _w = 256, _h = 256;
+    bag.g_width = _w;
+    bag.g_height = _h;
     auto wic = _rt->CreateBitmap(_w, _h);
     WICRect rect;
     rect.X = 0;
@@ -216,6 +238,8 @@ void PhysicsEngine::RenderSimpleSphere(CComPtr<ID2D1RenderTarget> rt, CRect boun
     }
     auto _rt = d2drt.lock();
     auto _w = 256, _h = 256;
+    bag.g_width = _w;
+    bag.g_height = _h;
     auto wic = _rt->CreateBitmap(_w, _h);
     WICRect rect;
     rect.X = 0;
