@@ -54,6 +54,7 @@ private:
 
 private:
     CComPtr<ID2D1Bitmap> bitmap;
+    CComPtr<ID2D1Bitmap> bitmap_effect;
     CComPtr<ID2D1BitmapRenderTarget> rt2;
     std::weak_ptr<Direct2DRenderTarget> d2drt;
     WICRect rect;

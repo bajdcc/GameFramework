@@ -2330,6 +2330,11 @@ namespace clib {
             global_state.ui->draw_font(vmm_getstr(ctx->ax._ui));
         }
         break;
+        case 312:
+        {
+            global_state.gui_blur = ctx->ax._f;
+        }
+        break;
         case 350:
         {
             auto s = vmm_getstr(ctx->ax._ui);

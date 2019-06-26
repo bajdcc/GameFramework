@@ -1006,26 +1006,20 @@ bool Window::HandleMessageInternal(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM l
 
 void Window::Render()
 {
-    if (window && IsVisible() && d2dRenderTarget && !(d2dRenderTarget->CheckWindowState() & D2D1_WINDOW_STATE_OCCLUDED))
+    if (window && IsVisible() && d2dRenderTarget)
     {
-        bool success = d2dRenderTarget->StartRendering();
-        if (!success)
-            return;
+        d2dRenderTarget->StartRendering();
 
         RenderInternal();
-        HRESULT result = d2dRenderTarget->StopRendering();
-        //RedrawContent();
-
+        auto result = d2dRenderTarget->StopRendering();
         if (FAILED(result))
         {
-            if (result == D2DERR_RECREATE_TARGET)
-            {
-                d2dRenderTarget->ClearRenderTarget();
-            }
-            else
-            {
-                ATLASSERT(!"D2DERR");
-            }
+            ATLVERIFY(!"D2D ERR: Render");
+        }
+
+        result = d2dRenderTarget->Present();
+        if (FAILED(result)) {
+            ATLVERIFY(!"D2D ERR: Present");
         }
     }
 }
@@ -1104,8 +1098,13 @@ void Window::Moving(CRect& bounds)
 void Window::Moved()
 {
     root->SetRenderRect(CRect(CPoint(), GetClientWindowSize()));
-    if (d2dRenderTarget && d2dRenderTarget->RecreateRenderTarget(GetClientWindowSize()))
+    if (d2dRenderTarget) {
+        d2dRenderTarget = nullptr;
+        Direct2D::Singleton().Init();
+        d2dRenderTarget = std::make_shared<Direct2DRenderTarget>(shared_from_this());
+        d2dRenderTarget->Init();
         Render();
+    }
     PostNoArgLuaMsg(L, WE_Moved);
 }
 

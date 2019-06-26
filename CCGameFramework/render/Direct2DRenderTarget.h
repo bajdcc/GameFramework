@@ -15,13 +15,10 @@ public:
     void Init();
 
     CComPtr<ID2D1RenderTarget> GetDirect2DRenderTarget();
-    D2D1_WINDOW_STATE CheckWindowState();
     void SetTextAntialias(bool antialias, bool verticalAntialias);
-    bool StartRendering();
+    void StartRendering();
     HRESULT StopRendering();
-
-    bool RecreateRenderTarget(CSize size);
-    void ClearRenderTarget();
+    HRESULT Present();
 
     CComPtr<ID2D1SolidColorBrush> CreateDirect2DBrush(CColor color);
     void DestroyDirect2DBrush(CColor color);
@@ -44,8 +41,7 @@ protected:
     CComPtr<IWICBitmap> GetBitmap(CComPtr<IWICBitmapDecoder> source, int index);
 
     std::weak_ptr<Window> window;
-    CComPtr<ID2D1HwndRenderTarget> d2dRenderTarget;
-    CSize previousSize;
+    CComPtr<ID2D1RenderTarget> d2dRenderTarget;
 
     CachedSolidBrushAllocator solidBrushes;
     CachedLinearBrushAllocator linearBrushes;

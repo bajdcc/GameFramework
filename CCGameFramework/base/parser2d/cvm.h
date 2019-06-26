@@ -289,6 +289,7 @@ namespace clib {
             int input_code{ 0 };
             string_t hostname{ "ccos" };
             bool gui{ false };
+            float gui_blur{ 0.0f };
             cgui_op* ui{ nullptr };
             decltype(std::chrono::system_clock::now()) now;
 #if LOG_VM

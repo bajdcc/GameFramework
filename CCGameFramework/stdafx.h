@@ -73,23 +73,28 @@
 #include <MMSystem.h>
 #include <Vfw.h>
 #include <d2d1.h>
+#include <d2d1_1.h>
+#include <d2d1_2.h>
+#include <d3d11.h>
+#include <dxgi.h>
 #include <dwrite.h>
 #include <usp10.h>
 #include <gdiplus.h>
 #include <initguid.h>
-#include <dxgi.h>
 
 #pragma comment(lib, "Gdiplus")
 #pragma comment(lib, "WindowsCodecs")
 #pragma comment(lib, "Msimg32")
 #pragma comment(lib, "WinHttp")
 #pragma comment(lib, "d2d1")
+#pragma comment(lib, "d3d11")
 #pragma comment(lib, "dwrite")
 #pragma comment(lib, "Comdlg32")
 #pragma comment(lib, "Comctl32")
 #pragma comment(lib, "Vfw32")
 #pragma comment(lib, "imm32")
 #pragma comment(lib, "dxgi")
+#pragma comment(lib, "dxguid")
 #pragma comment(lib, "winmm")
 #pragma comment(lib, "IPHLPAPI")
 

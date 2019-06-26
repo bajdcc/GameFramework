@@ -84,6 +84,7 @@ void Parser2DEngine::Reset(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget
         font_format = newRenderTarget->CreateDirect2DTextFormat(font);
         d2drt = newRenderTarget;
         cur_bursh = newRenderTarget->CreateDirect2DBrush(CColor());
+        bitmap = nullptr;
     }
 }
 
@@ -159,12 +160,26 @@ void Parser2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
         if (auto_fresh == 2) {
             auto_fresh = 0;
         }
-        rt->DrawBitmap(
-            bitmap,
-            D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
-            1.0f,
-            D2D1_BITMAP_INTERPOLATION_MODE_LINEAR
-        );
+        if (clib::cvm::global_state.gui_blur > 0.0f) {
+            CComPtr<ID2D1Effect> gaussianBlurEffect;
+            auto dev = Direct2D::Singleton().GetDirect2DDeviceContext();
+            dev->CreateEffect(CLSID_D2D1GaussianBlur, &gaussianBlurEffect);
+            gaussianBlurEffect->SetInput(0, bitmap);
+            gaussianBlurEffect->SetValue(D2D1_GAUSSIANBLUR_PROP_STANDARD_DEVIATION, clib::cvm::global_state.gui_blur);
+            dev->DrawImage(
+                gaussianBlurEffect.p,
+                D2D1::Point2F((FLOAT)bounds.left, (FLOAT)bounds.top),
+                D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
+                D2D1_INTERPOLATION_MODE_LINEAR
+            );
+        }
+        else
+            rt->DrawBitmap(
+                bitmap,
+                D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
+                1.0f,
+                D2D1_BITMAP_INTERPOLATION_MODE_LINEAR
+            );
     }
     else if (bitmap) {
         reset();

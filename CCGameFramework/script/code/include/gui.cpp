@@ -93,6 +93,11 @@ int gui_draw_text(char* text) {
     interrupt 311;
 }
 
+int gui_blur(float blur) {
+    blur;
+    interrupt 312;
+}
+
 int gui_lua(char* text) {
     text;
     interrupt 350;

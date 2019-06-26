@@ -3,12 +3,6 @@
 #include "Direct2D.h"
 #include <ui/window/Window.h>
 
-static HWND GetHWNDFromWindow(std::shared_ptr<Window> window)
-{
-    if (!window) return NULL;
-    return window->GetWindowHandle();
-}
-
 Direct2DRenderTarget::Direct2DRenderTarget(std::weak_ptr<Window> _window)
     : window(_window)
 {
@@ -33,16 +27,12 @@ void Direct2DRenderTarget::Init()
 {
     solidBrushes.SetRenderTarget(shared_from_this());
     linearBrushes.SetRenderTarget(shared_from_this());
+    d2dRenderTarget = Direct2D::Singleton().GetDirect2DDeviceContext();
 }
 
 CComPtr<ID2D1RenderTarget> Direct2DRenderTarget::GetDirect2DRenderTarget()
 {
-    return dynamic_cast<ID2D1RenderTarget*>(d2dRenderTarget.p);
-}
-
-D2D1_WINDOW_STATE Direct2DRenderTarget::CheckWindowState()
-{
-    return d2dRenderTarget->CheckWindowState();
+    return d2dRenderTarget;
 }
 
 void Direct2DRenderTarget::SetTextAntialias(bool antialias, bool verticalAntialias)
@@ -66,63 +56,20 @@ void Direct2DRenderTarget::SetTextAntialias(bool antialias, bool verticalAntiali
     }
 }
 
-bool Direct2DRenderTarget::StartRendering()
+void Direct2DRenderTarget::StartRendering()
 {
-    if (!d2dRenderTarget)
-        return false;
     d2dRenderTarget->BeginDraw();
     d2dRenderTarget->Clear(GetD2DColor(CColor(Gdiplus::Color::Gray)));
-    return true;
 }
 
 HRESULT Direct2DRenderTarget::StopRendering()
 {
-    HRESULT result = d2dRenderTarget->EndDraw();
-    return result;
+    return d2dRenderTarget->EndDraw();
 }
 
-bool Direct2DRenderTarget::RecreateRenderTarget(CSize size)
+HRESULT Direct2DRenderTarget::Present()
 {
-    if (!d2dRenderTarget)
-    {
-        ID2D1HwndRenderTarget* renderTarget;
-        D2D1_RENDER_TARGET_PROPERTIES tp = D2D1::RenderTargetProperties();
-        tp.dpiX = 96;
-        tp.dpiY = 96;
-        size.cx = __max(size.cx, 1);
-        size.cy = __max(size.cy, 1);
-        HRESULT hr = Direct2D::Singleton().GetDirect2DFactory()->CreateHwndRenderTarget(
-            tp,
-            D2D1::HwndRenderTargetProperties(
-                GetHWNDFromWindow(window.lock()),
-                D2D1::SizeU((int)size.cx, (int)size.cy)
-            ),
-            &renderTarget
-        );
-        if (SUCCEEDED(hr))
-        {
-            d2dRenderTarget.Attach(renderTarget);
-            d2dRenderTarget->SetTextAntialiasMode(D2D1_TEXT_ANTIALIAS_MODE_CLEARTYPE);
-            ATLTRACE(atlTraceWindowing, 0, "D2D::Create %s\n", (LPCSTR)size.ToString());
-        }
-    }
-    else if (previousSize != size)
-    {
-        HRESULT hr = d2dRenderTarget->Resize(D2D1::SizeU((int)size.cx, (int)size.cy));
-        ATLTRACE(atlTraceWindowing, 0, "D2D::Resize %s\n", (LPCSTR)size.ToString());
-    }
-    else
-    {
-        return false;
-    }
-    previousSize = size;
-    return true;
-}
-
-void Direct2DRenderTarget::ClearRenderTarget()
-{
-    d2dRenderTarget = nullptr;
-    RecreateRenderTarget(previousSize);
+    return Direct2D::Singleton().GetDXGISwapChain()->Present(1, 0);
 }
 
 CComPtr<IDWriteRenderingParams> Direct2DRenderTarget::CreateRenderingParams(DWRITE_RENDERING_MODE renderingMode, CComPtr<IDWriteRenderingParams> defaultParams, CComPtr<IDWriteFactory> dwriteFactory)
@@ -156,7 +103,7 @@ CComPtr<IWICBitmap> Direct2DRenderTarget::GetBitmap(CComPtr<IWICBitmapDecoder> s
     CComPtr<IWICBitmapFrameDecode> frameDecode;
     HRESULT hr = source->GetFrame(index, &frameDecode);
     if (FAILED(hr))
-        ATLASSERT(!"GetFrame failed");
+        ATLVERIFY(!"GetFrame failed");
     CComPtr<IWICFormatConverter> converter;
     hr = imagingFactory->CreateFormatConverter(&converter);
     if (SUCCEEDED(hr))
@@ -182,7 +129,7 @@ CComPtr<IWICBitmap> Direct2DRenderTarget::GetBitmap(CComPtr<IWICBitmapDecoder> s
     }
     hr = imagingFactory->CreateBitmapFromSource(convertedBitmapSource, WICBitmapCacheOnLoad, &bitmap);
     if (FAILED(hr))
-        ATLASSERT(!"CreateBitmapFromSource failed");
+        ATLVERIFY(!"CreateBitmapFromSource failed");
 
     return bitmap;
 }
@@ -222,7 +169,7 @@ CComPtr<IWICBitmap> Direct2DRenderTarget::CreateBitmap(UINT width, UINT height)
         WICBitmapCacheOnDemand,
         &bitmap);
     if (FAILED(hr))
-        ATLASSERT(!"CreateBitmap failed");
+        ATLVERIFY(!"CreateBitmap failed");
     return bitmap;
 }
 
@@ -236,7 +183,7 @@ CComPtr<IWICBitmap> Direct2DRenderTarget::CreateImageFromFile(const CStringA& pa
         WICDecodeMetadataCacheOnDemand,
         &bitmapDecoder);
     if (FAILED(hr))
-        ATLASSERT(!"CreateDecoderFromFilename failed");
+        ATLVERIFY(!"CreateDecoderFromFilename failed");
     return GetBitmap(bitmapDecoder, index);
 }
 
@@ -245,12 +192,12 @@ CComPtr<IWICBitmap> Direct2DRenderTarget::CreateImageFromMemory(LPVOID buffer, i
     CComPtr<IStream> stream = SHCreateMemStream((const BYTE*)buffer, length);
     if (!stream)
     {
-        ATLASSERT(!"SHCreateMemStream failed");
+        ATLVERIFY(!"SHCreateMemStream failed");
     }
     CComPtr<IWICBitmapDecoder> bitmapDecoder;
     HRESULT hr = imagingFactory->CreateDecoderFromStream(stream, NULL, WICDecodeMetadataCacheOnDemand, &bitmapDecoder);
     if (FAILED(hr))
-        ATLASSERT(!"CreateDecoderFromStream failed");
+        ATLVERIFY(!"CreateDecoderFromStream failed");
     return GetBitmap(bitmapDecoder, index);
 }
 
@@ -259,7 +206,7 @@ CComPtr<IWICBitmap> Direct2DRenderTarget::CreateImageFromBitmap(HBITMAP handle, 
     CComPtr<IWICBitmap> bitmap;
     HRESULT hr = imagingFactory->CreateBitmapFromHBITMAP(handle, NULL, WICBitmapUseAlpha, &bitmap);
     if (FAILED(hr))
-        ATLASSERT(!"CreateBitmapFromHBITMAP failed");
+        ATLVERIFY(!"CreateBitmapFromHBITMAP failed");
     return bitmap;
 }
 
@@ -268,7 +215,7 @@ CComPtr<IWICBitmap> Direct2DRenderTarget::CreateImageFromIcon(HICON handle, int 
     CComPtr<IWICBitmap> bitmap;
     HRESULT hr = imagingFactory->CreateBitmapFromHICON(handle, &bitmap);
     if (FAILED(hr))
-        ATLASSERT(!"CreateBitmapFromHICON failed");
+        ATLVERIFY(!"CreateBitmapFromHICON failed");
     return bitmap;
 }
 
@@ -280,7 +227,7 @@ CComPtr<ID2D1Bitmap> Direct2DRenderTarget::GetBitmapFromWIC(CComPtr<IWICBitmap> 
         &d2dBitmap
     );
     if (FAILED(hr))
-        ATLASSERT(!"CreateBitmapFromWicBitmap failed");
+        ATLVERIFY(!"CreateBitmapFromWicBitmap failed");
     return d2dBitmap;
 }
 
@@ -294,6 +241,6 @@ CComPtr<ID2D1BitmapRenderTarget> Direct2DRenderTarget::CreateBitmapRenderTarget(
     CComPtr<ID2D1BitmapRenderTarget> rt;
     HRESULT hr = d2dRenderTarget->CreateCompatibleRenderTarget(size, &rt);
     if (FAILED(hr))
-        ATLASSERT(!"CreateCompatibleRenderTarget failed");
+        ATLVERIFY(!"CreateCompatibleRenderTarget failed");
     return rt;
 }
