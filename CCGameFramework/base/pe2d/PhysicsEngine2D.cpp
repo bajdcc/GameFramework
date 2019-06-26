@@ -105,23 +105,37 @@ void PhysicsEngine::Reset(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget,
     {
         bg = newRenderTarget->CreateDirect2DBrush(bgColor);
         if (bitmap) {
-            bitmap = nullptr;
-            auto d2dRect = D2D1::RectU(0, 0, 1, 1);
-            auto wic = newRenderTarget->CreateBitmap(1, 1);
+            auto size = bitmap->GetPixelSize();
+            auto p = D2D1::Point2U();
+            auto r = D2D1::RectU(0, 0, size.width, size.height);
+            auto wic = newRenderTarget->CreateBitmap(size.width, size.height);
             bitmap = newRenderTarget->GetBitmapFromWIC(wic);
-            auto buffer = new BYTE[1 * 1 * 4];
-            auto hr = wic->CopyPixels(&rect, 1 * 4, 1 * 1 * 4, buffer);
-            bitmap->CopyFromMemory(&d2dRect, buffer, 1 * 4);
+            WICRect rect2;
+            rect2.X = 0;
+            rect2.Y = 0;
+            rect2.Width = size.width;
+            rect2.Height = size.height;
+            auto buffer = new BYTE[rect2.Width * rect2.Height * 4];
+            wic->CopyPixels(&rect2, rect2.Width * 4, rect2.Width * rect2.Height * 4, buffer);
+            memset(buffer, 255, rect2.Width * rect2.Height * 4);
+            bitmap->CopyFromMemory(&r, buffer, rect2.Width * 4);
             delete[]buffer;
         }
         if (bitmap2) {
-            bitmap2 = nullptr;
-            auto d2dRect = D2D1::RectU(0, 0, 1, 1);
-            auto wic = newRenderTarget->CreateBitmap(1, 1);
+            auto size = bitmap2->GetPixelSize();
+            auto p = D2D1::Point2U();
+            auto r = D2D1::RectU(0, 0, size.width, size.height);
+            auto wic = newRenderTarget->CreateBitmap(size.width, size.height);
             bitmap2 = newRenderTarget->GetBitmapFromWIC(wic);
-            auto buffer = new BYTE[1 * 1 * 4];
-            auto hr = wic->CopyPixels(&rect, 1 * 4, 1 * 1 * 4, buffer);
-            bitmap2->CopyFromMemory(&d2dRect, buffer, 1 * 4);
+            WICRect rect2;
+            rect2.X = 0;
+            rect2.Y = 0;
+            rect2.Width = size.width;
+            rect2.Height = size.height;
+            auto buffer = new BYTE[rect2.Width * rect2.Height * 4];
+            wic->CopyPixels(&rect2, rect2.Width * 4, rect2.Width * rect2.Height * 4, buffer);
+            memset(buffer, 255, rect2.Width * rect2.Height * 4);
+            bitmap2->CopyFromMemory(&r, buffer, rect2.Width * 4);
             delete[]buffer;
         }
     }
