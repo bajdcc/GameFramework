@@ -51,19 +51,21 @@ Direct2D::Direct2D()
 
 void Direct2D::Init()
 {
-    ID2D1Factory1* d2d1;
-    // create the Direct2D factory
-    D2D1_FACTORY_OPTIONS options;
+    if (!D2D1Factory.p) {
+        ID2D1Factory1* d2d1;
+        // create the Direct2D factory
+        D2D1_FACTORY_OPTIONS options;
 #ifdef DEBUG
-    options.debugLevel = D2D1_DEBUG_LEVEL_INFORMATION;
+        options.debugLevel = D2D1_DEBUG_LEVEL_INFORMATION;
 #else
-    options.debugLevel = D2D1_DEBUG_LEVEL_NONE;
+        options.debugLevel = D2D1_DEBUG_LEVEL_NONE;
 #endif
-    auto hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, __uuidof(ID2D1Factory1), &options, (void**)& d2d1);
-    if (SUCCEEDED(hr))
-        D2D1Factory.Attach(d2d1);
-    else
-        ATLVERIFY(!"D2D1CreateFactory failed");
+        auto hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, __uuidof(ID2D1Factory1), &options, (void**)& d2d1);
+        if (SUCCEEDED(hr))
+            D2D1Factory.Attach(d2d1);
+        else
+            ATLVERIFY(!"D2D1CreateFactory failed");
+    }
 
     // REFER: https://docs.microsoft.com/zh-cn/windows/desktop/Direct2D/devices-and-device-contexts
 
@@ -107,7 +109,7 @@ void Direct2D::Init()
     ID3D11Device* device3{ nullptr };
     ID3D11DeviceContext* context3{ nullptr };
     IDXGISwapChain* dxgiSwapChain{ nullptr };
-    hr = D3D11CreateDeviceAndSwapChain(
+    auto hr = D3D11CreateDeviceAndSwapChain(
         nullptr,                    // specify null to use the default adapter
         D3D_DRIVER_TYPE_HARDWARE,
         0,
@@ -138,7 +140,7 @@ void Direct2D::Init()
 
     ID2D1Device* device{ nullptr };
     ID2D1DeviceContext* context{ nullptr };
-    hr = d2d1->CreateDevice(dxgiDevice, &device);
+    hr = D2D1Factory->CreateDevice(dxgiDevice, &device);
     if (SUCCEEDED(hr))
         D2D1Device.Attach(device);
     else
@@ -155,41 +157,54 @@ void Direct2D::Init()
     if (FAILED(hr))
         ATLVERIFY(!"SetMaximumFrameLatency failed");
 
-    // Get the backbuffer for this window which is be the final 3D render target.
-    CComPtr<ID3D11Texture2D> backBuffer;
-    hr = dxgiSwapChain->GetBuffer(0, IID_PPV_ARGS(&backBuffer));
-    if (FAILED(hr))
-        ATLVERIFY(!"GetBuffer failed");
+    Resize();
+}
 
-    // Direct2D needs the dxgi version of the backbuffer surface pointer.
-    CComPtr<IDXGISurface> dxgiBackBuffer;
-    hr = dxgiSwapChain->GetBuffer(0, IID_PPV_ARGS(&dxgiBackBuffer));
-    if (FAILED(hr))
-        ATLVERIFY(!"GetBuffer failed");
+void Direct2D::Resize()
+{
+    if (DXGISwapChain)
+    {
+        // Release all outstanding references to the swap chain's buffers.
+        D2D1DeviceContext->SetTarget(nullptr);
 
-    // Now we set up the Direct2D render target bitmap linked to the swapchain. 
-    // Whenever we render to this bitmap, it is directly rendered to the 
-    // swap chain associated with the window.
-    D2D1_BITMAP_PROPERTIES1 bitmapProperties =
-        D2D1::BitmapProperties1(
-            D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
-            D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE)
+        D2D1RenderTarget.Release();
+
+        // Preserve the existing buffer count and format.
+        // Automatically choose the width and height to match the client rect for HWNDs.
+        auto hr = DXGISwapChain->ResizeBuffers(0, 0, 0, DXGI_FORMAT_UNKNOWN, 0);
+        if (FAILED(hr))
+            ATLVERIFY(!"ResizeBuffers failed");
+
+        // Direct2D needs the dxgi version of the backbuffer surface pointer.
+        CComPtr<IDXGISurface> dxgiBackBuffer;
+        hr = DXGISwapChain->GetBuffer(0, IID_PPV_ARGS(&dxgiBackBuffer));
+        if (FAILED(hr))
+            ATLVERIFY(!"GetBuffer failed");
+
+        // Now we set up the Direct2D render target bitmap linked to the swapchain. 
+        // Whenever we render to this bitmap, it is directly rendered to the 
+        // swap chain associated with the window.
+        D2D1_BITMAP_PROPERTIES1 bitmapProperties =
+            D2D1::BitmapProperties1(
+                D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
+                D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE)
+            );
+
+        // Get a D2D surface from the DXGI back buffer to use as the D2D render target.
+        ID2D1Bitmap1* d2dRenderTarget;
+        hr = D2D1DeviceContext->CreateBitmapFromDxgiSurface(
+            dxgiBackBuffer.p,
+            &bitmapProperties,
+            &d2dRenderTarget
         );
+        if (SUCCEEDED(hr))
+            D2D1RenderTarget.Attach(d2dRenderTarget);
+        else
+            ATLVERIFY(!"CreateBitmapFromDxgiSurface failed");
 
-    // Get a D2D surface from the DXGI back buffer to use as the D2D render target.
-    ID2D1Bitmap1* d2dRenderTarget;
-    hr = context->CreateBitmapFromDxgiSurface(
-        dxgiBackBuffer.p,
-        &bitmapProperties,
-        &d2dRenderTarget
-    );
-    if (SUCCEEDED(hr))
-        D2D1RenderTarget.Attach(d2dRenderTarget);
-    else
-        ATLVERIFY(!"CreateBitmapFromDxgiSurface failed");
-
-    // Now we can set the Direct2D render target.
-    context->SetTarget(D2D1RenderTarget.p);
+        // Now we can set the Direct2D render target.
+        D2D1DeviceContext->SetTarget(D2D1RenderTarget.p);
+    }
 }
 
 Direct2D::~Direct2D()
@@ -220,7 +235,7 @@ void Direct2D::ReportLiveObjects()
 #endif
 }
 
-CComPtr<ID2D1Factory> Direct2D::GetDirect2DFactory()
+CComPtr<ID2D1Factory1> Direct2D::GetDirect2DFactory()
 {
     return D2D1Factory;
 }

@@ -1102,10 +1102,7 @@ void Window::Moved()
     if (d2dRenderTarget) {
         if (size != GetClientWindowSize()) {
             size = GetClientWindowSize();
-            d2dRenderTarget = nullptr;
-            Direct2D::Singleton().Init();
-            d2dRenderTarget = std::make_shared<Direct2DRenderTarget>(shared_from_this());
-            d2dRenderTarget->Init();
+            Direct2D::Singleton().Resize();
             Render();
         }
     }

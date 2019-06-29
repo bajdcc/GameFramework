@@ -84,7 +84,6 @@ void Parser2DEngine::Reset(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget
         font_format = newRenderTarget->CreateDirect2DTextFormat(font);
         d2drt = newRenderTarget;
         cur_bursh = newRenderTarget->CreateDirect2DBrush(CColor());
-        bitmap = nullptr;
     }
 }
 

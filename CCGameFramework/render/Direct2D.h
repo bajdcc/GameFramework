@@ -26,7 +26,7 @@ class Direct2D
     bool RegisterRendererFactory(const CString& elementTypeName, std::shared_ptr<IGraphicsRendererFactory> factory);
 
 public:
-    CComPtr<ID2D1Factory> GetDirect2DFactory();
+    CComPtr<ID2D1Factory1> GetDirect2DFactory();
     CComPtr<IDWriteFactory> GetDirectWriteFactory();
     CComPtr<IWICImagingFactory> GetWICImagingFactory();
     CComPtr<ID2D1Device> GetDirect2DDevice();
@@ -41,9 +41,10 @@ public:
 
     static Direct2D& Singleton();
     void Init();
+    void Resize();
 
 private:
-    CComPtr<ID2D1Factory> D2D1Factory;
+    CComPtr<ID2D1Factory1> D2D1Factory;
     CComPtr<IDWriteFactory> DWriteFactory;
     CComPtr<IWICImagingFactory> WICImagingFactory;
     CComPtr<ID2D1Device> D2D1Device;
