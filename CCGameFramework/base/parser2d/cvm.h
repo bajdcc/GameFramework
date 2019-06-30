@@ -18,6 +18,7 @@
 #include "cvfs.h"
 #include "cnet.h"
 #include "cui.h"
+#include "cwnd.h"
 
 namespace clib {
 
@@ -163,6 +164,7 @@ namespace clib {
         bool math(int id);
         bool gui(int id);
         bool web(int id);
+        bool wnd(int id);
         void cast();
 
         void init_fs();
@@ -170,6 +172,7 @@ namespace clib {
         enum handle_type {
             h_none,
             h_file,
+            h_window,
             h__end,
         };
 
@@ -269,6 +272,7 @@ namespace clib {
             string_t name;
             union {
                 vfs_node_dec* file{ nullptr };
+                cwindow* cwnd;
             } data;
         };
         int handle_ids{ 0 };

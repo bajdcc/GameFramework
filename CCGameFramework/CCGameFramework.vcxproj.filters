@@ -538,6 +538,9 @@
     <ClInclude Include="base\parser2d\cmusic.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="base\parser2d\cwnd.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -928,6 +931,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="base\parser2d\cmusic.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\parser2d\cwnd.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

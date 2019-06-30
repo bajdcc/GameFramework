@@ -1998,6 +1998,7 @@ namespace clib {
         static std::tuple<handle_type, string_t> handle_typename_list[] = {
             std::make_tuple(h_none, "none"),
             std::make_tuple(h_file, "file"),
+            std::make_tuple(h_window, "window"),
             std::make_tuple(h__end, "end"),
         };
         assert(t >= h_none && t < h__end);
@@ -2019,6 +2020,10 @@ namespace clib {
                 auto dec = h->data.file;
                 dec->remove_handle(handle);
                 delete h->data.file;
+            }
+            else if (h->type == h_window) {
+                auto dec = h->data.cwnd;
+                delete h->data.cwnd;
             }
             h->type = h_none;
             available_handles--;
@@ -2391,6 +2396,34 @@ namespace clib {
         return false;
     }
 
+    bool cvm::wnd(int id)
+    {
+        switch (id) {
+        case 501:
+        {
+            struct __window_create_struct__ {
+                uint32_t caption;
+                int left, top, width, height;
+            };
+            auto s = vmm_get<__window_create_struct__>(ctx->ax._ui);
+            auto h = new_handle(h_window);
+            handles[h].name = vmm_getstr(s.caption);
+            handles[h].data.cwnd = new cwindow(handles[h].name,
+                CRect(s.left, s.top, s.left + s.width, s.top + s.height));
+            ctx->ax._i = h;
+            break;
+        }
+        default:
+#if LOG_SYSTEM
+            ATLTRACE("[SYSTEM] ERR  | unknown interrupt: %d\n", ctx->ax._i);
+#endif
+            error("unknown interrupt");
+            break;
+        }
+        ctx->pc += INC_PTR;
+        return false;
+    }
+
     bool cvm::interrupt() {
         auto id = vmm_get(ctx->pc);
         if (id > 200 && id < 300)
@@ -2399,6 +2432,8 @@ namespace clib {
             return gui(id);
         if (id >= 400 && id < 500)
             return web(id);
+        if (id >= 500 && id < 600)
+            return wnd(id);
         switch (id) {
         case 0:
         case 1:
@@ -2814,6 +2849,15 @@ namespace clib {
             break;
         }
                  break;
+        case 80:
+        {
+            auto h = ctx->ax._i;
+            if (ctx->handles.find(h) != ctx->handles.end()) {
+                ctx->pc -= INC_PTR;
+                return true;
+            }
+        }
+        break;
         case 100: {
             if (ctx->ax._i < 0) {
                 ctx->waiting_ms += (-ctx->ax._i) * 0.001;
