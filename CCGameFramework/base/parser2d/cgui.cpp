@@ -158,6 +158,7 @@ namespace clib {
             }
         }
         draw_text(rt, bounds, brushes);
+        draw_window(bounds);
     }
 
     void cgui::draw_text(CComPtr<ID2D1RenderTarget>& rt, const CRect& bounds, const Parser2DEngine::BrushBag& brushes) {
@@ -281,6 +282,11 @@ namespace clib {
                 }
             }
         }
+    }
+
+    void cgui::draw_window(const CRect& bounds)
+    {
+        vm->paint_window(bounds);
     }
 
     void cgui::tick() {

@@ -74,6 +74,7 @@ public:
     virtual void Render(CRect bounds) = 0;
     virtual void OnElementStateChanged() = 0;
     virtual CSize GetMinSize() = 0;
+    virtual void SetRelativePosition(bool s) = 0;
 };
 
 class IGraphicsRendererFactory : public std::enable_shared_from_this<IGraphicsRendererFactory>
@@ -208,14 +209,32 @@ public:
     {
         return minSize;
     }
+    void SetRelativePosition(bool s)override
+    {
+        relativePosition = s;
+        auto e = element.lock();
+        for (std::shared_ptr<IGraphicsElement>& child : e->GetChildren())
+        {
+            child->GetRenderer()->SetRelativePosition(s);
+        }
+    }
     void Render(CRect bounds)override
     {
         auto e = element.lock();
         if (e->flags.children_visible)
         {
-            for (std::shared_ptr<IGraphicsElement>& child : e->GetChildren())
-            {
-                child->GetRenderer()->Render(child->GetRenderRect());
+            if (relativePosition) {
+                for (std::shared_ptr<IGraphicsElement>& child : e->GetChildren())
+                {
+                    auto r = child->GetRenderRect().OfRect(e->GetRenderRect());
+                    child->GetRenderer()->Render(r);
+                }
+            }
+            else {
+                for (std::shared_ptr<IGraphicsElement>& child : e->GetChildren())
+                {
+                    child->GetRenderer()->Render(child->GetRenderRect());
+                }
             }
         }
     }
@@ -228,6 +247,7 @@ protected:
     std::weak_ptr<TElement> element;
     std::weak_ptr<TTarget> renderTarget;
     CSize minSize;
+    bool relativePosition{ false };
 };
 
 template <class TElement, class TRenderer, class TBrush, class TBrushProperty>

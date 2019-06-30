@@ -122,6 +122,8 @@ namespace clib {
         int stream_write(vfs_stream_t type, byte c) override;
         string_t stream_path(const string_t& path) override;
 
+        void paint_window(const CRect& bounds);
+
     private:
         // 申请页框
         uint32_t pmm_alloc(bool reusable = true);
@@ -281,6 +283,7 @@ namespace clib {
         int set_resize_id{ -1 };
         std::array<handle_t, HANDLE_NUM> handles;
         int kernel_pages{ 0 };
+        std::vector<cwindow*> wnds;
 
     public:
         static struct global_state_t {

@@ -2022,6 +2022,8 @@ namespace clib {
                 delete h->data.file;
             }
             else if (h->type == h_window) {
+                ATLVERIFY(std::find(wnds.begin(), wnds.end(), h->data.cwnd) != wnds.end());
+                wnds.erase(std::remove(wnds.begin(), wnds.end(), h->data.cwnd), wnds.end());
                 auto dec = h->data.cwnd;
                 delete h->data.cwnd;
             }
@@ -2410,6 +2412,7 @@ namespace clib {
             handles[h].name = vmm_getstr(s.caption);
             handles[h].data.cwnd = new cwindow(handles[h].name,
                 CRect(s.left, s.top, s.left + s.width, s.top + s.height));
+            wnds.push_back(handles[h].data.cwnd);
             ctx->ax._i = h;
             break;
         }
@@ -2890,5 +2893,14 @@ namespace clib {
         }
         ctx->pc += INC_PTR;
         return false;
+    }
+
+    void cvm::paint_window(const CRect& bounds)
+    {
+        if (wnds.empty())
+            return;
+        for (auto& wnd : wnds) {
+            wnd->paint(bounds);
+        }
     }
 }

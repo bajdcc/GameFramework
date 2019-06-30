@@ -71,6 +71,7 @@ namespace clib {
     private:
         void tick();
         void draw_text(CComPtr<ID2D1RenderTarget>& rt, const CRect& bounds, const Parser2DEngine::BrushBag& brushes);
+        void draw_window(const CRect& bounds);
 
         void new_line();
         inline void draw_char(const char& c);

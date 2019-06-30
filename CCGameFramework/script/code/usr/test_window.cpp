@@ -5,7 +5,7 @@ int main(int argc, char **argv) {
     __window_create_struct__ s;
     s.caption = "Test window";
     s.left = 10;
-    s.top = 10;
+    s.top = 50;
     s.width = 200;
     s.height = 200;
     int id = window_create(&s);

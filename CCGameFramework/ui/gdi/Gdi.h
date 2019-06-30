@@ -186,6 +186,7 @@ public:
     void OffsetRect(SIZE size);
     void OffsetRect(POINT point);
     void NormalizeRect();
+    CRect OfRect(const CRect& rt, bool add = true);
 
     // set this rectangle to intersection of two others
     BOOL IntersectRect(LPCRECT lpRect1, LPCRECT lpRect2);

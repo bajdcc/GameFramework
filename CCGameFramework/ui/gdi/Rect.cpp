@@ -132,6 +132,16 @@ void CRect::OffsetRect(POINT point)
 {
     ::OffsetRect(this, point.x, point.y);
 }
+CRect CRect::OfRect(const CRect& rt, bool add)
+{
+    auto r = *this;
+    if (add) r += rt.TopLeft();
+    r.left = __max(rt.left, __min(r.left, rt.right));
+    r.top = __max(rt.top, __min(r.top, rt.bottom));
+    r.right = __max(rt.left, __min(r.right, rt.right));
+    r.bottom = __max(rt.top, __min(r.bottom, rt.bottom));
+    return r;
+}
 void CRect::OffsetRect(SIZE size)
 {
     ::OffsetRect(this, size.cx, size.cy);

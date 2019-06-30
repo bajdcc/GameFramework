@@ -184,6 +184,7 @@ void Parser2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
     else if (bitmap) {
         reset();
     }
+
     CString logo(_T("脚本操作系统 clibparser @bajdcc"));
 
     rt->DrawText(logo.GetBuffer(0), logo.GetLength(), logoTF->textFormat,
