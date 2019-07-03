@@ -1850,6 +1850,9 @@ namespace clib {
         if (type == fss_music) {
             return vfs_node_stream_music::create(mod, type, this, path);
         }
+        if (type == fss_window) {
+            return vfs_node_stream_window::create(mod, type, this, path);
+        }
         if (type != fss_none) {
             return vfs_node_stream::create(mod, type, this);
         }
@@ -1903,6 +1906,16 @@ namespace clib {
     string_t cvm::stream_path(const string_t& path)
     {
         return fs.get_realpath(path);
+    }
+
+    cwindow* cvm::stream_getwnd(int handle)
+    {
+        if (handle < 0 || handle >= HANDLE_NUM)
+            error("stream_getwnd: invalid handle");
+        if (handles[handle].type != h_window) {
+            error("stream_getwnd: invalid type");
+        }
+        return handles[handle].data.cwnd;
     }
 
     const char* cvm::state_string(cvm::ctx_state_t type) {
@@ -1982,6 +1995,11 @@ namespace clib {
                             ss.str("");
                             ss << dir << _ps;
                             fs.func(ss.str(), this);
+                        }
+                        if (type == h_window) {
+                            ss.str("");
+                            ss << dir << "message";
+                            fs.magic(ss.str(), this, fss_window);
                         }
                     }
                     fs.as_root(false);

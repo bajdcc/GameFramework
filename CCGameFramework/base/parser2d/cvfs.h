@@ -41,6 +41,7 @@ namespace clib {
         fss_pipe,
         fss_semaphore,
         fss_mutex,
+        fss_window,
     };
 
     enum vfs_op_t {
@@ -164,12 +165,14 @@ namespace clib {
         string_t cache;
     };
 
+    class cwindow;
     class vfs_stream_call {
     public:
         virtual int stream_index(vfs_stream_t type) = 0;
         virtual string_t stream_net(vfs_stream_t type, const string_t& path) = 0;
         virtual int stream_write(vfs_stream_t type, byte c) = 0;
         virtual string_t stream_path(const string_t& path) = 0;
+        virtual cwindow* stream_getwnd(int id) = 0;
     };
 
     class vfs_node_stream : public vfs_node_dec {

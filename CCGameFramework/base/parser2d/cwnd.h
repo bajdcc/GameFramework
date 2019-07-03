@@ -8,8 +8,27 @@
 
 #include "types.h"
 #include <ui\window\Window.h>
+#include "cvfs.h"
 
 namespace clib {
+    class vfs_node_stream_window : public vfs_node_dec {
+        friend class cvfs;
+    public:
+        bool available() const override;
+        int index() const override;
+        void advance() override;
+        int write(byte c) override;
+        int truncate() override;
+        explicit vfs_node_stream_window(const vfs_mod_query*, vfs_stream_t, vfs_stream_call*, int id);
+        ~vfs_node_stream_window();
+
+        static vfs_node_dec* create(const vfs_mod_query* mod, vfs_stream_t s, vfs_stream_call* call, const string_t& path);
+
+    private:
+        vfs_stream_call* call{ nullptr };
+        cwindow* wnd{ nullptr };
+    };
+
     class cwindow {
     public:
         explicit cwindow(const string_t& caption, const CRect& location);
