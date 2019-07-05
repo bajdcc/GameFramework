@@ -162,7 +162,7 @@ namespace clib {
     }
 
     // 是否已分页
-    int cvm::vmm_ismap(uint32_t va, uint32_t * pa) const {
+    int cvm::vmm_ismap(uint32_t va, uint32_t* pa) const {
         uint32_t pde_idx = PDE_INDEX(va);
         uint32_t pte_idx = PTE_INDEX(va);
 
@@ -236,7 +236,7 @@ namespace clib {
         return vmm_set(va, value);
     }
 
-    void cvm::vmm_setstr(uint32_t va, const string_t & str) {
+    void cvm::vmm_setstr(uint32_t va, const string_t& str) {
         auto len = str.length();
         for (uint32_t i = 0; i < len; i++) {
             vmm_set(va + i, str[i]);
@@ -295,13 +295,13 @@ namespace clib {
     }
 
     template<class T>
-    void cvm::vmm_pushstack(uint32_t & sp, T value) {
+    void cvm::vmm_pushstack(uint32_t& sp, T value) {
         sp -= sizeof(T);
         vmm_set<T>(sp, value);
     }
 
     template<class T>
-    T cvm::vmm_popstack(uint32_t & sp) {
+    T cvm::vmm_popstack(uint32_t& sp) {
         T t = vmm_get<T>(sp);
         sp += sizeof(T);
         return t;
@@ -1207,7 +1207,7 @@ namespace clib {
         return code + ((PDB_ADDR*)& pdb->data)->addr;
     }
 
-    void cvm::error(const string_t & str) const {
+    void cvm::error(const string_t& str) const {
 #if REPORT_ERROR
         {
             std::ofstream log(REPORT_ERROR_FILE, std::ios::app | std::ios::out);
@@ -1240,7 +1240,7 @@ namespace clib {
         throw cexception(ex_vm, str + ", PATH: " + ctx->path + ", SOURCE: " + source());
     }
 
-    int cvm::load(const string_t & path, const std::vector<byte> & file, const std::vector<string_t> & args) {
+    int cvm::load(const string_t& path, const std::vector<byte>& file, const std::vector<string_t>& args) {
         auto old_ctx = ctx;
         new_pid();
         ctx->file = file;
@@ -1476,7 +1476,7 @@ namespace clib {
         available_tasks--;
     }
 
-    string_t get_args(const string_t & path, std::vector<string_t> & args) {
+    string_t get_args(const string_t& path, std::vector<string_t>& args) {
         std::stringstream ss(path);
         string_t temp;
         while (std::getline(ss, temp, ' ')) {
@@ -1496,7 +1496,7 @@ namespace clib {
         return str;
     }
 
-    int cvm::exec_file(const string_t & path) {
+    int cvm::exec_file(const string_t& path) {
         if (path.empty())
             return -1;
         auto new_path = trim(path);
@@ -1652,15 +1652,15 @@ namespace clib {
         fs.as_root(flag);
     }
 
-    bool cvm::read_vfs(const string_t & path, std::vector<byte> & data) const {
+    bool cvm::read_vfs(const string_t& path, std::vector<byte>& data) const {
         return fs.read_vfs(path, data);
     }
 
-    bool cvm::write_vfs(const string_t & path, const std::vector<byte> & data) {
+    bool cvm::write_vfs(const string_t& path, const std::vector<byte>& data) {
         return fs.write_vfs(path, data);
     }
 
-    vfs_stream_t cvm::stream_type(const string_t & path) const {
+    vfs_stream_t cvm::stream_type(const string_t& path) const {
         if (path.substr(0, 4) == "/dev") {
             static string_t pat{ R"(/dev/([a-z_]+))" };
             static std::regex re(pat);
@@ -1687,7 +1687,7 @@ namespace clib {
         return fss_none;
     }
 
-    string_t limit_string(const string_t & s, uint len) {
+    string_t limit_string(const string_t& s, uint len) {
         if (s.length() <= len) {
             return s;
         }
@@ -1696,7 +1696,7 @@ namespace clib {
         }
     }
 
-    string_t cvm::stream_callback(const string_t & path) {
+    string_t cvm::stream_callback(const string_t& path) {
         static char sz[256];
         if (path.substr(0, 6) == "/proc/") {
             static string_t pat{ R"(/proc/(\d+)/([a-z_]+))" };
@@ -1764,7 +1764,7 @@ namespace clib {
                             heaps_a += tasks[i].pool->available();
                         }
                     }
-                    sprintf(sz, "%-18s %d", "Heap Total:", heaps* PAGE_SIZE); ss << sz << std::endl;
+                    sprintf(sz, "%-18s %d", "Heap Total:", heaps * PAGE_SIZE); ss << sz << std::endl;
                     sprintf(sz, "%-18s %d", "Heap Using:", heaps * PAGE_SIZE - heaps_a); ss << sz << std::endl;
                     sprintf(sz, "%-18s %d", "Heap Free:", heaps_a); ss << sz << std::endl;
                     sprintf(sz, "%-18s %d", "Kernel Page:", kernel_pages); ss << sz << std::endl;
@@ -1840,7 +1840,7 @@ namespace clib {
         return "\033FFFF00000\033[ERROR] File not exists.\033S4\033";
     }
 
-    vfs_node_dec* cvm::stream_create(const vfs_mod_query * mod, vfs_stream_t type, const string_t & path) {
+    vfs_node_dec* cvm::stream_create(const vfs_mod_query* mod, vfs_stream_t type, const string_t& path) {
         if (type == fss_net) {
             return vfs_node_stream_net::create(mod, type, this, path);
         }
@@ -1877,7 +1877,7 @@ namespace clib {
         return -1;
     }
 
-    string_t cvm::stream_net(vfs_stream_t type, const string_t & path) {
+    string_t cvm::stream_net(vfs_stream_t type, const string_t& path) {
         switch (type) {
         case fss_net: {
             return net.http_get(path);
@@ -2919,6 +2919,17 @@ namespace clib {
             return;
         for (auto& wnd : wnds) {
             wnd->paint(bounds);
+        }
+    }
+
+    void cvm::hit(int n)
+    {
+        if (wnds.empty())
+            return;
+        for (auto wnd = wnds.rbegin(); wnd != wnds.rend(); wnd++) {
+            if ((*wnd)->hit(n, global_state.mouse_x, global_state.mouse_y)) {
+                break;
+            }
         }
     }
 }

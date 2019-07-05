@@ -124,6 +124,7 @@ namespace clib {
         cwindow* stream_getwnd(int id) override;
 
         void paint_window(const CRect& bounds);
+        void hit(int n);
 
     private:
         // 申请页框
@@ -303,6 +304,8 @@ namespace clib {
 #if LOG_VM
             std::vector<string_t> log_info, log_err;
 #endif
+            int mouse_x{ 0 };
+            int mouse_y{ 0 };
         } global_state;
     };
 }

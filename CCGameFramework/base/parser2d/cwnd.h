@@ -35,6 +35,15 @@ namespace clib {
         ~cwindow();
 
         void paint(const CRect& bounds);
+        bool hit(int n, int x, int y);
+
+        enum window_state_t {
+            W_NONE,
+            W_RUNNING,
+            W_CLOSING,
+        };
+
+        window_state_t get_state() const;
 
     private:
         void init();
@@ -45,9 +54,11 @@ namespace clib {
         std::shared_ptr<IGraphicsElement> root;
         std::shared_ptr<Direct2DRenderTarget> renderTarget;
         CRect bounds1, bounds2;
+        window_state_t state{ W_RUNNING };
 
         struct SystemBag {
             std::shared_ptr<IGraphicsElement> title, title_text;
+            std::shared_ptr<IGraphicsElement> close_text;
         } bag;
     };
 }

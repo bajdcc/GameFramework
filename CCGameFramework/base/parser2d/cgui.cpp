@@ -302,7 +302,7 @@ namespace clib {
                     gen.reset();
                 }
             }
-            catch (const cexception & e) {
+            catch (const cexception& e) {
                 ATLTRACE("[SYSTEM] ERR  | RUNTIME ERROR: %s\n", e.message().c_str());
 #if REPORT_ERROR
                 {
@@ -332,7 +332,7 @@ namespace clib {
         }
     }
 
-    void cgui::put_string(const string_t & str) {
+    void cgui::put_string(const string_t& str) {
         for (auto& s : str) {
             put_char(s);
         }
@@ -483,7 +483,7 @@ namespace clib {
         colors_fg[ptr_y * cols + ptr_x] = color_fg;
     }
 
-    void cgui::error(const string_t & str) {
+    void cgui::error(const string_t& str) {
         throw cexception(ex_gui, str);
     }
 
@@ -610,7 +610,7 @@ namespace clib {
         return { cols * GUI_FONT_W, rows * GUI_FONT_H };
     }
 
-    void cgui::load_dep(string_t & path, std::unordered_set<string_t> & deps) {
+    void cgui::load_dep(string_t& path, std::unordered_set<string_t>& deps) {
         auto f = cache_code.find(path);
         if (f != cache_code.end()) {
             deps.insert(cache_dep[path].begin(), cache_dep[path].end());
@@ -675,7 +675,7 @@ namespace clib {
         load_dep(path, deps);
     }
 
-    string_t cgui::do_include(string_t & path) { // DAG solution for include
+    string_t cgui::do_include(string_t& path) { // DAG solution for include
         std::vector<string_t> v; // VERTEX(Map id to name)
         std::unordered_map<string_t, int> deps; // VERTEX(Map name to id)
         {
@@ -748,7 +748,7 @@ namespace clib {
         return ss.str();
     }
 
-    int cgui::compile(const string_t & path, const std::vector<string_t> & args, const std::vector<string_t>& paths) {
+    int cgui::compile(const string_t& path, const std::vector<string_t>& args, const std::vector<string_t>& paths) {
         if (path.empty())
             return -1;
         auto fail_errno = -1;
@@ -780,7 +780,7 @@ namespace clib {
             cache.insert(std::make_pair(new_path, file));
             return vm->load(new_path, file, args);
         }
-        catch (const cexception & e) {
+        catch (const cexception& e) {
             gen.reset();
 #if LOG_VM
             {
@@ -918,8 +918,8 @@ namespace clib {
                 cvm::global_state.log_err.push_back(s.GetBuffer(0));
             }
 #endif
-                ATLTRACE("[SYSTEM] GUI  | Input invalid special key: %d\n", c & 0xff);
-                return;
+            ATLTRACE("[SYSTEM] GUI  | Input invalid special key: %d\n", c & 0xff);
+            return;
             }
             cvm::global_state.input_content = input_buffer();
             cvm::global_state.input_read_ptr = 0;
@@ -971,7 +971,13 @@ namespace clib {
         return c;
     }
 
-    void cgui::exec_cmd(const string_t & s) {
+    void cgui::hit(int n)
+    {
+        if (vm)
+            vm->hit(n);
+    }
+
+    void cgui::exec_cmd(const string_t& s) {
         switch (s[0]) {
         case 'B': { // 设置背景色
             color_bg = (uint32_t)std::stoul(s.substr(1), nullptr, 16);

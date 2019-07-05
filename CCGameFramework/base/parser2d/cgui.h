@@ -67,6 +67,7 @@ namespace clib {
         void input(int c);
         void reset_cmd();
         int reset_cycles();
+        void hit(int n);
 
     private:
         void tick();

@@ -120,7 +120,13 @@ function M:init_menu(info)
 		padbottom = 110
 	})
 	self:add(bg)
-	self.layers.pe2d = bg:add(PE2D:new())
+	self.layers.pe2d = bg:add(PE2D:new({
+		hit = function(this, evt)
+			UIExt.refresh(CurrentScene.layers.pe2d, CurrentCursorX | 0x40000)
+			UIExt.refresh(CurrentScene.layers.pe2d, CurrentCursorY | 0x80000)
+			UIExt.refresh(CurrentScene.layers.pe2d, evt | 0x100000)
+		end
+	}))
 	local menu = LinearLayout:new({
 		row = row,
 		col = col,
