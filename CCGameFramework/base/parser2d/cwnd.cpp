@@ -4,6 +4,7 @@
 //
 
 #include "stdafx.h"
+#include "cvm.h"
 #include "cwnd.h"
 
 namespace clib {
@@ -112,12 +113,16 @@ namespace clib {
         return d;
     }
 
-    void cwindow::handle_msg(const window_msg& msg)
+    void cwindow::handle_msg(cvm* vm, const window_msg& msg)
     {
         switch (msg.code)
         {
         case WM_CLOSE:
             state = W_CLOSING;
+            break;
+        case WM_SETTEXT:
+            caption = vm->vmm_getstr(msg.param1);
+            bag.title_text->SetText(CString(CStringA(caption.c_str())));
             break;
         default:
             break;
@@ -155,7 +160,7 @@ namespace clib {
 
     void cwindow::post_data(int code, int param1, int param2)
     {
-        window_msg s{ code, param1, param2 };
+        window_msg s{ code, (uint32)param1, (uint32)param2 };
         const auto p = (byte*)& s;
         for (auto i = 0; i < sizeof(window_msg); i++) {
             msg_data.push(p[i]);

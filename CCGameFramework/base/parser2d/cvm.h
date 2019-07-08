@@ -286,6 +286,7 @@ namespace clib {
         std::array<handle_t, HANDLE_NUM> handles;
         int kernel_pages{ 0 };
         std::vector<cwindow*> wnds;
+        friend class cwindow;
 
     public:
         static struct global_state_t {

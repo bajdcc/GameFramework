@@ -6,6 +6,7 @@
 #include "/include/xtoa_itoa"
 int read_file(int id, int handle) {
     int c;
+    window_set_text(id, "- Test window -");
     __window_msg_struct__ s;
     while (c = window_get_msg(handle, &s), c < 0x1000) {
         put_string("[MSG] Code: ");

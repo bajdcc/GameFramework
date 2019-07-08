@@ -29,6 +29,7 @@ namespace clib {
         cwindow* wnd{ nullptr };
     };
 
+    class cvm;
     class cwindow {
     public:
         explicit cwindow(const string_t& caption, const CRect& location);
@@ -49,14 +50,14 @@ namespace clib {
 
         struct window_msg {
             int code;
-            int param1, param2;
+            uint32 param1, param2;
         };
         struct window_msg2 {
             int handle;
             window_msg msg;
         };
 
-        void handle_msg(const window_msg &msg);
+        void handle_msg(cvm* vm, const window_msg& msg);
 
     private:
         void init();
@@ -72,7 +73,8 @@ namespace clib {
         std::queue<byte> msg_data;
 
         struct SystemBag {
-            std::shared_ptr<IGraphicsElement> title, title_text;
+            std::shared_ptr<SolidBackgroundElement> title;
+            std::shared_ptr<SolidLabelElement> title_text;
             std::shared_ptr<IGraphicsElement> close_text;
         } bag;
     };

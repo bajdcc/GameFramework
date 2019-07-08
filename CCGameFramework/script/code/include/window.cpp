@@ -5,7 +5,6 @@
 
 // 窗口
 #include "/include/fs"
-#include "/include/io"
 
 struct __window_create_struct__ {
     char* caption;
@@ -50,4 +49,20 @@ int window_default_msg(int handle, __window_msg_struct__* s) {
     k.msg = *s;
     &k;
     interrupt 502;
+}
+
+int window_post_msg(int handle, int code, int param1, int param2) {
+    __window_defmsg_struct__ k;
+    k.handle = handle;
+    k.msg.code = code;
+    k.msg.param1 = param1;
+    k.msg.param2 = param2;
+    &k;
+    interrupt 502;
+}
+
+// API
+
+int window_set_text(int handle, char* text) {
+    window_post_msg(handle, 0xC, text, 0);
 }
