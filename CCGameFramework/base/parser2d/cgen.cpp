@@ -13,7 +13,10 @@
 #include "cvm.h"
 #include "cexception.h"
 
-#define LOG_TYPE 0
+#define REPORT_GEN 0
+#define REPORT_GEN_FILE "gen.log"
+
+#define LOG_TYPE 1
 
 #define AST_IS_KEYWORD(node) ((node)->flag == ast_keyword)
 #define AST_IS_KEYWORD_K(node, k) ((node)->data._keyword == (k))
@@ -27,6 +30,8 @@
 #define AST_IS_COLL_N(node, k) (AST_IS_COLL(node) && AST_IS_COLL_K(node, k))
 
 namespace clib {
+
+    std::stringstream cgen::log_out;
 
     static string_t sym_to_string(const sym_t::ref& sym) {
         if (sym)
@@ -258,8 +263,11 @@ namespace clib {
 
     int type_typedef_t::size(sym_size_t t) const {
         if (t == x_inc) {
-            if (ptr > 0)
+            if (ptr > 0) {
+                if (refer.lock()->get_type() == s_struct)
+                    return refer.lock()->size(t);
                 return sizeof(void*);
+            }
             return refer.lock()->size(t);
         }
         if (ptr > 0)
@@ -1137,7 +1145,7 @@ namespace clib {
             gen.emit(PUSH, cast_size(exp1->base->get_cast()));
             exp2->gen_rvalue(gen); // exp2
 #if LOG_TYPE
-            std::cout << "[DEBUG] Binop type: op1= " << cast_str(exp1->base->get_cast())
+            cgen::log_out << "[DEBUG] Binop type: op1= " << cast_str(exp1->base->get_cast())
                 << ", op2=  " << cast_str(exp2->base->get_cast()) << std::endl;
 #endif
             if ((op->data._op == op_plus || op->data._op == op_minus) &&
@@ -1440,7 +1448,7 @@ namespace clib {
         switch (op->data._keyword) {
         case k_return: {
 #if LOG_TYPE
-            std::cout << "[DEBUG] Return: exp= " << sym_to_string(exp) << std::endl;
+            cgen::log_out << "[DEBUG] Return: exp= " << sym_to_string(exp) << std::endl;
 #endif
             if (exp)
                 exp->gen_rvalue(gen);
@@ -1455,7 +1463,7 @@ namespace clib {
         case k_interrupt: {
             auto number = std::dynamic_pointer_cast<sym_var_t>(exp);
 #if LOG_TYPE
-            std::cout << "[DEBUG] Interrupt: number= " << sym_to_string(exp) << std::endl;
+            cgen::log_out << "[DEBUG] Interrupt: number= " << sym_to_string(exp) << std::endl;
 #endif
             gen.emit(INTR, number->node->data._int);
         }
@@ -1492,6 +1500,7 @@ namespace clib {
         incs.clear();
         pdbs.clear();
         pdbs.push_back(std::make_tuple(0, "error"));
+        log_out.str("");
     }
 
     template <class T>
@@ -1505,6 +1514,12 @@ namespace clib {
         if (entry == symbols[0].end()) {
             error("main() not defined");
         }
+#if LOG_TYPE
+        {
+            std::ofstream log(REPORT_GEN_FILE, std::ios::app | std::ios::out);
+            log << std::endl << log_out.str() << std::endl;
+        }
+#endif
         // MAGIC
         auto magic = string_t(PE_MAGIC);
         std::copy((byte*)magic.data(), (byte*)magic.data() + magic.size(), std::back_inserter(file));
@@ -1551,7 +1566,7 @@ namespace clib {
 
     void cgen::emit(ins_t i) {
 #if LOG_TYPE
-        std::cout << "[DEBUG] *GEN* ==> [" << setiosflags(std::ios::right)
+        log_out << "[DEBUG] *GEN* ==> [" << setiosflags(std::ios::right)
             << std::setiosflags(std::ios::uppercase) << std::hex << std::setw(8)
             << std::setfill('0') << text.size() << "] " << setiosflags(std::ios::left)
             << std::setw(4) << std::setfill(' ') << INS_STRING(i) << std::endl;
@@ -1561,7 +1576,7 @@ namespace clib {
 
     void cgen::emit(ins_t i, int d) {
 #if LOG_TYPE
-        std::cout << "[DEBUG] *GEN* ==> [" << setiosflags(std::ios::right)
+        log_out << "[DEBUG] *GEN* ==> [" << setiosflags(std::ios::right)
             << std::setiosflags(std::ios::uppercase) << std::hex << std::setw(8)
             << std::setfill('0') << text.size() << "] " << setiosflags(std::ios::left)
             << std::setw(4) << std::setfill(' ') << INS_STRING(i) << " " << setiosflags(std::ios::right)
@@ -1574,7 +1589,7 @@ namespace clib {
 
     void cgen::emit(ins_t i, int d, int e) {
 #if LOG_TYPE
-        std::cout << "[DEBUG] *GEN* ==> [" << setiosflags(std::ios::right)
+        log_out << "[DEBUG] *GEN* ==> [" << setiosflags(std::ios::right)
             << std::setiosflags(std::ios::uppercase) << std::hex << std::setw(8)
             << std::setfill('0') << text.size() << "] " << setiosflags(std::ios::left)
             << std::setw(4) << std::setfill(' ') << INS_STRING(i) << " " << setiosflags(std::ios::right)
@@ -1639,7 +1654,7 @@ namespace clib {
             data.push_back(0);
         }
 #if LOG_TYPE
-        std::cout << "[DEBUG] *GEN* <== STRING: \"" << cast::display_str(s.c_str())
+        log_out << "[DEBUG] *GEN* <== STRING: \"" << cast::display_str(s.c_str())
             << "\", addr: " << addr << ", size: " << s.length() << std::endl;
 #endif
         return addr;
@@ -1876,7 +1891,7 @@ namespace clib {
             s.addr = (int)text.size();
             cases.back().push_back(s);
 #if LOG_TYPE
-            std::cout << "[DEBUG] Case: addr= " << s.addr << std::endl;
+            log_out << "[DEBUG] Case: addr= " << s.addr << std::endl;
 #endif
         }
                                  break;
@@ -2266,7 +2281,7 @@ namespace clib {
                 asts.erase(asts.begin(), asts.begin() + ptr);
             }
 #if LOG_TYPE
-            std::cout << "[DEBUG] Type: " << base_type->to_string() << std::endl;
+            log_out << "[DEBUG] Type: " << base_type->to_string() << std::endl;
 #endif
             tmp.back().push_back(base_type);
         }
@@ -2445,7 +2460,7 @@ namespace clib {
                 tmp.back().clear();
                 asts.clear();
 #if LOG_TYPE
-                std::cout << "[DEBUG] Func: " << ctx.lock()->to_string() << std::endl;
+                log_out << "[DEBUG] Func: " << ctx.lock()->to_string() << std::endl;
 #endif
                 if (has_impl) {
                     tmp.back().push_back(func);
@@ -2532,7 +2547,7 @@ namespace clib {
             if (AST_IS_KEYWORD_N(asts[0], k_case)) {
                 cases.back().back()._case = to_exp(tmp.back().front());
 #if LOG_TYPE
-                std::cout << "[DEBUG] Case: " << cases.back().back()._case->to_string() << std::endl;
+                log_out << "[DEBUG] Case: " << cases.back().back()._case->to_string() << std::endl;
 #endif
             }
             else if (AST_IS_KEYWORD_N(asts[0], k_default)) {
@@ -2555,7 +2570,7 @@ namespace clib {
             break;
         case c_expressionStatement: {
 #if LOG_TYPE
-            std::cout << "[DEBUG]  " << string_join(tmp.back(), ", ") << std::endl;
+            log_out << "[DEBUG]  " << string_join(tmp.back(), ", ") << std::endl;
 #endif
         }
                                     break;
@@ -2665,7 +2680,7 @@ namespace clib {
             auto exp = exp_list(tmp.back());
             tmp.back().clear();
 #if LOG_TYPE
-            std::cout << "[DEBUG] If: " << exp->to_string() << std::endl;
+            log_out << "[DEBUG] If: " << exp->to_string() << std::endl;
 #endif
             exp->gen_rvalue(*this);
             emit(JZ, -1);
@@ -2689,7 +2704,7 @@ namespace clib {
             gen_rec(_exp, level); // exp
             auto exp = exp_list(tmp.back());
 #if LOG_TYPE
-            std::cout << "[DEBUG] While: " << exp->to_string() << std::endl;
+            log_out << "[DEBUG] While: " << exp->to_string() << std::endl;
 #endif
             tmp.back().clear();
             emit(JMP, (int)text.size() + 4);
@@ -2725,7 +2740,7 @@ namespace clib {
             }
             if (_cond_exp[0]) { // init exp
 #if LOG_TYPE
-                std::cout << "[DEBUG] For: init= " << sym_to_string(_cond_exp[0]) << std::endl;
+                log_out << "[DEBUG] For: init= " << sym_to_string(_cond_exp[0]) << std::endl;
 #endif
                 _cond_exp[0]->gen_rvalue(*this);
             }
@@ -2735,7 +2750,7 @@ namespace clib {
             auto L2 = (int)text.size(); // continue
             if (_cond_exp[1]) { // cond exp
 #if LOG_TYPE
-                std::cout << "[DEBUG] For: cond= " << sym_to_string(_cond_exp[1]) << std::endl;
+                log_out << "[DEBUG] For: cond= " << sym_to_string(_cond_exp[1]) << std::endl;
 #endif
                 _cond_exp[1]->gen_rvalue(*this);
                 emit(JZ, L1); // jump break
@@ -2745,7 +2760,7 @@ namespace clib {
             gen_rec(_stmt, level); // stmt
             if (_cond_exp[2]) { // iter exp
 #if LOG_TYPE
-                std::cout << "[DEBUG] For: iter= " << sym_to_string(_cond_exp[2]) << std::endl;
+                log_out << "[DEBUG] For: iter= " << sym_to_string(_cond_exp[2]) << std::endl;
 #endif
                 _cond_exp[2]->gen_rvalue(*this);
             }
@@ -2760,7 +2775,7 @@ namespace clib {
             gen_rec(_exp, level); // exp
             auto exp = exp_list(tmp.back());
 #if LOG_TYPE
-            std::cout << "[DEBUG] Do-while: " << exp->to_string() << std::endl;
+            log_out << "[DEBUG] Do-while: " << exp->to_string() << std::endl;
 #endif
             tmp.back().clear();
             emit(JMP, -1);
@@ -2784,7 +2799,7 @@ namespace clib {
             gen_rec(_exp, level); // exp
             auto exp = exp_list(tmp.back());
 #if LOG_TYPE
-            std::cout << "[DEBUG] Switch: " << exp->to_string() << std::endl;
+            log_out << "[DEBUG] Switch: " << exp->to_string() << std::endl;
 #endif
             tmp.back().clear();
             emit(JMP, (int)text.size() + 4);
@@ -3152,7 +3167,7 @@ namespace clib {
         }
         allocate(new_id, init, delta);
 #if LOG_TYPE
-        std::cout << "[DEBUG] Id: " << new_id->to_string() << std::endl;
+        log_out << "[DEBUG] Id: " << new_id->to_string() << std::endl;
 #endif
         if (!symbols.back().insert(std::make_pair(node->data._string, new_id)).second) {
             error(new_id, "conflict id: " + new_id->to_string());

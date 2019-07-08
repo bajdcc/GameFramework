@@ -400,6 +400,9 @@ namespace clib {
 
         type_exp_t::ref to_exp(sym_t::ref s);
 
+    public:
+        static std::stringstream log_out;
+
     private:
         std::vector<LEX_T(int)> text; // 代码
         std::vector<LEX_T(char)> data; // 数据

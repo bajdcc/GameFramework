@@ -4,9 +4,18 @@
 #include "/include/memory"
 #include "/include/string"
 #include "/include/xtoa_itoa"
-int read_file(int handle) {
+int read_file(int id, int handle) {
     int c;
-    while (c = read(handle), c < 0x1000) {
+    __window_msg_struct__ s;
+    while (c = window_get_msg(handle, &s), c < 0x1000) {
+        put_string("[MSG] Code: ");
+        put_hex(s.code);
+        put_string(", Param1= ");
+        put_hex(s.param1);
+        put_string(", Param2= ");
+        put_hex(s.param2);
+        put_string("\n");
+        window_default_msg(id, &s);
     }
     switch (c) {
     case 0x2000:
@@ -42,7 +51,7 @@ int main(int argc, char **argv) {
     switch (handle) {
         default:
             // put_string("[INFO] Success.");
-            read_file(handle);
+            read_file(id, handle);
             break;
         case -1:
             set_fg(240, 0, 0);

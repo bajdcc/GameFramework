@@ -286,7 +286,8 @@ namespace clib {
 
     void cgui::draw_window(const CRect& bounds)
     {
-        vm->paint_window(bounds);
+        if(vm)
+            vm->paint_window(bounds);
     }
 
     void cgui::tick() {

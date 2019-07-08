@@ -34,7 +34,11 @@ namespace clib {
     }
 
     int vfs_node_stream_window::index() const {
-        return available() ? DELAY_CHAR : READ_EOF;
+        if (!available())return READ_EOF;
+        auto d = wnd->get_msg_data();
+        if (d == -1)
+            return DELAY_CHAR;
+        return (int)d;
     }
 
     void vfs_node_stream_window::advance() {
@@ -87,7 +91,7 @@ namespace clib {
     {
         if (n == 200) {
             if (bag.close_text->GetRenderRect().PtInRect(CPoint(x, y) + -root->GetRenderRect().TopLeft())) {
-                state = W_CLOSING;
+                post_data(WM_CLOSE);
                 return true;
             }
         }
@@ -97,6 +101,27 @@ namespace clib {
     cwindow::window_state_t cwindow::get_state() const
     {
         return state;
+    }
+
+    int cwindow::get_msg_data()
+    {
+        if (msg_data.empty())
+            return - 1;
+        auto d = msg_data.front();
+        msg_data.pop();
+        return d;
+    }
+
+    void cwindow::handle_msg(const window_msg& msg)
+    {
+        switch (msg.code)
+        {
+        case WM_CLOSE:
+            state = W_CLOSING;
+            break;
+        default:
+            break;
+        }
     }
 
     void cwindow::init()
@@ -126,5 +151,14 @@ namespace clib {
         close_text->SetFont(f);
         bag.close_text = close_text;
         list.push_back(close_text);
+    }
+
+    void cwindow::post_data(int code, int param1, int param2)
+    {
+        window_msg s{ code, param1, param2 };
+        const auto p = (byte*)& s;
+        for (auto i = 0; i < sizeof(window_msg); i++) {
+            msg_data.push(p[i]);
+        }
     }
 }

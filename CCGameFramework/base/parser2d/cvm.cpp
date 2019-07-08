@@ -191,8 +191,28 @@ namespace clib {
         if (!(ctx->flag & CTX_KERNEL))
             va |= ctx->mask;
         uint32_t pa;
-        if (vmm_ismap(va, &pa)) {
-            return *(T*)((byte*)pa + OFFSET_INDEX(va));
+        if (OFFSET_INDEX(va) == OFFSET_INDEX(va + sizeof(T) - 1)) {
+            if (vmm_ismap(va, &pa)) {
+                return *(T*)((byte*)pa + OFFSET_INDEX(va));
+            }
+        }
+        else {
+            T t;
+            byte* p = (byte*)& t;
+            auto pid = -1;
+            auto succ = true;
+            for (auto addr = va; addr < va + sizeof(T); addr++) {
+                if (OFFSET_INDEX(addr) != pid) {
+                    pid = OFFSET_INDEX(addr);
+                    if (!vmm_ismap(addr, &pa)) {
+                        succ = false;
+                        break;
+                    }
+                }
+                *p++ = *((byte*)pa + OFFSET_INDEX(addr));
+            }
+            if (succ)
+                return t;
         }
         //vmm_map(va, pmm_alloc(), PTE_U | PTE_P | PTE_R);
 #if 1
@@ -2432,6 +2452,20 @@ namespace clib {
                 CRect(s.left, s.top, s.left + s.width, s.top + s.height));
             wnds.push_back(handles[h].data.cwnd);
             ctx->ax._i = h;
+            break;
+        }
+        case 502:
+        {
+            auto s = vmm_get<cwindow::window_msg2>(ctx->ax._ui);
+            auto h = s.handle;
+            if (ctx->handles.find(h) != ctx->handles.end()) {
+                if (handles[h].type != h_window) {
+                    ctx->ax._i = -1;
+                    break;
+                }
+                auto wnd = handles[h].data.cwnd;
+                wnd->handle_msg(s.msg);
+            }
             break;
         }
         default:

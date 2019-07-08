@@ -45,8 +45,22 @@ namespace clib {
 
         window_state_t get_state() const;
 
+        int get_msg_data();
+
+        struct window_msg {
+            int code;
+            int param1, param2;
+        };
+        struct window_msg2 {
+            int handle;
+            window_msg msg;
+        };
+
+        void handle_msg(const window_msg &msg);
+
     private:
         void init();
+        void post_data(int code, int param1 = 0, int param2 = 0);
 
     private:
         string_t caption;
@@ -55,6 +69,7 @@ namespace clib {
         std::shared_ptr<Direct2DRenderTarget> renderTarget;
         CRect bounds1, bounds2;
         window_state_t state{ W_RUNNING };
+        std::queue<byte> msg_data;
 
         struct SystemBag {
             std::shared_ptr<IGraphicsElement> title, title_text;
