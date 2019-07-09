@@ -6,10 +6,15 @@
 #include "/include/xtoa_itoa"
 int read_file(int id, int handle) {
     int c;
+    char* title = malloc(20);
+    window_get_text(id, title);
+    put_string("[INFO] Title: ");
+    put_string(title);
+    put_string("\n");
     window_set_text(id, "- Test window -");
     __window_msg_struct__ s;
     while (c = window_get_msg(handle, &s), c < 0x1000) {
-        put_string("[MSG] Code: ");
+        put_string("[MSG ] Code: ");
         put_hex(s.code);
         put_string(", Param1= ");
         put_hex(s.param1);

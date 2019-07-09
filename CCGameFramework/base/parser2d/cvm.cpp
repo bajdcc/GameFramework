@@ -2464,7 +2464,7 @@ namespace clib {
                     break;
                 }
                 auto wnd = handles[h].data.cwnd;
-                wnd->handle_msg(this, s.msg);
+                ctx->ax._i = wnd->handle_msg(this, s.msg);
             }
             break;
         }

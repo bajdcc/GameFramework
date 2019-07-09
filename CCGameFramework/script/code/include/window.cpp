@@ -66,3 +66,7 @@ int window_post_msg(int handle, int code, int param1, int param2) {
 int window_set_text(int handle, char* text) {
     window_post_msg(handle, 0xC, text, 0);
 }
+
+int window_get_text(int handle, char* text) {
+    window_post_msg(handle, 0xD, text, 0);
+}

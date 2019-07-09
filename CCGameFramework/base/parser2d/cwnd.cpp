@@ -90,9 +90,30 @@ namespace clib {
 
     bool cwindow::hit(int n, int x, int y)
     {
-        if (n == 200) {
-            if (bag.close_text->GetRenderRect().PtInRect(CPoint(x, y) + -root->GetRenderRect().TopLeft())) {
+        static int mapnc[] = {
+            WM_NCLBUTTONDOWN, WM_NCLBUTTONUP, WM_NCLBUTTONDBLCLK,
+            WM_NCRBUTTONDOWN, WM_NCRBUTTONUP, WM_NCRBUTTONDBLCLK,
+            WM_NCMBUTTONDOWN, WM_NCMBUTTONUP, WM_NCMBUTTONDBLCLK,
+        };
+        static int mapc[] = {
+            WM_LBUTTONDOWN, WM_LBUTTONUP, WM_LBUTTONDBLCLK,
+            WM_RBUTTONDOWN, WM_RBUTTONUP, WM_RBUTTONDBLCLK,
+            WM_MBUTTONDOWN, WM_MBUTTONUP, WM_MBUTTONDBLCLK,
+        };
+        auto pt = CPoint(x, y) + -root->GetRenderRect().TopLeft();
+        if (pt.x < 0 || pt.y < 0 || pt.x >= location.Width() || pt.y >= location.Height()) return false;
+        if (n >= 200 && n <= 208) {
+            if (n == 200 && bag.close_text->GetRenderRect().PtInRect(pt)) {
                 post_data(WM_CLOSE);
+                return true;
+            }
+            if (bag.title->GetRenderRect().PtInRect(pt)) {
+                post_data(mapnc[n - 200], pt.x, pt.y);
+                return true;
+            }
+            else {
+                pt.y -= bag.title->GetRenderRect().Height();
+                post_data(mapc[n - 200], pt.x, pt.y);
                 return true;
             }
         }
@@ -113,7 +134,7 @@ namespace clib {
         return d;
     }
 
-    void cwindow::handle_msg(cvm* vm, const window_msg& msg)
+    int cwindow::handle_msg(cvm* vm, const window_msg& msg)
     {
         switch (msg.code)
         {
@@ -124,9 +145,13 @@ namespace clib {
             caption = vm->vmm_getstr(msg.param1);
             bag.title_text->SetText(CString(CStringA(caption.c_str())));
             break;
+        case WM_GETTEXT:
+            vm->vmm_setstr(msg.param1, caption);
+            break;
         default:
             break;
         }
+        return 0;
     }
 
     void cwindow::init()
@@ -152,7 +177,7 @@ namespace clib {
         auto close_text = SolidLabelElement::Create();
         close_text->SetColor(CColor(Gdiplus::Color::White));
         close_text->SetRenderRect(CRect(r.Width() - 20, 2, r.Width(), 30));
-        close_text->SetText(_T("X"));
+        close_text->SetText(_T("×"));
         close_text->SetFont(f);
         bag.close_text = close_text;
         list.push_back(close_text);

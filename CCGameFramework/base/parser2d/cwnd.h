@@ -57,7 +57,7 @@ namespace clib {
             window_msg msg;
         };
 
-        void handle_msg(cvm* vm, const window_msg& msg);
+        int handle_msg(cvm* vm, const window_msg& msg);
 
     private:
         void init();
