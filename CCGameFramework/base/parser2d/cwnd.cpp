@@ -55,7 +55,7 @@ namespace clib {
     }
 
     cwindow::cwindow(int handle, const string_t& caption, const CRect& location)
-        : handle(handle), caption(caption), location(location)
+        : handle(handle), caption(caption), location(location), self_min_size(100, 40)
     {
         auto bg = SolidBackgroundElement::Create();
         bg->SetColor(CColor(Gdiplus::Color::White));
@@ -75,6 +75,14 @@ namespace clib {
             focus = -1;
         if (hover == handle)
             hover = -1;
+    }
+
+    void cwindow::init(cvm* vm)
+    {
+        const auto& s = location;
+        hit(vm, 200, s.left + 1, s.top + 1);
+        hit(vm, 211, s.left + 1, s.top + 1);
+        hit(vm, 201, s.left + 1, s.top + 1);
     }
 
     void cwindow::paint(const CRect& bounds)
@@ -121,13 +129,42 @@ namespace clib {
             post_data(WM_MOVING, x, y); // 发送本窗口MOVNG
             return true;
         }
+        if (self_size && n == 211 && cvm::global_state.window_hover == handle) {
+            post_data(WM_SIZING, x, y); // 发送本窗口MOVNG
+            return true;
+        }
         if (pt.x < 0 || pt.y < 0 || pt.x >= location.Width() || pt.y >= location.Height())
         {
-            return false;
+            if (!(self_size || self_drag))
+                return false;
         }
-        if (n == 200 && bag.close_text->GetRenderRect().PtInRect(pt)) {
-            post_data(WM_CLOSE);
-            return true;
+        if (n == 200) {
+            if (bag.close_text->GetRenderRect().PtInRect(pt)) {
+                post_data(WM_CLOSE);
+                return true;
+            }
+            self_size = false;
+            int cx = 0, cy = 0;
+            if (abs(pt.x) <= 2) {
+                self_size = true;
+                cx = -1;
+            }
+            if (abs(pt.y) <= 2) {
+                self_size = true;
+                cy = -1;
+            }
+            if (abs(pt.x - location.Width()) <= 2) {
+                self_size = true;
+                cx = 1;
+            }
+            if (abs(pt.y - location.Height()) <= 2) {
+                self_size = true;
+                cy = 1;
+            }
+            if (self_size) {
+                post_data(WM_MOVE, x, y);
+                post_data(WM_SIZE, cx, cy);
+            }
         }
         int code = -1;
         if (n >= 200)
@@ -217,6 +254,26 @@ namespace clib {
             location.OffsetRect((LONG)msg.param1 - self_drag_pt.x, (LONG)msg.param2 - self_drag_pt.y);
             need_repaint = true;
             break;
+        case WM_SIZE:
+            self_size_pt.x = (LONG)msg.param1;
+            self_size_pt.y = (LONG)msg.param2;
+            break;
+        case WM_SIZING:
+            location = self_drag_rt;
+            if (self_size_pt.x == 1) {
+                location.right = __max(location.left + self_min_size.cx, location.right + (LONG)msg.param1 - self_drag_pt.x);
+            }
+            if (self_size_pt.x == -1) {
+                location.left = __min(location.right - self_min_size.cx, location.left + (LONG)msg.param1 - self_drag_pt.x);
+            }
+            if (self_size_pt.y == 1) {
+                location.bottom = __max(location.top + self_min_size.cy, location.bottom + (LONG)msg.param2 - self_drag_pt.y);
+            }
+            if (self_size_pt.y == -1) {
+                location.top = __min(location.bottom - self_min_size.cy, location.top + (LONG)msg.param2 - self_drag_pt.y);
+            }
+            need_repaint = true;
+            break;
         default:
             break;
         }
@@ -271,6 +328,7 @@ namespace clib {
             bag.border->GetFlags().self_visible = false;
             self_hovered = false;
             self_drag = false;
+            self_size = false;
         }
         else if (code == WM_SETFOCUS)
         {
@@ -282,6 +340,7 @@ namespace clib {
             bag.title->SetColor(CColor(149, 187, 234));
             self_focused = false;
             self_drag = false;
+            self_size = false;
         }
         else if (code == WM_NCLBUTTONDOWN)
         {
@@ -290,6 +349,7 @@ namespace clib {
         else if (code == WM_NCLBUTTONUP || code == WM_LBUTTONUP)
         {
             self_drag = false;
+            self_size = false;
         }
         window_msg s{ code, (uint32)param1, (uint32)param2 };
         const auto p = (byte*)& s;

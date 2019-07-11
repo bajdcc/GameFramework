@@ -35,6 +35,7 @@ namespace clib {
         explicit cwindow(int handle, const string_t& caption, const CRect& location);
         ~cwindow();
 
+        void init(cvm *vm);
         void paint(const CRect& bounds);
         bool hit(cvm* vm, int n, int x = 0, int y = 0);
 
@@ -76,7 +77,10 @@ namespace clib {
         bool self_hovered{ false };
         bool self_drag{ false };
         bool need_repaint{ false };
+        bool self_size{ false };
+        CPoint self_size_pt;
         CPoint self_drag_pt;
+        CSize self_min_size;
         CRect self_drag_rt;
 
         struct SystemBag {

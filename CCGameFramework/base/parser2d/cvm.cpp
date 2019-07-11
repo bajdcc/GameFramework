@@ -2473,8 +2473,7 @@ namespace clib {
             handles[h].data.cwnd = new cwindow(h, handles[h].name,
                 CRect(s.left, s.top, s.left + s.width, s.top + s.height));
             wnds.push_back(handles[h].data.cwnd);
-            handles[h].data.cwnd->hit(this, 200, s.left, s.top + 31);
-            handles[h].data.cwnd->hit(this, 211, s.left, s.top + 31);
+            handles[h].data.cwnd->init(this);
             ctx->ax._i = h;
             break;
         }
