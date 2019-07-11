@@ -160,16 +160,6 @@ namespace clib {
                 post_data(WM_SIZE, cx, cy);
             }
         }
-        if (n == 211) {
-            post_data(WM_SETCURSOR, x, y);
-            int cx, cy;
-            if (is_border(pt, cx, cy)) {
-                cursor = sys_cursor(cx, cy);
-            }
-            else {
-                cursor = 1;
-            }
-        }
         int code = -1;
         if (n >= 200)
             n -= 200;
@@ -265,13 +255,8 @@ namespace clib {
             need_repaint = true;
             break;
         case WM_SIZE:
-            if ((LONG)msg.param1 == -1 && (LONG)msg.param2 == -1) {
-                cursor = 1;
-            }
-            else {
-                self_size_pt.x = (LONG)msg.param1;
-                self_size_pt.y = (LONG)msg.param2;
-            }
+            self_size_pt.x = (LONG)msg.param1;
+            self_size_pt.y = (LONG)msg.param2;
             break;
         case WM_SIZING:
             location = self_drag_rt;
@@ -363,12 +348,12 @@ namespace clib {
     {
         if (code == WM_MOUSEENTER)
         {
-            bag.border->GetFlags().self_visible = true;
+            bag.border->SetColor(CColor(36, 125, 234));
             self_hovered = true;
         }
         else if (code == WM_MOUSELEAVE)
         {
-            bag.border->GetFlags().self_visible = false;
+            bag.border->SetColor(CColor(149, 187, 234));
             self_hovered = false;
             self_drag = false;
             self_size = false;
@@ -387,14 +372,47 @@ namespace clib {
         }
         else if (code == WM_NCLBUTTONDOWN)
         {
-            self_drag = true;
+            int cx, cy;
+            if (is_border(CPoint(param1, param2), cx, cy)) {
+                self_size = true;
+            }
+            else {
+                self_drag = true;
+            }
+        }
+        else if (code == WM_LBUTTONDOWN)
+        {
+            int cx, cy;
+            if (is_border(CPoint(param1, param2 + bag.title->GetRenderRect().Height()), cx, cy)) {
+                self_size = true;
+            }
+        }
+        else if (code == WM_MOUSEMOVE)
+        {
+            int cx, cy;
+            if (is_border(CPoint(param1, param2 + bag.title->GetRenderRect().Height()), cx, cy)) {
+                cursor = sys_cursor(cx, cy);
+            }
+            else {
+                cursor = 1;
+            }
+        }
+        else if (code == WM_NCMOUSEMOVE)
+        {
+            int cx, cy;
+            if (is_border(CPoint(param1, param2), cx, cy)) {
+                cursor = sys_cursor(cx, cy);
+            }
+            else {
+                cursor = 1;
+            }
         }
         else if (code == WM_NCLBUTTONUP || code == WM_LBUTTONUP)
         {
             self_drag = false;
             if (self_size) {
                 self_size = false;
-                post_data(WM_SIZE, -1, -1);
+                cursor = 1;
             }
         }
         window_msg s{ code, (uint32)param1, (uint32)param2 };
