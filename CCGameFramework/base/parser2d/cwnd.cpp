@@ -54,8 +54,8 @@ namespace clib {
         return -1;
     }
 
-    cwindow::cwindow(const string_t& caption, const CRect& location)
-        : caption(caption), location(location)
+    cwindow::cwindow(int handle, const string_t& caption, const CRect& location)
+        : handle(handle), caption(caption), location(location)
     {
         auto bg = SolidBackgroundElement::Create();
         bg->SetColor(CColor(Gdiplus::Color::White));
@@ -69,6 +69,12 @@ namespace clib {
 
     cwindow::~cwindow()
     {
+        auto& focus = cvm::global_state.window_focus;
+        auto& hover = cvm::global_state.window_hover;
+        if (focus == handle)
+            focus = -1;
+        if (hover == handle)
+            hover = -1;
     }
 
     void cwindow::paint(const CRect& bounds)
@@ -88,36 +94,74 @@ namespace clib {
         root->GetRenderer()->Render(root->GetRenderRect());
     }
 
-    bool cwindow::hit(int n, int x, int y)
+#define WM_MOUSEENTER 0x2A5
+    bool cwindow::hit(cvm* vm, int n, int x, int y)
     {
         static int mapnc[] = {
             WM_NCLBUTTONDOWN, WM_NCLBUTTONUP, WM_NCLBUTTONDBLCLK,
             WM_NCRBUTTONDOWN, WM_NCRBUTTONUP, WM_NCRBUTTONDBLCLK,
             WM_NCMBUTTONDOWN, WM_NCMBUTTONUP, WM_NCMBUTTONDBLCLK,
+            WM_SETFOCUS, WM_KILLFOCUS,
+            WM_NCMOUSEMOVE, 0x2A4, WM_NCMOUSELEAVE, WM_NCMOUSEHOVER
         };
         static int mapc[] = {
             WM_LBUTTONDOWN, WM_LBUTTONUP, WM_LBUTTONDBLCLK,
             WM_RBUTTONDOWN, WM_RBUTTONUP, WM_RBUTTONDBLCLK,
             WM_MBUTTONDOWN, WM_MBUTTONUP, WM_MBUTTONDBLCLK,
+            WM_SETFOCUS, WM_KILLFOCUS,
+            WM_MOUSEMOVE, WM_MOUSEENTER, WM_MOUSELEAVE, WM_MOUSEHOVER
         };
         auto pt = CPoint(x, y) + -root->GetRenderRect().TopLeft();
-        if (pt.x < 0 || pt.y < 0 || pt.x >= location.Width() || pt.y >= location.Height()) return false;
-        if (n >= 200 && n <= 208) {
-            if (n == 200 && bag.close_text->GetRenderRect().PtInRect(pt)) {
-                post_data(WM_CLOSE);
-                return true;
+        if (pt.x < 0 || pt.y < 0 || pt.x >= location.Width() || pt.y >= location.Height())
+        {
+            return false;
+        }
+        if (n == 200 && bag.close_text->GetRenderRect().PtInRect(pt)) {
+            post_data(WM_CLOSE);
+            return true;
+        }
+        int code = -1;
+        if (n >= 200)
+            n -= 200;
+        else
+            n += 3;
+        if (n <= 11 && bag.title->GetRenderRect().PtInRect(pt)) {
+            code = mapnc[n];
+        }
+        else {
+            pt.y -= bag.title->GetRenderRect().Height();
+            code = mapc[n];
+        }
+        post_data(code, pt.x, pt.y);
+        if (n == 11) {
+            auto& hover = cvm::global_state.window_hover;
+            if (hover != -1) { // 当前有鼠标悬停
+                if (hover != handle) { // 非当前窗口
+                    vm->post_data(hover, WM_MOUSELEAVE); // 给它发送MOUSELEAVE
+                    hover = handle; // 置为当前窗口
+                    vm->post_data(hover, WM_MOUSEENTER); // 发送本窗口MOUSEENTER
+                }
             }
-            if (bag.title->GetRenderRect().PtInRect(pt)) {
-                post_data(mapnc[n - 200], pt.x, pt.y);
-                return true;
-            }
-            else {
-                pt.y -= bag.title->GetRenderRect().Height();
-                post_data(mapc[n - 200], pt.x, pt.y);
-                return true;
+            else { // 当前没有鼠标悬停
+                hover = handle;
+                vm->post_data(hover, WM_MOUSEENTER);
             }
         }
-        return false;
+        else if (n == 0) {
+            auto& focus = cvm::global_state.window_focus;
+            if (focus != -1) { // 当前有焦点
+                if (focus != handle) { // 非当前窗口
+                    vm->post_data(focus, WM_KILLFOCUS); // 给它发送KILLFOCUS
+                    focus = handle; // 置为当前窗口
+                    vm->post_data(focus, WM_SETFOCUS); // 发送本窗口SETFOCUS
+                }
+            }
+            else { // 当前没有焦点
+                focus = handle;
+                vm->post_data(focus, WM_SETFOCUS);
+            }
+        }
+        return true;
     }
 
     cwindow::window_state_t cwindow::get_state() const
@@ -183,7 +227,7 @@ namespace clib {
         list.push_back(close_text);
     }
 
-    void cwindow::post_data(int code, int param1, int param2)
+    void cwindow::post_data(const int& code, int param1, int param2)
     {
         window_msg s{ code, (uint32)param1, (uint32)param2 };
         const auto p = (byte*)& s;

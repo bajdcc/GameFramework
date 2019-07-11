@@ -32,11 +32,11 @@ namespace clib {
     class cvm;
     class cwindow {
     public:
-        explicit cwindow(const string_t& caption, const CRect& location);
+        explicit cwindow(int handle, const string_t& caption, const CRect& location);
         ~cwindow();
 
         void paint(const CRect& bounds);
-        bool hit(int n, int x, int y);
+        bool hit(cvm* vm, int n, int x = 0, int y = 0);
 
         enum window_state_t {
             W_NONE,
@@ -58,10 +58,10 @@ namespace clib {
         };
 
         int handle_msg(cvm* vm, const window_msg& msg);
+        void post_data(const int& code, int param1 = 0, int param2 = 0);
 
     private:
         void init();
-        void post_data(int code, int param1 = 0, int param2 = 0);
 
     private:
         string_t caption;
@@ -71,6 +71,7 @@ namespace clib {
         CRect bounds1, bounds2;
         window_state_t state{ W_RUNNING };
         std::queue<byte> msg_data;
+        int handle{ -1 };
 
         struct SystemBag {
             std::shared_ptr<SolidBackgroundElement> title;

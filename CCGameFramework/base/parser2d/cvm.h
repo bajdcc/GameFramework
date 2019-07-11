@@ -184,6 +184,7 @@ namespace clib {
         int new_handle(handle_type);
         string_t handle_typename(handle_type);
         void destroy_handle(int handle);
+        int post_data(int handle, int code, int param1 = 0, int param2 = 0);
 
     private:
         /* 内核页表 = PTE_SIZE*PAGE_SIZE */
@@ -307,6 +308,8 @@ namespace clib {
 #endif
             int mouse_x{ 0 };
             int mouse_y{ 0 };
+            int window_focus{ -1 };
+            int window_hover{ -1 };
         } global_state;
     };
 }

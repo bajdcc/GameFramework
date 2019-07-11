@@ -4,6 +4,8 @@
 #include "/include/memory"
 #include "/include/string"
 #include "/include/xtoa_itoa"
+#include "/include/proc"
+int child;
 int read_file(int id, int handle) {
     int c;
     char* title = malloc(20);
@@ -11,10 +13,15 @@ int read_file(int id, int handle) {
     put_string("[INFO] Title: ");
     put_string(title);
     put_string("\n");
-    window_set_text(id, "- Test window -");
+    if (child)
+        window_set_text(id, "- Test window -");
+    else
+        window_set_text(id, "- Test window 2 -");
     __window_msg_struct__ s;
     while (c = window_get_msg(handle, &s), c < 0x1000) {
-        put_string("[MSG ] Code: ");
+        put_string("[MSG ] Handle: ");
+        put_hex(id);
+        put_string(", Code= ");
         put_hex(s.code);
         put_string(", Param1= ");
         put_hex(s.param1);
@@ -34,13 +41,21 @@ int read_file(int id, int handle) {
         break;
     }
     close(handle);
+    close(id);
 }
 int main(int argc, char **argv) {
     put_string("========== [#15 TEST WINDOW] ==========\n");
     __window_create_struct__ s;
+    if (fork() == -1)
+        child = false;
+    else
+        child = true;
     s.caption = "Test window";
     s.left = 10;
-    s.top = 50;
+    if (child)
+        s.top = 280;
+    else
+        s.top = 50;
     s.width = 200;
     s.height = 200;
     int id = window_create(&s);

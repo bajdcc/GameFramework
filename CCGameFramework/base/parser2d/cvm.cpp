@@ -2063,7 +2063,7 @@ namespace clib {
                 ATLVERIFY(std::find(wnds.begin(), wnds.end(), h->data.cwnd) != wnds.end());
                 wnds.erase(std::remove(wnds.begin(), wnds.end(), h->data.cwnd), wnds.end());
                 auto dec = h->data.cwnd;
-                delete h->data.cwnd;
+                delete dec;
             }
             h->type = h_none;
             available_handles--;
@@ -2076,6 +2076,18 @@ namespace clib {
         else {
             error("destroy handle failed!");
         }
+    }
+
+    int cvm::post_data(int h, int code, int param1, int param2)
+    {
+        if (h >= 0 && h < HANDLE_NUM) {
+            if (handles[h].type != h_window) {
+                return -1;
+            }
+            auto wnd = handles[h].data.cwnd;
+            wnd->post_data(code, param1, param2);
+        }
+        return -1;
     }
 
     char* cvm::output_fmt(int id) const {
@@ -2448,7 +2460,7 @@ namespace clib {
             auto s = vmm_get<__window_create_struct__>(ctx->ax._ui);
             auto h = new_handle(h_window);
             handles[h].name = vmm_getstr(s.caption);
-            handles[h].data.cwnd = new cwindow(handles[h].name,
+            handles[h].data.cwnd = new cwindow(h, handles[h].name,
                 CRect(s.left, s.top, s.left + s.width, s.top + s.height));
             wnds.push_back(handles[h].data.cwnd);
             ctx->ax._i = h;
@@ -2465,7 +2477,9 @@ namespace clib {
                 }
                 auto wnd = handles[h].data.cwnd;
                 ctx->ax._i = wnd->handle_msg(this, s.msg);
+                break;
             }
+            ctx->ax._i = -1;
             break;
         }
         default:
@@ -2958,11 +2972,41 @@ namespace clib {
 
     void cvm::hit(int n)
     {
+        if (n == 212 || n == 6 || n == 7)
+            return;
+        if (n == 213) {
+            auto& hover = cvm::global_state.window_hover;
+            if (hover != -1) { // 当前有悬停窗口
+                post_data(hover, WM_MOUSEMOVE); // 给它发送MOUSEMOVE
+            }
+            return;
+        }
+        if (n == 214) {
+            auto& hover = cvm::global_state.window_hover;
+            if (hover != -1) { // 当前有悬停窗口
+                post_data(hover, WM_MOUSEHOVER); // 给它发送MOUSEHOVER
+            }
+            return;
+        }
         if (wnds.empty())
             return;
-        for (auto wnd = wnds.rbegin(); wnd != wnds.rend(); wnd++) {
-            if ((*wnd)->hit(n, global_state.mouse_x, global_state.mouse_y)) {
-                break;
+        for (size_t i = 0; i < wnds.size(); i++) {
+            if (wnds[i]->hit(this, n, global_state.mouse_x, global_state.mouse_y)) {
+                return;
+            }
+        }
+        if (n == 211) { // 没有找到活动窗口
+            auto& hover = cvm::global_state.window_hover;
+            if (hover != -1) { // 当前有悬停窗口
+                post_data(hover, WM_MOUSELEAVE); // 给它发送MOUSELEAVE
+                hover = -1; // 清空
+            }
+        }
+        else if (n == 200) { // 没有找到焦点
+            auto& focus = cvm::global_state.window_focus;
+            if (focus != -1) { // 当前有焦点
+                post_data(focus, WM_KILLFOCUS); // 给它发送KILLFOCUS
+                focus = -1; // 清空
             }
         }
     }
