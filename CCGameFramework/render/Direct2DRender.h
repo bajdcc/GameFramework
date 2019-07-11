@@ -539,7 +539,7 @@ class RoundBorderElementRenderer : public GraphicsSolidBrushRenderer<RoundBorder
 public:
     void Render(CRect bounds)override;
 };
-#pragma endregion SolidBackground
+#pragma endregion RoundBorder
 
 #pragma region Image
 template <class TElement, class TRenderer>

@@ -79,7 +79,8 @@ namespace clib {
 
     void cwindow::paint(const CRect& bounds)
     {
-        if (bounds1 != bounds) {
+        if (bounds1 != bounds || need_repaint) {
+            need_repaint = false;
             CRect rt;
             root->SetRenderRect(location.OfRect(bounds));
             rt = bag.title->GetRenderRect();
@@ -90,6 +91,10 @@ namespace clib {
             rt.right = root->GetRenderRect().Width();
             bag.close_text->SetRenderRect(rt);
             bounds1 = bounds;
+            rt.left = rt.top = 0;
+            rt.right = bounds.Width();
+            rt.bottom = bounds.Height();
+            bag.border->SetRenderRect(rt);
         }
         root->GetRenderer()->Render(root->GetRenderRect());
     }
@@ -112,6 +117,10 @@ namespace clib {
             WM_MOUSEMOVE, WM_MOUSEENTER, WM_MOUSELEAVE, WM_MOUSEHOVER
         };
         auto pt = CPoint(x, y) + -root->GetRenderRect().TopLeft();
+        if (self_drag && n == 211 && cvm::global_state.window_hover == handle) {
+            post_data(WM_MOVING, x, y); // 发送本窗口MOVNG
+            return true;
+        }
         if (pt.x < 0 || pt.y < 0 || pt.x >= location.Width() || pt.y >= location.Height())
         {
             return false;
@@ -127,6 +136,9 @@ namespace clib {
             n += 3;
         if (n <= 11 && bag.title->GetRenderRect().PtInRect(pt)) {
             code = mapnc[n];
+            if (n == 0) {
+                post_data(WM_MOVE, x, y); // 发送本窗口MOVE
+            }
         }
         else {
             pt.y -= bag.title->GetRenderRect().Height();
@@ -139,12 +151,15 @@ namespace clib {
                 if (hover != handle) { // 非当前窗口
                     vm->post_data(hover, WM_MOUSELEAVE); // 给它发送MOUSELEAVE
                     hover = handle; // 置为当前窗口
-                    vm->post_data(hover, WM_MOUSEENTER); // 发送本窗口MOUSEENTER
+                    post_data(WM_MOUSEENTER); // 发送本窗口MOUSEENTER
+                }
+                else if (self_drag) {
+                    post_data(WM_MOVING, x, y); // 发送本窗口MOVNG
                 }
             }
             else { // 当前没有鼠标悬停
                 hover = handle;
-                vm->post_data(hover, WM_MOUSEENTER);
+                post_data(WM_MOUSEENTER);
             }
         }
         else if (n == 0) {
@@ -192,6 +207,16 @@ namespace clib {
         case WM_GETTEXT:
             vm->vmm_setstr(msg.param1, caption);
             break;
+        case WM_MOVE:
+            self_drag_pt.x = msg.param1;
+            self_drag_pt.y = msg.param2;
+            self_drag_rt = location;
+            break;
+        case WM_MOVING:
+            location = self_drag_rt;
+            location.OffsetRect((LONG)msg.param1 - self_drag_pt.x, (LONG)msg.param2 - self_drag_pt.y);
+            need_repaint = true;
+            break;
         default:
             break;
         }
@@ -225,10 +250,47 @@ namespace clib {
         close_text->SetFont(f);
         bag.close_text = close_text;
         list.push_back(close_text);
+        auto border = RoundBorderElement::Create();
+        border->SetColor(CColor(36, 125, 234));
+        border->SetFill(false);
+        border->SetRadius(0.0f);
+        border->SetRenderRect(r);
+        bag.border = border;
+        list.push_back(border);
     }
 
     void cwindow::post_data(const int& code, int param1, int param2)
     {
+        if (code == WM_MOUSEENTER)
+        {
+            bag.border->GetFlags().self_visible = true;
+            self_hovered = true;
+        }
+        else if (code == WM_MOUSELEAVE)
+        {
+            bag.border->GetFlags().self_visible = false;
+            self_hovered = false;
+            self_drag = false;
+        }
+        else if (code == WM_SETFOCUS)
+        {
+            bag.title->SetColor(CColor(45, 120, 213));
+            self_focused = true;
+        }
+        else if (code == WM_KILLFOCUS)
+        {
+            bag.title->SetColor(CColor(149, 187, 234));
+            self_focused = false;
+            self_drag = false;
+        }
+        else if (code == WM_NCLBUTTONDOWN)
+        {
+            self_drag = true;
+        }
+        else if (code == WM_NCLBUTTONUP || code == WM_LBUTTONUP)
+        {
+            self_drag = false;
+        }
         window_msg s{ code, (uint32)param1, (uint32)param2 };
         const auto p = (byte*)& s;
         for (auto i = 0; i < sizeof(window_msg); i++) {

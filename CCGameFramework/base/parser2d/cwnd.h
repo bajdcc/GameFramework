@@ -72,11 +72,18 @@ namespace clib {
         window_state_t state{ W_RUNNING };
         std::queue<byte> msg_data;
         int handle{ -1 };
+        bool self_focused{ false };
+        bool self_hovered{ false };
+        bool self_drag{ false };
+        bool need_repaint{ false };
+        CPoint self_drag_pt;
+        CRect self_drag_rt;
 
         struct SystemBag {
             std::shared_ptr<SolidBackgroundElement> title;
             std::shared_ptr<SolidLabelElement> title_text;
-            std::shared_ptr<IGraphicsElement> close_text;
+            std::shared_ptr<SolidLabelElement> close_text;
+            std::shared_ptr<RoundBorderElement> border;
         } bag;
     };
 }

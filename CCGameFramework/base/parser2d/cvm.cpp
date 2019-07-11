@@ -2086,6 +2086,16 @@ namespace clib {
             }
             auto wnd = handles[h].data.cwnd;
             wnd->post_data(code, param1, param2);
+            if (code == WM_SETFOCUS) {
+                if (wnds.size() > 1 && wnds.back() != wnd) {
+                    for (size_t i = 0; i < wnds.size(); i++) {
+                        if (wnds[i] == wnd) {
+                            std::swap(wnds[i], wnds.back());
+                        }
+                    }
+                }
+            }
+            return 0;
         }
         return -1;
     }
@@ -2463,6 +2473,8 @@ namespace clib {
             handles[h].data.cwnd = new cwindow(h, handles[h].name,
                 CRect(s.left, s.top, s.left + s.width, s.top + s.height));
             wnds.push_back(handles[h].data.cwnd);
+            handles[h].data.cwnd->hit(this, 200, s.left, s.top + 31);
+            handles[h].data.cwnd->hit(this, 211, s.left, s.top + 31);
             ctx->ax._i = h;
             break;
         }
@@ -2977,7 +2989,8 @@ namespace clib {
         if (n == 213) {
             auto& hover = cvm::global_state.window_hover;
             if (hover != -1) { // 当前有悬停窗口
-                post_data(hover, WM_MOUSEMOVE); // 给它发送MOUSEMOVE
+                post_data(hover, WM_MOUSELEAVE); // 给它发送MOUSELEAVE
+                hover = -1;
             }
             return;
         }
@@ -2990,8 +3003,8 @@ namespace clib {
         }
         if (wnds.empty())
             return;
-        for (size_t i = 0; i < wnds.size(); i++) {
-            if (wnds[i]->hit(this, n, global_state.mouse_x, global_state.mouse_y)) {
+        for (auto i = wnds.rbegin(); i != wnds.rend(); i++) {
+            if ((*i)->hit(this, n, global_state.mouse_x, global_state.mouse_y)) {
                 return;
             }
         }
