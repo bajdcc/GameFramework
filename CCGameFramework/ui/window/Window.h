@@ -116,7 +116,11 @@ public:
     {
         arrow = 1,
         hand,
-        ibeam
+        ibeam,
+        size_left,
+        size_top,
+        size_topleft,
+        size_topright,
     };
 
     struct event_base *get_event();

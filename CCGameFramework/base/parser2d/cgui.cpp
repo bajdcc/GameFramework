@@ -978,6 +978,13 @@ namespace clib {
             vm->hit(n);
     }
 
+    int cgui::cursor() const
+    {
+        if (vm)
+            return vm->cursor();
+        return 1;
+    }
+
     void cgui::exec_cmd(const string_t& s) {
         switch (s[0]) {
         case 'B': { // 设置背景色

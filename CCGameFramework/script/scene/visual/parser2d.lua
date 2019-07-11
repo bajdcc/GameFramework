@@ -122,6 +122,7 @@ function M:init_menu(info)
 	self:add(bg)
 	self.layers.pe2d = bg:add(PE2D:new({
 		hit = function(this, evt)
+			this.cur = UIExt.refresh(CurrentScene.layers.pe2d, -102)
 			UIExt.refresh(CurrentScene.layers.pe2d, CurrentCursorX | 0x40000)
 			UIExt.refresh(CurrentScene.layers.pe2d, CurrentCursorY | 0x80000)
 			UIExt.refresh(CurrentScene.layers.pe2d, evt | 0x100000)

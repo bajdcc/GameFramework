@@ -125,6 +125,7 @@ namespace clib {
 
         void paint_window(const CRect& bounds);
         void hit(int n);
+        int cursor() const;
 
     private:
         // 申请页框

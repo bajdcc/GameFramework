@@ -98,6 +98,9 @@ int Parser2DEngine::SetType(cint value)
         reset();
         return 1;
     }
+    if (value == -102) {
+        return clib::cgui::singleton().cursor();
+    }
     if (value & 0x40000) {
         clib::cvm::global_state.mouse_x = value & 0xffff;
         return 0;

@@ -973,6 +973,18 @@ bool Window::HandleMessageInternal(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM l
                     break;
                 case Window::ibeam:
                     idc = IDC_IBEAM;
+                case Window::size_left:
+                    idc = IDC_SIZEWE;
+                    break;
+                case Window::size_top:
+                    idc = IDC_SIZENS;
+                    break;
+                case Window::size_topleft:
+                    idc = IDC_SIZENWSE;
+                    break;
+                case Window::size_topright:
+                    idc = IDC_SIZENESW;
+                    break;
                 default:
                     break;
                 }

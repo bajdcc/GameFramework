@@ -68,6 +68,7 @@ namespace clib {
         void reset_cmd();
         int reset_cycles();
         void hit(int n);
+        int cursor() const;
 
     private:
         void tick();

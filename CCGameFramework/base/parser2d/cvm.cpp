@@ -3022,4 +3022,15 @@ namespace clib {
             }
         }
     }
+
+    int cvm::cursor() const
+    {
+        if (global_state.window_hover != -1) {
+            auto h = handles[global_state.window_hover];
+            if (h.type = h_window) {
+                return h.data.cwnd->get_cursor();
+            }
+        }
+        return 1;
+    }
 }

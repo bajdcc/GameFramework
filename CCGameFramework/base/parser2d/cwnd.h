@@ -48,6 +48,7 @@ namespace clib {
         window_state_t get_state() const;
 
         int get_msg_data();
+        int get_cursor() const;
 
         struct window_msg {
             int code;
@@ -63,6 +64,7 @@ namespace clib {
 
     private:
         void init();
+        bool is_border(const CPoint& pt, int& cx, int& cy);
 
     private:
         string_t caption;
@@ -82,6 +84,7 @@ namespace clib {
         CPoint self_drag_pt;
         CSize self_min_size;
         CRect self_drag_rt;
+        int cursor{ 1 };
 
         struct SystemBag {
             std::shared_ptr<SolidBackgroundElement> title;

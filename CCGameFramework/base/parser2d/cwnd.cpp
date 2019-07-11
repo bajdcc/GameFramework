@@ -54,6 +54,16 @@ namespace clib {
         return -1;
     }
 
+    int sys_cursor(int cx, int cy) {
+        using CT = Window::CursorType;
+        static int curs[] = {
+            CT::size_topleft, CT::size_left, CT::size_topright,
+            CT::size_top, CT::arrow, CT::size_top,
+            CT::size_topright, CT::size_left, CT::size_topleft,
+        };
+        return curs[(cx + 1) * 3 + (cy + 1)];
+    }
+
     cwindow::cwindow(int handle, const string_t& caption, const CRect& location)
         : handle(handle), caption(caption), location(location), self_min_size(100, 40)
     {
@@ -143,27 +153,21 @@ namespace clib {
                 post_data(WM_CLOSE);
                 return true;
             }
-            self_size = false;
-            int cx = 0, cy = 0;
-            if (abs(pt.x) <= 2) {
-                self_size = true;
-                cx = -1;
-            }
-            if (abs(pt.y) <= 2) {
-                self_size = true;
-                cy = -1;
-            }
-            if (abs(pt.x - location.Width()) <= 2) {
-                self_size = true;
-                cx = 1;
-            }
-            if (abs(pt.y - location.Height()) <= 2) {
-                self_size = true;
-                cy = 1;
-            }
+            int cx, cy;
+            self_size = is_border(pt, cx, cy);
             if (self_size) {
                 post_data(WM_MOVE, x, y);
                 post_data(WM_SIZE, cx, cy);
+            }
+        }
+        if (n == 211) {
+            post_data(WM_SETCURSOR, x, y);
+            int cx, cy;
+            if (is_border(pt, cx, cy)) {
+                cursor = sys_cursor(cx, cy);
+            }
+            else {
+                cursor = 1;
             }
         }
         int code = -1;
@@ -183,6 +187,7 @@ namespace clib {
         }
         post_data(code, pt.x, pt.y);
         if (n == 11) {
+            post_data(WM_SETCURSOR, pt.x, pt.y);
             auto& hover = cvm::global_state.window_hover;
             if (hover != -1) { // 当前有鼠标悬停
                 if (hover != handle) { // 非当前窗口
@@ -230,6 +235,11 @@ namespace clib {
         return d;
     }
 
+    int cwindow::get_cursor() const
+    {
+        return cursor;
+    }
+
     int cwindow::handle_msg(cvm* vm, const window_msg& msg)
     {
         switch (msg.code)
@@ -255,8 +265,13 @@ namespace clib {
             need_repaint = true;
             break;
         case WM_SIZE:
-            self_size_pt.x = (LONG)msg.param1;
-            self_size_pt.y = (LONG)msg.param2;
+            if ((LONG)msg.param1 == -1 && (LONG)msg.param2 == -1) {
+                cursor = 1;
+            }
+            else {
+                self_size_pt.x = (LONG)msg.param1;
+                self_size_pt.y = (LONG)msg.param2;
+            }
             break;
         case WM_SIZING:
             location = self_drag_rt;
@@ -273,6 +288,10 @@ namespace clib {
                 location.top = __min(location.bottom - self_min_size.cy, location.top + (LONG)msg.param2 - self_drag_pt.y);
             }
             need_repaint = true;
+            break;
+        case WM_SETCURSOR:
+        {
+        }
             break;
         default:
             break;
@@ -316,6 +335,30 @@ namespace clib {
         list.push_back(border);
     }
 
+    bool cwindow::is_border(const CPoint& pt, int& cx, int& cy)
+    {
+        auto suc = false;
+        cx = cy = 0;
+        const int border_len = 5;
+        if (abs(pt.x) <= border_len) {
+            suc = true;
+            cx = -1;
+        }
+        if (abs(pt.y) <= border_len) {
+            suc = true;
+            cy = -1;
+        }
+        if (abs(pt.x - location.Width()) <= border_len) {
+            suc = true;
+            cx = 1;
+        }
+        if (abs(pt.y - location.Height()) <= border_len) {
+            suc = true;
+            cy = 1;
+        }
+        return suc;
+    }
+
     void cwindow::post_data(const int& code, int param1, int param2)
     {
         if (code == WM_MOUSEENTER)
@@ -349,7 +392,10 @@ namespace clib {
         else if (code == WM_NCLBUTTONUP || code == WM_LBUTTONUP)
         {
             self_drag = false;
-            self_size = false;
+            if (self_size) {
+                self_size = false;
+                post_data(WM_SIZE, -1, -1);
+            }
         }
         window_msg s{ code, (uint32)param1, (uint32)param2 };
         const auto p = (byte*)& s;
