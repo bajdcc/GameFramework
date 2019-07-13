@@ -10,6 +10,8 @@
 #include <ui\window\Window.h>
 #include "cvfs.h"
 
+#define WINDOW_HANDLE_NUM 1024
+
 namespace clib {
     class vfs_node_stream_window : public vfs_node_dec {
         friend class cvfs;
@@ -27,6 +29,10 @@ namespace clib {
     private:
         vfs_stream_call* call{ nullptr };
         cwindow* wnd{ nullptr };
+    };
+
+    class comctl_base {
+
     };
 
     class cvm;
@@ -59,8 +65,18 @@ namespace clib {
             window_msg msg;
         };
 
+        enum window_comctl_type {
+            comctl_none = 0,
+            layout_absolute = 1,
+            layout_linear,
+            layout_grid,
+            comctl_label = 100,
+        };
+
         int handle_msg(cvm* vm, const window_msg& msg);
         void post_data(const int& code, int param1 = 0, int param2 = 0);
+
+        int create_comctl(cvm* vm, window_comctl_type type);
 
     private:
         void init();
@@ -85,6 +101,15 @@ namespace clib {
         CSize self_min_size;
         CRect self_drag_rt;
         int cursor{ 1 };
+
+        struct window_handle_t {
+            window_comctl_type type{ comctl_none };
+            comctl_base* comctl;
+        };
+        std::unordered_set<int> handles_set;
+        int handle_ids{ 0 };
+        int available_handles{ 0 };
+        std::array<window_handle_t, WINDOW_HANDLE_NUM> handles;
 
         struct SystemBag {
             std::shared_ptr<SolidBackgroundElement> title;

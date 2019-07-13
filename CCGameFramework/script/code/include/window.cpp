@@ -70,3 +70,23 @@ int window_set_text(int handle, char* text) {
 int window_get_text(int handle, char* text) {
     window_post_msg(handle, 0xD, text, 0);
 }
+
+enum window_comctl_type {
+    layout_absolute = 1,
+    layout_linear,
+    layout_grid,
+    comctl_label = 100,
+};
+
+struct __window_create_comctl_struct__ {
+    int handle;
+    int type;
+};
+
+long window_create_comctl(int handle, int type) {
+    __window_create_comctl_struct__ s;
+    s.handle = handle;
+    s.type = type;
+    &s;
+    interrupt 503;
+}

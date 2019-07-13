@@ -2493,6 +2493,26 @@ namespace clib {
             ctx->ax._i = -1;
             break;
         }
+        case 503:
+        {
+            struct __window_create_comctl_struct__ {
+                int handle;
+                cwindow::window_comctl_type type;
+            };
+            auto s = vmm_get<__window_create_comctl_struct__>(ctx->ax._ui);
+            auto h = s.handle;
+            if (ctx->handles.find(h) != ctx->handles.end()) {
+                if (handles[h].type != h_window) {
+                    ctx->ax._q = -1LL;
+                    break;
+                }
+                auto wnd = handles[h].data.cwnd;
+                ctx->ax._q = ((long long)h) << 32 || (long long)wnd->create_comctl(this, s.type);
+                break;
+            }
+            ctx->ax._q = -1LL;
+            break;
+        }
         default:
 #if LOG_SYSTEM
             ATLTRACE("[SYSTEM] ERR  | unknown interrupt: %d\n", ctx->ax._i);

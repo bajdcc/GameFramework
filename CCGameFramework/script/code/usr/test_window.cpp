@@ -13,8 +13,13 @@ int read_file(int id, int handle) {
     put_string("[INFO] Title: ");
     put_string(title);
     put_string("\n");
-    if (child)
+    if (child) {
         window_set_text(id, "- Test window -");
+        put_string("[INFO] Create layout: ");
+        long i = window_create_comctl(id, layout_absolute);
+        put_long(i);
+        put_string("\n");
+    }
     else
         window_set_text(id, "- Test window 2 -");
     __window_msg_struct__ s;

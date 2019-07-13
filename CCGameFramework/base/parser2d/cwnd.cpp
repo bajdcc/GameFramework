@@ -421,4 +421,25 @@ namespace clib {
             msg_data.push(p[i]);
         }
     }
+
+    int cwindow::create_comctl(cvm* vm, window_comctl_type type)
+    {
+        if (available_handles >= WINDOW_HANDLE_NUM)
+            vm->error("max window handle num!");
+        auto end = WINDOW_HANDLE_NUM + handle_ids;
+        for (int i = handle_ids; i < end; ++i) {
+            auto j = i % WINDOW_HANDLE_NUM;
+            if (handles[j].type == comctl_none) {
+                handles[j].type = type;
+                handles[j].comctl = nullptr;
+                handle_ids = (j + 1) % WINDOW_HANDLE_NUM;
+                available_handles++;
+                handles_set.insert(j);
+                // TODO: Add to fs
+                return j;
+            }
+        }
+        vm->error("max window handle num!");
+        return -1;
+    }
 }
