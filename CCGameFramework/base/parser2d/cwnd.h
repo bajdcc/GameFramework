@@ -32,7 +32,10 @@ namespace clib {
     };
 
     class comctl_base {
-
+    public:
+        comctl_base(int type);
+    protected:
+        int type{ 0 };
     };
 
     class cvm;
@@ -43,7 +46,7 @@ namespace clib {
 
         void init(cvm *vm);
         void paint(const CRect& bounds);
-        bool hit(cvm* vm, int n, int x = 0, int y = 0);
+        bool hit(int n, int x = 0, int y = 0);
 
         enum window_state_t {
             W_NONE,
@@ -74,16 +77,22 @@ namespace clib {
             comctl_end = 1000,
         };
 
-        int handle_msg(cvm* vm, const window_msg& msg);
+        int handle_msg(const window_msg& msg);
         void post_data(const int& code, int param1 = 0, int param2 = 0);
 
-        int create_comctl(cvm* vm, window_comctl_type type);
+        int create_comctl(window_comctl_type type);
         static string_t cwindow::handle_typename(window_comctl_type t);
         string_t handle_fs(const string_t& path);
 
     private:
         void init();
         bool is_border(const CPoint& pt, int& cx, int& cy);
+        static comctl_base* new_comctl(window_comctl_type t);
+
+        void error(const string_t& str) const;
+
+        void destroy();
+        void destroy_handle(int handle);
 
     private:
         string_t caption;
@@ -104,6 +113,7 @@ namespace clib {
         CSize self_min_size;
         CRect self_drag_rt;
         int cursor{ 1 };
+        cvm* vm{ nullptr };
 
         struct window_handle_t {
             window_comctl_type type{ comctl_none };
@@ -120,6 +130,16 @@ namespace clib {
             std::shared_ptr<SolidLabelElement> close_text;
             std::shared_ptr<RoundBorderElement> border;
         } bag;
+    };
+
+    class cwindow_layout : public comctl_base {
+    public:
+        cwindow_layout(int type);
+    };
+
+    class cwindow_layout_absolute : public cwindow_layout {
+    public:
+        cwindow_layout_absolute(int type);
     };
 }
 

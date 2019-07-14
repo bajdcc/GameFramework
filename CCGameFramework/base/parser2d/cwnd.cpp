@@ -85,14 +85,16 @@ namespace clib {
             focus = -1;
         if (hover == handle)
             hover = -1;
+        destroy();
     }
 
     void cwindow::init(cvm* vm)
     {
+        this->vm = vm;
         const auto& s = location;
-        hit(vm, 200, s.left + 1, s.top + 1);
-        hit(vm, 211, s.left + 1, s.top + 1);
-        hit(vm, 201, s.left + 1, s.top + 1);
+        hit(200, s.left + 1, s.top + 1);
+        //hit(211, s.left + 1, s.top + 1);
+        hit(201, s.left + 1, s.top + 1);
     }
 
     void cwindow::paint(const CRect& bounds)
@@ -118,7 +120,7 @@ namespace clib {
     }
 
 #define WM_MOUSEENTER 0x2A5
-    bool cwindow::hit(cvm* vm, int n, int x, int y)
+    bool cwindow::hit(int n, int x, int y)
     {
         static int mapnc[] = {
             WM_NCLBUTTONDOWN, WM_NCLBUTTONUP, WM_NCLBUTTONDBLCLK,
@@ -230,7 +232,7 @@ namespace clib {
         return cursor;
     }
 
-    int cwindow::handle_msg(cvm* vm, const window_msg& msg)
+    int cwindow::handle_msg(const window_msg& msg)
     {
         switch (msg.code)
         {
@@ -312,7 +314,7 @@ namespace clib {
         bag.close_text = close_text;
         list.push_back(close_text);
         auto border = RoundBorderElement::Create();
-        border->SetColor(CColor(36, 125, 234));
+        border->SetColor(CColor(149, 187, 234));
         border->SetFill(false);
         border->SetRadius(0.0f);
         border->SetRenderRect(r);
@@ -342,6 +344,51 @@ namespace clib {
             cy = 1;
         }
         return suc;
+    }
+
+    comctl_base* cwindow::new_comctl(window_comctl_type t)
+    {
+        switch (t) {
+        case layout_absolute: return new cwindow_layout_absolute(t);
+        case layout_linear: break;
+        case layout_grid: break;
+        case comctl_label: break;
+        }
+        return nullptr;
+    }
+
+    void cwindow::error(const string_t& str) const
+    {
+        vm->error(str);
+    }
+
+    void cwindow::destroy()
+    {
+        auto hs = handles_set;
+        for (auto& h : hs) {
+            destroy_handle(h);
+        }
+    }
+
+    void cwindow::destroy_handle(int handle)
+    {
+        if (handle < 0 || handle >= WINDOW_HANDLE_NUM)
+            error("invalid handle");
+        if (handles[handle].type != comctl_none) {
+            handles_set.erase(handle);
+            auto h = &handles[handle];
+            delete h->comctl;
+            h->type = comctl_none;
+            available_handles--;
+            {
+                std::stringstream ss;
+                ss << "/handle/" << this->handle << "/comctl/" << handle;
+                vm->fs.rm(ss.str());
+            }
+        }
+        else {
+            error("destroy handle failed!");
+        }
     }
 
     void cwindow::post_data(const int& code, int param1, int param2)
@@ -422,10 +469,10 @@ namespace clib {
         }
     }
 
-    int cwindow::create_comctl(cvm* vm, window_comctl_type type)
+    int cwindow::create_comctl(window_comctl_type type)
     {
         if (available_handles >= WINDOW_HANDLE_NUM)
-            vm->error("max window handle num!");
+            error("max window handle num!");
         auto end = WINDOW_HANDLE_NUM + handle_ids;
         for (int i = handle_ids; i < end; ++i) {
             auto j = i % WINDOW_HANDLE_NUM;
@@ -456,7 +503,7 @@ namespace clib {
                 return j;
             }
         }
-        vm->error("max window handle num!");
+        error("max window handle num!");
         return -1;
     }
 
@@ -493,5 +540,17 @@ namespace clib {
             }
         }
         return "\033FFFF00000\033[ERROR] Invalid handle.\033S4\033";
+    }
+
+    comctl_base::comctl_base(int type) : type(type)
+    {
+    }
+
+    cwindow_layout::cwindow_layout(int type) : comctl_base(type)
+    {
+    }
+
+    cwindow_layout_absolute::cwindow_layout_absolute(int type) : cwindow_layout(type)
+    {
     }
 }

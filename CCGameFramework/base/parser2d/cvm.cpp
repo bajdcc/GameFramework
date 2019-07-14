@@ -2495,7 +2495,7 @@ namespace clib {
                     break;
                 }
                 auto wnd = handles[h].data.cwnd;
-                ctx->ax._i = wnd->handle_msg(this, s.msg);
+                ctx->ax._i = wnd->handle_msg(s.msg);
                 break;
             }
             ctx->ax._i = -1;
@@ -2515,7 +2515,7 @@ namespace clib {
                     break;
                 }
                 auto wnd = handles[h].data.cwnd;
-                ctx->ax._q = ((long long)h) << 32 || (long long)wnd->create_comctl(this, s.type);
+                ctx->ax._q = ((long long)h) << 32 || (long long)wnd->create_comctl(s.type);
                 break;
             }
             ctx->ax._q = -1LL;
@@ -3031,7 +3031,7 @@ namespace clib {
         if (wnds.empty())
             return;
         for (auto i = wnds.rbegin(); i != wnds.rend(); i++) {
-            if ((*i)->hit(this, n, global_state.mouse_x, global_state.mouse_y)) {
+            if ((*i)->hit(n, global_state.mouse_x, global_state.mouse_y)) {
                 return;
             }
         }
