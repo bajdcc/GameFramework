@@ -1840,7 +1840,7 @@ namespace clib {
             }
         }
         else if (path.substr(0, 8) == "/handle/") {
-            static string_t pat{ R"(/handle/(\d+)/([a-z_]+))" };
+            static string_t pat{ R"(/handle/(\d+)/([a-z_]+)(/.*))" };
             static std::regex re(pat);
             std::smatch res;
             if (std::regex_match(path, res, re)) {
@@ -1854,6 +1854,12 @@ namespace clib {
                 }
                 else if (op == "name") {
                     return handles[id].name;
+                }
+                else {
+                    if (handles[id].type == h_window) {
+                        return handles[id].data.cwnd->handle_fs(res[3].str());
+                    }
+                    return "\033FFFF00000\033[ERROR] Invalid handle.\033S4\033";
                 }
             }
         }
@@ -2008,8 +2014,10 @@ namespace clib {
                     auto dir = ss.str();
                     fs.as_root(true);
                     if (fs.mkdir(dir) == 0) { // '/handle/[hid]'
-                        static std::vector<string_t> ps =
-                        { "type", "name" };
+                        std::vector<string_t> ps = { "type", "name" };
+                        if (type == h_window) {
+                            ps.push_back("comctl");
+                        }
                         dir += "/";
                         for (auto& _ps : ps) {
                             ss.str("");

@@ -435,11 +435,63 @@ namespace clib {
                 handle_ids = (j + 1) % WINDOW_HANDLE_NUM;
                 available_handles++;
                 handles_set.insert(j);
-                // TODO: Add to fs
+                {
+                    std::stringstream ss;
+                    ss << "/handle/" << handle << "/comctl/" << j;
+                    auto dir = ss.str();
+                    auto& fs = vm->fs;
+                    fs.as_root(true);
+                    if (fs.mkdir(dir) == 0) { // '/handle/[widnwo id]/comctl/[comctl id]'
+                        static std::vector<string_t> ps =
+                        { "type", "name" };
+                        dir += "/";
+                        for (auto& _ps : ps) {
+                            ss.str("");
+                            ss << dir << _ps;
+                            fs.func(ss.str(), vm);
+                        }
+                    }
+                    fs.as_root(false);
+                }
                 return j;
             }
         }
         vm->error("max window handle num!");
         return -1;
+    }
+
+    string_t cwindow::handle_typename(window_comctl_type t)
+    {
+        static std::tuple<window_comctl_type, string_t> handle_typename_list[] = {
+            std::make_tuple(comctl_none, "none"),
+            std::make_tuple(layout_absolute, "absolute layout"),
+            std::make_tuple(layout_linear, "linear layout"),
+            std::make_tuple(layout_grid, "grid layout"),
+            std::make_tuple(comctl_label, "label"),
+            std::make_tuple(comctl_end, "end"),
+        };
+        assert(t >= comctl_none && t < comctl_end);
+        return std::get<1>(handle_typename_list[t]);
+    }
+
+    string_t cwindow::handle_fs(const string_t& path)
+    {
+        static string_t pat{ R"(/(\d+)/([a-z_]+))" };
+        static std::regex re(pat);
+        std::smatch res;
+        if (std::regex_match(path, res, re)) {
+            auto id = std::stoi(res[1].str());
+            if (handles[id].type == comctl_none) {
+                return "\033FFFF00000\033[ERROR] Invalid handle.\033S4\033";
+            }
+            const auto& op = res[2].str();
+            if (op == "type") {
+                return handle_typename(handles[id].type);
+            }
+            else if (op == "name") {
+                return "none";
+            }
+        }
+        return "\033FFFF00000\033[ERROR] Invalid handle.\033S4\033";
     }
 }

@@ -71,12 +71,15 @@ namespace clib {
             layout_linear,
             layout_grid,
             comctl_label = 100,
+            comctl_end = 1000,
         };
 
         int handle_msg(cvm* vm, const window_msg& msg);
         void post_data(const int& code, int param1 = 0, int param2 = 0);
 
         int create_comctl(cvm* vm, window_comctl_type type);
+        static string_t cwindow::handle_typename(window_comctl_type t);
+        string_t handle_fs(const string_t& path);
 
     private:
         void init();
