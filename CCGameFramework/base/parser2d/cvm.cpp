@@ -2466,6 +2466,12 @@ namespace clib {
         return false;
     }
 
+
+    bool cvm::is_window_handle(int h) const
+    {
+        return ctx->handles.find(h) != ctx->handles.end() && handles[h].type == h_window;
+    }
+
     bool cvm::wnd(int id)
     {
         switch (id) {
@@ -2478,10 +2484,10 @@ namespace clib {
             auto s = vmm_get<__window_create_struct__>(ctx->ax._ui);
             auto h = new_handle(h_window);
             handles[h].name = vmm_getstr(s.caption);
-            handles[h].data.cwnd = new cwindow(h, handles[h].name,
+            handles[h].data.cwnd = new cwindow(this, h, handles[h].name,
                 CRect(s.left, s.top, s.left + s.width, s.top + s.height));
             wnds.push_back(handles[h].data.cwnd);
-            handles[h].data.cwnd->init(this);
+            handles[h].data.cwnd->init();
             ctx->ax._i = h;
             break;
         }
@@ -2489,11 +2495,7 @@ namespace clib {
         {
             auto s = vmm_get<cwindow::window_msg2>(ctx->ax._ui);
             auto h = s.handle;
-            if (ctx->handles.find(h) != ctx->handles.end()) {
-                if (handles[h].type != h_window) {
-                    ctx->ax._i = -1;
-                    break;
-                }
+            if (is_window_handle(h)) {
                 auto wnd = handles[h].data.cwnd;
                 ctx->ax._i = wnd->handle_msg(s.msg);
                 break;
@@ -2509,16 +2511,78 @@ namespace clib {
             };
             auto s = vmm_get<__window_create_comctl_struct__>(ctx->ax._ui);
             auto h = s.handle;
-            if (ctx->handles.find(h) != ctx->handles.end()) {
-                if (handles[h].type != h_window) {
-                    ctx->ax._q = -1LL;
-                    break;
-                }
+            if (is_window_handle(h)) {
                 auto wnd = handles[h].data.cwnd;
-                ctx->ax._q = ((long long)h) << 32 || (long long)wnd->create_comctl(s.type);
+                ctx->ax._u._1 = h;
+                ctx->ax._u._2 = wnd->create_comctl(s.type);
                 break;
             }
             ctx->ax._q = -1LL;
+            break;
+        }
+        case 504:
+        {
+            auto h = ctx->ax._i;
+            if (is_window_handle(h)) {
+                auto wnd = handles[h].data.cwnd;
+                ctx->ax._u._1 = h;
+                ctx->ax._u._2 = wnd->get_base();
+                break;
+            }
+            ctx->ax._q = -1LL;
+            break;
+        }
+        case 505:
+        {
+            struct __window_comctl_connect_struct__ {
+                int handle; int id;
+                int child; int cid;
+            };
+            auto s = vmm_get<__window_comctl_connect_struct__>(ctx->ax._ui);
+            auto h = s.handle;
+            auto c = s.child;
+            if (h == c && is_window_handle(h)) {
+                auto wnd = handles[h].data.cwnd;
+                ctx->ax._i = wnd->connect(s.id, s.cid) ? 0 : -1;
+                break;
+            }
+            ctx->ax._i = -1;
+            break;
+        }
+        case 509:
+        {
+            struct __window_comctl_set_bound_struct__ {
+                int handle; int id;
+                int left, top, right, bottom;
+            };
+            auto s = vmm_get<__window_comctl_set_bound_struct__>(ctx->ax._ui);
+            auto h = s.handle;
+            auto c = s.id;
+            if (is_window_handle(h)) {
+                auto wnd = handles[h].data.cwnd;
+                ctx->ax._i = wnd->set_bound(c, CRect(s.left, s.top, s.right, s.bottom)) ? 0 : -1;
+                break;
+            }
+            ctx->ax._i = -1;
+            break;
+        }
+
+        case 510:
+        {
+            struct __window_comctl_set_text_struct__ {
+                int handle; int id;
+                uint32 text;
+            };
+            auto s = vmm_get<__window_comctl_set_text_struct__>(ctx->ax._ui);
+            auto h = s.handle;
+            auto c = s.id;
+            auto text = vmm_getstr(s.text);
+            if (is_window_handle(h)) {
+                auto wnd = handles[h].data.cwnd;
+                ctx->ax._i = wnd->set_text(c, text) ? 0 : -1;
+                break;
+            }
+            ctx->ax._i = -1;
             break;
         }
         default:

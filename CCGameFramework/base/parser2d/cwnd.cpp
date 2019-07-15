@@ -64,8 +64,8 @@ namespace clib {
         return curs[(cx + 1) * 3 + (cy + 1)];
     }
 
-    cwindow::cwindow(int handle, const string_t& caption, const CRect& location)
-        : handle(handle), caption(caption), location(location), self_min_size(100, 40)
+    cwindow::cwindow(cvm* vm, int handle, const string_t& caption, const CRect& location)
+        : vm(vm), handle(handle), caption(caption), location(location), self_min_size(100, 40)
     {
         auto bg = SolidBackgroundElement::Create();
         bg->SetColor(CColor(Gdiplus::Color::White));
@@ -73,7 +73,7 @@ namespace clib {
         root->SetRenderRect(location);
         renderTarget = std::make_shared<Direct2DRenderTarget>(window->shared_from_this());
         renderTarget->Init();
-        init();
+        _init();
         root->GetRenderer()->SetRenderTarget(renderTarget);
     }
 
@@ -88,9 +88,8 @@ namespace clib {
         destroy();
     }
 
-    void cwindow::init(cvm* vm)
+    void cwindow::init()
     {
-        this->vm = vm;
         const auto& s = location;
         hit(200, s.left + 1, s.top + 1);
         //hit(211, s.left + 1, s.top + 1);
@@ -115,8 +114,11 @@ namespace clib {
             rt.right = bounds.Width();
             rt.bottom = bounds.Height();
             bag.border->SetRenderRect(rt);
+            bounds3 = root->GetRenderRect();
+            bounds3.top += bag.title->GetRenderRect().Height();
         }
         root->GetRenderer()->Render(root->GetRenderRect());
+        bag.comctl->paint(bounds3);
     }
 
 #define WM_MOUSEENTER 0x2A5
@@ -286,7 +288,7 @@ namespace clib {
         return 0;
     }
 
-    void cwindow::init()
+    void cwindow::_init()
     {
         auto r = root->GetRenderRect();
         auto& list = root->GetChildren();
@@ -320,6 +322,8 @@ namespace clib {
         border->SetRenderRect(r);
         bag.border = border;
         list.push_back(border);
+        base_id = create_comctl(layout_linear);
+        bag.comctl = handles[base_id].comctl;
     }
 
     bool cwindow::is_border(const CPoint& pt, int& cx, int& cy)
@@ -349,10 +353,10 @@ namespace clib {
     comctl_base* cwindow::new_comctl(window_comctl_type t)
     {
         switch (t) {
-        case layout_absolute: return new cwindow_layout_absolute(t);
-        case layout_linear: break;
+        case layout_absolute: return new cwindow_layout_absolute();
+        case layout_linear: return new cwindow_layout_linear();
         case layout_grid: break;
-        case comctl_label: break;
+        case comctl_label: return new cwindow_comctl_label();
         }
         return nullptr;
     }
@@ -366,13 +370,15 @@ namespace clib {
     {
         auto hs = handles_set;
         for (auto& h : hs) {
-            destroy_handle(h);
+            destroy_handle(h, true);
         }
     }
 
-    void cwindow::destroy_handle(int handle)
+    void cwindow::destroy_handle(int handle, bool force)
     {
         if (handle < 0 || handle >= WINDOW_HANDLE_NUM)
+            error("invalid handle");
+        if (!force && handle == base_id)
             error("invalid handle");
         if (handles[handle].type != comctl_none) {
             handles_set.erase(handle);
@@ -389,6 +395,11 @@ namespace clib {
         else {
             error("destroy handle failed!");
         }
+    }
+
+    bool cwindow::valid_handle(int h) const
+    {
+        return handles_set.find(h) != handles_set.end();
     }
 
     void cwindow::post_data(const int& code, int param1, int param2)
@@ -478,7 +489,8 @@ namespace clib {
             auto j = i % WINDOW_HANDLE_NUM;
             if (handles[j].type == comctl_none) {
                 handles[j].type = type;
-                handles[j].comctl = nullptr;
+                handles[j].comctl = new_comctl(type);
+                handles[j].comctl->set_rt(renderTarget);
                 handle_ids = (j + 1) % WINDOW_HANDLE_NUM;
                 available_handles++;
                 handles_set.insert(j);
@@ -542,15 +554,132 @@ namespace clib {
         return "\033FFFF00000\033[ERROR] Invalid handle.\033S4\033";
     }
 
+    int cwindow::get_base() const
+    {
+        return base_id;
+    }
+
+    bool cwindow::connect(int p, int c)
+    {
+        if (p != c && valid_handle(p) && valid_handle(c) && !handles[c].comctl->get_parent() && handles[p].comctl->get_layout()) {
+            handles[p].comctl->get_layout()->add(handles[c].comctl);
+            return true;
+        }
+        return false;
+    }
+
+    bool cwindow::set_bound(int h, const CRect& bound)
+    {
+        if (valid_handle(h)) {
+            handles[h].comctl->set_bound(bound);
+            return true;
+        }
+        return false;
+    }
+
+    bool cwindow::set_text(int h, const string_t& text)
+    {
+        if (valid_handle(h) && handles[h].comctl->get_label()) {
+            handles[h].comctl->get_label()->set_text(text);
+            return true;
+        }
+        return false;
+    }
+
     comctl_base::comctl_base(int type) : type(type)
     {
+    }
+
+    void comctl_base::set_rt(std::shared_ptr<Direct2DRenderTarget> rt)
+    {
+        this->rt = rt;
+    }
+
+    void comctl_base::paint(const CRect& bounds)
+    {
+    }
+
+    comctl_base* comctl_base::get_parent() const
+    {
+        return parent;
+    }
+
+    cwindow_layout* comctl_base::get_layout()
+    {
+        return nullptr;
+    }
+
+    cwindow_comctl_label* comctl_base::get_label()
+    {
+        return nullptr;
+    }
+
+    void comctl_base::set_bound(const CRect& bound)
+    {
+        this->bound = bound;
     }
 
     cwindow_layout::cwindow_layout(int type) : comctl_base(type)
     {
     }
 
-    cwindow_layout_absolute::cwindow_layout_absolute(int type) : cwindow_layout(type)
+    cwindow_layout* cwindow_layout::get_layout()
     {
+        return this;
+    }
+
+    void cwindow_layout::add(comctl_base* child)
+    {
+        children.push_back(child);
+    }
+
+    cwindow_layout_absolute::cwindow_layout_absolute() : cwindow_layout(cwindow::layout_absolute)
+    {
+    }
+
+    void cwindow_layout_absolute::paint(const CRect& bounds)
+    {
+        if (children.empty())
+            return;
+        children[0]->paint(bounds);
+    }
+
+    cwindow_layout_linear::cwindow_layout_linear() : cwindow_layout(cwindow::layout_linear)
+    {
+    }
+
+    void cwindow_layout_linear::paint(const CRect& bounds)
+    {
+        if (children.empty())
+            return;
+        children[0]->paint(bounds);
+    }
+
+    cwindow_comctl_label::cwindow_comctl_label() : comctl_base(cwindow::comctl_label)
+    {
+        text = SolidLabelElement::Create();
+        text->SetColor(CColor(Gdiplus::Color::Black));
+    }
+
+    void cwindow_comctl_label::set_rt(std::shared_ptr<Direct2DRenderTarget> rt)
+    {
+        comctl_base::set_rt(rt);
+        text->GetRenderer()->SetRenderTarget(rt);
+    }
+
+    void cwindow_comctl_label::paint(const CRect& bounds)
+    {
+        text->SetRenderRect((bound).OfRect(bounds));
+        text->GetRenderer()->Render(text->GetRenderRect());
+    }
+
+    cwindow_comctl_label* cwindow_comctl_label::get_label()
+    {
+        return this;
+    }
+
+    void cwindow_comctl_label::set_text(const string_t& text)
+    {
+        this->text->SetText(CString(CStringA(text.c_str())));
     }
 }

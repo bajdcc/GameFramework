@@ -186,6 +186,7 @@ namespace clib {
         string_t handle_typename(handle_type);
         void destroy_handle(int handle);
         int post_data(int handle, int code, int param1 = 0, int param2 = 0);
+        bool is_window_handle(int handle) const;
 
     private:
         /* 内核页表 = PTE_SIZE*PAGE_SIZE */

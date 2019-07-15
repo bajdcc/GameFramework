@@ -31,20 +31,31 @@ namespace clib {
         cwindow* wnd{ nullptr };
     };
 
+    class cwindow_comctl_label;
+    class cwindow_layout;
     class comctl_base {
     public:
         comctl_base(int type);
+        virtual void set_rt(std::shared_ptr<Direct2DRenderTarget> rt);
+        virtual void paint(const CRect& bounds);
+        comctl_base* get_parent() const;
+        virtual cwindow_layout* get_layout();
+        virtual cwindow_comctl_label* get_label();
+        void set_bound(const CRect& bound);
     protected:
         int type{ 0 };
+        comctl_base* parent{ nullptr };
+        CRect bound;
+        std::weak_ptr<Direct2DRenderTarget> rt;
     };
 
     class cvm;
     class cwindow {
     public:
-        explicit cwindow(int handle, const string_t& caption, const CRect& location);
+        explicit cwindow(cvm* vm, int handle, const string_t& caption, const CRect& location);
         ~cwindow();
 
-        void init(cvm *vm);
+        void init();
         void paint(const CRect& bounds);
         bool hit(int n, int x = 0, int y = 0);
 
@@ -83,23 +94,30 @@ namespace clib {
         int create_comctl(window_comctl_type type);
         static string_t cwindow::handle_typename(window_comctl_type t);
         string_t handle_fs(const string_t& path);
+        int get_base() const;
+
+        bool connect(int p, int c);
+        bool set_bound(int h, const CRect& bound);
+        bool set_text(int h, const string_t& text);
 
     private:
-        void init();
+        void _init();
         bool is_border(const CPoint& pt, int& cx, int& cy);
         static comctl_base* new_comctl(window_comctl_type t);
 
         void error(const string_t& str) const;
 
         void destroy();
-        void destroy_handle(int handle);
+        void destroy_handle(int handle, bool force = false);
+
+        bool valid_handle(int h) const;
 
     private:
         string_t caption;
         CRect location;
         std::shared_ptr<IGraphicsElement> root;
         std::shared_ptr<Direct2DRenderTarget> renderTarget;
-        CRect bounds1, bounds2;
+        CRect bounds1, bounds2, bounds3;
         window_state_t state{ W_RUNNING };
         std::queue<byte> msg_data;
         int handle{ -1 };
@@ -114,10 +132,11 @@ namespace clib {
         CRect self_drag_rt;
         int cursor{ 1 };
         cvm* vm{ nullptr };
+        int base_id{ -1 };
 
         struct window_handle_t {
             window_comctl_type type{ comctl_none };
-            comctl_base* comctl;
+            comctl_base* comctl{ nullptr };
         };
         std::unordered_set<int> handles_set;
         int handle_ids{ 0 };
@@ -129,17 +148,40 @@ namespace clib {
             std::shared_ptr<SolidLabelElement> title_text;
             std::shared_ptr<SolidLabelElement> close_text;
             std::shared_ptr<RoundBorderElement> border;
+            comctl_base* comctl{ nullptr };
         } bag;
     };
 
     class cwindow_layout : public comctl_base {
     public:
         cwindow_layout(int type);
+        cwindow_layout* get_layout();
+        void add(comctl_base* child);
+    protected:
+        std::vector<comctl_base*> children;
     };
 
     class cwindow_layout_absolute : public cwindow_layout {
     public:
-        cwindow_layout_absolute(int type);
+        cwindow_layout_absolute();
+        void paint(const CRect& bounds) override;
+    };
+
+    class cwindow_layout_linear : public cwindow_layout {
+    public:
+        cwindow_layout_linear();
+        void paint(const CRect& bounds) override;
+    };
+
+    class cwindow_comctl_label : public comctl_base {
+    public:
+        cwindow_comctl_label();
+        void set_rt(std::shared_ptr<Direct2DRenderTarget> rt) override;
+        void paint(const CRect& bounds) override;
+        cwindow_comctl_label* get_label() override;
+        void set_text(const string_t& text);
+    private:
+        std::shared_ptr<SolidLabelElement> text;
     };
 }
 

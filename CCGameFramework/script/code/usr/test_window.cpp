@@ -15,10 +15,12 @@ int read_file(int id, int handle) {
     put_string("\n");
     if (child) {
         window_set_text(id, "- Test window -");
-        put_string("[INFO] Create layout: ");
-        long i = window_create_comctl(id, layout_absolute);
-        put_long(i);
-        put_string("\n");
+        long layout = window_create_comctl(id, layout_absolute);
+        long text = window_create_comctl(id, comctl_label);
+        window_comctl_connect(window_get_base(id), layout);
+        window_comctl_connect(layout, text);
+        window_comctl_set_text(text, "Hello world!");
+        window_comctl_set_bound(text, 10, 10, 200, 30);
     }
     else
         window_set_text(id, "- Test window 2 -");

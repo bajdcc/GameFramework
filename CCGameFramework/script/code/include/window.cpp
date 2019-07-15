@@ -90,3 +90,50 @@ long window_create_comctl(int handle, int type) {
     &s;
     interrupt 503;
 }
+
+long window_get_base(int handle) {
+    handle;
+    interrupt 504;
+}
+
+struct __window_comctl_connect_struct__ {
+    long handle;
+    long child;
+};
+
+int window_comctl_connect(long handle, long child) {
+    __window_comctl_connect_struct__ s;
+    s.handle = handle;
+    s.child = child;
+    &s;
+    interrupt 505;
+}
+
+struct __window_comctl_set_bound_struct__ {
+    long handle;
+    int left, top, right, bottom;
+};
+
+int window_comctl_set_bound(long handle, int left, int top, int right, int bottom) {
+    __window_comctl_set_bound_struct__ s;
+    s.handle = handle;
+    s.left = left;
+    s.top = top;
+    s.right = right;
+    s.bottom = bottom;
+    &s;
+    interrupt 509;
+}
+
+struct __window_comctl_set_text_struct__ {
+    long handle;
+    char* text;
+};
+
+int window_comctl_set_text(long handle, char* text) {
+    __window_comctl_set_text_struct__ s;
+    s.handle = handle;
+    s.text = text;
+    &s;
+    interrupt 510;
+}
