@@ -414,6 +414,9 @@ void SolidLabelElementRenderer::Render(CRect bounds)
         CComPtr<IDWriteInlineObject> inlineObject;
         textLayout->GetTrimming(&trimming, &inlineObject);
         textLayout->SetWordWrapping(DWRITE_WORD_WRAPPING_WRAP);
+        trimming.granularity = DWRITE_TRIMMING_GRANULARITY_CHARACTER;
+        trimming.delimiter = 1;
+        trimming.delimiterCount = 3;
         switch (e->GetHorizontalAlignment())
         {
         case Alignment::StringAlignmentNear:

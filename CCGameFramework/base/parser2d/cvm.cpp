@@ -2549,6 +2549,22 @@ namespace clib {
             ctx->ax._i = -1;
             break;
         }
+        case 506:
+        {
+            struct __window_comctl_set_flag_struct__ {
+                int handle; int id;
+                int flag;
+            };
+            auto s = vmm_get<__window_comctl_set_flag_struct__>(ctx->ax._ui);
+            auto h = s.handle;
+            if (is_window_handle(h)) {
+                auto wnd = handles[h].data.cwnd;
+                ctx->ax._i = wnd->set_flag(s.id, s.flag) ? 0 : -1;
+                break;
+            }
+            ctx->ax._i = -1;
+            break;
+        }
         case 509:
         {
             struct __window_comctl_set_bound_struct__ {

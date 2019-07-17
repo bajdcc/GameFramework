@@ -109,6 +109,19 @@ int window_comctl_connect(long handle, long child) {
     interrupt 505;
 }
 
+struct __window_comctl_set_flag_struct__ {
+    long handle;
+    int flag;
+};
+
+int window_comctl_set_flag(long handle, int flag) {
+    __window_comctl_set_flag_struct__ s;
+    s.handle = handle;
+    s.flag = flag;
+    &s;
+    interrupt 506;
+}
+
 struct __window_comctl_set_bound_struct__ {
     long handle;
     int left, top, right, bottom;
@@ -137,3 +150,16 @@ int window_comctl_set_text(long handle, char* text) {
     &s;
     interrupt 510;
 }
+
+// ----------------------------------------
+// FLAG
+
+int window_layout_linear_set_vertical_align(long handle) { window_comctl_set_flag(handle, 0); }
+int window_layout_linear_set_horizontal_align(long handle) { window_comctl_set_flag(handle, 1); }
+
+int window_comctl_label_set_vertical_align_top(long handle) { window_comctl_set_flag(handle, 10); }
+int window_comctl_label_set_vertical_align_middle(long handle) { window_comctl_set_flag(handle, 11); }
+int window_comctl_label_set_vertical_align_bottom(long handle) { window_comctl_set_flag(handle, 12); }
+int window_comctl_label_set_horizontal_align_left(long handle) { window_comctl_set_flag(handle, 13); }
+int window_comctl_label_set_horizontal_align_middle(long handle) { window_comctl_set_flag(handle, 14); }
+int window_comctl_label_set_horizontal_align_right(long handle) { window_comctl_set_flag(handle, 15); }

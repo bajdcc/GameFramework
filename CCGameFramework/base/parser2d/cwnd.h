@@ -42,6 +42,8 @@ namespace clib {
         virtual cwindow_layout* get_layout();
         virtual cwindow_comctl_label* get_label();
         void set_bound(const CRect& bound);
+        CRect get_bound() const;
+        virtual int set_flag(int flag);
     protected:
         int type{ 0 };
         comctl_base* parent{ nullptr };
@@ -99,6 +101,7 @@ namespace clib {
         bool connect(int p, int c);
         bool set_bound(int h, const CRect& bound);
         bool set_text(int h, const string_t& text);
+        bool set_flag(int h, int flag);
 
     private:
         void _init();
@@ -171,6 +174,12 @@ namespace clib {
     public:
         cwindow_layout_linear();
         void paint(const CRect& bounds) override;
+        int set_flag(int flag) override;
+    private:
+        enum align_type {
+            vertical,
+            horizontal,
+        } align{ vertical };
     };
 
     class cwindow_comctl_label : public comctl_base {
@@ -180,6 +189,7 @@ namespace clib {
         void paint(const CRect& bounds) override;
         cwindow_comctl_label* get_label() override;
         void set_text(const string_t& text);
+        int set_flag(int flag) override;
     private:
         std::shared_ptr<SolidLabelElement> text;
     };

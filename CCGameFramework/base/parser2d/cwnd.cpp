@@ -7,6 +7,10 @@
 #include "cvm.h"
 #include "cwnd.h"
 
+#define WINDOW_CLOSE_BTN_X 20
+#define WINDOW_MIN_SIZE_X 100
+#define WINDOW_MIN_SIZE_Y 40
+
 namespace clib {
 
     vfs_node_stream_window::vfs_node_stream_window(const vfs_mod_query* mod, vfs_stream_t s, vfs_stream_call* call, int id) :
@@ -65,7 +69,7 @@ namespace clib {
     }
 
     cwindow::cwindow(cvm* vm, int handle, const string_t& caption, const CRect& location)
-        : vm(vm), handle(handle), caption(caption), location(location), self_min_size(100, 40)
+        : vm(vm), handle(handle), caption(caption), location(location), self_min_size(WINDOW_MIN_SIZE_X, WINDOW_MIN_SIZE_Y)
     {
         auto bg = SolidBackgroundElement::Create();
         bg->SetColor(CColor(Gdiplus::Color::White));
@@ -105,8 +109,10 @@ namespace clib {
             rt = bag.title->GetRenderRect();
             rt.right = root->GetRenderRect().Width();
             bag.title->SetRenderRect(rt);
+            rt.right -= WINDOW_CLOSE_BTN_X;
+            bag.title_text->SetRenderRect(rt);
             rt = bag.close_text->GetRenderRect();
-            rt.left = root->GetRenderRect().Width() - 20;
+            rt.left = root->GetRenderRect().Width() - WINDOW_CLOSE_BTN_X;
             rt.right = root->GetRenderRect().Width();
             bag.close_text->SetRenderRect(rt);
             bounds1 = bounds;
@@ -172,6 +178,7 @@ namespace clib {
         if (n <= 11 && bag.title->GetRenderRect().PtInRect(pt)) {
             code = mapnc[n];
             if (n == 0) {
+                post_data(WM_NCCALCSIZE, self_min_size.cx, self_min_size.cy);
                 post_data(WM_MOVE, x, y); // 发送本窗口MOVE
             }
         }
@@ -181,7 +188,7 @@ namespace clib {
         }
         post_data(code, pt.x, pt.y);
         if (n == 11) {
-            post_data(WM_SETCURSOR, pt.x, pt.y);
+            //post_data(WM_SETCURSOR, pt.x, pt.y);
             auto& hover = cvm::global_state.window_hover;
             if (hover != -1) { // 当前有鼠标悬停
                 if (hover != handle) { // 非当前窗口
@@ -281,6 +288,10 @@ namespace clib {
         case WM_SETCURSOR:
         {
         }
+            break;
+        case WM_NCCALCSIZE:
+            self_min_size.cx = __max(WINDOW_MIN_SIZE_X, (LONG)msg.param1);
+            self_min_size.cy = __max(WINDOW_MIN_SIZE_Y, (LONG)msg.param2);
             break;
         default:
             break;
@@ -586,6 +597,15 @@ namespace clib {
         return false;
     }
 
+    bool cwindow::set_flag(int h, int flag)
+    {
+        if (valid_handle(h)) {
+            handles[h].comctl->set_flag(flag);
+            return true;
+        }
+        return false;
+    }
+
     comctl_base::comctl_base(int type) : type(type)
     {
     }
@@ -619,6 +639,16 @@ namespace clib {
         this->bound = bound;
     }
 
+    CRect comctl_base::get_bound() const
+    {
+        return bound;
+    }
+
+    int comctl_base::set_flag(int flag)
+    {
+        return 0;
+    }
+
     cwindow_layout::cwindow_layout(int type) : comctl_base(type)
     {
     }
@@ -641,7 +671,8 @@ namespace clib {
     {
         if (children.empty())
             return;
-        children[0]->paint(bounds);
+        for (auto& c : children)
+            c->paint(bounds);
     }
 
     cwindow_layout_linear::cwindow_layout_linear() : cwindow_layout(cwindow::layout_linear)
@@ -652,7 +683,36 @@ namespace clib {
     {
         if (children.empty())
             return;
-        children[0]->paint(bounds);
+        auto b = bounds;
+        if (align == vertical) {
+            for (auto& c : children) {
+                c->paint(b);
+                b.top = __min(bounds.bottom, b.top + c->get_bound().Height());
+                b.bottom = __min(bounds.bottom, b.bottom + c->get_bound().Height());
+            }
+        } else if (align == horizontal) {
+            for (auto& c : children) {
+                c->paint(b);
+                b.left = __min(bounds.right, b.left + c->get_bound().Width());
+                b.right = __min(bounds.right, b.right + c->get_bound().Width());
+            }
+        }
+    }
+
+    int cwindow_layout_linear::set_flag(int flag)
+    {
+        switch (flag)
+        {
+        case 0:
+            align = vertical;
+            break;
+        case 1:
+            align = horizontal;
+            break;
+        default:
+            break;
+        }
+        return 0;
     }
 
     cwindow_comctl_label::cwindow_comctl_label() : comctl_base(cwindow::comctl_label)
@@ -670,7 +730,8 @@ namespace clib {
     void cwindow_comctl_label::paint(const CRect& bounds)
     {
         text->SetRenderRect((bound).OfRect(bounds));
-        text->GetRenderer()->Render(text->GetRenderRect());
+        if (text->GetRenderRect().Width() > 5)
+            text->GetRenderer()->Render(text->GetRenderRect());
     }
 
     cwindow_comctl_label* cwindow_comctl_label::get_label()
@@ -681,5 +742,33 @@ namespace clib {
     void cwindow_comctl_label::set_text(const string_t& text)
     {
         this->text->SetText(CString(CStringA(text.c_str())));
+    }
+
+    int cwindow_comctl_label::set_flag(int flag)
+    {
+        switch (flag)
+        {
+        case 10:
+            this->text->SetVerticalAlignment(Alignment::StringAlignmentNear);
+            break;
+        case 11:
+            this->text->SetVerticalAlignment(Alignment::StringAlignmentCenter);
+            break;
+        case 12:
+            this->text->SetVerticalAlignment(Alignment::StringAlignmentFar);
+            break;
+        case 13:
+            this->text->SetHorizontalAlignment(Alignment::StringAlignmentNear);
+            break;
+        case 14:
+            this->text->SetHorizontalAlignment(Alignment::StringAlignmentCenter);
+            break;
+        case 15:
+            this->text->SetHorizontalAlignment(Alignment::StringAlignmentFar);
+            break;
+        default:
+            break;
+        }
+        return 0;
     }
 }

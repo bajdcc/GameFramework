@@ -651,17 +651,19 @@ namespace clib {
                 _deps.insert(include_path);
             }
             std::stringstream sc;
-            size_t prev = 0;
+            int prev = 0;
             for (auto& r : records) {
                 auto& start = std::get<0>(r);
                 auto& length = std::get<1>(r);
-                if (prev < start - prev) {
-                    auto frag = code.substr((uint)prev, (uint)start - prev);
+                if (prev < start) {
+                    auto frag = code.substr((uint)prev, (uint)(start - prev));
                     sc << frag;
                 }
+                auto incs = code.substr((uint)start, (uint)(length - start));
+                sc << "// => " << incs;
                 prev = length;
             }
-            if (prev < code.length()) {
+            if (prev < (int)code.length()) {
                 auto frag = code.substr((uint)prev, code.length() - (uint)prev);
                 sc << frag;
             }
