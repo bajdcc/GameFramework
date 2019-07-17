@@ -1743,8 +1743,14 @@ namespace clib {
                     std::stringstream ss;
                     std::copy(tasks[id].paths.begin(), tasks[id].paths.end(),
                         std::ostream_iterator<string_t>(ss, "\n"));
-                    sprintf(sz, "%s", ss.str().c_str());
-                    return sz;
+                    return ss.str();
+                }
+                else if (op == "dep") {
+                    auto deps = cgui::singleton().get_dep(tasks[id].path);
+                    std::stringstream ss;
+                    std::copy(deps.begin(), deps.end(),
+                        std::ostream_iterator<string_t>(ss, "\n"));
+                    return ss.str();
                 }
             }
         }
@@ -1979,7 +1985,7 @@ namespace clib {
                     fs.as_root(true);
                     if (fs.mkdir(dir) == 0) { // '/proc/[pid]'
                         static std::vector<string_t> ps =
-                        { "exe", "parent", "heap_size", "path" };
+                        { "exe", "parent", "heap_size", "path", "dep" };
                         dir += "/";
                         for (auto& _ps : ps) {
                             ss.str("");

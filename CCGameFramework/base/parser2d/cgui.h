@@ -70,6 +70,8 @@ namespace clib {
         void hit(int n);
         int cursor() const;
 
+        std::unordered_set<string_t> get_dep(string_t& path) const;
+
     private:
         void tick();
         void draw_text(CComPtr<ID2D1RenderTarget>& rt, const CRect& bounds, const Parser2DEngine::BrushBag& brushes);

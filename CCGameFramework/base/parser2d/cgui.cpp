@@ -611,6 +611,15 @@ namespace clib {
         return { cols * GUI_FONT_W, rows * GUI_FONT_H };
     }
 
+    std::unordered_set<string_t> cgui::get_dep(string_t& path) const
+    {
+        auto f = cache_code.find(path);
+        if (f != cache_code.end()) {
+            return cache_dep.at(path);
+        }
+        return std::unordered_set<string_t>();
+    }
+
     void cgui::load_dep(string_t& path, std::unordered_set<string_t>& deps) {
         auto f = cache_code.find(path);
         if (f != cache_code.end()) {
