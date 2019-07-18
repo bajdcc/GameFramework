@@ -244,6 +244,12 @@ namespace clib {
 
     int cwindow::handle_msg(const window_msg& msg)
     {
+        if (msg.comctl != -1) {
+            if (valid_handle(msg.comctl)) {
+                return handles[msg.comctl].comctl->handle_msg(msg.code, msg.param1, msg.param2);
+            }
+            return -1;
+        }
         switch (msg.code)
         {
         case WM_CLOSE:
@@ -735,6 +741,11 @@ namespace clib {
         return id;
     }
 
+    int comctl_base::handle_msg(int code, uint32 param1, uint32 param2)
+    {
+        return 0;
+    }
+
     cwindow_layout::cwindow_layout(int type) : comctl_base(type)
     {
     }
@@ -890,6 +901,45 @@ namespace clib {
     {
         if (this->text->GetRenderRect().PtInRect(CPoint(x, y)))
             return id;
+        return 0;
+    }
+
+    int cwindow_comctl_label::handle_msg(int code, uint32 param1, uint32 param2)
+    {
+        switch (code) {
+        case WM_MOUSEENTER:
+        {
+            auto f = text->GetFont();
+            f.underline = true;
+            text->SetFont(f);
+        }
+            break;
+        case WM_MOUSELEAVE:
+        {
+            auto f = text->GetFont();
+            f.underline = false;
+            text->SetFont(f);
+        }
+            break;
+        case WM_LBUTTONDOWN:
+        case WM_MBUTTONDOWN:
+        case WM_RBUTTONDOWN:
+        {
+            auto f = text->GetFont();
+            f.bold = true;
+            text->SetFont(f);
+        }
+        break;
+        case WM_LBUTTONUP:
+        case WM_MBUTTONUP:
+        case WM_RBUTTONUP:
+        {
+            auto f = text->GetFont();
+            f.bold = false;
+            text->SetFont(f);
+        }
+        break;
+    }
         return 0;
     }
 }

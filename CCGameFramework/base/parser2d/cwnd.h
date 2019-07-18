@@ -47,6 +47,7 @@ namespace clib {
         virtual int hit(int x, int y) const;
         void set_id(int id);
         int get_id() const;
+        virtual int handle_msg(int code, uint32 param1, uint32 param2);
     protected:
         int id{ -1 };
         int type{ 0 };
@@ -201,6 +202,7 @@ namespace clib {
         void set_text(const string_t& text);
         int set_flag(int flag) override;
         int hit(int x, int y) const override;
+        int handle_msg(int code, uint32 param1, uint32 param2) override;
     private:
         std::shared_ptr<SolidLabelElement> text;
     };
