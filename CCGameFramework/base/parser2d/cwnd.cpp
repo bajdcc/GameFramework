@@ -416,73 +416,75 @@ namespace clib {
 
     void cwindow::post_data(const int& code, int param1, int param2, int comctl)
     {
-        if (code == WM_MOUSEENTER)
-        {
-            bag.border->SetColor(CColor(36, 125, 234));
-            self_hovered = true;
-        }
-        else if (code == WM_MOUSELEAVE)
-        {
-            bag.border->SetColor(CColor(149, 187, 234));
-            self_hovered = false;
-            self_drag = false;
-            self_size = false;
-        }
-        else if (code == WM_SETFOCUS)
-        {
-            bag.title->SetColor(CColor(45, 120, 213));
-            self_focused = true;
-        }
-        else if (code == WM_KILLFOCUS)
-        {
-            bag.title->SetColor(CColor(149, 187, 234));
-            self_focused = false;
-            self_drag = false;
-            self_size = false;
-        }
-        else if (code == WM_NCLBUTTONDOWN)
-        {
-            int cx, cy;
-            if (is_border(CPoint(param1, param2), cx, cy)) {
-                self_size = true;
+        if (comctl == -1) {
+            if (code == WM_MOUSEENTER)
+            {
+                bag.border->SetColor(CColor(36, 125, 234));
+                self_hovered = true;
             }
-            else {
-                self_drag = true;
-            }
-        }
-        else if (code == WM_LBUTTONDOWN)
-        {
-            int cx, cy;
-            if (is_border(CPoint(param1, param2 + bag.title->GetRenderRect().Height()), cx, cy)) {
-                self_size = true;
-            }
-        }
-        else if (code == WM_MOUSEMOVE)
-        {
-            int cx, cy;
-            if (is_border(CPoint(param1, param2 + bag.title->GetRenderRect().Height()), cx, cy)) {
-                cursor = sys_cursor(cx, cy);
-            }
-            else {
-                cursor = 1;
-            }
-        }
-        else if (code == WM_NCMOUSEMOVE)
-        {
-            int cx, cy;
-            if (is_border(CPoint(param1, param2), cx, cy)) {
-                cursor = sys_cursor(cx, cy);
-            }
-            else {
-                cursor = 1;
-            }
-        }
-        else if (code == WM_NCLBUTTONUP || code == WM_LBUTTONUP)
-        {
-            self_drag = false;
-            if (self_size) {
+            else if (code == WM_MOUSELEAVE)
+            {
+                bag.border->SetColor(CColor(149, 187, 234));
+                self_hovered = false;
+                self_drag = false;
                 self_size = false;
-                cursor = 1;
+            }
+            else if (code == WM_SETFOCUS)
+            {
+                bag.title->SetColor(CColor(45, 120, 213));
+                self_focused = true;
+            }
+            else if (code == WM_KILLFOCUS)
+            {
+                bag.title->SetColor(CColor(149, 187, 234));
+                self_focused = false;
+                self_drag = false;
+                self_size = false;
+            }
+            else if (code == WM_NCLBUTTONDOWN)
+            {
+                int cx, cy;
+                if (is_border(CPoint(param1, param2), cx, cy)) {
+                    self_size = true;
+                }
+                else {
+                    self_drag = true;
+                }
+            }
+            else if (code == WM_LBUTTONDOWN)
+            {
+                int cx, cy;
+                if (is_border(CPoint(param1, param2 + bag.title->GetRenderRect().Height()), cx, cy)) {
+                    self_size = true;
+                }
+            }
+            else if (code == WM_MOUSEMOVE)
+            {
+                int cx, cy;
+                if (is_border(CPoint(param1, param2 + bag.title->GetRenderRect().Height()), cx, cy)) {
+                    cursor = sys_cursor(cx, cy);
+                }
+                else {
+                    cursor = 1;
+                }
+            }
+            else if (code == WM_NCMOUSEMOVE)
+            {
+                int cx, cy;
+                if (is_border(CPoint(param1, param2), cx, cy)) {
+                    cursor = sys_cursor(cx, cy);
+                }
+                else {
+                    cursor = 1;
+                }
+            }
+            else if (code == WM_NCLBUTTONUP || code == WM_LBUTTONUP)
+            {
+                self_drag = false;
+                if (self_size) {
+                    self_size = false;
+                    cursor = 1;
+                }
             }
         }
         switch (code) {
@@ -499,6 +501,48 @@ namespace clib {
             if (comctl == -1 && param1 != 0 && param2 != 0) {
                 comctl = bag.comctl->hit(self_client.x, self_client.y);
             }
+            if (code == WM_MOUSEMOVE) {
+                if (comctl != -1) {
+                    if (comctl_hover != -1) {
+                        if (comctl_hover != comctl) {
+                            post_data(WM_MOUSELEAVE, 0, 0, comctl_hover);
+                            comctl_hover = comctl;
+                            post_data(WM_MOUSEENTER, 0, 0, comctl_hover);
+                        }
+                    }
+                    else {
+                        comctl_hover = comctl;
+                        post_data(WM_MOUSEENTER, 0, 0, comctl_hover);
+                    }
+                }
+                else if (comctl_hover != -1) {
+                    post_data(WM_MOUSELEAVE, 0, 0, comctl_hover);
+                    comctl_hover = -1;
+                }
+            }
+            else {
+                if (comctl != -1) {
+                    if (comctl_focus != -1) {
+                        if (comctl_focus != comctl) {
+                            post_data(WM_KILLFOCUS, 0, 0, comctl_focus);
+                            comctl_focus = comctl;
+                            post_data(WM_SETFOCUS, 0, 0, comctl_focus);
+                        }
+                    }
+                    else {
+                        comctl_focus = comctl;
+                        post_data(WM_SETFOCUS, 0, 0, comctl_focus);
+                    }
+                }
+                else if (comctl_focus != -1) {
+                    post_data(WM_KILLFOCUS, 0, 0, comctl_focus);
+                    comctl_focus = -1;
+                }
+            }
+            break;
+        case WM_MOUSEHOVER:
+            if (comctl_hover != -1)
+                comctl = comctl_hover;
             break;
         }
         window_msg s{ code, comctl, (uint32)param1, (uint32)param2 };
