@@ -42,9 +42,11 @@ int read_file(int id, int handle) {
     __window_msg_struct__ s;
     while (c = window_get_msg(handle, &s), c < 0x1000) {
         put_string("[MSG ] Handle: ");
-        put_hex(id);
+        put_int(id);
         put_string(", Code= ");
-        put_hex(s.code);
+        put_int(s.code);
+        put_string(", Comctl= ");
+        put_int(s.comctl);
         put_string(", Param1= ");
         put_hex(s.param1);
         put_string(", Param2= ");

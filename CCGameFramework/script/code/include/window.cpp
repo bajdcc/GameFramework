@@ -22,7 +22,7 @@ int window_wait(int id) {
 }
 
 struct __window_msg_struct__ {
-    int code;
+    int code, comctl;
     int param1, param2;
 };
 
@@ -51,10 +51,11 @@ int window_default_msg(int handle, __window_msg_struct__* s) {
     interrupt 502;
 }
 
-int window_post_msg(int handle, int code, int param1, int param2) {
+int window_post_msg(int handle, int code, int comctl, int param1, int param2) {
     __window_defmsg_struct__ k;
     k.handle = handle;
     k.msg.code = code;
+    k.msg.comctl = comctl;
     k.msg.param1 = param1;
     k.msg.param2 = param2;
     &k;
@@ -64,11 +65,11 @@ int window_post_msg(int handle, int code, int param1, int param2) {
 // API
 
 int window_set_text(int handle, char* text) {
-    window_post_msg(handle, 0xC, text, 0);
+    window_post_msg(handle, 0xC, -1, text, 0);
 }
 
 int window_get_text(int handle, char* text) {
-    window_post_msg(handle, 0xD, text, 0);
+    window_post_msg(handle, 0xD, -1, text, 0);
 }
 
 enum window_comctl_type {

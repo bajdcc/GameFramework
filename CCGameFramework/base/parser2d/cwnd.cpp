@@ -144,7 +144,8 @@ namespace clib {
             WM_SETFOCUS, WM_KILLFOCUS,
             WM_MOUSEMOVE, WM_MOUSEENTER, WM_MOUSELEAVE, WM_MOUSEHOVER
         };
-        auto pt = CPoint(x, y) + -root->GetRenderRect().TopLeft();
+        self_client = CPoint(x, y);
+        auto pt = self_client + -root->GetRenderRect().TopLeft();
         if (self_drag && n == 211 && cvm::global_state.window_hover == handle) {
             post_data(WM_MOVING, x, y); // 发送本窗口MOVNG
             return true;
@@ -230,7 +231,7 @@ namespace clib {
     int cwindow::get_msg_data()
     {
         if (msg_data.empty())
-            return - 1;
+            return -1;
         auto d = msg_data.front();
         msg_data.pop();
         return d;
@@ -413,7 +414,7 @@ namespace clib {
         return handles_set.find(h) != handles_set.end();
     }
 
-    void cwindow::post_data(const int& code, int param1, int param2)
+    void cwindow::post_data(const int& code, int param1, int param2, int comctl)
     {
         if (code == WM_MOUSEENTER)
         {
@@ -484,7 +485,23 @@ namespace clib {
                 cursor = 1;
             }
         }
-        window_msg s{ code, (uint32)param1, (uint32)param2 };
+        switch (code) {
+        case WM_MOUSEMOVE:
+        case WM_LBUTTONDOWN:
+        case WM_LBUTTONUP:
+        case WM_LBUTTONDBLCLK:
+        case WM_RBUTTONDOWN:
+        case WM_RBUTTONUP:
+        case WM_RBUTTONDBLCLK:
+        case WM_MBUTTONDOWN:
+        case WM_MBUTTONUP:
+        case WM_MBUTTONDBLCLK:
+            if (comctl == -1 && param1 != 0 && param2 != 0) {
+                comctl = bag.comctl->hit(self_client.x, self_client.y);
+            }
+            break;
+        }
+        window_msg s{ code, comctl, (uint32)param1, (uint32)param2 };
         const auto p = (byte*)& s;
         for (auto i = 0; i < sizeof(window_msg); i++) {
             msg_data.push(p[i]);
@@ -501,6 +518,7 @@ namespace clib {
             if (handles[j].type == comctl_none) {
                 handles[j].type = type;
                 handles[j].comctl = new_comctl(type);
+                handles[j].comctl->set_id(j);
                 handles[j].comctl->set_rt(renderTarget);
                 handle_ids = (j + 1) % WINDOW_HANDLE_NUM;
                 available_handles++;
@@ -649,6 +667,16 @@ namespace clib {
         return 0;
     }
 
+    int comctl_base::hit(int x, int y) const
+    {
+        return -1;
+    }
+
+    void comctl_base::set_id(int id)
+    {
+        this->id = id;
+    }
+
     cwindow_layout::cwindow_layout(int type) : comctl_base(type)
     {
     }
@@ -660,7 +688,22 @@ namespace clib {
 
     void cwindow_layout::add(comctl_base* child)
     {
-        children.push_back(child);
+        if (!child->get_parent())
+            children.push_back(child);
+        else
+            ATLVERIFY(!"comctl already has parent!");
+    }
+
+    int cwindow_layout::hit(int x, int y) const
+    {
+        if (children.empty())
+            return -1;
+        for (auto& c : children) {
+            auto h = c->hit(x, y);
+            if (h) 
+                return h;
+        }
+        return -1;
     }
 
     cwindow_layout_absolute::cwindow_layout_absolute() : cwindow_layout(cwindow::layout_absolute)
@@ -769,6 +812,13 @@ namespace clib {
         default:
             break;
         }
+        return 0;
+    }
+
+    int cwindow_comctl_label::hit(int x, int y) const
+    {
+        if (this->text->GetRenderRect().PtInRect(CPoint(x, y)))
+            return id;
         return 0;
     }
 }

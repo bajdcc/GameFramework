@@ -44,7 +44,10 @@ namespace clib {
         void set_bound(const CRect& bound);
         CRect get_bound() const;
         virtual int set_flag(int flag);
+        virtual int hit(int x, int y) const;
+        void set_id(int id);
     protected:
+        int id{ -1 };
         int type{ 0 };
         comctl_base* parent{ nullptr };
         CRect bound;
@@ -73,7 +76,7 @@ namespace clib {
         int get_cursor() const;
 
         struct window_msg {
-            int code;
+            int code, comctl;
             uint32 param1, param2;
         };
         struct window_msg2 {
@@ -91,7 +94,7 @@ namespace clib {
         };
 
         int handle_msg(const window_msg& msg);
-        void post_data(const int& code, int param1 = 0, int param2 = 0);
+        void post_data(const int& code, int param1 = 0, int param2 = 0, int comctl = -1);
 
         int create_comctl(window_comctl_type type);
         static string_t cwindow::handle_typename(window_comctl_type t);
@@ -133,6 +136,7 @@ namespace clib {
         CPoint self_drag_pt;
         CSize self_min_size;
         CRect self_drag_rt;
+        CPoint self_client;
         int cursor{ 1 };
         cvm* vm{ nullptr };
         int base_id{ -1 };
@@ -160,6 +164,7 @@ namespace clib {
         cwindow_layout(int type);
         cwindow_layout* get_layout();
         void add(comctl_base* child);
+        int hit(int x, int y) const override;
     protected:
         std::vector<comctl_base*> children;
     };
@@ -190,6 +195,7 @@ namespace clib {
         cwindow_comctl_label* get_label() override;
         void set_text(const string_t& text);
         int set_flag(int flag) override;
+        int hit(int x, int y) const override;
     private:
         std::shared_ptr<SolidLabelElement> text;
     };

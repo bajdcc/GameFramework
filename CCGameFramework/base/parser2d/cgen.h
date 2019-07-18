@@ -62,11 +62,11 @@ namespace clib {
         virtual void emit(ins_t) = 0;
         virtual void emit(ins_t, int) = 0;
         virtual void emit(ins_t, int, int) = 0;
-        virtual void emit(keyword_t) = 0;
+        virtual void emit(int, int, keyword_t) = 0;
         virtual int current() const = 0;
         virtual void edit(int, int) = 0;
         virtual int load_string(const string_t&) = 0;
-        virtual void error(const string_t&) const = 0;
+        virtual void error(int, int, const string_t&) const = 0;
     };
 
     enum sym_size_t {
@@ -376,11 +376,11 @@ namespace clib {
         void emit(ins_t) override;
         void emit(ins_t, int) override;
         void emit(ins_t, int, int) override;
-        void emit(keyword_t) override;
+        void emit(int, int, keyword_t) override;
         int current() const override;
         void edit(int, int) override;
         int load_string(const string_t&) override;
-        void error(const string_t&) const override;
+        void error(int, int, const string_t&) const override;
     private:
         void gen_rec(ast_node* node, int level);
         void gen_coll(const std::vector<ast_node*>& nodes, int level, ast_node* node);

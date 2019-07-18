@@ -16,7 +16,7 @@
 #define REPORT_GEN 0
 #define REPORT_GEN_FILE "gen.log"
 
-#define LOG_TYPE 1
+#define LOG_TYPE 0
 
 #define AST_IS_KEYWORD(node) ((node)->flag == ast_keyword)
 #define AST_IS_KEYWORD_K(node, k) ((node)->data._keyword == (k))
@@ -141,17 +141,17 @@ namespace clib {
     }
 
     gen_t sym_t::gen_lvalue(igen & gen) {
-        gen.error("unsupport lvalue: " + to_string());
+        gen.error(line, column, "unsupport lvalue: " + to_string());
         return g_ok;
     }
 
     gen_t sym_t::gen_rvalue(igen & gen) {
-        gen.error("unsupport rvalue: " + to_string());
+        gen.error(line, column, "unsupport rvalue: " + to_string());
         return g_ok;
     }
 
     gen_t sym_t::gen_invoke(igen & gen, ref & list) {
-        gen.error("unsupport invoke");
+        gen.error(line, column, "unsupport invoke");
         return g_error;
     }
 
@@ -329,7 +329,7 @@ namespace clib {
 
     gen_t sym_id_t::gen_lvalue(igen & gen) {
         if (clazz == z_global_var) {
-            // gen.error("global id cannot be modified");
+            // gen.error(line, column, "global id cannot be modified");
             gen.emit(IMM, DATA_BASE | addr);
             return g_no_load;
         }
@@ -360,7 +360,7 @@ namespace clib {
             gen.emit(LOAD, base->size(x_load));
         }
         else if (clazz == z_struct_var) {
-            gen.error("not implemented");
+            gen.error(line, column, "not implemented");
         }
         else if (clazz == z_function) {
             gen.emit(IMM, USER_BASE | addr);
@@ -527,7 +527,7 @@ namespace clib {
         auto args = std::dynamic_pointer_cast<sym_list_t>(list);
         auto & exps = args->exps;
         if (exps.size() != params.size()) {
-            gen.error("invoke: argument size not equal, required: " + to_string() +
+            gen.error(line, column, "invoke: argument size not equal, required: " + to_string() +
                 ", but got: " + args->to_string());
         }
         auto total_size = 0;
@@ -537,7 +537,7 @@ namespace clib {
             auto param_type = params[i]->base->get_cast();
             auto s = cast_find(exp_type, param_type);
             if (s == -1)
-                gen.error("invoke: argument unsupported cast, required: " + params[i]->to_string() +
+                gen.error(line, column, "invoke: argument unsupported cast, required: " + params[i]->to_string() +
                     ", but got: " + exps[i]->to_string() + ", func: " + to_string());
             if (s != 0) {
                 gen.emit(CAST, s);
@@ -630,7 +630,7 @@ namespace clib {
             base = std::make_shared<type_base_t>(l_char, 1);
             return g_no_load;
         }
-        gen.error("invalid lvalue: " + to_string());
+        gen.error(line, column, "invalid lvalue: " + to_string());
         return g_error;
     }
 
@@ -659,11 +659,11 @@ namespace clib {
             else if (AST_IS_KEYWORD_K(node, k_false))
                 gen.emit(IMM, 0);
             else
-                gen.error("sym_var_t::gen_rvalue unsupported keyword type");
+                gen.error(line, column, "sym_var_t::gen_rvalue unsupported keyword type");
         }
                           break;
         default:
-            gen.error("sym_var_t::gen_rvalue unsupported type");
+            gen.error(line, column, "sym_var_t::gen_rvalue unsupported type");
             break;
         }
         return g_ok;
@@ -750,7 +750,7 @@ namespace clib {
     }
 
     gen_t sym_cast_t::gen_lvalue(igen & gen) {
-        gen.error("cast: unsupported lvalue");
+        gen.error(line, column, "cast: unsupported lvalue");
         return g_error;
     }
 
@@ -759,12 +759,12 @@ namespace clib {
         auto src = exp->base->get_cast();
         auto dst = base->get_cast();
         if (src == t_error)
-            gen.error("cast: src error");
+            gen.error(line, column, "cast: src error");
         if (dst == t_error)
-            gen.error("cast: dst error");
+            gen.error(line, column, "cast: dst error");
         auto s = cast_find(src, dst);
         if (s == -1)
-            gen.error("cast: unsupported cast");
+            gen.error(line, column, "cast: unsupported cast");
         if (s != 0)
             gen.emit(CAST, s);
         return r;
@@ -807,7 +807,7 @@ namespace clib {
         case op_logical_not:
         case op_bit_not:
         case op_bit_and:
-            gen.error("[unop] invalid lvalue: " + to_string());
+            gen.error(line, column, "[unop] invalid lvalue: " + to_string());
             break;
         case op_plus_plus:
         case op_minus_minus: {
@@ -833,11 +833,11 @@ namespace clib {
             exp->gen_rvalue(gen);
             base = exp->base->clone();
             if (base->get_cast() != t_ptr)
-                gen.error("[unop] invalid deref: " + to_string());
+                gen.error(line, column, "[unop] invalid deref: " + to_string());
             base->ptr--;
             break;
         default:
-            gen.error("[unop] not supported lvalue: " + to_string());
+            gen.error(line, column, "[unop] not supported lvalue: " + to_string());
             return g_error;
         }
         return g_ok;
@@ -903,12 +903,12 @@ namespace clib {
             exp->gen_rvalue(gen);
             base = exp->base->clone();
             if (base->get_cast() != t_ptr)
-                gen.error("invalid deref: " + to_string());
+                gen.error(line, column, "invalid deref: " + to_string());
             base->ptr--;
             gen.emit(LOAD, max(exp->size(x_inc), 1));
             break;
         default:
-            gen.error("[unop] not supported rvalue: " + to_string());
+            gen.error(line, column, "[unop] not supported rvalue: " + to_string());
             return g_error;
         }
         return g_ok;
@@ -961,7 +961,7 @@ namespace clib {
         }
                              break;
         default:
-            gen.error("[sinop] not supported lvalue: " + to_string());
+            gen.error(line, column, "[sinop] not supported lvalue: " + to_string());
             return g_error;
         }
         return g_ok;
@@ -991,7 +991,7 @@ namespace clib {
         }
                              break;
         default:
-            gen.error("[sinop] not supported rvalue: " + to_string());
+            gen.error(line, column, "[sinop] not supported rvalue: " + to_string());
             return g_error;
         }
         return g_ok;
@@ -1035,7 +1035,7 @@ namespace clib {
             auto size = base->get_cast();
             auto c = cast_size(size);
             if (size != t_ptr)
-                gen.error("invalid address by []: " + exp1->base->to_string());
+                gen.error(line, column, "invalid address by []: " + exp1->base->to_string());
             base->ptr--;
             if (!base->matrix.empty()) {
                 base->matrix.pop_back();
@@ -1060,13 +1060,13 @@ namespace clib {
             exp1->gen_lvalue(gen);
             base = exp1->base;
             if (base->get_type() != s_type_typedef)
-                gen.error("[binop] need struct type: " + exp1->to_string());
+                gen.error(line, column, "[binop] need struct type: " + exp1->to_string());
             auto type_def = std::dynamic_pointer_cast<type_typedef_t>(base);
             auto _type = type_def->refer.lock();
             if (_type->get_type() != s_struct)
-                gen.error("[binop] need struct type: " + exp1->to_string());
+                gen.error(line, column, "[binop] need struct type: " + exp1->to_string());
             if (exp1->get_cast() == t_ptr)
-                gen.error("[binop] need non-pointer type: " + exp1->to_string());
+                gen.error(line, column, "[binop] need non-pointer type: " + exp1->to_string());
             auto _struct = std::dynamic_pointer_cast<sym_struct_t>(_type);
             auto dec = exp2->get_name();
             sym_id_t::ref field;
@@ -1077,7 +1077,7 @@ namespace clib {
                 }
             }
             if (!field)
-                gen.error("[binop] invalid struct field: " + to_string());
+                gen.error(line, column, "[binop] invalid struct field: " + to_string());
             gen.emit(PUSH, cast_size(t_ptr));
             field->gen_lvalue(gen);
             base = field->base;
@@ -1088,14 +1088,14 @@ namespace clib {
             exp1->gen_rvalue(gen);
             base = exp1->base;
             if (base->get_cast() != t_ptr) {
-                gen.error("[binop] need struct pointer");
+                gen.error(line, column, "[binop] need struct pointer");
             }
             if (base->get_type() != s_type_typedef)
-                gen.error("[binop] need struct type");
+                gen.error(line, column, "[binop] need struct type");
             auto type_def = std::dynamic_pointer_cast<type_typedef_t>(base);
             auto _type = type_def->refer.lock();
             if (_type->get_type() != s_struct)
-                gen.error("[binop] need struct type");
+                gen.error(line, column, "[binop] need struct type");
             auto _struct = std::dynamic_pointer_cast<sym_struct_t>(_type);
             auto dec = exp2->get_name();
             sym_id_t::ref field;
@@ -1106,7 +1106,7 @@ namespace clib {
                 }
             }
             if (!field)
-                gen.error("[binop] invalid struct field: " + to_string());
+                gen.error(line, column, "[binop] invalid struct field: " + to_string());
             gen.emit(PUSH, cast_size(t_ptr));
             field->gen_lvalue(gen);
             base = field->base;
@@ -1114,7 +1114,7 @@ namespace clib {
         }
                          break;
         default:
-            gen.error("[binop] not supported lvalue: " + to_string());
+            gen.error(line, column, "[binop] not supported lvalue: " + to_string());
             return g_error;
         }
         return g_ok;
@@ -1166,19 +1166,19 @@ namespace clib {
                 auto t2 = exp2->base->get_cast();
                 if (t1 != t2) {
                     if (t1 == t_error)
-                        gen.error("arithmetic binop: src error");
+                        gen.error(line, column, "arithmetic binop: src error");
                     if (t2 == t_error)
-                        gen.error("arithmetic binop: dst error");
+                        gen.error(line, column, "arithmetic binop: dst error");
                     auto use_first = t1 > t2;
                     auto max_type = use_first ? t1 : t2;
                     auto min_type = use_first ? t2 : t1;
                     if (max_type == t_ptr || max_type == t_struct) {
-                        gen.error("arithmetic binop: unsupported cast, exp1= " + exp1->to_string() +
+                        gen.error(line, column, "arithmetic binop: unsupported cast, exp1= " + exp1->to_string() +
                             ", exp2= " + exp2->to_string());
                     }
                     auto s = cast_find(min_type, max_type);
                     if (s == -1)
-                        gen.error("arithmetic binop: invalid cast, exp1= " + exp1->to_string() +
+                        gen.error(line, column, "arithmetic binop: invalid cast, exp1= " + exp1->to_string() +
                             ", exp2= " + exp2->to_string());
                     if (s != 0) {
                         if (use_first) {
@@ -1222,12 +1222,12 @@ namespace clib {
             auto t2 = exp2->base->get_cast();
             if (t1 != t2) {
                 if (t1 == t_error)
-                    gen.error("assign assign: src error");
+                    gen.error(line, column, "assign assign: src error");
                 if (t2 == t_error)
-                    gen.error("assign assign: dst error");
+                    gen.error(line, column, "assign assign: dst error");
                 auto s = cast_find(t2, t1);
                 if (s == -1)
-                    gen.error("assign assign: invalid cast, exp1= " + exp1->to_string() +
+                    gen.error(line, column, "assign assign: invalid cast, exp1= " + exp1->to_string() +
                         ", exp2= " + exp2->to_string());
                 if (s != 0)
                     gen.emit(CAST, s);
@@ -1236,7 +1236,7 @@ namespace clib {
             auto size = exp1->size(x_load);
             if (size == 0) {
                 size = exp1->size(x_load);
-                gen.error("size == zero: " + to_string());
+                gen.error(line, column, "size == zero: " + to_string());
             }
             gen.emit(SAVE, size);
         }
@@ -1260,12 +1260,12 @@ namespace clib {
             auto t2 = exp2->base->get_cast();
             if (t1 != t2) {
                 if (t1 == t_error)
-                    gen.error("assign binop: src error");
+                    gen.error(line, column, "assign binop: src error");
                 if (t2 == t_error)
-                    gen.error("assign binop: dst error");
+                    gen.error(line, column, "assign binop: dst error");
                 auto s = cast_find(t2, t1);
                 if (s == -1)
-                    gen.error("assign binop: invalid cast, exp1= " + exp1->to_string() +
+                    gen.error(line, column, "assign binop: invalid cast, exp1= " + exp1->to_string() +
                         ", exp2= " + exp2->to_string());
                 if (s != 0)
                     gen.emit(CAST, s);
@@ -1284,7 +1284,7 @@ namespace clib {
             auto t1 = exp1->base->get_cast();
             auto t2 = exp2->base->get_cast();
             if (!(t1 == t_ptr && t2 == t_ptr) && max(t1, t2) >= t_long) {
-                gen.error("logical binop: unsupported cast, op= " + OP_STRING(op->data._op) +
+                gen.error(line, column, "logical binop: unsupported cast, op= " + OP_STRING(op->data._op) +
                     ", exp1= " + exp1->to_string() +
                     ", exp2= " + exp2->to_string());
             }
@@ -1314,7 +1314,7 @@ namespace clib {
         }
                          break;
         default:
-            gen.error("[binop] not supported rvalue: " + to_string());
+            gen.error(line, column, "[binop] not supported rvalue: " + to_string());
             return g_error;
         }
         return g_ok;
@@ -1352,7 +1352,7 @@ namespace clib {
     }
 
     gen_t sym_triop_t::gen_lvalue(igen & gen) {
-        gen.error("[triop] not supported: " + to_string());
+        gen.error(line, column, "[triop] not supported: " + to_string());
         return g_error;
     }
 
@@ -1371,7 +1371,7 @@ namespace clib {
             return g_ok;
         }
         else {
-            gen.error("[triop] not supported: " + to_string());
+            gen.error(line, column, "[triop] not supported: " + to_string());
             return g_error;
         }
     }
@@ -1401,7 +1401,7 @@ namespace clib {
     }
 
     gen_t sym_list_t::gen_lvalue(igen & gen) {
-        gen.error("not supported: " + to_string());
+        gen.error(line, column, "not supported: " + to_string());
         return g_error;
     }
 
@@ -1440,7 +1440,7 @@ namespace clib {
     }
 
     gen_t sym_ctrl_t::gen_lvalue(igen & gen) {
-        gen.error("[ctrl] not supported lvalue: " + to_string());
+        gen.error(line, column, "[ctrl] not supported lvalue: " + to_string());
         return g_error;
     }
 
@@ -1457,7 +1457,7 @@ namespace clib {
                        break;
         case k_break:
         case k_continue: {
-            gen.emit(op->data._keyword);
+            gen.emit(line, column, op->data._keyword);
         }
                          break;
         case k_interrupt: {
@@ -1469,7 +1469,7 @@ namespace clib {
         }
                           break;
         default:
-            gen.error("[ctrl] not supported rvalue: " + to_string());
+            gen.error(line, column, "[ctrl] not supported rvalue: " + to_string());
             return g_error;
         }
         return g_ok;
@@ -1512,7 +1512,7 @@ namespace clib {
         std::vector<byte> file;
         auto entry = symbols[0].find("main");
         if (entry == symbols[0].end()) {
-            error("main() not defined");
+            error(-1, -1, "main() not defined");
         }
 #if LOG_TYPE
         {
@@ -1602,11 +1602,11 @@ namespace clib {
         text.push_back(e);
     }
 
-    void cgen::emit(keyword_t k) {
+    void cgen::emit(int line, int column, keyword_t k) {
         switch (k) {
         case k_break: {
             if (cycle.empty()) {
-                error("invalid break");
+                error(line, column, "invalid break");
             }
             for (auto c = cycle.rbegin(); c != cycle.rend(); ++c) {
                 if (c->_break >= 0) {
@@ -1614,12 +1614,12 @@ namespace clib {
                     return;
                 }
             }
-            error("invalid break");
+            error(line, column, "invalid break");
         }
                       break;
         case k_continue: {
             if (cycle.empty()) {
-                error("invalid continue");
+                error(line, column, "invalid continue");
             }
             for (auto c = cycle.rbegin(); c != cycle.rend(); ++c) {
                 if (c->_continue >= 0) {
@@ -1627,11 +1627,11 @@ namespace clib {
                     return;
                 }
             }
-            error("invalid continue");
+            error(line, column, "invalid continue");
         }
                          break;
         default:
-            error("invalid keyword: " + KEYWORD_STRING(k));
+            error(line, column, "invalid keyword: " + KEYWORD_STRING(k));
             break;
         }
     }
@@ -1828,7 +1828,7 @@ namespace clib {
                 ctx = f->second;
             }
             else {
-                error("invalid struct/union name");
+                error(name, "invalid struct/union name");
             }
         }
                                       break;
@@ -1980,11 +1980,11 @@ namespace clib {
                             }
                         }
                         else {
-                            error("invalid postfix  op");
+                            error(a, "invalid postfix  op");
                         }
                     }
                     else {
-                        error("invalid postfix  coll");
+                        error(a, "invalid postfix  coll");
                     }
                 }
                 tmp.back().clear();
@@ -2092,7 +2092,7 @@ namespace clib {
                     }
                 }
                 else {
-                    error("invalid binop: coll");
+                    error(a, "invalid binop: coll");
                 }
             }
             tmp.back().clear();
@@ -2124,7 +2124,7 @@ namespace clib {
             if (AST_IS_KEYWORD_N(asts[0], k_struct) || AST_IS_KEYWORD_K(asts[0], k_union)) {
                 auto f = symbols[0].find(asts[1]->data._string);
                 if (f == symbols[0].end()) {
-                    error("missing struct type");
+                    error(asts[1], "missing struct type");
                 }
                 auto s = std::dynamic_pointer_cast<sym_struct_t>(f->second);
                 if (s->get_type() != s_struct) {
@@ -2846,8 +2846,18 @@ namespace clib {
         }
     }
 
-    void cgen::error(const string_t & str) const {
-        throw cexception(ex_gen, str);
+    void cgen::error(int x, int y, const string_t & str) const {
+        std::stringstream ss;
+        string_t page;
+        int line;
+        if (get_line(x, page, line)) {
+            ss << "[" << page << ":" << line << ":" << y << "] ";
+        }
+        else {
+            ss << "[" << x << ":" << y << "] ";
+        }
+        ss << str;
+        throw cexception(ex_gen, ss.str());
     }
 
     bool cgen::get_line(int L, string_t& s, int& line) const
@@ -2869,8 +2879,8 @@ namespace clib {
 
     void cgen::error(ast_node * node, const string_t & str, bool info) const {
         std::stringstream ss;
-        static string_t page;
-        static int line;
+        string_t page;
+        int line;
         if (get_line(node->line, page, line)) {
             ss << "[" << page << ":" << line << ":" << node->column << "] ";
         }
@@ -2881,13 +2891,13 @@ namespace clib {
         if (info) {
             cast::print(node, 0, ss);
         }
-        error(ss.str());
+        throw cexception(ex_gen, ss.str());
     }
 
     void cgen::error(sym_t::ref s, const string_t & str) const {
         std::stringstream ss;
-        static string_t page;
-        static int line;
+        string_t page;
+        int line;
         if (get_line(s->line, page, line)) {
             ss << "[" << page << ":" << line << ":" << s->column << "] ";
         }
@@ -2895,7 +2905,7 @@ namespace clib {
             ss << "[" << s->line << ":" << s->column << "] ";
         }
         ss << str;
-        error(ss.str());
+        throw cexception(ex_gen, ss.str());
     }
 
     type_exp_t::ref cgen::to_exp(sym_t::ref s) {
