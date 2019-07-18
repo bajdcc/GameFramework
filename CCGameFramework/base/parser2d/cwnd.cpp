@@ -380,9 +380,8 @@ namespace clib {
 
     void cwindow::destroy()
     {
-        auto hs = handles_set;
-        for (auto& h : hs) {
-            destroy_handle(h, true);
+        while (!handles_set.empty()) {
+            destroy_handle(*handles_set.begin(), true);
         }
     }
 
@@ -395,6 +394,16 @@ namespace clib {
         if (handles[handle].type != comctl_none) {
             handles_set.erase(handle);
             auto h = &handles[handle];
+            auto c = h->comctl;
+            if (c->get_parent() && c->get_parent()->get_layout()) {
+                c->get_parent()->get_layout()->remove(c);
+            }
+            if (c->get_layout()) {
+                auto cl = c->get_layout()->get_list();
+                for (auto cc : cl) {
+                    destroy_handle(cc, force);
+                }
+            }
             delete h->comctl;
             h->type = comctl_none;
             available_handles--;
@@ -721,6 +730,11 @@ namespace clib {
         this->id = id;
     }
 
+    int comctl_base::get_id() const
+    {
+        return id;
+    }
+
     cwindow_layout::cwindow_layout(int type) : comctl_base(type)
     {
     }
@@ -738,12 +752,25 @@ namespace clib {
             ATLVERIFY(!"comctl already has parent!");
     }
 
+    void cwindow_layout::remove(comctl_base* child)
+    {
+        children.erase(std::remove(children.begin(), children.end(), child), children.end());
+    }
+
+    std::vector<int> cwindow_layout::get_list() const
+    {
+        std::vector<int> v(children.size());
+        std::transform(children.begin(), children.end(), v.begin(),
+            [](comctl_base* c) -> int { return c->get_id(); });
+        return v;
+    }
+
     int cwindow_layout::hit(int x, int y) const
     {
         if (children.empty())
             return -1;
-        for (auto& c : children) {
-            auto h = c->hit(x, y);
+        for (auto c = children.rbegin(); c != children.rend(); c++) {
+            auto h = (*c)->hit(x, y);
             if (h) 
                 return h;
         }

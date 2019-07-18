@@ -46,6 +46,7 @@ namespace clib {
         virtual int set_flag(int flag);
         virtual int hit(int x, int y) const;
         void set_id(int id);
+        int get_id() const;
     protected:
         int id{ -1 };
         int type{ 0 };
@@ -166,6 +167,8 @@ namespace clib {
         cwindow_layout(int type);
         cwindow_layout* get_layout();
         void add(comctl_base* child);
+        void remove(comctl_base* child);
+        std::vector<int> get_list() const;
         int hit(int x, int y) const override;
     protected:
         std::vector<comctl_base*> children;
