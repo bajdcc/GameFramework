@@ -18,14 +18,19 @@ int read_file(int id, int handle) {
         window_layout_linear_set_vertical_align(window_get_base(id));
         long text = window_create_comctl(id, comctl_label);
         long text2 = window_create_comctl(id, comctl_label);
+        long text3 = window_create_comctl(id, comctl_label);
         window_comctl_connect(window_get_base(id), text);
         window_comctl_connect(window_get_base(id), text2);
+        window_comctl_connect(window_get_base(id), text3);
         window_comctl_set_text(text, "Hello world!!");
         window_comctl_set_text(text2, "Hello world!!!");
+        window_comctl_set_text(text3, "Click me to be stuck!");
         window_comctl_set_bound(text, 10, 10, 200, 30);
         window_comctl_set_bound(text2, 10, 10, 200, 30);
+        window_comctl_set_bound(text3, 10, 10, 200, 30);
         window_comctl_label_set_horizontal_align_middle(text);
         window_comctl_label_set_horizontal_align_middle(text2);
+        window_comctl_label_set_horizontal_align_middle(text3);
     }
     else {
         window_set_text(id, "- Test window 2 -");
@@ -41,6 +46,9 @@ int read_file(int id, int handle) {
     }
     __window_msg_struct__ s;
     while (c = window_get_msg(handle, &s), c < 0x1000) {
+        if (child && s.code == 0x201 && s.comctl == 3) {
+            sleep(6000); // BUSY STATE
+        }
         put_string("[MSG ] Handle: ");
         put_int(id);
         put_string(", Code= ");

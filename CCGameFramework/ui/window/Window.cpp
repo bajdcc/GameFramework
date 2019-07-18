@@ -986,6 +986,9 @@ bool Window::HandleMessageInternal(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM l
                 case Window::size_topright:
                     idc = IDC_SIZENESW;
                     break;
+                case Window::wait:
+                    idc = IDC_WAIT;
+                    break;
                 default:
                     break;
                 }

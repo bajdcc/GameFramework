@@ -69,6 +69,7 @@ namespace clib {
         enum window_state_t {
             W_NONE,
             W_RUNNING,
+            W_BUSY,
             W_CLOSING,
         };
 
@@ -144,6 +145,7 @@ namespace clib {
         int base_id{ -1 };
         int comctl_focus{ -1 };
         int comctl_hover{ -1 };
+        std::chrono::time_point<std::chrono::system_clock> time_handler;
 
         struct window_handle_t {
             window_comctl_type type{ comctl_none };

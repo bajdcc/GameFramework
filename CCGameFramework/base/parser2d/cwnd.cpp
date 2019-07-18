@@ -98,10 +98,18 @@ namespace clib {
         hit(200, s.left + 1, s.top + 1);
         //hit(211, s.left + 1, s.top + 1);
         hit(201, s.left + 1, s.top + 1);
+        time_handler = std::chrono::system_clock::now();
     }
 
     void cwindow::paint(const CRect& bounds)
     {
+        if (msg_data.size() > 100 ||
+            std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - time_handler).count() > 1LL) {
+            state = W_BUSY;
+        }
+        else if (state == W_BUSY) {
+            state = W_RUNNING;
+        }
         if (bounds1 != bounds || need_repaint) {
             need_repaint = false;
             CRect rt;
@@ -239,11 +247,14 @@ namespace clib {
 
     int cwindow::get_cursor() const
     {
+        if (state == W_BUSY)
+            return Window::wait;
         return cursor;
     }
 
     int cwindow::handle_msg(const window_msg& msg)
     {
+        time_handler = std::chrono::system_clock::now();
         if (msg.comctl != -1) {
             if (valid_handle(msg.comctl)) {
                 return handles[msg.comctl].comctl->handle_msg(msg.code, msg.param1, msg.param2);

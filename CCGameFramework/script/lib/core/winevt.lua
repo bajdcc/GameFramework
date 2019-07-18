@@ -65,7 +65,12 @@ _G["HitTest"] = N
 local S = {
 	arrow = 1,
 	hand = 2,
-	ibeam = 3
+	ibeam = 3,
+	size_left = 4,
+	size_top = 5,
+	size_topleft = 6,
+	size_topright = 7,
+	wait = 8
 }
 
 _G["SysCursor"] = S

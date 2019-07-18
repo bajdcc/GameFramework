@@ -121,6 +121,7 @@ public:
         size_top,
         size_topleft,
         size_topright,
+        wait,
     };
 
     struct event_base *get_event();
