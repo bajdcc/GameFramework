@@ -120,6 +120,7 @@ namespace clib {
         void destroy_handle(int handle, bool force = false);
 
         bool valid_handle(int h) const;
+        bool is_nonclient(const CPoint& pt) const;
 
     private:
         string_t caption;
@@ -140,6 +141,7 @@ namespace clib {
         CSize self_min_size;
         CRect self_drag_rt;
         CPoint self_client;
+        CRect self_title;
         int cursor{ 1 };
         cvm* vm{ nullptr };
         int base_id{ -1 };
@@ -158,6 +160,7 @@ namespace clib {
 
         struct SystemBag {
             std::shared_ptr<SolidBackgroundElement> title;
+            std::shared_ptr<SolidBackgroundElement> client;
             std::shared_ptr<SolidLabelElement> title_text;
             std::shared_ptr<SolidLabelElement> close_text;
             std::shared_ptr<RoundBorderElement> border;

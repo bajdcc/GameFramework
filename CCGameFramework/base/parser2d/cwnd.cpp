@@ -7,6 +7,8 @@
 #include "cvm.h"
 #include "cwnd.h"
 
+#define WINDOW_BORDER_X 5
+#define WINDOW_TITLE_Y 30
 #define WINDOW_CLOSE_BTN_X 20
 #define WINDOW_MIN_SIZE_X 100
 #define WINDOW_MIN_SIZE_Y 40
@@ -116,9 +118,17 @@ namespace clib {
             root->SetRenderRect(location.OfRect(bounds));
             rt = bag.title->GetRenderRect();
             rt.right = root->GetRenderRect().Width();
+            rt.bottom = root->GetRenderRect().Height();
             bag.title->SetRenderRect(rt);
+            self_title = CRect(0, 0, rt.Width(), WINDOW_TITLE_Y);
             rt.right -= WINDOW_CLOSE_BTN_X;
+            rt.bottom = self_title.Height();
             bag.title_text->SetRenderRect(rt);
+            rt.left = WINDOW_BORDER_X;
+            rt.top = WINDOW_TITLE_Y;
+            rt.right = root->GetRenderRect().Width() - WINDOW_BORDER_X;
+            rt.bottom = root->GetRenderRect().Height() - WINDOW_BORDER_X;
+            bag.client->SetRenderRect(rt);
             rt = bag.close_text->GetRenderRect();
             rt.left = root->GetRenderRect().Width() - WINDOW_CLOSE_BTN_X;
             rt.right = root->GetRenderRect().Width();
@@ -129,7 +139,7 @@ namespace clib {
             rt.bottom = bounds.Height();
             bag.border->SetRenderRect(rt);
             bounds3 = root->GetRenderRect();
-            bounds3.top += bag.title->GetRenderRect().Height();
+            bounds3.top += self_title.Height();
         }
         root->GetRenderer()->Render(root->GetRenderRect());
         bag.comctl->paint(bounds3);
@@ -184,7 +194,7 @@ namespace clib {
             n -= 200;
         else
             n += 3;
-        if (n <= 11 && bag.title->GetRenderRect().PtInRect(pt)) {
+        if (n <= 11 && is_nonclient(pt)) {
             code = mapnc[n];
             if (n == 0) {
                 post_data(WM_NCCALCSIZE, self_min_size.cx, self_min_size.cy);
@@ -192,7 +202,7 @@ namespace clib {
             }
         }
         else {
-            pt.y -= bag.title->GetRenderRect().Height();
+            pt.y -= self_title.Height();
             code = mapc[n];
         }
         post_data(code, pt.x, pt.y);
@@ -220,12 +230,12 @@ namespace clib {
                 if (focus != handle) { // 非当前窗口
                     vm->post_data(focus, WM_KILLFOCUS); // 给它发送KILLFOCUS
                     focus = handle; // 置为当前窗口
-                    vm->post_data(focus, WM_SETFOCUS); // 发送本窗口SETFOCUS
+                    post_data(WM_SETFOCUS); // 发送本窗口SETFOCUS
                 }
             }
             else { // 当前没有焦点
                 focus = handle;
-                vm->post_data(focus, WM_SETFOCUS);
+                post_data(WM_SETFOCUS);
             }
         }
         return true;
@@ -323,14 +333,16 @@ namespace clib {
         auto& list = root->GetChildren();
         auto title = SolidBackgroundElement::Create();
         title->SetColor(CColor(45, 120, 213));
-        title->SetRenderRect(CRect(0, 0, r.Width(), 30));
+        title->SetRenderRect(CRect(0, 0, r.Width(), r.Height()));
+        self_title = CRect(0, 0, r.Width(), WINDOW_TITLE_Y);
         bag.title = title;
         list.push_back(title);
         root->GetRenderer()->SetRelativePosition(true);
         auto title_text = SolidLabelElement::Create();
         title_text->SetColor(CColor(Gdiplus::Color::White));
-        title_text->SetRenderRect(CRect(5, 2, r.Width(), 30));
+        title_text->SetRenderRect(CRect(5, 2, r.Width(), WINDOW_TITLE_Y));
         title_text->SetText(CString(CStringA(caption.c_str())));
+        title_text->SetAlignments(Alignment::StringAlignmentCenter, Alignment::StringAlignmentCenter);
         bag.title_text = title_text;
         Font f;
         f.size = 20;
@@ -351,6 +363,11 @@ namespace clib {
         border->SetRenderRect(r);
         bag.border = border;
         list.push_back(border);
+        auto client = SolidBackgroundElement::Create();
+        client->SetColor(CColor(Gdiplus::Color::White));
+        client->SetRenderRect(CRect(WINDOW_BORDER_X, WINDOW_TITLE_Y, r.Width() - WINDOW_BORDER_X, r.Height() - WINDOW_BORDER_X));
+        bag.client = client;
+        list.push_back(client);
         base_id = create_comctl(layout_linear);
         bag.comctl = handles[base_id].comctl;
     }
@@ -359,7 +376,7 @@ namespace clib {
     {
         auto suc = false;
         cx = cy = 0;
-        const int border_len = 5;
+        const int border_len = WINDOW_BORDER_X;
         if (abs(pt.x) <= border_len) {
             suc = true;
             cx = -1;
@@ -440,6 +457,13 @@ namespace clib {
         return handles_set.find(h) != handles_set.end();
     }
 
+    bool cwindow::is_nonclient(const CPoint& pt) const
+    {
+        if (self_title.PtInRect(pt))
+            return true;
+        return false;
+    }
+
     void cwindow::post_data(const int& code, int param1, int param2, int comctl)
     {
         if (comctl == -1) {
@@ -480,14 +504,14 @@ namespace clib {
             else if (code == WM_LBUTTONDOWN)
             {
                 int cx, cy;
-                if (is_border(CPoint(param1, param2 + bag.title->GetRenderRect().Height()), cx, cy)) {
+                if (is_border(CPoint(param1, param2 + self_title.Height()), cx, cy)) {
                     self_size = true;
                 }
             }
             else if (code == WM_MOUSEMOVE)
             {
                 int cx, cy;
-                if (is_border(CPoint(param1, param2 + bag.title->GetRenderRect().Height()), cx, cy)) {
+                if (is_border(CPoint(param1, param2 + self_title.Height()), cx, cy)) {
                     cursor = sys_cursor(cx, cy);
                 }
                 else {
@@ -866,8 +890,11 @@ namespace clib {
     void cwindow_comctl_label::paint(const CRect& bounds)
     {
         text->SetRenderRect((bound).OfRect(bounds));
-        if (text->GetRenderRect().Width() > 5)
-            text->GetRenderer()->Render(text->GetRenderRect());
+        if (bound.Height() > bounds.Height() || bound.Width() > bounds.Width())
+            return;
+        if (bound.Height() > text->GetRenderRect().Height() || bound.Width() > text->GetRenderRect().Width())
+            return;
+        text->GetRenderer()->Render(text->GetRenderRect());
     }
 
     cwindow_comctl_label* cwindow_comctl_label::get_label()
