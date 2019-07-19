@@ -15,6 +15,7 @@ public:
     void Init();
 
     CComPtr<ID2D1RenderTarget> GetDirect2DRenderTarget();
+    CComPtr<ID2D1RenderTarget> SetDirect2DRenderTarget(CComPtr<ID2D1RenderTarget>);
     void SetTextAntialias(bool antialias, bool verticalAntialias);
     void StartRendering();
     HRESULT StopRendering();

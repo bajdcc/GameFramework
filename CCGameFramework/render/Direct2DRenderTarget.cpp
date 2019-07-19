@@ -35,6 +35,13 @@ CComPtr<ID2D1RenderTarget> Direct2DRenderTarget::GetDirect2DRenderTarget()
     return d2dRenderTarget;
 }
 
+CComPtr<ID2D1RenderTarget> Direct2DRenderTarget::SetDirect2DRenderTarget(CComPtr<ID2D1RenderTarget> rt)
+{
+    auto old = d2dRenderTarget;
+    d2dRenderTarget = rt;
+    return old;
+}
+
 void Direct2DRenderTarget::SetTextAntialias(bool antialias, bool verticalAntialias)
 {
     CComPtr<IDWriteRenderingParams> params;

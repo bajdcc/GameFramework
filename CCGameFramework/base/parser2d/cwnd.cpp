@@ -9,6 +9,7 @@
 
 #define WINDOW_BORDER_X 5
 #define WINDOW_TITLE_Y 30
+#define WINDOW_HANG_MS 100ms
 #define WINDOW_CLOSE_BTN_X 20
 #define WINDOW_MIN_SIZE_X 100
 #define WINDOW_MIN_SIZE_Y 40
@@ -105,12 +106,26 @@ namespace clib {
 
     void cwindow::paint(const CRect& bounds)
     {
-        if (msg_data.size() > 100 ||
-            std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - time_handler).count() > 1LL) {
-            state = W_BUSY;
+        using namespace std::chrono_literals;
+        if (state == W_RUNNING) {
+            if (msg_data.empty()) {
+                state = W_IDLE;
+            }
+            else if (std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::system_clock::now() - time_handler) >= WINDOW_HANG_MS) {
+                state = W_BUSY;
+            }
+        }
+        else if (state == W_IDLE) {
+            if (!msg_data.empty()) {
+                state = W_RUNNING;
+            }
         }
         else if (state == W_BUSY) {
-            state = W_RUNNING;
+            if (std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::system_clock::now() - time_handler) < WINDOW_HANG_MS) {
+                state = W_RUNNING;
+            }
         }
         if (bounds1 != bounds || need_repaint) {
             need_repaint = false;
@@ -142,7 +157,39 @@ namespace clib {
             bounds3.top += self_title.Height();
         }
         root->GetRenderer()->Render(root->GetRenderRect());
-        bag.comctl->paint(bounds3);
+        if (state == W_BUSY) {
+            auto sz = bounds3.Size();
+            auto b = renderTarget->CreateBitmapRenderTarget(D2D1::SizeF((float)sz.cx, (float)sz.cy));
+            CComPtr<ID2D1Bitmap> bitmap;
+            b->GetBitmap(&bitmap);
+            auto old = renderTarget->SetDirect2DRenderTarget(b.p);
+            auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::system_clock::now() - time_handler).count();
+            auto delay = ((float)ms) * 0.001f;
+            delay = __min(delay, 5.0f); // (0, 5.0]
+            auto clr = byte(255.0f - delay * 20.0f);
+            b->BeginDraw();
+            b->Clear(GetD2DColor(CColor(clr, clr, clr)));
+            bag.comctl->paint(CRect(CPoint(), sz));
+            b->EndDraw();
+            CComPtr<ID2D1Effect> gaussianBlurEffect;
+            auto dev = Direct2D::Singleton().GetDirect2DDeviceContext();
+            dev->CreateEffect(CLSID_D2D1GaussianBlur, &gaussianBlurEffect);
+            gaussianBlurEffect->SetInput(0, bitmap);
+            gaussianBlurEffect->SetValue(D2D1_GAUSSIANBLUR_PROP_STANDARD_DEVIATION, delay);
+            dev->DrawImage(
+                gaussianBlurEffect.p,
+                D2D1::Point2F((FLOAT)root->GetRenderRect().left + WINDOW_BORDER_X,
+                (FLOAT)root->GetRenderRect().top + self_title.Height()),
+                D2D1::RectF((FLOAT)WINDOW_BORDER_X, (FLOAT)0,
+                (FLOAT)sz.cx - WINDOW_BORDER_X, (FLOAT)sz.cy - WINDOW_BORDER_X),
+                D2D1_INTERPOLATION_MODE_LINEAR
+            );
+            renderTarget->SetDirect2DRenderTarget(old);
+        }
+        else {
+            bag.comctl->paint(bounds3);
+        }
     }
 
 #define WM_MOUSEENTER 0x2A5
@@ -230,12 +277,12 @@ namespace clib {
                 if (focus != handle) { // 非当前窗口
                     vm->post_data(focus, WM_KILLFOCUS); // 给它发送KILLFOCUS
                     focus = handle; // 置为当前窗口
-                    post_data(WM_SETFOCUS); // 发送本窗口SETFOCUS
+                    vm->post_data(focus, WM_SETFOCUS); // 发送本窗口SETFOCUS
                 }
             }
             else { // 当前没有焦点
                 focus = handle;
-                post_data(WM_SETFOCUS);
+                vm->post_data(focus, WM_SETFOCUS);
             }
         }
         return true;

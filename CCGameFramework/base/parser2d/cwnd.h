@@ -70,6 +70,7 @@ namespace clib {
             W_NONE,
             W_RUNNING,
             W_BUSY,
+            W_IDLE,
             W_CLOSING,
         };
 
