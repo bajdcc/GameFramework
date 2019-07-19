@@ -10,6 +10,7 @@
 #define WINDOW_BORDER_X 5
 #define WINDOW_TITLE_Y 30
 #define WINDOW_HANG_MS 100ms
+#define WINDOW_HANG_BLUR 5
 #define WINDOW_CLOSE_BTN_X 20
 #define WINDOW_MIN_SIZE_X 100
 #define WINDOW_MIN_SIZE_Y 40
@@ -113,6 +114,7 @@ namespace clib {
             }
             else if (std::chrono::duration_cast<std::chrono::milliseconds>(
                 std::chrono::system_clock::now() - time_handler) >= WINDOW_HANG_MS) {
+                bag.title_text->SetText(CString(CStringA((caption + "（未响应）").c_str())));
                 state = W_BUSY;
             }
         }
@@ -124,19 +126,26 @@ namespace clib {
         else if (state == W_BUSY) {
             if (std::chrono::duration_cast<std::chrono::milliseconds>(
                 std::chrono::system_clock::now() - time_handler) < WINDOW_HANG_MS) {
+                bag.title_text->SetText(CString(CStringA(caption.c_str())));
                 state = W_RUNNING;
             }
         }
         if (bounds1 != bounds || need_repaint) {
             need_repaint = false;
             CRect rt;
+            {
+                auto mins = bag.comctl->min_size();
+                location.right = location.left + __max(location.Width(), mins.cx + WINDOW_BORDER_X * 2);
+                location.bottom = location.top + __max(location.Height(), mins.cy + WINDOW_BORDER_X + WINDOW_TITLE_Y);
+            }
             root->SetRenderRect(location.OfRect(bounds));
             rt = bag.title->GetRenderRect();
             rt.right = root->GetRenderRect().Width();
             rt.bottom = root->GetRenderRect().Height();
             bag.title->SetRenderRect(rt);
             self_title = CRect(0, 0, rt.Width(), WINDOW_TITLE_Y);
-            rt.right -= WINDOW_CLOSE_BTN_X;
+            if (bag.title_text->GetRenderer()->GetMinSize().cx < rt.Width())
+                rt.right -= WINDOW_CLOSE_BTN_X;
             rt.bottom = self_title.Height();
             bag.title_text->SetRenderRect(rt);
             rt.left = WINDOW_BORDER_X;
@@ -158,7 +167,10 @@ namespace clib {
         }
         root->GetRenderer()->Render(root->GetRenderRect());
         if (state == W_BUSY) {
+            const int blur_size = WINDOW_HANG_BLUR;
             auto sz = bounds3.Size();
+            sz.cx += blur_size * 2;
+            sz.cy += blur_size * 2;
             auto b = renderTarget->CreateBitmapRenderTarget(D2D1::SizeF((float)sz.cx, (float)sz.cy));
             CComPtr<ID2D1Bitmap> bitmap;
             b->GetBitmap(&bitmap);
@@ -166,11 +178,11 @@ namespace clib {
             auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
                 std::chrono::system_clock::now() - time_handler).count();
             auto delay = ((float)ms) * 0.001f;
-            delay = __min(delay, 5.0f); // (0, 5.0]
+            delay = __min(delay, blur_size); // (0, 5.0]
             auto clr = byte(255.0f - delay * 20.0f);
             b->BeginDraw();
             b->Clear(GetD2DColor(CColor(clr, clr, clr)));
-            bag.comctl->paint(CRect(CPoint(), sz));
+            bag.comctl->paint(CRect(CPoint(blur_size, blur_size), sz));
             b->EndDraw();
             CComPtr<ID2D1Effect> gaussianBlurEffect;
             auto dev = Direct2D::Singleton().GetDirect2DDeviceContext();
@@ -181,8 +193,8 @@ namespace clib {
                 gaussianBlurEffect.p,
                 D2D1::Point2F((FLOAT)root->GetRenderRect().left + WINDOW_BORDER_X,
                 (FLOAT)root->GetRenderRect().top + self_title.Height()),
-                D2D1::RectF((FLOAT)WINDOW_BORDER_X, (FLOAT)0,
-                (FLOAT)sz.cx - WINDOW_BORDER_X, (FLOAT)sz.cy - WINDOW_BORDER_X),
+                D2D1::RectF((FLOAT)WINDOW_BORDER_X + blur_size, (FLOAT)blur_size,
+                (FLOAT)sz.cx - WINDOW_BORDER_X - blur_size, (FLOAT)sz.cy - WINDOW_BORDER_X - blur_size),
                 D2D1_INTERPOLATION_MODE_LINEAR
             );
             renderTarget->SetDirect2DRenderTarget(old);
@@ -216,6 +228,7 @@ namespace clib {
             return true;
         }
         if (self_size && n == 211 && cvm::global_state.window_hover == handle) {
+            post_data(WM_NCCALCSIZE, self_min_size.cx, self_min_size.cy);
             post_data(WM_SIZING, x, y); // 发送本窗口MOVNG
             return true;
         }
@@ -244,7 +257,6 @@ namespace clib {
         if (n <= 11 && is_nonclient(pt)) {
             code = mapnc[n];
             if (n == 0) {
-                post_data(WM_NCCALCSIZE, self_min_size.cx, self_min_size.cy);
                 post_data(WM_MOVE, x, y); // 发送本窗口MOVE
             }
         }
@@ -324,8 +336,7 @@ namespace clib {
             state = W_CLOSING;
             break;
         case WM_SETTEXT:
-            caption = vm->vmm_getstr(msg.param1);
-            bag.title_text->SetText(CString(CStringA(caption.c_str())));
+            set_caption(vm->vmm_getstr(msg.param1));
             break;
         case WM_GETTEXT:
             vm->vmm_setstr(msg.param1, caption);
@@ -365,8 +376,11 @@ namespace clib {
         }
             break;
         case WM_NCCALCSIZE:
-            self_min_size.cx = __max(WINDOW_MIN_SIZE_X, (LONG)msg.param1);
-            self_min_size.cy = __max(WINDOW_MIN_SIZE_Y, (LONG)msg.param2);
+        {
+            auto sz = bag.comctl->min_size();
+            self_min_size.cx = __max(sz.cx, __max(WINDOW_MIN_SIZE_X, (LONG)msg.param1));
+            self_min_size.cy = __max(sz.cy, __max(WINDOW_MIN_SIZE_Y, (LONG)msg.param2));
+        }
             break;
         default:
             break;
@@ -387,9 +401,14 @@ namespace clib {
         root->GetRenderer()->SetRelativePosition(true);
         auto title_text = SolidLabelElement::Create();
         title_text->SetColor(CColor(Gdiplus::Color::White));
-        title_text->SetRenderRect(CRect(5, 2, r.Width(), WINDOW_TITLE_Y));
         title_text->SetText(CString(CStringA(caption.c_str())));
         title_text->SetAlignments(Alignment::StringAlignmentCenter, Alignment::StringAlignmentCenter);
+        title_text->SetRenderRect(CRect(5, 2, r.Width() - WINDOW_CLOSE_BTN_X, WINDOW_TITLE_Y));
+        if (title_text->GetRenderer()->GetMinSize().cx < r.Width()) {
+            auto rr = title_text->GetRenderRect();
+            rr.right -= WINDOW_CLOSE_BTN_X;
+            title_text->SetRenderRect(rr);
+        }
         bag.title_text = title_text;
         Font f;
         f.size = 20;
@@ -509,6 +528,13 @@ namespace clib {
         if (self_title.PtInRect(pt))
             return true;
         return false;
+    }
+
+    void cwindow::set_caption(const string_t& text)
+    {
+        if (caption == text) return;
+        caption = text;
+        bag.title_text->SetText(CString(CStringA(caption.c_str())));
     }
 
     void cwindow::post_data(const int& code, int param1, int param2, int comctl)
@@ -828,6 +854,11 @@ namespace clib {
         return 0;
     }
 
+    CSize comctl_base::min_size() const
+    {
+        return CSize();
+    }
+
     cwindow_layout::cwindow_layout(int type) : comctl_base(type)
     {
     }
@@ -920,6 +951,27 @@ namespace clib {
             break;
         }
         return 0;
+    }
+
+    CSize cwindow_layout_linear::min_size() const
+    {
+        if (children.empty())
+            return cwindow_layout::min_size();
+        auto b = cwindow_layout::min_size();
+        auto lt = children[0]->get_bound().TopLeft();
+        if (align == vertical) {
+            for (auto& c : children) {
+                b.cx = __max(b.cx, c->get_bound().Width());
+                b.cy += c->get_bound().Height();
+            }
+        }
+        else if (align == horizontal) {
+            for (auto& c : children) {
+                b.cx += c->get_bound().Width();
+                b.cy = __max(b.cy, c->get_bound().Height());
+            }
+        }
+        return lt + b;
     }
 
     cwindow_comctl_label::cwindow_comctl_label() : comctl_base(cwindow::comctl_label)
@@ -1026,5 +1078,10 @@ namespace clib {
         break;
     }
         return 0;
+    }
+
+    CSize cwindow_comctl_label::min_size() const
+    {
+        return text->GetRenderer()->GetMinSize();
     }
 }

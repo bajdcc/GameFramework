@@ -48,6 +48,7 @@ namespace clib {
         void set_id(int id);
         int get_id() const;
         virtual int handle_msg(int code, uint32 param1, uint32 param2);
+        virtual CSize min_size() const;
     protected:
         int id{ -1 };
         int type{ 0 };
@@ -123,6 +124,8 @@ namespace clib {
         bool valid_handle(int h) const;
         bool is_nonclient(const CPoint& pt) const;
 
+        void set_caption(const string_t&);
+
     private:
         string_t caption;
         CRect location;
@@ -192,6 +195,7 @@ namespace clib {
         cwindow_layout_linear();
         void paint(const CRect& bounds) override;
         int set_flag(int flag) override;
+        CSize min_size() const override;
     private:
         enum align_type {
             vertical,
@@ -209,6 +213,7 @@ namespace clib {
         int set_flag(int flag) override;
         int hit(int x, int y) const override;
         int handle_msg(int code, uint32 param1, uint32 param2) override;
+        CSize min_size() const override;
     private:
         std::shared_ptr<SolidLabelElement> text;
     };
