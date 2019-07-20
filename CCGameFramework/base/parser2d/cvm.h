@@ -285,7 +285,7 @@ namespace clib {
         int handle_ids{ 0 };
         int available_handles{ 0 };
         int set_cycle_id{ -1 };
-        int set_resize_id{ -1 };
+        std::unordered_set<int> set_resize_id;
         std::array<handle_t, HANDLE_NUM> handles;
         int kernel_pages{ 0 };
         std::vector<cwindow*> wnds;

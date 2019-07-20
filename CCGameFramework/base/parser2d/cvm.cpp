@@ -1394,9 +1394,11 @@ namespace clib {
                 cgui::singleton().set_cycle(0);
                 set_cycle_id = -1;
             }
-            if (set_resize_id == ctx->id) {
-                cgui::singleton().resize(0, 0);
-                set_resize_id = -1;
+            if (set_resize_id.find(ctx->id) != set_resize_id.end()) {
+                set_resize_id.erase(ctx->id);
+                if (set_resize_id.empty()) {
+                    cgui::singleton().resize(0, 0);
+                }
             }
             if (ctx->output_redirect != -1 && tasks[ctx->output_redirect].flag & CTX_VALID) {
                 if (!ctx->input_queue.empty()) {
@@ -1650,6 +1652,9 @@ namespace clib {
             handles[h].refs++;
         }
         available_tasks++;
+        if (set_resize_id.find(old_ctx->id) != set_resize_id.end()) {
+            set_resize_id.insert(ctx->id);
+        }
         auto pid = ctx->id;
         ctx = old_ctx;
         return pid;
@@ -2801,7 +2806,7 @@ namespace clib {
         }
         case 20: {
             if (global_state.input_lock == -1) {
-                set_resize_id = ctx->id;
+                set_resize_id.insert(ctx->id);
                 cgui::singleton().resize(ctx->ax._i >> 16, ctx->ax._i & 0xFFFF);
             }
             else {

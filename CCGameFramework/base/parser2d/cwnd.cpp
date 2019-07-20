@@ -144,7 +144,7 @@ namespace clib {
             rt.bottom = root->GetRenderRect().Height();
             bag.title->SetRenderRect(rt);
             self_title = CRect(0, 0, rt.Width(), WINDOW_TITLE_Y);
-            if (bag.title_text->GetRenderer()->GetMinSize().cx < rt.Width())
+            if (bag.title_text->GetRenderer()->GetMinSize().cx + WINDOW_CLOSE_BTN_X * 2 > rt.Width())
                 rt.right -= WINDOW_CLOSE_BTN_X;
             rt.bottom = self_title.Height();
             bag.title_text->SetRenderRect(rt);
@@ -404,7 +404,7 @@ namespace clib {
         title_text->SetText(CString(CStringA(caption.c_str())));
         title_text->SetAlignments(Alignment::StringAlignmentCenter, Alignment::StringAlignmentCenter);
         title_text->SetRenderRect(CRect(5, 2, r.Width() - WINDOW_CLOSE_BTN_X, WINDOW_TITLE_Y));
-        if (title_text->GetRenderer()->GetMinSize().cx < r.Width()) {
+        if (title_text->GetRenderer()->GetMinSize().cx + WINDOW_CLOSE_BTN_X * 2 > r.Width()) {
             auto rr = title_text->GetRenderRect();
             rr.right -= WINDOW_CLOSE_BTN_X;
             title_text->SetRenderRect(rr);

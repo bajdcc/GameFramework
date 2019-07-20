@@ -45,16 +45,17 @@ int read_file(int id, int handle) {
         window_comctl_set_bound(text2, 10, 10, 200, 30);
     }
     __window_msg_struct__ s;
+    resize(30, 100);
     while (c = window_get_msg(handle, &s), c < 0x1000) {
         if (child && s.code == 0x201 && s.comctl == 3) {
             sleep(6000); // BUSY STATE
         }
         put_string("[MSG ] Handle: ");
-        put_int(id);
+        put_hex(id);
         put_string(", Code= ");
-        put_int(s.code);
+        put_hex(s.code);
         put_string(", Comctl= ");
-        put_int(s.comctl);
+        put_hex(s.comctl);
         put_string(", Param1= ");
         put_hex(s.param1);
         put_string(", Param2= ");
