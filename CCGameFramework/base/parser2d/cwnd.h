@@ -31,12 +31,57 @@ namespace clib {
         cwindow* wnd{ nullptr };
     };
 
+    class cwindow_style : public std::enable_shared_from_this<cwindow_style> {
+    public:
+        enum color_t {
+            c__none,
+            c_window_nonclient,
+            c_window_background,
+            c_window_title_text,
+            c_button_bg_def,
+            c_button_bg_focus,
+            c_button_fg_def,
+            c_button_fg_hover,
+            c__end,
+        };
+        enum str_t {
+            s__none,
+            s_title_hang,
+            s__end,
+        };
+        enum px_t {
+            p__none,
+            p_title_y,
+            p_close_btn_x,
+            p_border_x,
+            p_hang_blur,
+            p_title_tl_x,
+            p_title_tl_y,
+            p_min_size_x,
+            p_min_size_y,
+            p__end,
+        };
+
+        enum float_t {
+            f__none,
+            f_button_radius,
+            f__end,
+        };
+
+        using ref = std::shared_ptr<cwindow_style>;
+
+        virtual CColor get_color(color_t t) const = 0;
+        virtual string_t get_str(str_t t) const = 0;
+        virtual int get_int(px_t t) const = 0;
+        virtual float get_float(float_t t) const = 0;
+    };
+
     class cwindow_comctl_label;
     class cwindow_layout;
     class comctl_base {
     public:
         comctl_base(int type);
-        virtual void set_rt(std::shared_ptr<Direct2DRenderTarget> rt);
+        virtual void set_rt(std::shared_ptr<Direct2DRenderTarget> rt, cwindow_style::ref);
         virtual void paint(const CRect& bounds);
         comctl_base* get_parent() const;
         virtual cwindow_layout* get_layout();
@@ -55,6 +100,14 @@ namespace clib {
         comctl_base* parent{ nullptr };
         CRect bound;
         std::weak_ptr<Direct2DRenderTarget> rt;
+    };
+
+    class cwindow_style_win : public cwindow_style {
+    public:
+        CColor get_color(color_t t) const override;
+        string_t get_str(str_t t) const override;
+        int get_int(px_t t) const override;
+        float get_float(float_t t) const override;
     };
 
     class cvm;
@@ -95,6 +148,7 @@ namespace clib {
             layout_linear,
             layout_grid,
             comctl_label = 100,
+            comctl_button,
             comctl_end = 1000,
         };
 
@@ -162,6 +216,8 @@ namespace clib {
         int available_handles{ 0 };
         std::array<window_handle_t, WINDOW_HANDLE_NUM> handles;
 
+        cwindow_style::ref style;
+
         struct SystemBag {
             std::shared_ptr<SolidBackgroundElement> title;
             std::shared_ptr<SolidBackgroundElement> client;
@@ -206,7 +262,7 @@ namespace clib {
     class cwindow_comctl_label : public comctl_base {
     public:
         cwindow_comctl_label();
-        void set_rt(std::shared_ptr<Direct2DRenderTarget> rt) override;
+        void set_rt(std::shared_ptr<Direct2DRenderTarget> rt, cwindow_style::ref) override;
         void paint(const CRect& bounds) override;
         cwindow_comctl_label* get_label() override;
         void set_text(const string_t& text);
@@ -214,8 +270,21 @@ namespace clib {
         int hit(int x, int y) const override;
         int handle_msg(int code, uint32 param1, uint32 param2) override;
         CSize min_size() const override;
-    private:
+    protected:
         std::shared_ptr<SolidLabelElement> text;
+    };
+
+    class cwindow_comctl_button : public cwindow_comctl_label {
+    public:
+        cwindow_comctl_button();
+        void set_rt(std::shared_ptr<Direct2DRenderTarget> rt, cwindow_style::ref) override;
+        void paint(const CRect& bounds) override;
+        int hit(int x, int y) const override;
+        int handle_msg(int code, uint32 param1, uint32 param2) override;
+        CSize min_size() const override;
+    private:
+        std::shared_ptr<RoundBorderElement> background;
+        std::weak_ptr<cwindow_style> _style;
     };
 }
 

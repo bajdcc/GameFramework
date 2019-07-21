@@ -77,6 +77,7 @@ enum window_comctl_type {
     layout_linear,
     layout_grid,
     comctl_label = 100,
+    comctl_button,
 };
 
 struct __window_create_comctl_struct__ {
