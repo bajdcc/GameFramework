@@ -332,8 +332,9 @@ namespace clib {
         if (state == W_BUSY) {
             const int blur_size = style->get_int(cwindow_style::p_hang_blur);;
             auto sz = bounds3.Size();
-            sz.cx += blur_size * 2;
-            sz.cy += blur_size * 2;
+            auto border_x = style->get_int(cwindow_style::p_border_x);
+            sz.cx += blur_size * 2 + border_x * 2;
+            sz.cy += blur_size * 2 + border_x;
             auto b = renderTarget->CreateBitmapRenderTarget(D2D1::SizeF((float)sz.cx, (float)sz.cy));
             CComPtr<ID2D1Bitmap> bitmap;
             b->GetBitmap(&bitmap);
@@ -345,14 +346,13 @@ namespace clib {
             auto clr = byte(255.0f - delay * 20.0f);
             b->BeginDraw();
             b->Clear(GetD2DColor(CColor(clr, clr, clr)));
-            bag.comctl->paint(CRect(CPoint(blur_size, blur_size), sz));
+            bag.comctl->paint(CRect(CPoint(blur_size + border_x, blur_size), sz));
             b->EndDraw();
             CComPtr<ID2D1Effect> gaussianBlurEffect;
             auto dev = Direct2D::Singleton().GetDirect2DDeviceContext();
             dev->CreateEffect(CLSID_D2D1GaussianBlur, &gaussianBlurEffect);
             gaussianBlurEffect->SetInput(0, bitmap);
             gaussianBlurEffect->SetValue(D2D1_GAUSSIANBLUR_PROP_STANDARD_DEVIATION, delay);
-            auto border_x = style->get_int(cwindow_style::p_border_x);
             dev->DrawImage(
                 gaussianBlurEffect.p,
                 D2D1::Point2F((FLOAT)root->GetRenderRect().left + border_x,
