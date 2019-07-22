@@ -124,6 +124,24 @@ int window_comctl_set_flag(long handle, int flag) {
     interrupt 506;
 }
 
+enum window_style {
+    style_win10 = 1,
+    style_win10_white,
+};
+
+struct __window_set_style_struct__ {
+    int handle;
+    int style;
+};
+
+int window_set_style(int handle, int style) {
+    __window_set_style_struct__ s;
+    s.handle = handle;
+    s.style = style;
+    &s;
+    interrupt 507;
+}
+
 struct __window_comctl_set_bound_struct__ {
     long handle;
     int left, top, right, bottom;
@@ -151,6 +169,21 @@ int window_comctl_set_text(long handle, char* text) {
     s.text = text;
     &s;
     interrupt 510;
+}
+
+struct __window_get_comctl_struct__ {
+    int handle;
+    int comctl;
+};
+
+int window_get_comctl(long handle) {
+    __window_get_comctl_struct__* s = &handle;
+    return s->comctl;
+}
+
+int window_get_handle(long handle) {
+    __window_get_comctl_struct__* s = &handle;
+    return s->handle;
 }
 
 // ----------------------------------------

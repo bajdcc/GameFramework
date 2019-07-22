@@ -72,16 +72,37 @@ namespace clib {
         return curs[(cx + 1) * 3 + (cy + 1)];
     }
 
+    cwindow_style::ref cwindow_style::create_style(style_t t)
+    {
+        if (t > S__NONE && t < S__END) {
+            switch (t) {
+            case S_WIN10_DEFAULT:
+                return std::make_shared<cwindow_style_win>();
+            case S_WIN10_WHITE:
+                return std::make_shared<cwindow_style_win_white>();
+            }
+        }
+        return nullptr;
+    }
+
     CColor cwindow_style_win::get_color(color_t t) const
     {
         if (t > c__none && t < c__end) {
             switch (t) {
             case c_window_nonclient:
                 return CColor(45, 120, 213);
+            case c_window_nonclient_lost:
+                return CColor(149, 187, 234);
             case c_window_background:
                 return CColor(238, 238, 238);
             case c_window_title_text:
                 return CColor(Gdiplus::Color::White);
+            case c_window_close_btn:
+                return CColor(Gdiplus::Color::White);
+            case c_window_border_def:
+                return CColor(36, 125, 234);
+            case c_window_border_lost:
+                return CColor(149, 187, 234);
             case c_button_bg_def:
                 return CColor(204, 204, 204);
             case c_button_bg_focus:
@@ -138,21 +159,61 @@ namespace clib {
     {
         if (t > f__none && t < f__end) {
             switch (t) {
+            case f_window_border_radius:
+                return 0.0f;
             case f_button_radius:
                 return 5.0f;
             }
         }
-        ATLVERIFY(!"undefined style int!");
+        ATLVERIFY(!"undefined style float!");
         return 0.0f;
+    }
+
+    CColor cwindow_style_win_white::get_color(color_t t) const
+    {
+        switch (t) {
+        case c_window_nonclient:
+            return CColor(Gdiplus::Color::White);
+        case c_window_nonclient_lost:
+            return CColor(Gdiplus::Color::White);
+        case c_window_background:
+            return CColor(240, 240, 240);
+        case c_window_title_text:
+            return CColor(Gdiplus::Color::Black);
+        case c_window_close_btn:
+            return CColor(Gdiplus::Color::Black);
+        case c_window_border_def:
+            return CColor(Gdiplus::Color::Black);
+        case c_window_border_lost:
+            return CColor(Gdiplus::Color::Black);
+        case c_button_bg_def:
+            return CColor(225, 225, 225);
+        case c_button_bg_focus:
+            return CColor(204, 204, 204);
+        case c_button_fg_def:
+            return CColor(Gdiplus::Color::Black);
+        case c_button_fg_hover:
+            return CColor(Gdiplus::Color::Black);
+        }
+        return cwindow_style_win::get_color(t);
+    }
+
+    float cwindow_style_win_white::get_float(float_t t) const
+    {
+        switch (t) {
+        case f_window_border_radius:
+            return 0.0f;
+        case f_button_radius:
+            return 0.0f;
+        }
+        return cwindow_style_win::get_float(t);
     }
 
     cwindow::cwindow(cvm* vm, int handle, const string_t& caption, const CRect& location)
         : vm(vm), handle(handle), caption(caption), location(location), self_min_size(WINDOW_MIN_SIZE_X, WINDOW_MIN_SIZE_Y)
     {
         style = std::make_shared<cwindow_style_win>();
-        auto bg = SolidBackgroundElement::Create();
-        bg->SetColor(style->get_color(cwindow_style::c_window_background));
-        root = bg;
+        root = SolidBackgroundElement::Create();
         root->SetRenderRect(location);
         renderTarget = std::make_shared<Direct2DRenderTarget>(window->shared_from_this());
         renderTarget->Init();
@@ -472,55 +533,61 @@ namespace clib {
     {
         auto r = root->GetRenderRect();
         auto& list = root->GetChildren();
-        auto title = SolidBackgroundElement::Create();
-        title->SetColor(style->get_color(cwindow_style::c_window_nonclient));
-        title->SetRenderRect(CRect(0, 0, r.Width(), r.Height()));
+        bag.title = SolidBackgroundElement::Create();
+        list.push_back(bag.title);
+        bag.title_text = SolidLabelElement::Create();
+        list.push_back(bag.title_text);
+        bag.close_text = SolidLabelElement::Create();
+        list.push_back(bag.close_text);
+        bag.border = RoundBorderElement::Create();
+        list.push_back(bag.border);
+        bag.client = SolidBackgroundElement::Create();;
+        list.push_back(bag.client);
+        base_id = create_comctl(layout_linear);
+        bag.comctl = handles[base_id].comctl;
+        _init_style();
+    }
+
+    void cwindow::_init_style()
+    {
+        auto r = root->GetRenderRect();
+        root->SetColor(style->get_color(cwindow_style::c_window_background));
+        auto& list = root->GetChildren();
+        bag.title->SetColor(style->get_color(cwindow_style::c_window_nonclient));
+        bag.title->SetRenderRect(CRect(0, 0, r.Width(), r.Height()));
         auto title_y = style->get_int(cwindow_style::p_title_y);
         self_title = CRect(0, 0, r.Width(), title_y);
-        bag.title = title;
-        list.push_back(title);
         root->GetRenderer()->SetRelativePosition(true);
-        auto title_text = SolidLabelElement::Create();
-        title_text->SetColor(style->get_color(cwindow_style::c_window_title_text));
-        title_text->SetText(CString(CStringA(caption.c_str())));
-        title_text->SetAlignments(Alignment::StringAlignmentCenter, Alignment::StringAlignmentCenter);
+        bag.title_text->SetColor(style->get_color(cwindow_style::c_window_title_text));
+        bag.title_text->SetText(CString(CStringA(caption.c_str())));
+        bag.title_text->SetAlignments(Alignment::StringAlignmentCenter, Alignment::StringAlignmentCenter);
         auto close_btn_x = style->get_int(cwindow_style::p_close_btn_x);
-        title_text->SetRenderRect(CRect(style->get_int(cwindow_style::p_title_tl_x),
+        bag.title_text->SetRenderRect(CRect(style->get_int(cwindow_style::p_title_tl_x),
             style->get_int(cwindow_style::p_title_tl_y),
-            r.Width() - close_btn_x, title_y));
-        if (title_text->GetRenderer()->GetMinSize().cx + close_btn_x * 2 > r.Width()) {
-            auto rr = title_text->GetRenderRect();
+            r.Width(), title_y));
+        if (bag.title_text->GetRenderer()->GetMinSize().cx + close_btn_x * 2 > r.Width()) {
+            auto rr = bag.title_text->GetRenderRect();
             rr.right -= close_btn_x;
-            title_text->SetRenderRect(rr);
+            bag.title_text->SetRenderRect(rr);
         }
-        bag.title_text = title_text;
         Font f;
         f.size = 20;
         f.fontFamily = "微软雅黑";
-        title_text->SetFont(f);
-        list.push_back(title_text);
-        auto close_text = SolidLabelElement::Create();
-        close_text->SetColor(CColor(Gdiplus::Color::White));
-        close_text->SetRenderRect(CRect(r.Width() - 20, 2, r.Width(), 30));
-        close_text->SetText(_T("×"));
-        close_text->SetFont(f);
-        bag.close_text = close_text;
-        list.push_back(close_text);
-        auto border = RoundBorderElement::Create();
-        border->SetColor(CColor(149, 187, 234));
-        border->SetFill(false);
-        border->SetRadius(0.0f);
-        border->SetRenderRect(r);
-        bag.border = border;
-        list.push_back(border);
-        auto client = SolidBackgroundElement::Create();
-        client->SetColor(style->get_color(cwindow_style::c_window_background));
+        bag.title_text->SetFont(f);
+        bag.close_text->SetColor(style->get_color(cwindow_style::c_window_close_btn));
+        bag.close_text->SetRenderRect(CRect(r.Width() - close_btn_x, style->get_int(cwindow_style::p_title_tl_y), r.Width(), title_y));
+        bag.close_text->SetText(_T("×"));
+        bag.close_text->SetFont(f);
+        bag.border->SetColor(style->get_color(cwindow_style::c_window_border_def));
+        bag.border->SetFill(false);
+        bag.border->SetRadius(style->get_float(cwindow_style::f_window_border_radius));
+        r.left = r.top = 0;
+        r.right = root->GetRenderRect().Width();
+        r.bottom = root->GetRenderRect().Height();
+        bag.border->SetRenderRect(r);
+        bag.client->SetColor(style->get_color(cwindow_style::c_window_background));
         auto border_x = style->get_int(cwindow_style::p_border_x);
-        client->SetRenderRect(CRect(border_x, title_y, r.Width() - border_x, r.Height() - border_x));
-        bag.client = client;
-        list.push_back(client);
-        base_id = create_comctl(layout_linear);
-        bag.comctl = handles[base_id].comctl;
+        bag.client->SetRenderRect(CRect(border_x, title_y, r.Width() - border_x, r.Height() - border_x));
     }
 
     bool cwindow::is_border(const CPoint& pt, int& cx, int& cy)
@@ -628,24 +695,24 @@ namespace clib {
         if (comctl == -1) {
             if (code == WM_MOUSEENTER)
             {
-                bag.border->SetColor(CColor(36, 125, 234));
+                bag.border->SetColor(style->get_color(cwindow_style::c_window_border_def));
                 self_hovered = true;
             }
             else if (code == WM_MOUSELEAVE)
             {
-                bag.border->SetColor(CColor(149, 187, 234));
+                bag.border->SetColor(style->get_color(cwindow_style::c_window_border_lost));
                 self_hovered = false;
                 self_drag = false;
                 self_size = false;
             }
             else if (code == WM_SETFOCUS)
             {
-                bag.title->SetColor(CColor(45, 120, 213));
+                bag.title->SetColor(style->get_color(cwindow_style::c_window_nonclient));
                 self_focused = true;
             }
             else if (code == WM_KILLFOCUS)
             {
-                bag.title->SetColor(CColor(149, 187, 234));
+                bag.title->SetColor(style->get_color(cwindow_style::c_window_nonclient_lost));
                 self_focused = false;
                 self_drag = false;
                 self_size = false;
@@ -810,6 +877,7 @@ namespace clib {
             std::make_tuple(layout_linear, "linear layout"),
             std::make_tuple(layout_grid, "grid layout"),
             std::make_tuple(comctl_label, "label"),
+            std::make_tuple(comctl_button, "button"),
             std::make_tuple(comctl_end, "end"),
         };
         assert(t >= comctl_none && t < comctl_end);
@@ -876,6 +944,16 @@ namespace clib {
             return true;
         }
         return false;
+    }
+
+    bool cwindow::set_style(int style)
+    {
+        auto s = cwindow_style::create_style((cwindow_style::style_t)style);
+        if (!s) return false;
+        this->style = s;
+        _init_style();
+        bag.comctl->set_rt(renderTarget, s);
+        return true;
     }
 
     comctl_base::comctl_base(int type) : type(type)
@@ -948,6 +1026,13 @@ namespace clib {
 
     cwindow_layout::cwindow_layout(int type) : comctl_base(type)
     {
+    }
+
+    void cwindow_layout::set_rt(std::shared_ptr<Direct2DRenderTarget> rt, cwindow_style::ref style)
+    {
+        for (auto& c : children) {
+            c->set_rt(rt, style);
+        }
     }
 
     cwindow_layout* cwindow_layout::get_layout()

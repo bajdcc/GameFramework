@@ -2576,6 +2576,22 @@ namespace clib {
             ctx->ax._i = -1;
             break;
         }
+        case 507:
+        {
+            struct __window_set_style_struct__ {
+                int handle;
+                int style;
+            };
+            auto s = vmm_get<__window_set_style_struct__>(ctx->ax._ui);
+            auto h = s.handle;
+            if (is_window_handle(h)) {
+                auto wnd = handles[h].data.cwnd;
+                ctx->ax._i = wnd->set_style(s.style) ? 0 : -1;
+                break;
+            }
+            ctx->ax._i = -1;
+            break;
+        }
         case 509:
         {
             struct __window_comctl_set_bound_struct__ {

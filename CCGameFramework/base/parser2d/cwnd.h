@@ -36,8 +36,12 @@ namespace clib {
         enum color_t {
             c__none,
             c_window_nonclient,
+            c_window_nonclient_lost,
             c_window_background,
             c_window_title_text,
+            c_window_close_btn,
+            c_window_border_def,
+            c_window_border_lost,
             c_button_bg_def,
             c_button_bg_focus,
             c_button_fg_def,
@@ -61,11 +65,17 @@ namespace clib {
             p_min_size_y,
             p__end,
         };
-
         enum float_t {
             f__none,
+            f_window_border_radius,
             f_button_radius,
             f__end,
+        };
+        enum style_t {
+            S__NONE,
+            S_WIN10_DEFAULT,
+            S_WIN10_WHITE,
+            S__END
         };
 
         using ref = std::shared_ptr<cwindow_style>;
@@ -74,6 +84,8 @@ namespace clib {
         virtual string_t get_str(str_t t) const = 0;
         virtual int get_int(px_t t) const = 0;
         virtual float get_float(float_t t) const = 0;
+
+        static ref create_style(style_t t);
     };
 
     class cwindow_comctl_label;
@@ -107,6 +119,12 @@ namespace clib {
         CColor get_color(color_t t) const override;
         string_t get_str(str_t t) const override;
         int get_int(px_t t) const override;
+        float get_float(float_t t) const override;
+    };
+
+    class cwindow_style_win_white : public cwindow_style_win {
+    public:
+        CColor get_color(color_t t) const override;
         float get_float(float_t t) const override;
     };
 
@@ -164,9 +182,11 @@ namespace clib {
         bool set_bound(int h, const CRect& bound);
         bool set_text(int h, const string_t& text);
         bool set_flag(int h, int flag);
+        bool set_style(int style);
 
     private:
         void _init();
+        void _init_style();
         bool is_border(const CPoint& pt, int& cx, int& cy);
         static comctl_base* new_comctl(window_comctl_type t);
 
@@ -183,7 +203,7 @@ namespace clib {
     private:
         string_t caption;
         CRect location;
-        std::shared_ptr<IGraphicsElement> root;
+        std::shared_ptr<SolidBackgroundElement> root;
         std::shared_ptr<Direct2DRenderTarget> renderTarget;
         CRect bounds1, bounds2, bounds3;
         window_state_t state{ W_RUNNING };
@@ -231,6 +251,7 @@ namespace clib {
     class cwindow_layout : public comctl_base {
     public:
         cwindow_layout(int type);
+        void set_rt(std::shared_ptr<Direct2DRenderTarget> rt, cwindow_style::ref) override;
         cwindow_layout* get_layout();
         void add(comctl_base* child);
         void remove(comctl_base* child);
