@@ -212,6 +212,7 @@ namespace clib {
         bool self_focused{ false };
         bool self_hovered{ false };
         bool self_drag{ false };
+        bool self_drag_start{ false };
         bool need_repaint{ false };
         bool self_size{ false };
         CPoint self_size_pt;

@@ -402,12 +402,14 @@ namespace clib {
                 return false;
         }
         if (bag.close_text->GetRenderRect().PtInRect(pt)) {
-            if (n == 200) {
+            if (n == 201 && !self_size && !self_drag) {
                 post_data(WM_CLOSE);
                 return true;
             }
             else if (n == 211) {
-                bag.close_bg->GetFlags().self_visible = true;
+                if (!bag.close_bg->GetFlags().self_visible) {
+                    bag.close_bg->GetFlags().self_visible = true;
+                }
             }
         }
         else if (n == 211) {
@@ -765,7 +767,7 @@ namespace clib {
                     self_size = true;
                 }
                 else {
-                    self_drag = true;
+                    self_drag_start = true;
                 }
             }
             else if (code == WM_LBUTTONDOWN)
@@ -792,12 +794,15 @@ namespace clib {
                     cursor = sys_cursor(cx, cy);
                 }
                 else {
+                    if (self_drag_start)
+                        self_drag = true;
                     cursor = 1;
                 }
             }
             else if (code == WM_NCLBUTTONUP || code == WM_LBUTTONUP)
             {
                 self_drag = false;
+                self_drag_start = false;
                 if (self_size) {
                     self_size = false;
                     cursor = 1;
