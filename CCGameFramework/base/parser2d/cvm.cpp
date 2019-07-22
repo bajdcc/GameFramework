@@ -9,6 +9,7 @@
 #include <cstring>
 #include <regex>
 #include <random>
+#include <sstream>
 #include "cvm.h"
 #include "cgen.h"
 #include "cexception.h"
@@ -215,9 +216,13 @@ namespace clib {
                 return t;
         }
         //vmm_map(va, pmm_alloc(), PTE_U | PTE_P | PTE_R);
-#if 1
+#if LOG_SYSTEM
         ATLTRACE("[SYSTEM] MEM  | Invalid VA: %08X\n", va);
 #endif
+        {
+            std::ofstream log(REPORT_ERROR_FILE, std::ios::app | std::ios::out);
+            log << std::endl << "VMM::GET invalid ptr: " << std::hex << va << std::endl;
+        }
         error("vmm::get error");
         return vmm_get<T>(va);
     }
@@ -249,9 +254,14 @@ namespace clib {
             return value;
         }
         //vmm_map(va, pmm_alloc(), PTE_U | PTE_P | PTE_R);
-#if 1
+#if LOG_SYSTEM
         ATLTRACE("[SYSTEM] MEM  | Invalid VA: %08X\n", va);
 #endif
+        {
+            std::ofstream log(REPORT_ERROR_FILE, std::ios::app | std::ios::out);
+            log << std::endl << "VMM::SET invalid ptr: " << std::hex << va <<
+                ", value: " << std::hex << va << std::endl;
+        }
         error("vmm::set error");
         return vmm_set(va, value);
     }
@@ -371,6 +381,9 @@ namespace clib {
     void cvm::exec(int cycle, int& cycles) {
         if (!ctx)
             error("no process!");
+#if LOG_STACK
+        std::ofstream log(REPORT_ERROR_FILE, std::ios::app | std::ios::out);
+#endif
         for (auto i = 0; i < cycle; ++i) {
             i++;
             cycles++;
@@ -385,7 +398,7 @@ namespace clib {
             }
             auto op = vmm_get(ctx->pc); // get next operation code
             ctx->pc += INC_PTR;
-
+            auto old_pc = ctx->pc;
 #if LOG_INS
             assert(op <= EXIT);
             // print debug info
@@ -402,6 +415,18 @@ namespace clib {
                 else
                     b.Format("\n");
                 ATLTRACE((a + b).GetBuffer(0));
+            }
+            if (ctx->debug) {
+                CStringA a, b;
+                a.Format("%04d> [%08X] %02d %.4s", i, ctx->pc, op, INS_STRING((ins_t)op).c_str());
+                if ((op >= PUSH && op <= LNT) || op == LOAD || op == SAVE)
+                    b.Format(" %d", vmm_get(ctx->pc));
+                else if (op == IMX)
+                    b.Format(" %08X(%d) %08X(%d)", vmm_get(ctx->pc), vmm_get(ctx->pc),
+                        vmm_get(ctx->pc + INC_PTR), vmm_get(ctx->pc + INC_PTR));
+                else if (op <= ADJ)
+                    b.Format(" %08X(%d)", vmm_get(ctx->pc), vmm_get(ctx->pc));
+                log << ((a + b).GetBuffer(0)) << std::endl;
             }
 #endif
             switch (op) {
@@ -571,6 +596,7 @@ namespace clib {
                 /* break;case RET: {pc = (int *)*sp++;} // return from subroutine; */
                        break;
             case ENT: {
+                ctx->stacktrace.push_back(ctx->bp);
                 vmm_pushstack(ctx->sp, ctx->bp);
                 ctx->bp = ctx->sp;
                 ctx->sp = ctx->sp - vmm_get(ctx->pc);
@@ -585,6 +611,12 @@ namespace clib {
             case LEV: {
                 ctx->sp = ctx->bp;
                 ctx->bp = (uint32_t)vmm_popstack(ctx->sp);
+                if (ctx->bp != ctx->stacktrace.back()) {
+                    error("invalid stack bp");
+                }
+                else {
+                    ctx->stacktrace.pop_back();
+                }
                 ctx->pc = (uint32_t)vmm_popstack(ctx->sp);
             } /* restore call frame and PC */
                       break;
@@ -1197,6 +1229,37 @@ namespace clib {
                     ATLTRACE("\n");
                 ATLTRACE("---------------- STACK END >>>>\n\n");
             }
+            if (ctx->debug) {
+                log << std::endl << "---------------- STACK BEGIN <<<< " << std::endl;
+                std::stringstream a;
+                CStringA b;
+                b.Format("AX: %08X BX: %08X BP: %08X SP: %08X PC: %08X", ctx->ax._u._1, ctx->ax._u._2, ctx->bp, ctx->sp, ctx->pc);
+                log << b.GetBuffer(0) << std::endl;
+                auto k = 0;
+                for (uint32_t j = ctx->sp; j < STACK_BASE + PAGE_SIZE; j += 4, ++k) {
+                    b.Format("[%08X]> %08X", j, vmm_get<uint32_t>(j)); a << b.GetBuffer(0);
+                    if (k % 4 == 3) {
+                        a << std::endl;
+                        log << a.str();
+                        a.str("");
+                    }
+                    else
+                        a << "  |  ";
+                }
+                if (k % 4 != 0)
+                    log << std::endl;
+                log << "---------------- STACK END >>>>" << std::endl << std::endl;
+            }
+            if (!(ctx->sp & STACK_BASE)) {
+                ctx->pc = old_pc;
+                log.close();
+                error("RUNTIME ERROR: invalid sp");
+            }
+            if (ctx->bp && !(ctx->bp & STACK_BASE)) {
+                ctx->pc = old_pc;
+                log.close();
+                error("RUNTIME ERROR: invalid bp");
+            }
 #endif
         }
     }
@@ -1237,24 +1300,27 @@ namespace clib {
             log << a.GetBuffer(0) << std::endl;
             a = "";
             auto k = 0;
-            for (uint32_t j = ctx->sp; j < STACK_BASE + PAGE_SIZE; j += 4, ++k) {
-                if (vmm_valid<uint32_t>(j)) {
-                    b.Format("[%08X]> %08X", j, vmm_get<uint32_t>(j)); a += b;
+            if (ctx->sp & STACK_BASE) {
+                for (uint32_t j = ctx->sp; j < STACK_BASE + PAGE_SIZE; j += 4, ++k) {
+                    if (vmm_valid<uint32_t>(j)) {
+                        b.Format("[%08X]> %08X", j, vmm_get<uint32_t>(j)); a += b;
+                    }
+                    else {
+                        b.Format("[%08X]> ????????", j); a += b;
+                    }
+                    if (k % 4 == 3) {
+                        a += "\n";
+                        log << (a.GetBuffer(0));
+                        a = "";
+                    }
+                    else
+                        a += "  |  ";
                 }
-                else {
-                    b.Format("[%08X]> ????????", j); a += b;
-                }
-                if (k % 4 == 3) {
-                    a += "\n";
-                    log << (a.GetBuffer(0));
-                    a = "";
-                }
-                else
-                    a += "  |  ";
             }
             if (k % 4 != 0)
                 log << std::endl;
             log << "---------------- STACK END >>>>" << std::endl << std::endl;
+            log << (str + ", PATH: " + ctx->path + ", SOURCE: " + source()) << std::endl;
         }
 #endif
         throw cexception(ex_vm, str + ", PATH: " + ctx->path + ", SOURCE: " + source());
@@ -1639,6 +1705,7 @@ namespace clib {
         ctx->data = old_ctx->data;
         ctx->base = old_ctx->base;
         ctx->heap = old_ctx->heap;
+        ctx->stacktrace = old_ctx->stacktrace;
         ctx->pc = old_ctx->pc;
         ctx->ax._i = -1;
         ctx->bp = old_ctx->bp;

@@ -256,6 +256,7 @@ namespace clib {
             std::vector<uint32_t> data_mem;
             std::vector<uint32_t> text_mem;
             std::vector<uint32_t> stack_mem;
+            std::vector<uint32_t> stacktrace;
             std::unique_ptr<cmem> pool;
             // SYSTEM CALL
             std::chrono::system_clock::time_point record_now;

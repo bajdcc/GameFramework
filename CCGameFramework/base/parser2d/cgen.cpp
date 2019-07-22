@@ -119,7 +119,7 @@ namespace clib {
         return "error";
     }
 
-    int sym_t::size(sym_size_t t) const {
+    int sym_t::size(sym_size_t t, int level) const {
         assert(!"invalid size");
         return 0;
     }
@@ -176,7 +176,7 @@ namespace clib {
 
     type_base_t::type_base_t(lexer_t type, int ptr) : type_t(ptr), type(type) {}
 
-    int type_base_t::size(sym_size_t t) const {
+    int type_base_t::size(sym_size_t t, int level) const {
         if (t == x_inc) {
             if (ptr == 0)
                 return 1;
@@ -261,18 +261,16 @@ namespace clib {
         return s_type_typedef;
     }
 
-    int type_typedef_t::size(sym_size_t t) const {
+    int type_typedef_t::size(sym_size_t t, int level) const {
         if (t == x_inc) {
-            if (ptr > 0) {
-                if (refer.lock()->get_type() == s_struct)
-                    return refer.lock()->size(t);
+            if (ptr > level) {
                 return sizeof(void*);
             }
-            return refer.lock()->size(t);
+            return refer.lock()->size(t, level);
         }
         if (ptr > 0)
             return sizeof(void*);
-        return refer.lock()->size(t);
+        return refer.lock()->size(t, level);
     }
 
     string_t type_typedef_t::to_string() const {
@@ -305,8 +303,8 @@ namespace clib {
         return s_id;
     }
 
-    int sym_id_t::size(sym_size_t t) const {
-        return base->size(t);
+    int sym_id_t::size(sym_size_t t, int level) const {
+        return base->size(t, level);
     }
 
     symbol_t sym_id_t::get_base_type() const {
@@ -382,12 +380,12 @@ namespace clib {
         return s_struct;
     }
 
-    int sym_struct_t::size(sym_size_t t) const {
+    int sym_struct_t::size(sym_size_t t, int level) const {
         if (_size == 0) {
             if (_struct) {
                 for (auto& decl : decls) {
                     decl->addr = _size;
-                    auto size = decl->size(t);
+                    auto size = decl->size(t, level);
                     if ((size & 3) != 0)
                         size += 4 - (size & 3);
                     *const_cast<int*>(&_size) += size;
@@ -397,7 +395,7 @@ namespace clib {
             else {
                 for (auto& decl : decls) {
                     decl->addr = 0;
-                    auto s = decl->size(t);
+                    auto s = decl->size(t, level);
                     *const_cast<int*>(&_size) = max(_size, s);
                     decl->addr_end = s;
                 }
@@ -434,7 +432,7 @@ namespace clib {
         return s_function;
     }
 
-    int sym_func_t::size(sym_size_t t) const {
+    int sym_func_t::size(sym_size_t t, int level) const {
         if (t == x_inc)
             return 0;
         return sizeof(void*);
@@ -573,8 +571,8 @@ namespace clib {
         return base->get_cast();
     }
 
-    int type_exp_t::size(sym_size_t t) const {
-        return base->size(t);
+    int type_exp_t::size(sym_size_t t, int level) const {
+        return base->size(t, level);
     }
 
     gen_t type_exp_t::gen_invoke(igen& gen, sym_t::ref& list)
@@ -608,8 +606,8 @@ namespace clib {
         return s_var;
     }
 
-    int sym_var_t::size(sym_size_t t) const {
-        return base->size(t);
+    int sym_var_t::size(sym_size_t t, int level) const {
+        return base->size(t, level);
     }
 
     string_t sym_var_t::get_name() const {
@@ -680,8 +678,8 @@ namespace clib {
         return s_var_id;
     }
 
-    int sym_var_id_t::size(sym_size_t t) const {
-        return id.lock()->size(t);
+    int sym_var_id_t::size(sym_size_t t, int level) const {
+        return id.lock()->size(t, level);
     }
 
     string_t sym_var_id_t::get_name() const {
@@ -735,8 +733,8 @@ namespace clib {
         return s_cast;
     }
 
-    int sym_cast_t::size(sym_size_t t) const {
-        return base->size(t);
+    int sym_cast_t::size(sym_size_t t, int level) const {
+        return base->size(t, level);
     }
 
     string_t sym_cast_t::get_name() const {
@@ -780,14 +778,14 @@ namespace clib {
         return s_unop;
     }
 
-    int sym_unop_t::size(sym_size_t t) const {
+    int sym_unop_t::size(sym_size_t t, int level) const {
         if (t == x_inc)
             return 0;
         if (t == x_load) {
             if (AST_IS_OP_N(op, op_times))
-                return exp->size(x_inc);
+                return exp->size(x_inc, level + 1);
         }
-        return exp->size(t);
+        return exp->size(t, level);
     }
 
     string_t sym_unop_t::get_name() const {
@@ -924,8 +922,8 @@ namespace clib {
         return s_sinop;
     }
 
-    int sym_sinop_t::size(sym_size_t t) const {
-        return exp->size(t);
+    int sym_sinop_t::size(sym_size_t t, int level) const {
+        return exp->size(t, level);
     }
 
     string_t sym_sinop_t::get_name() const {
@@ -1007,10 +1005,10 @@ namespace clib {
         return s_binop;
     }
 
-    int sym_binop_t::size(sym_size_t t) const {
+    int sym_binop_t::size(sym_size_t t, int level) const {
         if (t == x_inc)
             return 0;
-        return base->size(t);
+        return base->size(t, level);
     }
 
     string_t sym_binop_t::get_name() const {
@@ -1331,10 +1329,10 @@ namespace clib {
         return s_triop;
     }
 
-    int sym_triop_t::size(sym_size_t t) const {
+    int sym_triop_t::size(sym_size_t t, int level) const {
         if (t == x_inc)
             return 0;
-        return max(max(exp1->size(t), exp2->size(t)), exp3->size(t));
+        return max(max(exp1->size(t, level), exp2->size(t, level)), exp3->size(t, level));
     }
 
     string_t sym_triop_t::get_name() const {
@@ -1382,7 +1380,7 @@ namespace clib {
         return s_list;
     }
 
-    int sym_list_t::size(sym_size_t t) const {
+    int sym_list_t::size(sym_size_t t, int level) const {
         if (t == x_inc)
             return 0;
         return exps.size();
@@ -1422,7 +1420,7 @@ namespace clib {
         return s_ctrl;
     }
 
-    int sym_ctrl_t::size(sym_size_t t) const {
+    int sym_ctrl_t::size(sym_size_t t, int level) const {
         return 0;
     }
 

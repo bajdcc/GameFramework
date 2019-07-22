@@ -82,7 +82,7 @@ namespace clib {
         using weak_ref = std::weak_ptr<sym_t>;
         virtual symbol_t get_type() const;
         virtual symbol_t get_base_type() const;
-        virtual int size(sym_size_t t) const;
+        virtual int size(sym_size_t t, int level = 0) const;
         virtual string_t get_name() const;
         virtual string_t to_string() const;
         virtual gen_t gen_lvalue(igen& gen);
@@ -107,7 +107,7 @@ namespace clib {
     public:
         explicit type_base_t(lexer_t type, int ptr = 0);
         symbol_t get_type() const override;
-        int size(sym_size_t t) const override;
+        int size(sym_size_t t, int level = 0) const override;
         string_t get_name() const override;
         string_t to_string() const override;
         cast_t get_cast() const override;
@@ -119,7 +119,7 @@ namespace clib {
     public:
         explicit type_typedef_t(const sym_t::ref& refer, int ptr = 0);
         symbol_t get_type() const override;
-        int size(sym_size_t t) const override;
+        int size(sym_size_t t, int level = 0) const override;
         string_t to_string() const override;
         cast_t get_cast() const override;
         ref clone() const override;
@@ -144,7 +144,7 @@ namespace clib {
         explicit type_exp_t(const type_t::ref& base);
         symbol_t get_type() const override;
         symbol_t get_base_type() const override;
-        int size(sym_size_t t) const override;
+        int size(sym_size_t t, int level = 0) const override;
         gen_t gen_invoke(igen& gen, sym_t::ref& list) override;
         cast_t get_cast() const override;
         type_t::ref base;
@@ -156,7 +156,7 @@ namespace clib {
         explicit sym_id_t(const type_t::ref& base, const string_t& id);
         symbol_t get_type() const override;
         symbol_t get_base_type() const override;
-        int size(sym_size_t t) const override;
+        int size(sym_size_t t, int level = 0) const override;
         string_t get_name() const override;
         string_t to_string() const override;
         gen_t gen_lvalue(igen& gen) override;
@@ -176,7 +176,7 @@ namespace clib {
         explicit sym_struct_t(bool _struct, const string_t& id);
         symbol_t get_type() const override;
         symbol_t get_base_type() const override;
-        int size(sym_size_t t) const override;
+        int size(sym_size_t t, int level = 0) const override;
         string_t get_name() const override;
         string_t to_string() const override;
         cast_t get_cast() const override;
@@ -191,7 +191,7 @@ namespace clib {
         explicit sym_func_t(const type_t::ref& base, const string_t& id);
         symbol_t get_type() const override;
         symbol_t get_base_type() const override;
-        int size(sym_size_t t) const override;
+        int size(sym_size_t t, int level = 0) const override;
         string_t to_string() const override;
         gen_t gen_invoke(igen& gen, sym_t::ref& list) override;
         cast_t get_cast() const override;
@@ -205,7 +205,7 @@ namespace clib {
         using ref = std::shared_ptr<sym_var_t>;
         explicit sym_var_t(const type_t::ref& base, ast_node* node);
         symbol_t get_type() const override;
-        int size(sym_size_t t) const override;
+        int size(sym_size_t t, int level = 0) const override;
         string_t get_name() const override;
         string_t to_string() const override;
         gen_t gen_lvalue(igen& gen) override;
@@ -219,7 +219,7 @@ namespace clib {
         using ref = std::shared_ptr<sym_var_id_t>;
         explicit sym_var_id_t(const type_t::ref& base, ast_node* node, const sym_t::ref& symbol);
         symbol_t get_type() const override;
-        int size(sym_size_t t) const override;
+        int size(sym_size_t t, int level = 0) const override;
         string_t get_name() const override;
         string_t to_string() const override;
         gen_t gen_lvalue(igen& gen) override;
@@ -234,7 +234,7 @@ namespace clib {
         using ref = std::shared_ptr<sym_cast_t>;
         explicit sym_cast_t(const type_exp_t::ref& exp, const type_t::ref& base);
         symbol_t get_type() const override;
-        int size(sym_size_t t) const override;
+        int size(sym_size_t t, int level = 0) const override;
         string_t get_name() const override;
         string_t to_string() const override;
         gen_t gen_lvalue(igen& gen) override;
@@ -247,7 +247,7 @@ namespace clib {
         using ref = std::shared_ptr<sym_unop_t>;
         explicit sym_unop_t(const type_exp_t::ref& exp, ast_node* op);
         symbol_t get_type() const override;
-        int size(sym_size_t t) const override;
+        int size(sym_size_t t, int level = 0) const override;
         string_t get_name() const override;
         string_t to_string() const override;
         gen_t gen_lvalue(igen& gen) override;
@@ -261,7 +261,7 @@ namespace clib {
         using ref = std::shared_ptr<sym_sinop_t>;
         explicit sym_sinop_t(const type_exp_t::ref& exp, ast_node* op);
         symbol_t get_type() const override;
-        int size(sym_size_t t) const override;
+        int size(sym_size_t t, int level = 0) const override;
         string_t get_name() const override;
         string_t to_string() const override;
         gen_t gen_lvalue(igen& gen) override;
@@ -275,7 +275,7 @@ namespace clib {
         using ref = std::shared_ptr<sym_binop_t>;
         explicit sym_binop_t(const type_exp_t::ref& exp1, const type_exp_t::ref& exp2, ast_node* op);
         symbol_t get_type() const override;
-        int size(sym_size_t t) const override;
+        int size(sym_size_t t, int level = 0) const override;
         string_t get_name() const override;
         string_t to_string() const override;
         gen_t gen_lvalue(igen& gen) override;
@@ -290,7 +290,7 @@ namespace clib {
         explicit sym_triop_t(const type_exp_t::ref& exp1, const type_exp_t::ref& exp2,
             const type_exp_t::ref& exp3, ast_node* op1, ast_node* op2);
         symbol_t get_type() const override;
-        int size(sym_size_t t) const override;
+        int size(sym_size_t t, int level = 0) const override;
         string_t get_name() const override;
         string_t to_string() const override;
         gen_t gen_lvalue(igen& gen) override;
@@ -304,7 +304,7 @@ namespace clib {
         using ref = std::shared_ptr<sym_list_t>;
         sym_list_t();
         symbol_t get_type() const override;
-        int size(sym_size_t t) const override;
+        int size(sym_size_t t, int level = 0) const override;
         string_t get_name() const override;
         string_t to_string() const override;
         gen_t gen_lvalue(igen& gen) override;
@@ -317,7 +317,7 @@ namespace clib {
         using ref = std::shared_ptr<sym_ctrl_t>;
         explicit sym_ctrl_t(ast_node* op);
         symbol_t get_type() const override;
-        int size(sym_size_t t) const override;
+        int size(sym_size_t t, int level = 0) const override;
         string_t get_name() const override;
         string_t to_string() const override;
         gen_t gen_lvalue(igen& gen) override;
