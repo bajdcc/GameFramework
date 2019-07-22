@@ -99,6 +99,8 @@ namespace clib {
                 return CColor(Gdiplus::Color::White);
             case c_window_close_btn:
                 return CColor(Gdiplus::Color::White);
+            case c_window_close_bg:
+                return CColor(232, 17, 35);
             case c_window_border_def:
                 return CColor(36, 125, 234);
             case c_window_border_lost:
@@ -141,10 +143,6 @@ namespace clib {
                 return WINDOW_BORDER_X;
             case p_hang_blur:
                 return WINDOW_HANG_BLUR;
-            case p_title_tl_x:
-                return 5;
-            case p_title_tl_y:
-                return 2;
             case p_min_size_x:
                 return WINDOW_MIN_SIZE_X;
             case p_min_size_y:
@@ -182,6 +180,8 @@ namespace clib {
             return CColor(Gdiplus::Color::Black);
         case c_window_close_btn:
             return CColor(Gdiplus::Color::Black);
+        case c_window_close_bg:
+            return CColor(232, 17, 35);
         case c_window_border_def:
             return CColor(Gdiplus::Color::Black);
         case c_window_border_lost:
@@ -196,6 +196,25 @@ namespace clib {
             return CColor(Gdiplus::Color::Black);
         }
         return cwindow_style_win::get_color(t);
+    }
+
+    int cwindow_style_win_white::get_int(px_t t) const
+    {
+        switch (t) {
+        case p_title_y:
+            return WINDOW_TITLE_Y;
+        case p_close_btn_x:
+            return 45;
+        case p_border_x:
+            return 0;
+        case p_hang_blur:
+            return WINDOW_HANG_BLUR;
+        case p_min_size_x:
+            return WINDOW_MIN_SIZE_X;
+        case p_min_size_y:
+            return WINDOW_MIN_SIZE_Y;
+        }
+        return cwindow_style_win::get_int(t);
     }
 
     float cwindow_style_win_white::get_float(float_t t) const
@@ -297,6 +316,7 @@ namespace clib {
             rt.left = root->GetRenderRect().Width() - close_btn_x;
             rt.right = root->GetRenderRect().Width();
             bag.close_text->SetRenderRect(rt);
+            bag.close_bg->SetRenderRect(bag.close_text->GetRenderRect());
             bounds1 = bounds;
             rt.left = rt.top = 0;
             rt.right = bounds.Width();
@@ -304,6 +324,9 @@ namespace clib {
             bag.border->SetRenderRect(rt);
             bounds3 = root->GetRenderRect();
             bounds3.top += self_title.Height();
+            bounds3.left += border_x;
+            bounds3.right -= border_x;
+            bounds3.bottom -= border_x;
         }
         root->GetRenderer()->Render(root->GetRenderRect());
         if (state == W_BUSY) {
@@ -378,11 +401,21 @@ namespace clib {
             if (!(self_size || self_drag))
                 return false;
         }
-        if (n == 200) {
-            if (bag.close_text->GetRenderRect().PtInRect(pt)) {
+        if (bag.close_text->GetRenderRect().PtInRect(pt)) {
+            if (n == 200) {
                 post_data(WM_CLOSE);
                 return true;
             }
+            else if (n == 211) {
+                bag.close_bg->GetFlags().self_visible = true;
+            }
+        }
+        else if (n == 211) {
+            if (bag.close_bg->GetFlags().self_visible) {
+                bag.close_bg->GetFlags().self_visible = false;
+            }
+        }
+        if (n == 200) {
             int cx, cy;
             self_size = is_border(pt, cx, cy);
             if (self_size) {
@@ -533,15 +566,17 @@ namespace clib {
     {
         auto r = root->GetRenderRect();
         auto& list = root->GetChildren();
+        bag.border = RoundBorderElement::Create();
+        list.push_back(bag.border);
         bag.title = SolidBackgroundElement::Create();
         list.push_back(bag.title);
         bag.title_text = SolidLabelElement::Create();
         list.push_back(bag.title_text);
+        bag.close_bg = SolidBackgroundElement::Create();
+        list.push_back(bag.close_bg);
         bag.close_text = SolidLabelElement::Create();
         list.push_back(bag.close_text);
-        bag.border = RoundBorderElement::Create();
-        list.push_back(bag.border);
-        bag.client = SolidBackgroundElement::Create();;
+        bag.client = SolidBackgroundElement::Create();
         list.push_back(bag.client);
         base_id = create_comctl(layout_linear);
         bag.comctl = handles[base_id].comctl;
@@ -562,9 +597,7 @@ namespace clib {
         bag.title_text->SetText(CString(CStringA(caption.c_str())));
         bag.title_text->SetAlignments(Alignment::StringAlignmentCenter, Alignment::StringAlignmentCenter);
         auto close_btn_x = style->get_int(cwindow_style::p_close_btn_x);
-        bag.title_text->SetRenderRect(CRect(style->get_int(cwindow_style::p_title_tl_x),
-            style->get_int(cwindow_style::p_title_tl_y),
-            r.Width(), title_y));
+        bag.title_text->SetRenderRect(CRect(0, 0, r.Width(), title_y));
         if (bag.title_text->GetRenderer()->GetMinSize().cx + close_btn_x * 2 > r.Width()) {
             auto rr = bag.title_text->GetRenderRect();
             rr.right -= close_btn_x;
@@ -575,9 +608,13 @@ namespace clib {
         f.fontFamily = "微软雅黑";
         bag.title_text->SetFont(f);
         bag.close_text->SetColor(style->get_color(cwindow_style::c_window_close_btn));
-        bag.close_text->SetRenderRect(CRect(r.Width() - close_btn_x, style->get_int(cwindow_style::p_title_tl_y), r.Width(), title_y));
+        bag.close_text->SetRenderRect(CRect(r.Width() - close_btn_x, 0, r.Width(), title_y));
         bag.close_text->SetText(_T("×"));
         bag.close_text->SetFont(f);
+        bag.close_text->SetAlignments(Alignment::StringAlignmentCenter, Alignment::StringAlignmentCenter);
+        bag.close_bg->SetColor(style->get_color(cwindow_style::c_window_close_bg));
+        bag.close_bg->GetFlags().self_visible = false;
+        bag.close_bg->SetRenderRect(bag.close_text->GetRenderRect());
         bag.border->SetColor(style->get_color(cwindow_style::c_window_border_def));
         bag.border->SetFill(false);
         bag.border->SetRadius(style->get_float(cwindow_style::f_window_border_radius));
@@ -701,6 +738,8 @@ namespace clib {
             else if (code == WM_MOUSELEAVE)
             {
                 bag.border->SetColor(style->get_color(cwindow_style::c_window_border_lost));
+                if (bag.close_bg->GetFlags().self_visible)
+                    bag.close_bg->GetFlags().self_visible = false;
                 self_hovered = false;
                 self_drag = false;
                 self_size = false;
@@ -713,6 +752,8 @@ namespace clib {
             else if (code == WM_KILLFOCUS)
             {
                 bag.title->SetColor(style->get_color(cwindow_style::c_window_nonclient_lost));
+                if (bag.close_bg->GetFlags().self_visible)
+                    bag.close_bg->GetFlags().self_visible = false;
                 self_focused = false;
                 self_drag = false;
                 self_size = false;
@@ -952,6 +993,7 @@ namespace clib {
         if (!s) return false;
         this->style = s;
         _init_style();
+        need_repaint = true;
         bag.comctl->set_rt(renderTarget, s);
         return true;
     }

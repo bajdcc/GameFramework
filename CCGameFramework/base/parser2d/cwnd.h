@@ -40,6 +40,7 @@ namespace clib {
             c_window_background,
             c_window_title_text,
             c_window_close_btn,
+            c_window_close_bg,
             c_window_border_def,
             c_window_border_lost,
             c_button_bg_def,
@@ -59,8 +60,6 @@ namespace clib {
             p_close_btn_x,
             p_border_x,
             p_hang_blur,
-            p_title_tl_x,
-            p_title_tl_y,
             p_min_size_x,
             p_min_size_y,
             p__end,
@@ -125,6 +124,7 @@ namespace clib {
     class cwindow_style_win_white : public cwindow_style_win {
     public:
         CColor get_color(color_t t) const override;
+        int get_int(px_t t) const override;
         float get_float(float_t t) const override;
     };
 
@@ -243,6 +243,7 @@ namespace clib {
             std::shared_ptr<SolidBackgroundElement> client;
             std::shared_ptr<SolidLabelElement> title_text;
             std::shared_ptr<SolidLabelElement> close_text;
+            std::shared_ptr<SolidBackgroundElement> close_bg;
             std::shared_ptr<RoundBorderElement> border;
             comctl_base* comctl{ nullptr };
         } bag;
