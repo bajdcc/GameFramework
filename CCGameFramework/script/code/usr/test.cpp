@@ -23,6 +23,7 @@ int main(int argc, char **argv) {
         case 13: shell("test_mutex");
         case 14: shell("test_semaphore");
         case 15: shell("test_window");
+        case 16: shell("test_stack");
     }
     return 0;
 }

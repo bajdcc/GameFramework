@@ -1727,6 +1727,11 @@ namespace clib {
         return pid;
     }
 
+    string_t cvm::get_stacktrace() const
+    {
+        return string_t();
+    }
+
     void cvm::map_page(uint32_t addr, uint32_t id) {
         uint32_t pa;
         auto va = (ctx->heap | ctx->mask) | (PAGE_SIZE * id);
@@ -2911,6 +2916,9 @@ namespace clib {
         case 40:
             destroy(ctx->id);
             return true;
+        case 41:
+            vmm_setstr(ctx->ax._ui, get_stacktrace());
+            break;
         case 51:
             ctx->ax._i = exec_file(vmm_getstr(ctx->ax._ui));
             ctx->pc += INC_PTR;

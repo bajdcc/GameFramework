@@ -198,6 +198,8 @@ namespace clib {
         std::vector<sym_id_t::ref> params;
         int ebp{ 0 }, ebp_local{ 0 };
         int entry{ 0 };
+        bool implemented{ false };
+        std::vector<int> write_backs;
     };
 
     class sym_var_t : public type_exp_t {
@@ -411,6 +413,7 @@ namespace clib {
         std::vector<std::vector<sym_t::ref>> tmp;
         std::vector<cycle_t> cycle;
         std::vector<std::vector<switch_t>> cases;
+        std::unordered_set<string_t> func_write_backs;
         sym_t::weak_ref ctx;
         std::vector<sym_t::ref> ctx_stack;
         int global_id{ 0 };

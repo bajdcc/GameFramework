@@ -163,6 +163,8 @@ namespace clib {
         int exec_file(const string_t& path);
         int fork();
 
+        string_t get_stacktrace() const;
+
         char* output_fmt(int id) const;
         int output(int id);
         bool interrupt();

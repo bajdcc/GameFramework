@@ -544,7 +544,13 @@ namespace clib {
             gen.emit(PUSH, c);
             total_size += c;
         }
-        gen.emit(IMM, addr);
+        if (implemented) {
+            gen.emit(IMM, addr);
+        }
+        else {
+            gen.emit(IMM, 0);
+            write_backs.push_back(gen.current() - 1);
+        }
         gen.emit(CALL);
         if (!exps.empty()) {
             gen.emit(ADJ, total_size / 4);
@@ -1481,6 +1487,16 @@ namespace clib {
 
     void cgen::gen(ast_node * node) {
         gen_rec(node, 0);
+        if (!func_write_backs.empty()) {
+            std::stringstream ss;
+            ss << "unimplemented func: ";
+            std::copy(func_write_backs.begin(), func_write_backs.end(),
+                std::ostream_iterator<std::string>(ss, ", "));
+            auto s = ss.str();
+            s.pop_back();
+            s.pop_back();
+            error(node, s);
+        }
     }
 
     void cgen::reset() {
@@ -1498,6 +1514,7 @@ namespace clib {
         incs.clear();
         pdbs.clear();
         pdbs.push_back(std::make_tuple(0, "error"));
+        func_write_backs.clear();
         log_out.str("");
     }
 
@@ -2404,12 +2421,19 @@ namespace clib {
                 auto func = std::make_shared<sym_func_t>(type, nodes[0]->data._string);
                 ctx = func;
                 func->clazz = z_function;
+                func->implemented = has_impl;
                 func->addr = text.size();
+                decltype(func) old_func;
                 {
                     auto f = symbols[0].find(func->get_name());
                     if (f != symbols[0].end()) {
                         if (f->second->get_type() == s_function) {
-                            error(nodes[0], "conflict id with function: " + func->to_string());
+                            old_func = std::dynamic_pointer_cast<sym_func_t>(f->second); // 假设为前置声明
+                            if (!old_func->implemented)
+                                symbols[0].erase(func->get_name());
+                            else
+                                error(asts[0], "conflict declaration in function: " + func->id +
+                                    ", with: " + old_func->to_string());
                         }
                     }
                 }
@@ -2455,19 +2479,32 @@ namespace clib {
                     param->addr = func->ebp - param->addr;
                     param->addr_end = func->ebp - param->addr_end;
                 }
-                tmp.back().clear();
-                asts.clear();
 #if LOG_TYPE
                 log_out << "[DEBUG] Func: " << ctx.lock()->to_string() << std::endl;
 #endif
                 if (has_impl) {
+                    if (old_func) {
+                        for (auto& addr : old_func->write_backs) {
+                            edit(addr, func->addr);
+                        }
+                        func_write_backs.erase(func->id);
+                    }
                     tmp.back().push_back(func);
                     emit(ENT, 0);
                     func->entry = text.size() - 1;
                 }
                 else {
+                    if (old_func) {
+                        error(asts[0], "conflict declaration in function: " + func->to_string() +
+                            ", with: " + old_func->to_string());
+                    }
+                    else {
+                        func_write_backs.insert(func->id);
+                    }
                     ctx.reset();
                 }
+                tmp.back().clear();
+                asts.clear();
             }
             else if (AST_IS_OP_N(node->child->next, op_lsquare)) {
                 if (asts.size() > 1)
