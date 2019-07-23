@@ -1,5 +1,4 @@
 #include "/include/io"
-#include "/include/fs"
 #include "/include/memory"
 #include "/include/shell"
 #include "/include/string"

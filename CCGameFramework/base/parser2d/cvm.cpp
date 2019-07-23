@@ -1579,6 +1579,7 @@ namespace clib {
             ctx->stacktrace.clear();
             ctx->stacktrace_pc.clear();
             ctx->stacktrace_dbg.clear();
+            while (!ctx->sigs.empty())ctx->sigs.pop();
             {
                 std::stringstream ss;
                 ss << "/proc/" << ctx->id;
@@ -1733,6 +1734,7 @@ namespace clib {
         ctx->stacktrace = old_ctx->stacktrace;
         ctx->stacktrace_pc = old_ctx->stacktrace_pc;
         ctx->stacktrace_dbg = old_ctx->stacktrace_dbg;
+        ctx->sigs = old_ctx->sigs;
         ctx->pc = old_ctx->pc;
         ctx->ax._i = -1;
         ctx->bp = old_ctx->bp;
@@ -2952,6 +2954,26 @@ namespace clib {
             return true;
         case 41:
             vmm_setstr(ctx->ax._ui, get_stacktrace());
+            break;
+        case 42:
+        {
+            auto left = ctx->ax._ui >> 16;
+            auto right = ctx->ax._ui & 0xFFFF;
+            if (left >= 0 && left < TASK_NUM) {
+                if (tasks[left].flag & CTX_VALID) {
+                    tasks[left].sigs.push(right);
+                }
+            }
+        }
+            break;
+        case 43:
+            if (ctx->sigs.empty()) {
+                ctx->ax._i = -1;
+            }
+            else {
+                ctx->ax._us = ctx->sigs.front();
+                ctx->sigs.pop();
+            }
             break;
         case 51:
             ctx->ax._i = exec_file(vmm_getstr(ctx->ax._ui));

@@ -20,5 +20,6 @@ int main(int argc, char **argv) {
     welcome();
     exec_service("/init/init");
     exec("sh"); wait();
+    exec("/init/exit"); wait();
     return 0;
 }

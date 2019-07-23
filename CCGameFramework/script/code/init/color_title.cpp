@@ -33,6 +33,7 @@ int main(int argc, char** argv) {
         int color = gui_hsl2rgb(rand(240), 240, 120);
         strcpy(c, get_hex("AAAAAAA", color));
         set_title(s, c);
+        if (recv_signal() == 9) break;
         shell("sleep 5");
     }
     return 0;

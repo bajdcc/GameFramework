@@ -25,3 +25,10 @@ int exit(int n) {
     n;
     interrupt 40;
 }
+int send_signal(int pid, int signal) {
+    pid << 16 | signal;
+    interrupt 42;
+}
+int recv_signal() {
+    interrupt 43;
+}

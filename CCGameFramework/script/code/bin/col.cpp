@@ -15,33 +15,6 @@ string new_string() {
     s.length = 0;
     return s;
 }
-struct node {
-    string text;
-    node *prev;
-    node *next;
-};
-void destroy(node *tmp) {
-    free(tmp->text.text);
-    free(tmp);
-}
-void push(node **head, node **last, string s, int not_remove) {
-    node *new_node = (node *) malloc(sizeof(node));
-    new_node->text = s;
-    new_node->prev = 0;
-    new_node->next = *head;
-    if (new_node->next)
-        new_node->next->prev = new_node;
-    if (not_remove == 1) {
-        if (!*last)
-            *last = new_node;
-    } else {
-        node *tmp = *last;
-        *last = (*last)->prev;
-        (*last)->next = 0;
-        destroy(tmp);
-    }
-    *head = new_node;
-}
 void append_char(string *s, char c) {
     if (s->length >= s->capacity - 1) {
         s->capacity <<= 1;
@@ -53,47 +26,57 @@ void append_char(string *s, char c) {
     (s->text)[s->length++] = c;
     (s->text)[s->length] = 0;
 }
-void print(node *last) {
-    while (last) {
-        put_string((last->text).text);
-        put_string("\n");
-        last = last->prev;
+void show(string* s, int n) {
+    int i = 0; char* c = s->text;
+    while (*c) {
+        if (*c == ' ') { c++; continue; }
+        i++;
+        if (n == i) {
+            while (*c) {
+                if (*c == ' ') break;
+                put_char(*c++);
+            }
+            put_char('\n');
+            break;
+        }
+        else {
+            while (*c) {
+                if (*c != ' ') c++;
+                else break;
+            }
+        }
     }
 }
-void tail(int n) {
-    int c, i = 0, cmd = 0;
-    node *list = (node *) 0;
-    node *last = (node *) 0;
+void col(int n) {
+    int c, cmd = 0;
     string s = new_string();
     input_lock();
     while ((c = input_valid()) != -1) {
         c = input_char();
         if (((char) c) == '\033') {
-            append_char(&s, c);
             cmd = 1 - cmd;
         } else if (cmd == 0) {
             if (((char) c) == '\n') {
-                push(&list, &last, s, i < n);
+                show(&s, n);
+                free(s.text);
                 s = new_string();
-                ++i;
             } else {
                 append_char(&s, c);
             }
-        } else {
-            append_char(&s, c);
         }
     }
     input_unlock();
-    print(last);
 }
 int main(int argc, char **argv) {
-    if (argc == 1) { // tail
+    if (argc == 1) { // col
         shell("pipe");
-    } else if (argc == 2) { // tail XX
+    } else if (argc == 2) { // col XX
         int n = atoi32(argv[1]);
-        if (n <= 0)
-            return 1;
-        tail(n);
+        if (n <= 0) {
+            shell("pipe");
+            return 0;
+        }
+        col(n); // start from 1
     } else {
         set_fg(240, 0, 0);
         put_string("[Error] Invalid argument.");

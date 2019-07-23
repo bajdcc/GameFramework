@@ -248,6 +248,7 @@ namespace clib {
                     int _1, _2;
                 } _u;
                 short _s;
+                uint16_t _us;
                 char _c;
                 byte big_data[BIG_DATA_NUM];
             } ax{ 0 };
@@ -263,6 +264,7 @@ namespace clib {
             std::vector<uint32_t> stacktrace_pc;
             std::unordered_map<uint32_t, string_t> stacktrace_dbg;
             std::unique_ptr<cmem> pool;
+            std::queue<uint16_t> sigs;
             // SYSTEM CALL
             std::chrono::system_clock::time_point record_now;
             decimal waiting_ms{ 0 };
