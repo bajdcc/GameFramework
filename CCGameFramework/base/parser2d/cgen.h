@@ -172,7 +172,7 @@ namespace clib {
 
     class sym_struct_t : public sym_t {
     public:
-        using ref = std::shared_ptr<sym_id_t>;
+        using ref = std::shared_ptr<sym_struct_t>;
         explicit sym_struct_t(bool _struct, const string_t& id);
         symbol_t get_type() const override;
         symbol_t get_base_type() const override;
@@ -188,6 +188,7 @@ namespace clib {
 
     class sym_func_t : public sym_id_t {
     public:
+        using ref = std::shared_ptr<sym_func_t>;
         explicit sym_func_t(const type_t::ref& base, const string_t& id);
         symbol_t get_type() const override;
         symbol_t get_base_type() const override;
@@ -354,10 +355,12 @@ namespace clib {
         uint data_len;
         uint text_len;
         uint pdb_len;
+        uint pdb2_len;
         byte data;
         // byte *data;
         // byte *text;
         // PDB pdb;
+        // PDB pdb2;
     };
 
     // 生成虚拟机指令

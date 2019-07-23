@@ -1570,12 +1570,62 @@ namespace clib {
             }
         }
         bit_write(file, pdb_data.size());
+        // PDB2 SIZE
+        std::vector<byte> pdb_data2;
+        {
+            std::vector<sym_func_t::ref> funcs;
+            for (auto& sy : symbols[0]) {
+                if (sy.second->get_type() == s_function)
+                    funcs.push_back(std::dynamic_pointer_cast<sym_func_t>(sy.second));
+            }
+            bit_write(pdb_data2, funcs.size());
+            auto tmp_idx = pdb_data2.size();
+            for (auto& p : funcs) {
+                // INDEX
+                bit_write(pdb_data2, p->entry - 1);
+                // ADDR
+                bit_write(pdb_data2, 0);
+            }
+            // CODE
+            auto code_idx = pdb_data2.size();
+            int i = 0;
+            for (auto& p : funcs) {
+                // ADDR
+                auto addr = (PDB_ADDR*)(pdb_data2.data() + tmp_idx) + i++;
+                addr->addr = pdb_data2.size() - code_idx;
+                std::stringstream ss;
+                string_t page; int L; CStringA ts;
+                if (get_line(p->line, page, L)) {
+                    ts.Format("[%s:%d:%d:%d]", page.c_str(), L, p->column, p->entry - 1);
+                }
+                else {
+                    ts.Format("[???:%d:%d:%d]", p->line, p->column, p->entry - 1);
+                }
+                ss << ts.GetBuffer(0) << " ";
+                ss << p->base->to_string() << " " << p->id << "(";
+                for (size_t pi = 0; pi < p->params.size(); pi++) {
+                    ss << p->params[pi]->base->to_string() << " " << p->params[pi]->id;
+                    if (pi + 1 < p->params.size())
+                        ss << ", ";
+                }
+                ss << ")";
+                auto info = ss.str();
+                // CODE
+                for (auto& s : info) {
+                    pdb_data2.push_back((byte)s);
+                }
+                pdb_data2.push_back(0);
+            }
+        }
+        bit_write(file, pdb_data2.size());
         // DATA
         std::copy(data.begin(), data.end(), std::back_inserter(file));
         // TEXT
         std::copy((byte*)text.data(), ((byte*)text.data()) + text.size() * sizeof(text[0]), std::back_inserter(file));
         // PDB
         std::copy(pdb_data.begin(), pdb_data.end(), std::back_inserter(file));
+        // PDB2
+        std::copy(pdb_data2.begin(), pdb_data2.end(), std::back_inserter(file));
         return file;
     }
 

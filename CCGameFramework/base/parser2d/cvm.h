@@ -157,6 +157,7 @@ namespace clib {
         T vmm_popstack(uint32_t & sp);
 
         string_t source() const;
+        string_t get_func_info(int pc) const;
         void error(const string_t&) const;
         void exec(int cycle, int& cycles);
         void destroy(int id);
@@ -259,6 +260,8 @@ namespace clib {
             std::vector<uint32_t> text_mem;
             std::vector<uint32_t> stack_mem;
             std::vector<uint32_t> stacktrace;
+            std::vector<uint32_t> stacktrace_pc;
+            std::unordered_map<uint32_t, string_t> stacktrace_dbg;
             std::unique_ptr<cmem> pool;
             // SYSTEM CALL
             std::chrono::system_clock::time_point record_now;

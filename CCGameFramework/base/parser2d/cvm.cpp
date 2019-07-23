@@ -592,6 +592,7 @@ namespace clib {
             case CALL: {
                 vmm_pushstack(ctx->sp, ctx->pc);
                 ctx->pc = ctx->base + (ctx->ax._ui) * INC_PTR;
+                ctx->stacktrace_pc.push_back(ctx->pc);
             } /* call subroutine */
                 /* break;case RET: {pc = (int *)*sp++;} // return from subroutine; */
                        break;
@@ -618,6 +619,7 @@ namespace clib {
                     ctx->stacktrace.pop_back();
                 }
                 ctx->pc = (uint32_t)vmm_popstack(ctx->sp);
+                ctx->stacktrace_pc.pop_back();
             } /* restore call frame and PC */
                       break;
             case LEA: {
@@ -1290,6 +1292,15 @@ namespace clib {
         return code + ((PDB_ADDR*)& pdb->data)->addr;
     }
 
+    string_t cvm::get_func_info(int pc) const
+    {
+        pc = K2U(pc) / INC_PTR;
+        auto f = ctx->stacktrace_dbg.find(pc);
+        if (f != ctx->stacktrace_dbg.end())
+            return f->second;
+        return "UNKNOWN";
+    }
+
     void cvm::error(const string_t& str) const {
 #if REPORT_ERROR
         {
@@ -1424,6 +1435,7 @@ namespace clib {
                 vmm_set(argvs + INC_PTR * i, str);
             }
             vmm_pushstack(ctx->sp, tmp);
+            ctx->stacktrace_pc.push_back((ctx->entry * INC_PTR));
         }
         ctx->flag |= CTX_USER_MODE;
         if (old_ctx) {
@@ -1431,6 +1443,16 @@ namespace clib {
                 ctx->flag |= CTX_SERVICE;
             else
                 ctx->flag |= CTX_FOREGROUND;
+        }
+        {
+            auto pe = (PE*)ctx->file.data();
+            auto pdb = (PDB*)(&pe->data + pe->data_len + pe->text_len + pe->pdb_len);
+            auto len = pdb->code_len;
+            auto addr = (PDB_ADDR*)& pdb->data;
+            auto code = (char*)(addr + len);
+            for (uint i = 0; i < len; i++, addr++) {
+                ctx->stacktrace_dbg.insert(std::make_pair(addr->idx, code + addr->addr));
+            }
         }
         ctx->debug = false;
         ctx->waiting_ms = 0;
@@ -1554,6 +1576,9 @@ namespace clib {
             ctx->text_mem.clear();
             ctx->stack_mem.clear();
             ctx->input_queue.clear();
+            ctx->stacktrace.clear();
+            ctx->stacktrace_pc.clear();
+            ctx->stacktrace_dbg.clear();
             {
                 std::stringstream ss;
                 ss << "/proc/" << ctx->id;
@@ -1706,6 +1731,8 @@ namespace clib {
         ctx->base = old_ctx->base;
         ctx->heap = old_ctx->heap;
         ctx->stacktrace = old_ctx->stacktrace;
+        ctx->stacktrace_pc = old_ctx->stacktrace_pc;
+        ctx->stacktrace_dbg = old_ctx->stacktrace_dbg;
         ctx->pc = old_ctx->pc;
         ctx->ax._i = -1;
         ctx->bp = old_ctx->bp;
@@ -1729,7 +1756,14 @@ namespace clib {
 
     string_t cvm::get_stacktrace() const
     {
-        return string_t();
+        static char sz[32];
+        std::stringstream ss;
+        for (auto i = ctx->stacktrace_pc.rbegin(); i != ctx->stacktrace_pc.rend(); i++) {
+            auto& s = *i;
+            sprintf(sz, "[%08X]", s | ctx->mask);
+            ss << sz << " " << get_func_info(s) << std::endl;
+        }
+        return ss.str();
     }
 
     void cvm::map_page(uint32_t addr, uint32_t id) {

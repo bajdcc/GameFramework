@@ -18,3 +18,7 @@ int reset_cycle(int cycle) {
 long timestamp() {
     interrupt 102;
 }
+char* stacktrace(char *s) {
+    s;
+    interrupt 41;
+}
