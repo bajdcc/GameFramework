@@ -25,6 +25,12 @@ void Parser2DEngine::Initialize(std::shared_ptr<Direct2DRenderTarget> rt)
     logoFont.bold = false;
     logoFont.italic = false;
     logoFont.underline = false;
+    loggingFont.size = 12;
+    loggingFont.fontFamily = "Courier New";
+    loggingFont.bold = false;
+    loggingFont.italic = false;
+    loggingFont.underline = false;
+    bgColorLog = CColor(0, 0, 0, 100);
     brushes.cmdFont.size = 16;
     brushes.cmdFont.fontFamily = "Courier New";
     brushes.cmdFont.bold = false;
@@ -68,7 +74,9 @@ void Parser2DEngine::Reset(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget
     if (oldRenderTarget)
     {
         oldRenderTarget->DestroyDirect2DBrush(bgColor); bg = nullptr;
+        oldRenderTarget->DestroyDirect2DBrush(bgColorLog); bg = nullptr;
         oldRenderTarget->DestroyDirect2DTextFormat(logoFont); logoTF = nullptr;
+        oldRenderTarget->DestroyDirect2DTextFormat(loggingFont); loggingTF = nullptr;
         oldRenderTarget->DestroyDirect2DBrush(logoColor); logoBrush = nullptr;
         oldRenderTarget->DestroyDirect2DTextFormat(brushes.cmdFont); brushes.cmdTF = nullptr;
         oldRenderTarget->DestroyDirect2DTextFormat(brushes.gbkFont); brushes.gbkTF = nullptr;
@@ -77,7 +85,9 @@ void Parser2DEngine::Reset(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget
     if (newRenderTarget)
     {
         bg = newRenderTarget->CreateDirect2DBrush(bgColor);
+        bg_log = newRenderTarget->CreateDirect2DBrush(bgColorLog);
         logoTF = newRenderTarget->CreateDirect2DTextFormat(logoFont);
+        loggingTF = newRenderTarget->CreateDirect2DTextFormat(loggingFont);
         logoBrush = newRenderTarget->CreateDirect2DBrush(logoColor);
         brushes.cmdTF = newRenderTarget->CreateDirect2DTextFormat(brushes.cmdFont);
         brushes.gbkTF = newRenderTarget->CreateDirect2DTextFormat(brushes.gbkFont);
@@ -96,6 +106,10 @@ int Parser2DEngine::SetType(cint value)
     if (value == -101) {
         clib::cgui::singleton().reset();
         reset();
+        return 1;
+    }
+    if (value == -103) {
+        logged = !logged;
         return 1;
     }
     if (value == -102) {
@@ -208,4 +222,21 @@ void Parser2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
     logo.Format(_T("FPS: %2.1f IPS: %S"), inv, ipsf(ips));
     rt->DrawText(logo.GetBuffer(0), logo.GetLength(), logoTF->textFormat,
         D2D1::RectF((float)bounds.right - 210, (float)bounds.top + 5, (float)bounds.right, (float)bounds.top + 50), logoBrush);
+
+    if (logged) {
+        const int span = 12;
+        auto R = D2D1::RectF((float)bounds.left + 10, (float)bounds.top + 50, (float)bounds.right - 10, (float)bounds.top + 60);
+        rt->FillRectangle(
+            D2D1::RectF((float)bounds.left, (float)bounds.top, (float)bounds.right, (float)bounds.bottom),
+            bg_log
+        );
+        for (auto& l : clib::cvm::global_state.logging) {
+            rt->DrawText(l.GetBuffer(0), l.GetLength(), loggingTF->textFormat, R, logoBrush);
+            R.top += span;
+            R.bottom += span;
+            if (R.top + span >= bounds.bottom) {
+                break;
+            }
+        }
+    }
 }

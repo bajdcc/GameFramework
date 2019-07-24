@@ -25,6 +25,7 @@
 #define LOG_INS 0
 #define LOG_STACK 0
 #define LOG_SYSTEM 1
+#define LOG_MAX 20
 
 int g_argc;
 char** g_argv;
@@ -82,10 +83,10 @@ namespace clib {
         }
 
         init_fs();
+        init_global();
     }
 
     void cvm::init_fs() {
-        global_state.now = std::chrono::system_clock::now();
         fs.as_root(true);
         fs.mkdir("/sys");
         fs.func("/sys/ps", this);
@@ -112,6 +113,37 @@ namespace clib {
         fs.load("/usr/test_command.txt");
         fs.load("/usr/test_lua.txt");
         fs.load("/init/init.txt");
+    }
+
+    void cvm::init_global()
+    {
+        global_state.interrupt = false;
+        global_state.input_lock = -1;
+        global_state.input_waiting_list.clear();
+        global_state.input_content.clear();
+        global_state.input_success = false;
+        global_state.input_read_ptr = -1;
+        global_state.input_code = 0;
+        global_state.hostname = "ccos";
+        global_state.gui = false;
+        global_state.gui_blur = 0.0f;
+        global_state.now = std::chrono::system_clock::now();
+#if LOG_VM
+        global_state.log_info.clear();
+        global_state.log_err.clear();
+#endif
+        global_state.mouse_x = 0;
+        global_state.mouse_y = 0;
+        global_state.window_focus = -1;
+        global_state.window_hover = -1;
+        global_state.logging.clear();
+    }
+
+    void cvm::logging(CString s)
+    {
+        if (global_state.logging.size() > LOG_MAX)
+            global_state.logging.pop_front();
+        global_state.logging.push_back(s);
     }
 
     // 虚页映射
@@ -369,6 +401,9 @@ namespace clib {
             }
 #if LOG_SYSTEM
             ATLTRACE("[SYSTEM] SIG  | Received Ctrl-C!\n");
+#endif
+#if LOG_VM
+            logging(CString(L"[SYSTEM] SIG  | Received Ctrl-C!"));
 #endif
             for (auto& pid : foreground_pids) {
                 destroy(pid);
@@ -1188,6 +1223,13 @@ namespace clib {
 #if LOG_SYSTEM
                 ATLTRACE("[SYSTEM] PROC | Exit: PID= #%d, CODE= %d\n", ctx->id, ctx->ax._i);
 #endif
+#if LOG_VM
+                {
+                    CStringA s;
+                    s.Format("[SYSTEM] PROC | Exit: PID= #%d, CODE= %d", ctx->id, ctx->ax._i);
+                    logging(CString(s));
+                }
+#endif
                 destroy(ctx->id);
                 return;
             }
@@ -1342,13 +1384,14 @@ namespace clib {
         new_pid();
         ctx->file = file;
 #if LOG_SYSTEM
+        ATLTRACE("[SYSTEM] PROC | Create: PID= #%d\n", ctx->id);
+#endif
 #if LOG_VM
         {
             CStringA s; s.Format("[SYSTEM] PROC | Create: PID= #%d\n", ctx->id);
             cvm::global_state.log_info.push_back(s.GetBuffer(0));
+            logging(CString(s));
         }
-#endif
-        ATLTRACE("[SYSTEM] PROC | Create: PID= #%d\n", ctx->id);
 #endif
         PE* pe = (PE*)file.data();
         // TODO: VALID PE FILE
@@ -1508,6 +1551,7 @@ namespace clib {
         {
             CStringA s; s.Format("[SYSTEM] PROC | Destroy: PID= #%d, Code= %d\n", ctx->id, ctx->ax._i);
             cvm::global_state.log_info.push_back(s.GetBuffer(0));
+            logging(CString(s));
         }
 #endif
         ATLTRACE("[SYSTEM] PROC | Destroy: PID= #%d, Code= %d\n", ctx->id, ctx->ax._i);
@@ -1619,6 +1663,7 @@ namespace clib {
         {
             CStringA s; s.Format("[SYSTEM] PROC | Exec: Command= %s\n", new_path.data());
             cvm::global_state.log_info.push_back(s.GetBuffer(0));
+            logging(CString(s));
         }
 #endif
         ATLTRACE("[SYSTEM] PROC | Exec: Command= %s\n", new_path.data());
@@ -1634,13 +1679,14 @@ namespace clib {
             tasks[pid].parent = ctx->id;
             tasks[pid].paths = ctx->paths;
 #if LOG_SYSTEM
+            ATLTRACE("[SYSTEM] PROC | Exec: Parent= #%d, Child= #%d\n", ctx->id, pid);
+#endif
 #if LOG_VM
             {
                 CStringA s; s.Format("[SYSTEM] PROC | Exec: Parent= #%d, Child= #%d\n", ctx->id, pid);
                 cvm::global_state.log_info.push_back(s.GetBuffer(0));
+                logging(CString(s));
             }
-#endif
-            ATLTRACE("[SYSTEM] PROC | Exec: Parent= #%d, Child= #%d\n", ctx->id, pid);
 #endif
         }
         return pid;
@@ -1651,13 +1697,14 @@ namespace clib {
         new_pid();
         ctx->file = old_ctx->file;
 #if LOG_SYSTEM
+        ATLTRACE("[SYSTEM] PROC | Fork: Parent= #%d, Child= #%d\n", old_ctx->id, ctx->id);
+#endif
 #if LOG_VM
         {
             CStringA s; s.Format("[SYSTEM] PROC | Fork: Parent= #%d, Child= #%d\n", old_ctx->id, ctx->id);
             cvm::global_state.log_info.push_back(s.GetBuffer(0));
+            logging(CString(s));
         }
-#endif
-        ATLTRACE("[SYSTEM] PROC | Fork: Parent= #%d, Child= #%d\n", old_ctx->id, ctx->id);
 #endif
         PE* pe = (PE*)ctx->file.data();
         // TODO: VALID PE FILE
@@ -3086,6 +3133,13 @@ namespace clib {
                 }
             }
             auto h = new_handle(h_file);
+#if LOG_VM
+            {
+                CStringA s;
+                s.Format("[SYSTEM] FILE | Open: %s, handle= %d", path.c_str(), h);
+                logging(CString(s));
+            }
+#endif
             handles[h].name = path;
             handles[h].data.file = dec;
             ctx->ax._i = h;

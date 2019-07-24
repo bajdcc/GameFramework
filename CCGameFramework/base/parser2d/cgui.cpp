@@ -103,7 +103,6 @@ namespace clib {
         if (vm) {
             vm.reset();
             gen.reset();
-            running = false;
             cvm::global_state.input_lock = -1;
             cvm::global_state.input_content.clear();
             cvm::global_state.input_waiting_list.clear();
@@ -111,6 +110,8 @@ namespace clib {
             cvm::global_state.input_success = false;
             cvm::global_state.input_code = 0;
         }
+        running = false;
+        exited = false;
     }
 
     void cgui::draw(CComPtr<ID2D1RenderTarget>& rt, const CRect& bounds, const Parser2DEngine::BrushBag& brushes, bool paused, decimal fps) {
@@ -807,6 +808,7 @@ namespace clib {
             {
                 CStringA s; s.Format("[SYSTEM] ERR  | PATH: %s, %s\n", new_path.c_str(), e.message().c_str());
                 cvm::global_state.log_err.push_back(s.GetBuffer(0));
+                cvm::logging(CString(s));
             }
 #endif
             ATLTRACE("[SYSTEM] ERR  | PATH: %s, %s\n", new_path.c_str(), e.message().c_str());
@@ -923,6 +925,10 @@ namespace clib {
                 return;
             case VK_ESCAPE:
                 return;
+            case VK_SPACE:
+                return;
+            case VK_BACK:
+                return;
             case VK_RETURN:
                 input('\r');
                 return;
@@ -932,11 +938,16 @@ namespace clib {
                 return;
             case 0x74: // ALT
                 return;
+            case VK_SHIFT: // SHIFT
+                return;
+            case VK_CONTROL: // CTRL
+                return;
             default:
 #if LOG_VM
             {
                 CStringA s; s.Format("[SYSTEM] GUI  | Input invalid special key: %d\n", c & 0xff);
                 cvm::global_state.log_err.push_back(s.GetBuffer(0));
+                cvm::logging(CString(s));
             }
 #endif
             ATLTRACE("[SYSTEM] GUI  | Input invalid special key: %d\n", c & 0xff);

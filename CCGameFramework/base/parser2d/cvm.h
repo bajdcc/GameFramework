@@ -127,6 +127,8 @@ namespace clib {
         void hit(int n);
         int cursor() const;
 
+        static void logging(CString s);
+
     private:
         // 申请页框
         uint32_t pmm_alloc(bool reusable = true);
@@ -176,6 +178,7 @@ namespace clib {
         void cast();
 
         void init_fs();
+        void init_global();
 
         enum handle_type {
             h_none,
@@ -320,6 +323,7 @@ namespace clib {
             int mouse_y{ 0 };
             int window_focus{ -1 };
             int window_hover{ -1 };
+            std::list<CString> logging;
         } global_state;
     };
 }

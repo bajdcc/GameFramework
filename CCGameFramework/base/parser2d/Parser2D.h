@@ -46,10 +46,14 @@ private:
 
 private:
     CComPtr<ID2D1SolidColorBrush> bg;
+    CComPtr<ID2D1SolidColorBrush> bg_log;
     CColor bgColor;
+    CColor bgColorLog;
     Font logoFont;
+    Font loggingFont;
     CColor logoColor;
     std::shared_ptr<D2DTextFormatPackage> logoTF;
+    std::shared_ptr<D2DTextFormatPackage> loggingTF;
     CComPtr<ID2D1SolidColorBrush> logoBrush;
 
 private:
@@ -71,6 +75,7 @@ private:
     int cycles{ 0 };
     double ips{ 0 };
     bool paused{ false };
+    bool logged{ false };
 
 private:
     std::shared_ptr<D2DTextFormatPackage> font_format;
