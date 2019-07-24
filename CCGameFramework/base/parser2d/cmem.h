@@ -10,7 +10,7 @@
 #include <map>
 #include "types.h"
 
-#define MAX_PAGE_PER_PROCESS 64
+#define MAX_PAGE_PER_PROCESS 65536
 
 namespace clib {
 

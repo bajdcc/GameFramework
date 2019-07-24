@@ -253,6 +253,9 @@ namespace clib {
             }
             x = old_x;
             y += GUI_FONT_H;
+            if (y + GUI_FONT_H >= bounds.Height()) {
+                break;
+            }
         }
 
         if (input_state) {
@@ -378,20 +381,26 @@ namespace clib {
             }
         }
         else if (c == '\b') {
-            if (ptr_mx + ptr_my * cols < ptr_x + ptr_y * cols) {
+            if (ptr_mx == -1 && ptr_my == -1 && ptr_x > 0) {
                 forward(ptr_x, ptr_y, false);
                 draw_char('\u0000');
-                if (!(ptr_x == ptr_rx && ptr_y == ptr_ry)) {
-                    for (auto i = ptr_y * cols + ptr_x; i < ptr_ry * cols + ptr_rx; ++i) {
-                        buffer[i] = buffer[i + 1];
-                        colors_bg[i] = colors_bg[i + 1];
-                        colors_fg[i] = colors_fg[i + 1];
+            }
+            else {
+                if (ptr_mx + ptr_my * cols < ptr_x + ptr_y * cols) {
+                    forward(ptr_x, ptr_y, false);
+                    draw_char('\u0000');
+                    if (!(ptr_x == ptr_rx && ptr_y == ptr_ry)) {
+                        for (auto i = ptr_y * cols + ptr_x; i < ptr_ry * cols + ptr_rx; ++i) {
+                            buffer[i] = buffer[i + 1];
+                            colors_bg[i] = colors_bg[i + 1];
+                            colors_fg[i] = colors_fg[i + 1];
+                        }
+                        buffer[ptr_ry * cols + ptr_rx] = '\0';
+                        colors_bg[ptr_ry * cols + ptr_rx] = color_bg;
+                        colors_fg[ptr_ry * cols + ptr_rx] = color_fg;
                     }
-                    buffer[ptr_ry * cols + ptr_rx] = '\0';
-                    colors_bg[ptr_ry * cols + ptr_rx] = color_bg;
-                    colors_fg[ptr_ry * cols + ptr_rx] = color_fg;
+                    forward(ptr_rx, ptr_ry, false);
                 }
-                forward(ptr_rx, ptr_ry, false);
             }
         }
         else if (c == 0xff) {

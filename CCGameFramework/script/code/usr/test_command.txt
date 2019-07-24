@@ -46,3 +46,6 @@ sleep 1 show
 echo 【堆栈】
 sleep 1 show
 /usr/test_stack
+echo 【读取文件】
+sleep 1 show
+/usr/test_readfile
