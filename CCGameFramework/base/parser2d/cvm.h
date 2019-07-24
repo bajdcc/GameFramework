@@ -128,6 +128,11 @@ namespace clib {
         int cursor() const;
 
         static void logging(CString s);
+        enum disp_t {
+            D_PS,
+            D_HTOP,
+        };
+        CString get_disp(disp_t) const;
 
     private:
         // 申请页框
@@ -277,6 +282,7 @@ namespace clib {
             std::deque<char> input_queue;
             std::unordered_set<int> handles;
             std::vector<string_t> paths;
+            string_t cmd;
         };
         context_t* ctx{ nullptr };
         int available_tasks{ 0 };
@@ -324,6 +330,7 @@ namespace clib {
             int window_focus{ -1 };
             int window_hover{ -1 };
             std::list<CString> logging;
+            bool is_logging{ false };
         } global_state;
     };
 }

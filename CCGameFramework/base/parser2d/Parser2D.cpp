@@ -30,7 +30,7 @@ void Parser2DEngine::Initialize(std::shared_ptr<Direct2DRenderTarget> rt)
     loggingFont.bold = false;
     loggingFont.italic = false;
     loggingFont.underline = false;
-    bgColorLog = CColor(0, 0, 0, 100);
+    bgColorLog = CColor(0, 0, 0, 220);
     brushes.cmdFont.size = 16;
     brushes.cmdFont.fontFamily = "Courier New";
     brushes.cmdFont.bold = false;
@@ -109,7 +109,7 @@ int Parser2DEngine::SetType(cint value)
         return 1;
     }
     if (value == -103) {
-        logged = !logged;
+        clib::cvm::global_state.is_logging = !clib::cvm::global_state.is_logging;
         return 1;
     }
     if (value == -102) {
@@ -223,7 +223,7 @@ void Parser2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
     rt->DrawText(logo.GetBuffer(0), logo.GetLength(), logoTF->textFormat,
         D2D1::RectF((float)bounds.right - 210, (float)bounds.top + 5, (float)bounds.right, (float)bounds.top + 50), logoBrush);
 
-    if (logged) {
+    if (clib::cvm::global_state.is_logging) {
         const int span = 12;
         auto R = D2D1::RectF((float)bounds.left + 10, (float)bounds.top + 50, (float)bounds.right - 10, (float)bounds.top + 60);
         rt->FillRectangle(
@@ -238,5 +238,18 @@ void Parser2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
                 break;
             }
         }
+        R = D2D1::RectF((float)bounds.right - 400, (float)bounds.top + 50, (float)bounds.right - 10, (float)bounds.top + 60);
+        auto disp = clib::cgui::singleton().get_disp(clib::cvm::D_PS);
+        rt->DrawText(disp, disp.GetLength(), loggingTF->textFormat, R, logoBrush);
+        auto lines = 3;
+        {
+            for (auto i = 0; i < disp.GetLength(); i++) {
+                if (disp[i] == L'\n') lines++;
+            }
+        }
+        R.top += lines * span;
+        R.bottom += lines * span;
+        disp = clib::cgui::singleton().get_disp(clib::cvm::D_HTOP);
+        rt->DrawText(disp, disp.GetLength(), loggingTF->textFormat, R, logoBrush);
     }
 }

@@ -75,7 +75,6 @@ private:
     int cycles{ 0 };
     double ips{ 0 };
     bool paused{ false };
-    bool logged{ false };
 
 private:
     std::shared_ptr<D2DTextFormatPackage> font_format;

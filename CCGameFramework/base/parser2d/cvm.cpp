@@ -1379,7 +1379,7 @@ namespace clib {
         throw cexception(ex_vm, str + ", PATH: " + ctx->path + ", SOURCE: " + source());
     }
 
-    int cvm::load(const string_t& path, const std::vector<byte>& file, const std::vector<string_t>& args) {
+    int cvm::load(const string_t& path, const std::vector<byte>& file, const std::vector<string_t>& _args) {
         auto old_ctx = ctx;
         new_pid();
         ctx->file = file;
@@ -1407,6 +1407,29 @@ namespace clib {
         ctx->flag |= CTX_KERNEL;
         ctx->state = CTS_RUNNING;
         ctx->path = path;
+        auto args = _args;
+        {
+            if (args.empty()) {
+                args.push_back(path);
+            }
+            else {
+                args[0] = path;
+            }
+            if (args.size() < 2) {
+                ctx->cmd = ctx->path;
+            }
+            else {
+                auto arr = args;
+                arr.erase(arr.begin());
+                std::stringstream ss;
+                ss << ctx->path << " ";
+                std::copy(arr.begin(), arr.end(), std::ostream_iterator<string_t>(ss, " "));
+                auto a = ss.str();
+                if (a.empty())
+                    a.erase(a.begin() + a.size() - 1);
+                ctx->cmd = ss.str();
+            }
+        }
         /* 映射4KB的代码空间 */
         {
             auto size = PAGE_SIZE / sizeof(int);
@@ -1723,6 +1746,7 @@ namespace clib {
         old_ctx->child.insert(ctx->id);
         ctx->parent = old_ctx->id;
         ctx->paths = old_ctx->paths;
+        ctx->cmd = old_ctx->cmd;
         /* 映射4KB的代码空间 */
         {
             auto size = PAGE_SIZE / sizeof(int);
@@ -1876,6 +1900,89 @@ namespace clib {
         }
     }
 
+    CString cvm::get_disp(disp_t t) const
+    {
+        static TCHAR sz[256];
+        std::wstringstream ss;
+        if (t == D_PS) {
+            ss << L"[STATE] [FLAG] [PID] [PPID] [COMMAND LINE]     [PAGE]" << std::endl;
+            for (auto i = 0; i < TASK_NUM; ++i) {
+                if (tasks[i].flag & CTX_VALID) {
+                    wsprintf(sz, L"%7S  %04X   %4d   %4d %-18S   %4d",
+                        state_string(tasks[i].state),
+                        tasks[i].flag,
+                        i,
+                        tasks[i].parent,
+                        limit_string(tasks[i].path, 18).c_str(),
+                        tasks[i].allocation.size());
+                    ss << sz << std::endl;
+                }
+            }
+        }
+        else if (t == D_HTOP) {
+            auto root_id = -1;
+            std::unordered_map<int, std::list<int>> deps;
+            for (auto i = 0; i < TASK_NUM; ++i) {
+                if (tasks[i].flag & CTX_VALID) {
+                    const auto& p = tasks[i].parent;
+                    if (p != -1) {
+                        auto f = deps.find(p);
+                        if (f == deps.end()) {
+                            deps[p] = std::list<int>();
+                        }
+                        deps[p].push_back(i);
+                    }
+                    else {
+                        root_id = i;
+                    }
+                }
+            }
+            std::bitset<TASK_NUM> visited;
+            std::bitset<TASK_NUM> printed;
+            int current = root_id;
+            int level = 0;
+            // 多叉树的非递归前序遍历
+            while (current != -1) {
+                if (visited.test(current)) { // 访问过了，查看有无兄弟
+                    auto parent = tasks[current].parent;
+                    if (deps.find(parent) != deps.end()) { // 还有未访问的兄弟
+                        auto brother = deps[parent].front(); // 进入兄弟节点
+                        deps[parent].pop_front(); // 除去此节点
+                        if (deps[parent].empty())
+                            deps.erase(parent);
+                        current = brother;
+                    }
+                    else { // 没有兄弟（或兄弟访问完），回到父节点
+                        current = parent;
+                        level--;
+                    }
+                }
+                else { // 没访问过，进入
+                    if (!printed.test(current)) {
+                        ss << std::setfill(L' ') << std::setw(level * 2) << "";
+                        wsprintf(sz, L"#%d %S", current, limit_string(tasks[current].cmd, 30).c_str());
+                        ss << sz << std::endl;
+                        printed.set(current);
+                    }
+                    if (deps.find(current) != deps.end()) { // 有孩子，进入孩子
+                        auto child = deps[current].front(); // 进入子节点
+                        deps[current].pop_front(); // 除去此节点
+                        if (deps[current].empty())
+                            deps.erase(current);
+                        current = child;
+                        level++;
+                    }
+                    else { // 没有孩子（或孩子访问完），回到父节点
+                        visited.set(current);
+                        current = tasks[current].parent;
+                        level--;
+                    }
+                }
+            };
+        }
+        return CString(ss.str().c_str());
+    }
+
     string_t cvm::stream_callback(const string_t& path) {
         static char sz[256];
         if (path.substr(0, 6) == "/proc/") {
@@ -1912,6 +2019,9 @@ namespace clib {
                         std::ostream_iterator<string_t>(ss, "\n"));
                     return ss.str();
                 }
+                else if (op == "cmd") {
+                    return tasks[id].cmd;
+                }
             }
         }
         else if (path.substr(0, 5) == "/sys/") {
@@ -1931,7 +2041,7 @@ namespace clib {
                                 i,
                                 tasks[i].parent,
                                 limit_string(tasks[i].path, 18).c_str(),
-                                ctx->allocation.size());
+                                tasks[i].allocation.size());
                             ss << sz << std::endl;
                         }
                     }
@@ -2145,7 +2255,7 @@ namespace clib {
                     fs.as_root(true);
                     if (fs.mkdir(dir) == 0) { // '/proc/[pid]'
                         static std::vector<string_t> ps =
-                        { "exe", "parent", "heap_size", "path", "dep" };
+                        { "exe", "parent", "heap_size", "path", "dep", "cmd" };
                         dir += "/";
                         for (auto& _ps : ps) {
                             ss.str("");

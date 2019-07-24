@@ -630,6 +630,14 @@ namespace clib {
         return std::unordered_set<string_t>();
     }
 
+    CString cgui::get_disp(cvm::disp_t t) const
+    {
+        if (vm) {
+                return vm->get_disp(t);
+        }
+        return CString();
+    }
+
     void cgui::load_dep(string_t& path, std::unordered_set<string_t>& deps) {
         auto f = cache_code.find(path);
         if (f != cache_code.end()) {

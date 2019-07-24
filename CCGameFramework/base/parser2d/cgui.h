@@ -15,6 +15,7 @@
 #include "cgen.h"
 #include "parser2d.h"
 #include "cui.h"
+#include "cvm.h"
 
 #define GUI_FONT GLUT_BITMAP_9_BY_15
 #define GUI_FONT_W 9
@@ -71,6 +72,8 @@ namespace clib {
         int cursor() const;
 
         std::unordered_set<string_t> get_dep(string_t& path) const;
+
+        CString get_disp(cvm::disp_t) const;
 
     private:
         void tick();
