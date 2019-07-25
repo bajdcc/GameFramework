@@ -32,6 +32,7 @@ int process(char* text) {
             break;
     }
     strcpy(text, tmp);
+    free(tmp);
 }
 int exec_single(char* text, int* total, int right) {
     int pid;

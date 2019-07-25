@@ -225,7 +225,7 @@ void Parser2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
 
     if (clib::cvm::global_state.is_logging) {
         const int span = 12;
-        auto R = D2D1::RectF((float)bounds.left + 10, (float)bounds.top + 50, (float)bounds.right - 10, (float)bounds.top + 60);
+        auto R = D2D1::RectF((float)bounds.left + 10, (float)bounds.top + 10, (float)bounds.right - 10, (float)bounds.top + 60);
         rt->FillRectangle(
             D2D1::RectF((float)bounds.left, (float)bounds.top, (float)bounds.right, (float)bounds.bottom),
             bg_log
@@ -238,18 +238,40 @@ void Parser2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
                 break;
             }
         }
-        R = D2D1::RectF((float)bounds.right - 400, (float)bounds.top + 50, (float)bounds.right - 10, (float)bounds.top + 60);
-        auto disp = clib::cgui::singleton().get_disp(clib::cvm::D_PS);
+        R.top += span;
+        R.bottom = (float)bounds.bottom;
+        auto disp = clib::cgui::singleton().get_disp(clib::cvm::D_HANDLE);
         rt->DrawText(disp, disp.GetLength(), loggingTF->textFormat, R, logoBrush);
-        auto lines = 3;
+        R.top += span;
+        auto lines = 1;
         {
             for (auto i = 0; i < disp.GetLength(); i++) {
                 if (disp[i] == L'\n') lines++;
             }
         }
         R.top += lines * span;
-        R.bottom += lines * span;
+        disp = clib::cgui::singleton().get_disp(clib::cvm::D_WINDOW);
+        rt->DrawText(disp, disp.GetLength(), loggingTF->textFormat, R, logoBrush);
+        R = D2D1::RectF((float)bounds.right - 400, (float)bounds.top + 10, (float)bounds.right - 10, (float)bounds.bottom);
+        disp = clib::cgui::singleton().get_disp(clib::cvm::D_PS);
+        rt->DrawText(disp, disp.GetLength(), loggingTF->textFormat, R, logoBrush);
+        lines = 3;
+        {
+            for (auto i = 0; i < disp.GetLength(); i++) {
+                if (disp[i] == L'\n') lines++;
+            }
+        }
+        R.top += lines * span;
         disp = clib::cgui::singleton().get_disp(clib::cvm::D_HTOP);
+        rt->DrawText(disp, disp.GetLength(), loggingTF->textFormat, R, logoBrush);
+        lines = 3;
+        {
+            for (auto i = 0; i < disp.GetLength(); i++) {
+                if (disp[i] == L'\n') lines++;
+            }
+        }
+        R.top += lines * span;
+        disp = clib::cgui::singleton().get_disp(clib::cvm::D_MEM);
         rt->DrawText(disp, disp.GetLength(), loggingTF->textFormat, R, logoBrush);
     }
 }

@@ -12,7 +12,10 @@ struct node {
     node *prev;
     node *next;
 };
-node *push(node **head, char *text) {
+void push(node **head, char *text) {
+    if ((*head != (node*)0) && strcmp((*head)->text, text) == 0) {
+        return;
+    }
     node *new_node = (node *) malloc(sizeof(node));
     int len = strlen(text);
     char *new_text = malloc(len + 1);
@@ -23,7 +26,6 @@ node *push(node **head, char *text) {
     if (new_node->next)
         new_node->next->prev = new_node;
     *head = new_node;
-    return new_node;
 }
 int print_history(node *head) {
     set_fg(240, 200, 220);
@@ -40,7 +42,7 @@ int main(int argc, char **argv) {
     char *_whoami = malloc(100);
     char *_hostname = malloc(100);
     char *_pwd = malloc(100);
-    node *head;
+    node* head = (node*)0;
     node *cur;
     path_add("/usr");
     while (state) {

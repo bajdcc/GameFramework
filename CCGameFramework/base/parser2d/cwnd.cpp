@@ -90,17 +90,19 @@ namespace clib {
         if (t > c__none && t < c__end) {
             switch (t) {
             case c_window_nonclient:
-                return CColor(45, 120, 213);
+                return CColor(102, 203, 234);
             case c_window_nonclient_lost:
-                return CColor(149, 187, 234);
+                return CColor(194, 214, 220);
             case c_window_background:
-                return CColor(238, 238, 238);
+                return CColor(245, 246, 247);
             case c_window_title_text:
-                return CColor(Gdiplus::Color::White);
+                return CColor(Gdiplus::Color::Black);
             case c_window_close_btn:
-                return CColor(Gdiplus::Color::White);
+                return CColor(Gdiplus::Color::Black);
             case c_window_close_bg:
-                return CColor(232, 17, 35);
+                return CColor(236, 108, 96);
+            case c_window_close_bg_lost:
+                return CColor(195, 90, 80);
             case c_window_border_def:
                 return CColor(36, 125, 234);
             case c_window_border_lost:
@@ -167,6 +169,11 @@ namespace clib {
         return 0.0f;
     }
 
+    string_t cwindow_style_win::get_name() const
+    {
+        return "Windows 8";
+    }
+
     CColor cwindow_style_win_white::get_color(color_t t) const
     {
         switch (t) {
@@ -182,6 +189,8 @@ namespace clib {
             return CColor(Gdiplus::Color::Black);
         case c_window_close_bg:
             return CColor(232, 17, 35);
+        case c_window_close_bg_lost:
+            return CColor(255, 255, 255, 0);
         case c_window_border_def:
             return CColor(Gdiplus::Color::Black);
         case c_window_border_lost:
@@ -226,6 +235,11 @@ namespace clib {
             return 0.0f;
         }
         return cwindow_style_win::get_float(t);
+    }
+
+    string_t cwindow_style_win_white::get_name() const
+    {
+        return "Windows 10";
     }
 
     cwindow::cwindow(cvm* vm, int handle, const string_t& caption, const CRect& location)
@@ -407,15 +421,11 @@ namespace clib {
                 return true;
             }
             else if (n == 211) {
-                if (!bag.close_bg->GetFlags().self_visible) {
-                    bag.close_bg->GetFlags().self_visible = true;
-                }
+                bag.close_bg->SetColor(style->get_color(cwindow_style::c_window_close_bg));
             }
         }
         else if (n == 211) {
-            if (bag.close_bg->GetFlags().self_visible) {
-                bag.close_bg->GetFlags().self_visible = false;
-            }
+            bag.close_bg->SetColor(style->get_color(cwindow_style::c_window_close_bg_lost));
         }
         if (n == 200) {
             int cx, cy;
@@ -614,8 +624,7 @@ namespace clib {
         bag.close_text->SetText(_T("×"));
         bag.close_text->SetFont(f);
         bag.close_text->SetAlignments(Alignment::StringAlignmentCenter, Alignment::StringAlignmentCenter);
-        bag.close_bg->SetColor(style->get_color(cwindow_style::c_window_close_bg));
-        bag.close_bg->GetFlags().self_visible = false;
+        bag.close_bg->SetColor(style->get_color(cwindow_style::c_window_close_bg_lost));
         bag.close_bg->SetRenderRect(bag.close_text->GetRenderRect());
         bag.border->SetColor(style->get_color(cwindow_style::c_window_border_def));
         bag.border->SetFill(false);
@@ -725,12 +734,17 @@ namespace clib {
     void cwindow::set_caption(const string_t& text)
     {
         if (caption == text) return;
+        vm->handles[handle].name = text;
         caption = text;
         bag.title_text->SetText(CString(CStringA(caption.c_str())));
     }
 
     void cwindow::post_data(const int& code, int param1, int param2, int comctl)
     {
+        if (code == WM_SETFOCUS) {
+            if (!bag.close_bg->GetFlags().self_visible)
+                bag.close_bg->GetFlags().self_visible = true;
+        }
         if (comctl == -1) {
             if (code == WM_MOUSEENTER)
             {
@@ -740,8 +754,6 @@ namespace clib {
             else if (code == WM_MOUSELEAVE)
             {
                 bag.border->SetColor(style->get_color(cwindow_style::c_window_border_lost));
-                if (bag.close_bg->GetFlags().self_visible)
-                    bag.close_bg->GetFlags().self_visible = false;
                 self_hovered = false;
                 self_drag = false;
                 self_size = false;
@@ -960,6 +972,7 @@ namespace clib {
     {
         if (p != c && valid_handle(p) && valid_handle(c) && !handles[c].comctl->get_parent() && handles[p].comctl->get_layout()) {
             handles[p].comctl->get_layout()->add(handles[c].comctl);
+            handles[c].comctl->set_parent(handles[p].comctl);
             return true;
         }
         return false;
@@ -1003,6 +1016,113 @@ namespace clib {
         return true;
     }
 
+    extern string_t limit_string(const string_t& s, uint len);
+
+    std::wstring cwindow::to_string() const
+    {
+        static std::vector<CString> v_state = {
+            L"NONE",
+            L"RUNNING",
+            L"BUSY",
+            L"IDLE",
+            L"CLOSING",
+        };
+        std::wstringstream ss;
+        CString a;
+        a.Format(L"Window #%d: \"%s\"", handle, (LPCTSTR)bag.title_text->GetText());
+        ss << a.GetBuffer(0) << std::endl;
+        a.Format(L"     | Style: %S, Queue: %d, State: ", style->get_name().c_str(), msg_data.size());
+        ss << a.GetBuffer(0);
+        LPCTSTR attrs[6]; int attr_i = 0;
+        if (self_focused) attrs[attr_i++] = L"Focused";
+        if (self_hovered) attrs[attr_i++] = L"Hovered";
+        if (self_drag) attrs[attr_i++] = L"Moving";
+        if (self_size) attrs[attr_i++] = L"Sizing";
+        ss << (LPCTSTR)v_state[state];
+        for (auto i = 0; i < attr_i; i++) {
+            ss << L"," << attrs[i];
+        }
+        ss << std::endl;
+        a.Format(L"     | Size: %dx%d, Loc: %d,%d,%d,%d, MinSize: %dx%d", location.Width(), location.Height(),
+            location.left, location.top, location.right, location.bottom,
+            self_min_size.cx, self_min_size.cy);
+        ss << a.GetBuffer(0) << std::endl;
+        {
+            static TCHAR sz[256];
+            std::unordered_map<int, std::list<int>> deps;
+            for (auto i = 0; i < WINDOW_HANDLE_NUM; ++i) {
+                if (handles[i].type != comctl_none) {
+                    const auto pp = handles[i].comctl->get_parent();
+                    if (pp) {
+                        const auto& p = pp->get_id();
+                        auto f = deps.find(p);
+                        if (f == deps.end()) {
+                            deps[p] = std::list<int>();
+                        }
+                        deps[p].push_back(i);
+                    }
+                }
+            }
+            std::bitset<WINDOW_HANDLE_NUM> visited;
+            std::bitset<WINDOW_HANDLE_NUM> printed;
+            int current = base_id;
+            int level = 0;
+            // 多叉树的非递归前序遍历
+            while (current != -1) {
+                if (visited.test(current)) { // 访问过了，查看有无兄弟
+                    auto pp = handles[current].comctl->get_parent();
+                    auto parent = pp ? pp->get_id() : -1;
+                    if (deps.find(parent) != deps.end()) { // 还有未访问的兄弟
+                        auto brother = deps[parent].front(); // 进入兄弟节点
+                        deps[parent].pop_front(); // 除去此节点
+                        if (deps[parent].empty())
+                            deps.erase(parent);
+                        current = brother;
+                    }
+                    else { // 没有兄弟（或兄弟访问完），回到父节点
+                        current = parent;
+                        level--;
+                    }
+                }
+                else { // 没访问过，进入
+                    if (!printed.test(current)) {
+                        ss << std::setfill(L' ') << std::setw(level * 2LL) << "";
+                        wsprintf(sz, L"#%d %S ", current, handle_typename(handles[current].type).c_str());
+                        ss << sz;
+                        const auto& ctl = handles[current].comctl;
+                        const auto& b = ctl->get_bound();
+                        const auto& ms = ctl->min_size();
+                        wsprintf(sz, L" Size= %dx%d, Loc= %d,%d,%d,%d, Min=%dx%d ",
+                            b.Width(), b.Height(), b.left, b.top, b.right, b.bottom,
+                            ms.cx, ms.cy);
+                        ss << sz;
+                        if (this->comctl_focus == current)
+                            ss << L"Focused ";
+                        if (this->comctl_hover == current)
+                            ss << L"Hovered ";
+                        ss << std::endl;
+                        printed.set(current);
+                    }
+                    if (deps.find(current) != deps.end()) { // 有孩子，进入孩子
+                        auto child = deps[current].front(); // 进入子节点
+                        deps[current].pop_front(); // 除去此节点
+                        if (deps[current].empty())
+                            deps.erase(current);
+                        current = child;
+                        level++;
+                    }
+                    else { // 没有孩子（或孩子访问完），回到父节点
+                        visited.set(current);
+                        auto pp = handles[current].comctl->get_parent();
+                        current = pp ? pp->get_id() : -1;
+                        level--;
+                    }
+                }
+            }
+        }
+        return ss.str();
+    }
+
     comctl_base::comctl_base(int type) : type(type)
     {
     }
@@ -1019,6 +1139,11 @@ namespace clib {
     comctl_base* comctl_base::get_parent() const
     {
         return parent;
+    }
+
+    void comctl_base::set_parent(comctl_base* parent)
+    {
+        this->parent = parent;
     }
 
     cwindow_layout* comctl_base::get_layout()

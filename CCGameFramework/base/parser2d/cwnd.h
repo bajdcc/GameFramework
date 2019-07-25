@@ -41,6 +41,7 @@ namespace clib {
             c_window_title_text,
             c_window_close_btn,
             c_window_close_bg,
+            c_window_close_bg_lost,
             c_window_border_def,
             c_window_border_lost,
             c_button_bg_def,
@@ -83,6 +84,7 @@ namespace clib {
         virtual string_t get_str(str_t t) const = 0;
         virtual int get_int(px_t t) const = 0;
         virtual float get_float(float_t t) const = 0;
+        virtual string_t get_name() const = 0;
 
         static ref create_style(style_t t);
     };
@@ -95,6 +97,7 @@ namespace clib {
         virtual void set_rt(std::shared_ptr<Direct2DRenderTarget> rt, cwindow_style::ref);
         virtual void paint(const CRect& bounds);
         comctl_base* get_parent() const;
+        void set_parent(comctl_base* parent);
         virtual cwindow_layout* get_layout();
         virtual cwindow_comctl_label* get_label();
         void set_bound(const CRect& bound);
@@ -119,6 +122,7 @@ namespace clib {
         string_t get_str(str_t t) const override;
         int get_int(px_t t) const override;
         float get_float(float_t t) const override;
+        string_t get_name() const override;
     };
 
     class cwindow_style_win_white : public cwindow_style_win {
@@ -126,6 +130,7 @@ namespace clib {
         CColor get_color(color_t t) const override;
         int get_int(px_t t) const override;
         float get_float(float_t t) const override;
+        string_t get_name() const override;
     };
 
     class cvm;
@@ -161,13 +166,13 @@ namespace clib {
         };
 
         enum window_comctl_type {
-            comctl_none = 0,
-            layout_absolute = 1,
+            comctl_none,
+            layout_absolute,
             layout_linear,
             layout_grid,
-            comctl_label = 100,
+            comctl_label,
             comctl_button,
-            comctl_end = 1000,
+            comctl_end,
         };
 
         int handle_msg(const window_msg& msg);
@@ -183,6 +188,8 @@ namespace clib {
         bool set_text(int h, const string_t& text);
         bool set_flag(int h, int flag);
         bool set_style(int style);
+
+        std::wstring to_string() const;
 
     private:
         void _init();

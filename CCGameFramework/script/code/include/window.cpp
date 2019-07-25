@@ -76,7 +76,7 @@ enum window_comctl_type {
     layout_absolute = 1,
     layout_linear,
     layout_grid,
-    comctl_label = 100,
+    comctl_label,
     comctl_button,
 };
 

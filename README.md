@@ -8,6 +8,17 @@
 
 **已嵌入脚本操作系统代码[clibparser](https://github.com/bajdcc/clibparser)。**
 
+## 脚本操作系统
+
+简介：语言为简化C语言，自制编译器（词法+语法+LR分析）、IR（基于寄存器）、虚拟机、GUI、VFS
+
+原理：执行程序时，即时编译代码并执行所生成的二进制指令，按需加载。
+
+![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/os_1.png)
+
+![main](https://raw.githubusercontent.com/bajdcc/GameFramework/master/screenshots/os_2.png)
+
+
 ## 介绍
 
 架构是**C/C++**，渲染用**DirectX**，库用**STL/ATL**。

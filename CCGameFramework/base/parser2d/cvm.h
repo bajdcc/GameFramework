@@ -131,8 +131,12 @@ namespace clib {
         enum disp_t {
             D_PS,
             D_HTOP,
+            D_HANDLE,
+            D_WINDOW,
+            D_MEM,
         };
         CString get_disp(disp_t) const;
+
 
     private:
         // 申请页框
@@ -194,7 +198,7 @@ namespace clib {
 
         int new_pid();
         int new_handle(handle_type);
-        string_t handle_typename(handle_type);
+        string_t handle_typename(handle_type) const;
         void destroy_handle(int handle);
         int post_data(int handle, int code, int param1 = 0, int param2 = 0);
         bool is_window_handle(int handle) const;
@@ -218,6 +222,7 @@ namespace clib {
             CTX_USER_MODE = 1 << 2,
             CTX_FOREGROUND = 1 << 3,
             CTX_SERVICE = 1 << 4,
+            CTX_INPUT = 1 << 5,
         };
 
         enum ctx_state_t {

@@ -25,7 +25,7 @@
 #define LOG_INS 0
 #define LOG_STACK 0
 #define LOG_SYSTEM 1
-#define LOG_MAX 20
+#define LOG_MAX 10
 
 int g_argc;
 char** g_argv;
@@ -93,6 +93,7 @@ namespace clib {
         fs.func("/sys/mem", this);
         fs.func("/sys/time", this);
         fs.func("/sys/uptime", this);
+        fs.mkdir("/init");
         fs.mkdir("/proc");
         fs.mkdir("/handle");
         fs.mkdir("/dev");
@@ -1913,7 +1914,7 @@ namespace clib {
                         tasks[i].flag,
                         i,
                         tasks[i].parent,
-                        limit_string(tasks[i].path, 18).c_str(),
+                        limit_string(tasks[i].cmd, 18).c_str(),
                         tasks[i].allocation.size());
                     ss << sz << std::endl;
                 }
@@ -1959,7 +1960,7 @@ namespace clib {
                 }
                 else { // 没访问过，进入
                     if (!printed.test(current)) {
-                        ss << std::setfill(L' ') << std::setw(level * 2) << "";
+                        ss << std::setfill(L' ') << std::setw(level * 2LL) << "";
                         wsprintf(sz, L"#%d %S", current, limit_string(tasks[current].cmd, 30).c_str());
                         ss << sz << std::endl;
                         printed.set(current);
@@ -1978,7 +1979,43 @@ namespace clib {
                         level--;
                     }
                 }
-            };
+            }
+        }
+        else if (t == D_HANDLE) {
+            for (auto i = 0; i < HANDLE_NUM; ++i) {
+                if (handles[i].type != h_none) {
+                    wsprintf(sz, L"%4d | %6S | %S", i, handle_typename(handles[i].type).c_str(),
+                        limit_string(handles[i].name, 30).c_str());
+                    ss << sz << std::endl;
+                }
+            }
+        }
+        else if (t == D_WINDOW) {
+            wsprintf(sz, L"Cursor: %d,%d", global_state.mouse_x, global_state.mouse_y);
+            ss << sz << std::endl << std::endl;
+            for (const auto& w : wnds) {
+                ss << w->to_string() << std::endl;
+            }
+        }
+        else if (t == D_MEM) {
+            std::wstringstream ss;
+            wsprintf(sz, L"%-18s %9d", L"Memory Total:", memory.DEFAULT_ALLOC_MEMORY_SIZE); ss << sz << std::endl;
+            wsprintf(sz, L"%-18s %9d", L"Memory Using:", (memory.DEFAULT_ALLOC_BLOCK_SIZE - memory.available()) * memory.BLOCK_SIZE); ss << sz << std::endl;
+            wsprintf(sz, L"%-18s %9d", L"Memory Free:", memory.available() * memory.BLOCK_SIZE); ss << sz << std::endl;
+            int pages = 0, heaps = 0, heaps_a = 0;
+            for (auto i = 0; i < TASK_NUM; ++i) {
+                if (tasks[i].flag & CTX_VALID) {
+                    pages += tasks[i].allocation.size();
+                    heaps += tasks[i].pool->page_size();
+                    heaps_a += tasks[i].pool->available();
+                }
+            }
+            wsprintf(sz, L"%-18s %9d", L"Heap Total:", heaps * PAGE_SIZE); ss << sz << std::endl;
+            wsprintf(sz, L"%-18s %9d", L"Heap Using:", heaps * PAGE_SIZE - heaps_a); ss << sz << std::endl;
+            wsprintf(sz, L"%-18s %9d", L"Heap Free:", heaps_a); ss << sz << std::endl;
+            wsprintf(sz, L"%-18s %9d", L"Kernel Page:", kernel_pages); ss << sz << std::endl;
+            wsprintf(sz, L"%-18s %9d", L"User Page:", pages); ss << sz << std::endl;
+            return CString(ss.str().c_str());
         }
         return CString(ss.str().c_str());
     }
@@ -2040,7 +2077,7 @@ namespace clib {
                                 tasks[i].flag,
                                 i,
                                 tasks[i].parent,
-                                limit_string(tasks[i].path, 18).c_str(),
+                                limit_string(tasks[i].cmd, 18).c_str(),
                                 tasks[i].allocation.size());
                             ss << sz << std::endl;
                         }
@@ -2315,7 +2352,7 @@ namespace clib {
         return -1;
     }
 
-    string_t cvm::handle_typename(handle_type t)
+    string_t cvm::handle_typename(handle_type t) const
     {
         static std::tuple<handle_type, string_t> handle_typename_list[] = {
             std::make_tuple(h_none, "none"),
@@ -2942,6 +2979,7 @@ namespace clib {
             }
             else {
                 if (global_state.input_lock == -1) {
+                    ctx->flag |= CTX_INPUT;
                     global_state.input_lock = ctx->id;
                     ctx->pc += INC_PTR;
                     cgui::singleton().input_set(true);
@@ -3063,6 +3101,7 @@ namespace clib {
                                 tasks[_id].state = CTS_RUNNING;
                             }
                         }
+                        ctx->flag &= ~CTX_INPUT;
                         global_state.input_lock = -1;
                         global_state.input_waiting_list.clear();
                         global_state.input_read_ptr = -1;
