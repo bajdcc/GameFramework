@@ -66,6 +66,7 @@ namespace clib {
         virtual int current() const = 0;
         virtual void edit(int, int) = 0;
         virtual int load_string(const string_t&) = 0;
+        virtual void add_label(int, int, int, const string_t&) = 0;
         virtual void error(int, int, const string_t&) const = 0;
     };
 
@@ -195,12 +196,15 @@ namespace clib {
         int size(sym_size_t t, int level = 0) const override;
         string_t to_string() const override;
         gen_t gen_invoke(igen& gen, sym_t::ref& list) override;
+        void gen_labels(igen& gen);
         cast_t get_cast() const override;
         std::vector<sym_id_t::ref> params;
         int ebp{ 0 }, ebp_local{ 0 };
         int entry{ 0 };
         bool implemented{ false };
         std::vector<int> write_backs;
+        std::unordered_map<string_t, int> labels;
+        std::vector<std::tuple<int, string_t, int, int>> labels_writeback;
     };
 
     class sym_var_t : public type_exp_t {
@@ -385,6 +389,7 @@ namespace clib {
         int current() const override;
         void edit(int, int) override;
         int load_string(const string_t&) override;
+        void add_label(int, int, int, const string_t&) override;
         void error(int, int, const string_t&) const override;
     private:
         void gen_rec(ast_node* node, int level);
@@ -422,6 +427,7 @@ namespace clib {
         int global_id{ 0 };
         std::vector<std::tuple<int, string_t>> incs;
         std::vector<std::tuple<int, string_t>> pdbs;
+        int labeled_id{ -1 };
     };
 }
 

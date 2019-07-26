@@ -1961,7 +1961,19 @@ namespace clib {
                 else { // 没访问过，进入
                     if (!printed.test(current)) {
                         ss << std::setfill(L' ') << std::setw(level * 2LL) << "";
-                        wsprintf(sz, L"#%d %S", current, limit_string(tasks[current].cmd, 30).c_str());
+                        static TCHAR sz2[64];
+                        const auto& I = tasks[current].input_redirect;
+                        const auto& O = tasks[current].output_redirect;
+                        const auto& Q = tasks[current].input_queue.size();
+                        if (I == -1 && O == -1)
+                            sz2[0] = 0;
+                        else if (I != -1 && O == -1)
+                            wsprintf(sz2, L"(I=%d,Q=%d) ", I, Q);
+                        else if (I == -1 && O != -1)
+                            wsprintf(sz2, L"(O=%d) ", O);
+                        else
+                            wsprintf(sz2, L"(I=%d,O=%d,Q=%d) ", I, O, Q);
+                        wsprintf(sz, L"#%d %s%S", current, sz2, limit_string(tasks[current].cmd, 30).c_str());
                         ss << sz << std::endl;
                         printed.set(current);
                     }
@@ -1999,6 +2011,24 @@ namespace clib {
         }
         else if (t == D_MEM) {
             std::wstringstream ss;
+            {
+                if (global_state.input_lock == -1)
+                    wsprintf(sz, L"%-18s %9s", L"Input Lock:", L"None");
+                else
+                    wsprintf(sz, L"%-18s %9d", L"Input Lock:", global_state.input_lock);
+                ss << sz << std::endl;
+                std::string str;
+                if (global_state.input_waiting_list.empty())
+                    str = "Empty";
+                else {
+                    std::stringstream ss2;
+                    std::copy(global_state.input_waiting_list.begin(), global_state.input_waiting_list.end(),
+                        std::ostream_iterator<int>(ss2, ","));
+                    str = ss2.str();
+                    str.pop_back();
+                }
+                wsprintf(sz, L"%-18s %9S", L"Input Waiting:  ", str.c_str()); ss << sz << std::endl;
+            }
             wsprintf(sz, L"%-18s %9d", L"Memory Total:", memory.DEFAULT_ALLOC_MEMORY_SIZE); ss << sz << std::endl;
             wsprintf(sz, L"%-18s %9d", L"Memory Using:", (memory.DEFAULT_ALLOC_BLOCK_SIZE - memory.available()) * memory.BLOCK_SIZE); ss << sz << std::endl;
             wsprintf(sz, L"%-18s %9d", L"Memory Free:", memory.available() * memory.BLOCK_SIZE); ss << sz << std::endl;

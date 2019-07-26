@@ -1,7 +1,6 @@
 //
 // Project: clibparser
 // Created by bajdcc
-//xtoa_kDiySignificandSize
 
 #include "/include/memory"
 #include "/include/xtoa_lut"

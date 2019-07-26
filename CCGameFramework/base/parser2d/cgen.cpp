@@ -558,6 +558,21 @@ namespace clib {
         return g_ok;
     }
 
+    void sym_func_t::gen_labels(igen& gen)
+    {
+        for (auto& r : labels_writeback) {
+            auto name = std::get<1>(r);
+            auto f = labels.find(name);
+            if (f != labels.end()) {
+                gen.edit(std::get<0>(r), f->second);
+            }
+            else {
+                gen.error(std::get<2>(r), std::get<3>(r), "missing label: " + name);
+            }
+        }
+        labels_writeback.clear();
+    }
+
     cast_t sym_func_t::get_cast() const {
         return t_ptr;
     }
@@ -1472,6 +1487,15 @@ namespace clib {
             gen.emit(INTR, number->node->data._int);
         }
                           break;
+        case k_goto: {
+            auto label = std::dynamic_pointer_cast<sym_var_t>(exp);
+#if LOG_TYPE
+            cgen::log_out << "[DEBUG] Goto: label= " << sym_to_string(exp) << std::endl;
+#endif
+            gen.emit(JMP, -1);
+            gen.add_label(label->line, label->column, gen.current() - 1, label->node->data._string);
+        }
+                          break;
         default:
             gen.error(line, column, "[ctrl] not supported rvalue: " + to_string());
             return g_error;
@@ -1516,6 +1540,7 @@ namespace clib {
         pdbs.push_back(std::make_tuple(0, "error"));
         func_write_backs.clear();
         log_out.str("");
+        labeled_id = -1;
     }
 
     template <class T>
@@ -1723,6 +1748,22 @@ namespace clib {
             << "\", addr: " << addr << ", size: " << s.length() << std::endl;
 #endif
         return addr;
+    }
+
+    void cgen::add_label(int line, int column, int index, const string_t& label)
+    {
+        auto c = ctx.lock();
+        if (!c || c->get_type() != s_function) {
+            error(line, column, "invalid label: must be in function");
+        }
+        auto func = std::dynamic_pointer_cast<sym_func_t>(c);
+        auto f = func->labels.find(label);
+        if (f != func->labels.end()) {
+            edit(index, f->second);
+        }
+        else {
+            func->labels_writeback.emplace_back(index, label, line, column);
+        }
     }
 
     template<class T>
@@ -1952,8 +1993,12 @@ namespace clib {
         case c_statement:
             break;
         case c_labeledStatement: {
+            labeled_id = (int)text.size();
+            if (cycle.empty()) {
+                break;
+            }
             switch_t s;
-            s.addr = (int)text.size();
+            s.addr = labeled_id;
             cases.back().push_back(s);
 #if LOG_TYPE
             log_out << "[DEBUG] Case: addr= " << s.addr << std::endl;
@@ -2236,7 +2281,7 @@ namespace clib {
                 }
                 asts.clear();
                 _tmp.clear();
-                _tmp.push_back(std::make_shared<type_base_t>(l_int, 0));
+                _tmp.emplace_back(std::make_shared<type_base_t>(l_int, 0));
                 break;
             }
             if (AST_IS_KEYWORD_N(asts[0], k_unsigned)) { // unsigned ...
@@ -2637,8 +2682,24 @@ namespace clib {
             }
             else if (AST_IS_KEYWORD_N(asts[0], k_default)) {
             }
-            else {
-                error(asts[0], "not supported: ", true);
+            else if (AST_IS_ID(asts[0])) { // GOTO LABEL
+                if (!cycle.empty()) {
+                    cases.back().pop_back();
+                }
+                auto c = ctx.lock();
+                if (!c || c->get_type() != s_function) {
+                    error(asts[0], "invalid label: must be in function", true);
+                }
+                auto func = std::dynamic_pointer_cast<sym_func_t>(c);
+                auto name = string_t(asts[0]->data._string);
+                if (func->labels.find(name) != func->labels.end()) {
+                    error(asts[0], "invalid label: conflict", true);
+                }
+                auto addr = labeled_id;
+                func->labels.insert(std::make_pair(name, addr));
+#if LOG_TYPE
+                    log_out << "[DEBUG] Label: " << asts[0]->data._string << std::endl;
+#endif
             }
             tmp.back().clear();
             asts.clear();
@@ -2699,8 +2760,16 @@ namespace clib {
                 }
                 else if (AST_IS_KEYWORD_K(a, k_interrupt)) {
                     auto ctrl = std::make_shared<sym_ctrl_t>(a);
-                    auto number = primary_node(asts[1]);
-                    ctrl->exp = number;
+                    ctrl->exp = primary_node(asts[1]);
+                    tmp.back().push_back(ctrl);
+                    asts.clear();
+                }
+                else if (AST_IS_KEYWORD_K(a, k_goto)) {
+                    auto ctrl = std::make_shared<sym_ctrl_t>(a);
+                    auto old = asts[1]->flag;
+                    asts[1]->flag = ast_string;
+                    ctrl->exp = primary_node(asts[1]);
+                    asts[1]->flag = old;
                     tmp.back().push_back(ctrl);
                     asts.clear();
                 }
@@ -2737,6 +2806,8 @@ namespace clib {
         }
                                     break;
         case c_functionDefinition: {
+            auto func = std::dynamic_pointer_cast<sym_func_t>(ctx.lock());
+            func->gen_labels(*this);
             ctx_stack.clear();
             ctx.reset();
             symbols.pop_back();

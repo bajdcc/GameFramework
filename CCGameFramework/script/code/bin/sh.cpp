@@ -44,6 +44,7 @@ int main(int argc, char **argv) {
     char *_pwd = malloc(100);
     node* head = (node*)0;
     node *cur;
+    switch_task();
     path_add("/usr");
     while (state) {
         if (direct_input) {
@@ -62,6 +63,7 @@ int main(int argc, char **argv) {
             set_fg(143, 164, 174);
             put_string("]# ");
             restore_fg();
+            sleep(100);
         }
         *text = 0;
         while (state) {
@@ -97,14 +99,11 @@ int main(int argc, char **argv) {
             continue;
         }
         if (strcmp(text, "?") == 0) {
-            switch_task();
             shell("help");
-            switch_task();
             continue;
         }
         push(&head, text);
         cur = 0;
-        switch_task();
         int pid = shell(text);
         if (pid < 0) {
             switch (pid) {
@@ -125,7 +124,6 @@ int main(int argc, char **argv) {
                 break;
             }
         }
-        switch_task();
         if (!direct_input)
             break;
         newline();

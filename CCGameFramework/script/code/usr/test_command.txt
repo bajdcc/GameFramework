@@ -49,3 +49,6 @@ sleep 1 show
 echo 【读取文件】
 sleep 1 show
 /usr/test_readfile
+echo 【跳转】
+sleep 1 show
+/usr/test_goto
