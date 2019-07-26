@@ -15,6 +15,7 @@
 #define SHOW_RULE 0
 #define SHOW_LABEL 0
 #define SHOW_CLOSURE 0
+#define DETECT_LEFT_RECURSION 0
 
 #define IS_SEQ(type) (type == u_sequence)
 #define IS_BRANCH(type) (type == u_branch)
@@ -437,6 +438,7 @@ namespace clib {
                 dep[i][i] = false;
             }
         }
+#if DETECT_LEFT_RECURSION
         {
             // INDIRECT LEFT RECURSION DETECTION
             // 由于VS的vector在DEBUG下性能太慢，因此选择bitset
@@ -473,6 +475,7 @@ namespace clib {
                 }
             }
         }
+#endif
         {
             // CALCULATE FIRST SET
             std::vector<bool> visited(size);

@@ -101,6 +101,7 @@ namespace clib {
         symbol_t get_base_type() const override;
         virtual ref clone() const;
         int ptr;
+        bool _static{ false };
         std::vector<int> matrix;
     };
 

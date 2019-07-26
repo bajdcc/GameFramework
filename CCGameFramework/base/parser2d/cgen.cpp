@@ -250,6 +250,7 @@ namespace clib {
 
     type_t::ref type_base_t::clone() const {
         auto obj = std::make_shared<type_base_t>(type, ptr);
+        obj->_static = _static;
         if (!matrix.empty())
             obj->matrix = matrix;
         return obj;
@@ -288,6 +289,7 @@ namespace clib {
 
     type_t::ref type_typedef_t::clone() const {
         auto obj = std::make_shared<type_typedef_t>(refer.lock(), ptr);
+        obj->_static = _static;
         if (!matrix.empty())
             obj->matrix = matrix;
         return obj;
@@ -2284,6 +2286,11 @@ namespace clib {
                 _tmp.emplace_back(std::make_shared<type_base_t>(l_int, 0));
                 break;
             }
+            bool _static = false;
+            if (AST_IS_KEYWORD_N(asts[0], k_static)) { // static
+                _static = true;
+                asts.erase(asts.begin());
+            }
             if (AST_IS_KEYWORD_N(asts[0], k_unsigned)) { // unsigned ...
                 if (asts.size() == 1 || (asts.size() > 1 && !AST_IS_KEYWORD(asts[1]))) {
                     base_type = std::make_shared<type_base_t>(l_uint);
@@ -2393,6 +2400,7 @@ namespace clib {
 #if LOG_TYPE
             log_out << "[DEBUG] Type: " << base_type->to_string() << std::endl;
 #endif
+            base_type->_static = _static;
             tmp.back().push_back(base_type);
         }
                                        break;
@@ -2419,6 +2427,8 @@ namespace clib {
                 auto t = (tmp.rbegin() + 1)->back();
                 if (t->get_base_type() == s_type) {
                     type = std::dynamic_pointer_cast<type_t>(t);
+                    if (type->_static)
+                        clazz = z_global_var;
                 }
                 else {
                     type = std::make_shared<type_typedef_t>(t);

@@ -38,15 +38,15 @@ void fun3(int i) {
     case 1:      put_char('*');
     } while (--n > 0); }
 }
-int co_1_i, co_1_state = 0;
 int co_1(int n) {
+    static static int i, state = 0;
     // Coroutine: https://www.chiark.greenend.org.uk/~sgtatham/coroutines.html
-    switch (co_1_state) {
+    switch (state) {
     case 0: /* start of function */
-        for (co_1_i = 0; co_1_i < n; co_1_i++) {
-            co_1_state = 1; /* so we will come back to "case 1" */
+        for (i = 0; i < n; i++) {
+            state = 1; /* so we will come back to "case 1" */
             put_char('#');
-            return co_1_i;
+            return i;
     case 1: /* resume control straight after the return */
             put_char('*');
         }
