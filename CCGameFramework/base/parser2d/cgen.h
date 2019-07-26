@@ -420,7 +420,7 @@ namespace clib {
         std::vector<std::vector<ast_node*>> ast;
         std::vector<std::vector<sym_t::ref>> tmp;
         std::vector<cycle_t> cycle;
-        std::vector<std::vector<switch_t>> cases;
+        std::vector<std::unordered_map<ast_node*, switch_t>> cases;
         std::unordered_set<string_t> func_write_backs;
         sym_t::weak_ref ctx;
         std::vector<sym_t::ref> ctx_stack;

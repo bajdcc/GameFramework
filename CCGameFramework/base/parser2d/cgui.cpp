@@ -14,6 +14,8 @@
 #include "Parser2D.h"
 #include <ui\window\Window.h>
 
+#define AST_FILE "ast.log"
+
 #define LOG_AST 0
 #define LOG_DEP 0
 
@@ -802,7 +804,12 @@ namespace clib {
             gen.reset();
             auto root = p.parse(code, &gen);
 #if LOG_AST
-            cast::print(root, 0, std::cout);
+            {
+                std::ofstream log(AST_FILE, std::ios::app | std::ios::out);
+                log << std::endl << std::endl;
+                cast::print(root, 0, log);
+                log << std::endl << std::endl;
+            }
 #endif
             gen.gen(root);
             auto file = gen.file();

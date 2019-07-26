@@ -1994,12 +1994,12 @@ namespace clib {
             break;
         case c_labeledStatement: {
             labeled_id = (int)text.size();
-            if (cycle.empty()) {
+            if (nodes[0]->flag == ast_literal) {
                 break;
             }
             switch_t s;
             s.addr = labeled_id;
-            cases.back().push_back(s);
+            cases.back().insert(std::make_pair(nodes[0], s));
 #if LOG_TYPE
             log_out << "[DEBUG] Case: addr= " << s.addr << std::endl;
 #endif
@@ -2675,7 +2675,7 @@ namespace clib {
                           break;
         case c_labeledStatement: {
             if (AST_IS_KEYWORD_N(asts[0], k_case)) {
-                cases.back().back()._case = to_exp(tmp.back().front());
+                cases.back().at(asts[0])._case = to_exp(tmp.back().front());
 #if LOG_TYPE
                 log_out << "[DEBUG] Case: " << cases.back().back()._case->to_string() << std::endl;
 #endif
@@ -2683,9 +2683,6 @@ namespace clib {
             else if (AST_IS_KEYWORD_N(asts[0], k_default)) {
             }
             else if (AST_IS_ID(asts[0])) { // GOTO LABEL
-                if (!cycle.empty()) {
-                    cases.back().pop_back();
-                }
                 auto c = ctx.lock();
                 if (!c || c->get_type() != s_function) {
                     error(asts[0], "invalid label: must be in function", true);
@@ -2974,8 +2971,14 @@ namespace clib {
             text[L2 - 1] = text.size(); // jump cases
             auto _default = -1;
             auto & _cases = cases.back();
-            for (size_t i = 0; i < _cases.size(); ++i) {
-                auto& _c = _cases[i];
+            std::vector<switch_t*> cc;
+            for (auto& s : _cases)
+                cc.push_back(&s.second);
+            std::sort(cc.begin(), cc.end(), [](switch_t* a, switch_t* b) {
+                return a->addr > b->addr;
+                });
+            for (size_t i = 0; i < cc.size(); ++i) {
+                auto& _c = *(cc[i]);
                 if (_c._case) {
                     _c._case->gen_rvalue(*this);
                     emit(CASE);
@@ -2990,7 +2993,7 @@ namespace clib {
             }
             emit(POP, c2);
             if (_default != -1) {
-                emit(JMP, _cases[_default].addr);
+                emit(JMP, cc[_default]->addr);
             }
             text[L1 + 1] = text.size(); // jump break
             tmp.back().clear();
