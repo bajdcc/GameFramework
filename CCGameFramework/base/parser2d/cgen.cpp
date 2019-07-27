@@ -2427,7 +2427,7 @@ namespace clib {
                 auto t = (tmp.rbegin() + 1)->back();
                 if (t->get_base_type() == s_type) {
                     type = std::dynamic_pointer_cast<type_t>(t);
-                    if (type->_static)
+                    if (type->_static && clazz == z_local_var)
                         clazz = z_global_var;
                 }
                 else {
@@ -3363,9 +3363,9 @@ namespace clib {
     }
 
     sym_t::ref cgen::find_symbol(const string_t & name) {
-        for (auto s = symbols.rbegin(); s != symbols.rend(); s++) {
-            auto f = s->find(name);
-            if (f != s->end()) {
+        for (auto i = (int)symbols.size() - 1; i > 0; i--) {
+            auto f = symbols[i].find(name);
+            if (f != symbols[i].end()) {
                 return f->second;
             }
         }
@@ -3378,6 +3378,12 @@ namespace clib {
                         return param;
                     }
                 }
+            }
+        }
+        if (!symbols.empty()) {
+            auto f = symbols[0].find(name);
+            if (f != symbols[0].end()) {
+                return f->second;
             }
         }
         return nullptr;
