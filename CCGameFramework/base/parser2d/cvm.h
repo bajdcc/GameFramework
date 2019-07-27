@@ -124,6 +124,7 @@ namespace clib {
         cwindow* stream_getwnd(int id) override;
 
         void paint_window(const CRect& bounds);
+        void reset_ips();
         void hit(int n);
         int cursor() const;
 
@@ -249,6 +250,8 @@ namespace clib {
             uint base{ 0 };
             uint heap{ 0 };
             uint pc{ 0 };
+            uint64 ips{ 0ULL };
+            uint64 ips_disp{ 0ULL };
             union {
                 int _i;
                 uint _ui;

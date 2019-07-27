@@ -156,6 +156,7 @@ namespace clib {
                     cycle_stable = GUI_CYCLE_STABLE;
                 }
             }
+            reset_ips();
             for (int i = 0; i < ticks; ++i) {
                 tick();
             }
@@ -294,6 +295,12 @@ namespace clib {
     {
         if(vm)
             vm->paint_window(bounds);
+    }
+
+    void cgui::reset_ips()
+    {
+        if (vm)
+            vm->reset_ips();
     }
 
     void cgui::tick() {

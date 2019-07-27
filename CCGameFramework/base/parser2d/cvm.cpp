@@ -382,11 +382,15 @@ namespace clib {
     }
 
     bool cvm::run(int cycle, int& cycles) {
+        int c;
         for (int i = 0; i < TASK_NUM; ++i) {
             if (tasks[i].flag & CTX_VALID) {
                 if (tasks[i].state == CTS_RUNNING) {
                     ctx = &tasks[i];
-                    exec(cycle, cycles);
+                    c = 0;
+                    exec(cycle, c);
+                    tasks[i].ips += c;
+                    cycles += c;
                 }
             }
         }
@@ -1647,6 +1651,8 @@ namespace clib {
             ctx->stacktrace.clear();
             ctx->stacktrace_pc.clear();
             ctx->stacktrace_dbg.clear();
+            ctx->ips = 0ULL;
+            ctx->ips_disp = 0ULL;
             while (!ctx->sigs.empty())ctx->sigs.pop();
             {
                 std::stringstream ss;
@@ -1901,19 +1907,36 @@ namespace clib {
         }
     }
 
+    LPCTSTR get_ips_disp(uint64 ips) {
+        static TCHAR _ipsf[32];
+        if (ips < 1e3) {
+            wsprintf(_ipsf, L"%I64u", ips);
+        }
+        else if (ips < 1e6) {
+            wsprintf(_ipsf, L"%I64uK", ips / 1000ULL);
+        }
+        else if (ips < 1e9) {
+            wsprintf(_ipsf, L"%I64uM", ips / 1000000ULL);
+        }
+        else {
+            wsprintf(_ipsf, L"%I64uG", ips / 1000000000ULL);
+        }
+        return _ipsf;
+    }
+
     CString cvm::get_disp(disp_t t) const
     {
         static TCHAR sz[256];
         std::wstringstream ss;
         if (t == D_PS) {
-            ss << L"[STATE] [FLAG] [PID] [PPID] [COMMAND LINE]     [PAGE]" << std::endl;
+            ss << L"[STATE] [FLAG] [PID] [IPS] [COMMAND LINE]     [PAGE]" << std::endl;
             for (auto i = 0; i < TASK_NUM; ++i) {
                 if (tasks[i].flag & CTX_VALID) {
-                    wsprintf(sz, L"%7S  %04X   %4d   %4d %-18S   %4d",
+                    wsprintf(sz, L"%7S  %04X   %4d %5s %-18S   %4d",
                         state_string(tasks[i].state),
                         tasks[i].flag,
                         i,
-                        tasks[i].parent,
+                        get_ips_disp(tasks[i].ips_disp),
                         limit_string(tasks[i].cmd, 18).c_str(),
                         tasks[i].allocation.size());
                     ss << sz << std::endl;
@@ -3477,6 +3500,16 @@ namespace clib {
             return;
         for (auto& wnd : wnds) {
             wnd->paint(bounds);
+        }
+    }
+
+    void cvm::reset_ips()
+    {
+        for (int i = 0; i < TASK_NUM; ++i) {
+            if (tasks[i].flag & CTX_VALID) {
+                tasks[i].ips_disp = tasks[i].ips;
+                tasks[i].ips = 0ULL;
+            }
         }
     }
 

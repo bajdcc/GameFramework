@@ -39,7 +39,7 @@ void fun3(int i) {
     } while (--n > 0); }
 }
 int co_1(int n) {
-    static static int i, state = 0;
+    static int i, state = 0;
     // Coroutine: https://www.chiark.greenend.org.uk/~sgtatham/coroutines.html
     switch (state) {
     case 0: /* start of function */

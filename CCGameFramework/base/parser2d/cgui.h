@@ -76,6 +76,7 @@ namespace clib {
         CString get_disp(cvm::disp_t) const;
 
     private:
+        void reset_ips();
         void tick();
         void draw_text(CComPtr<ID2D1RenderTarget>& rt, const CRect& bounds, const Parser2DEngine::BrushBag& brushes);
         void draw_window(const CRect& bounds);
