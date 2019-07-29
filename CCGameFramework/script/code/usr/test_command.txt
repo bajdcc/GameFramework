@@ -52,3 +52,6 @@ sleep 1 show
 echo 【跳转】
 sleep 1 show
 /usr/test_goto
+echo 【BF语言】
+sleep 1 show
+/usr/test_bf

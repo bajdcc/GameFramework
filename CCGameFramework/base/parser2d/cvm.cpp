@@ -125,6 +125,7 @@ namespace clib {
         global_state.input_success = false;
         global_state.input_read_ptr = -1;
         global_state.input_code = 0;
+        global_state.input_single = 0;
         global_state.hostname = "ccos";
         global_state.gui = false;
         global_state.gui_blur = 0.0f;
@@ -3177,6 +3178,9 @@ namespace clib {
             ctx->pc += INC_PTR;
             return true;
         }
+        case 15:
+            global_state.input_single = true;
+                 break;
         case 20: {
             if (global_state.input_lock == -1) {
                 set_resize_id.insert(ctx->id);

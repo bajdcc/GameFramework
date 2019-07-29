@@ -68,6 +68,9 @@ int input_state() {
 int input_valid() {
     interrupt 14;
 }
+int input_single() {
+    interrupt 15;
+}
 int input(char *text, int len) {
     int i, c;
     int state = input_lock();
@@ -84,6 +87,21 @@ int input(char *text, int len) {
     text[i] = '\0';
     if (i == len - 1) return -1;
     return c;
+}
+int get_char() {
+    int c;
+    int state = input_lock();
+    input_single();
+    while ((c = input_valid()) != -1) {
+        if (c <= INPUT_BEGIN) {
+            continue;
+        }
+        int c = input_char();
+        input_unlock();
+        return c;
+    }
+    input_unlock();
+    return -1;
 }
 
 // 界面部分

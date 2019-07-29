@@ -325,6 +325,7 @@ namespace clib {
             bool input_success{ false };
             int input_read_ptr{ -1 };
             int input_code{ 0 };
+            bool input_single{ false };
             string_t hostname{ "ccos" };
             bool gui{ false };
             float gui_blur{ 0.0f };

@@ -875,11 +875,38 @@ namespace clib {
                 cvm::global_state.input_success = true;
                 cvm::global_state.input_code = 0;
                 input_state = false;
+                cvm::global_state.input_single = false;
             }
             return;
         }
         if (!input_state)
             return;
+        if (cvm::global_state.input_single) {
+            if (c > 0 && c < 256 && (std::isprint(c) || c == '\r')) {
+                if (c == '\r')
+                    c = '\n';
+                put_char(c);
+                ptr_x = ptr_rx;
+                ptr_y = ptr_ry;
+                string_t s;
+                s += c;
+                cvm::global_state.input_content = s;
+                cvm::global_state.input_read_ptr = 0;
+                cvm::global_state.input_success = true;
+                cvm::global_state.input_code = 0;
+                input_state = false;
+            }
+            else {
+#if LOG_VM
+                {
+                    CStringA s; s.Format("[SYSTEM] GUI  | Input invalid single key: %d\n", c);
+                    cvm::global_state.log_err.push_back(s.GetBuffer(0));
+                    cvm::logging(CString(s));
+                }
+#endif
+            }
+            return;
+        }
         if (c < 0) {
             put_char(c);
             return;

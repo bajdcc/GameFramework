@@ -26,6 +26,7 @@ int main(int argc, char **argv) {
         case 16: shell("test_stack");
         case 17: shell("test_readfile");
         case 18: shell("test_goto");
+        case 19: shell("test_bf");
     }
     return 0;
 }
