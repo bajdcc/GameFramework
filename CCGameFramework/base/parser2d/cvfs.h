@@ -228,6 +228,7 @@ namespace clib {
         int rm(const string_t& path);
         int rm_safe(const string_t& path);
         void load(const string_t& path);
+        void load_bin(const string_t& path);
 
         static void split_path(const string_t& path, std::vector<string_t>& args, char c);
         static string_t get_filename(const string_t& path);

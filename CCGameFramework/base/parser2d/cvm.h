@@ -156,6 +156,7 @@ namespace clib {
         template<class T = int>
         bool vmm_valid(uint32_t va) const;
         string_t vmm_getstr(uint32_t va) const;
+        void vmm_getmem(uint32_t va, int len, std::vector<byte>& data) const;
         template<class T = int>
         T vmm_set(uint32_t va, T);
         void vmm_setstr(uint32_t va, const string_t& str);

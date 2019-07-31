@@ -402,6 +402,91 @@ WireworldAutomatonImageElementRenderer::~WireworldAutomatonImageElementRenderer(
     if (buffer) delete buffer;
 }
 
+SolidImageElement::SolidImageElement()
+{
+
+}
+
+SolidImageElement::~SolidImageElement()
+{
+    renderer->Finalize();
+}
+
+CString SolidImageElement::GetElementTypeName()
+{
+    return _T("SolidImage");
+}
+
+const byte* SolidImageElement::GetDataPtr() const
+{
+    return data;
+}
+
+size_t SolidImageElement::GetDataSize() const
+{
+    return len;
+}
+
+void SolidImageElement::SetData(const byte* p, size_t l)
+{
+    if (data != p) {
+        data = p;
+        len = l;
+    }
+}
+
+FLOAT SolidImageElement::GetOpacity() const
+{
+    return opacity;
+}
+
+void SolidImageElement::SetOpacity(FLOAT value)
+{
+    opacity = value;
+}
+
+cint SolidImageElement::GetTypeId()
+{
+    return SolidImage;
+}
+
+void SolidImageElementRenderer::CreateImage(std::shared_ptr<Direct2DRenderTarget> renderTarget)
+{
+    if (renderTarget)
+    {
+        auto e = element.lock();
+        auto data = e->GetDataPtr();
+        auto len = e->GetDataSize();
+        if (data && len)
+        {
+            ptr = data;
+            wic = renderTarget->CreateImageFromMemory((LPVOID)data, (int)len);
+            e->SetData(nullptr, 0);
+        }
+        if (wic)
+            bitmap = renderTarget->GetBitmapFromWIC(wic);
+    }
+}
+
+void SolidImageElementRenderer::Render(CRect bounds)
+{
+    auto e = element.lock();
+    if (e->flags.self_visible)
+    {
+        CComPtr<ID2D1RenderTarget> d2dRenderTarget = renderTarget.lock()->GetDirect2DRenderTarget();
+        if (bitmap)
+        {
+            d2dRenderTarget->DrawBitmap(
+                bitmap,
+                D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
+                e->GetOpacity(),
+                D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR
+            );
+        }
+    }
+    GraphicsImageRenderer::Render(bounds);
+}
+
 bool IsValidPoint(const INT& w, const INT& h, const INT& x, const INT& y)
 {
     return x >= 0 && y >= 0 && x < w && y < h;

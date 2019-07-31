@@ -91,6 +91,7 @@ namespace clib {
 
     class cwindow_comctl_label;
     class cwindow_layout;
+    class cwindow_comctl_ptr;
     class comctl_base {
     public:
         comctl_base(int type);
@@ -100,6 +101,7 @@ namespace clib {
         void set_parent(comctl_base* parent);
         virtual cwindow_layout* get_layout();
         virtual cwindow_comctl_label* get_label();
+        virtual cwindow_comctl_ptr* get_ptr();
         void set_bound(const CRect& bound);
         CRect get_bound() const;
         virtual int set_flag(int flag);
@@ -172,6 +174,7 @@ namespace clib {
             layout_grid,
             comctl_label,
             comctl_button,
+            comctl_image,
             comctl_end,
         };
 
@@ -188,6 +191,7 @@ namespace clib {
         bool set_text(int h, const string_t& text);
         bool set_flag(int h, int flag);
         bool set_style(int style);
+        bool set_ptr(int h, const std::vector<byte>& data);
 
         std::wstring to_string() const;
 
@@ -195,7 +199,7 @@ namespace clib {
         void _init();
         void _init_style();
         bool is_border(const CPoint& pt, int& cx, int& cy);
-        static comctl_base* new_comctl(window_comctl_type t);
+        static comctl_base* new_comctl(cvm* vm, window_comctl_type t);
 
         void error(const string_t& str) const;
 
@@ -315,6 +319,28 @@ namespace clib {
     private:
         std::shared_ptr<RoundBorderElement> background;
         std::weak_ptr<cwindow_style> _style;
+    };
+
+    class cwindow_comctl_image;
+    class cwindow_comctl_ptr : public comctl_base {
+    public:
+        cwindow_comctl_ptr(int type);
+        cwindow_comctl_ptr* get_ptr();
+        virtual cwindow_comctl_image* get_image() = 0;
+        virtual void set_data(const std::vector<byte>& data) = 0;
+    };
+
+    class cwindow_comctl_image : public cwindow_comctl_ptr {
+    public:
+        cwindow_comctl_image();
+        cwindow_comctl_image* get_image() override;
+        void set_rt(std::shared_ptr<Direct2DRenderTarget> rt, cwindow_style::ref) override;
+        void paint(const CRect& bounds) override;
+        int hit(int x, int y) const override;
+        CSize min_size() const override;
+        void set_data(const std::vector<byte>& data) override;
+    protected:
+        std::shared_ptr<SolidImageElement> img;
     };
 }
 

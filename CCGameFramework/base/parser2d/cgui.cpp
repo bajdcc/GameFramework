@@ -111,6 +111,9 @@ namespace clib {
             cvm::global_state.input_read_ptr = -1;
             cvm::global_state.input_success = false;
             cvm::global_state.input_code = 0;
+            reset_cmd();
+            reset_cycles();
+            reset_ips();
         }
         running = false;
         exited = false;

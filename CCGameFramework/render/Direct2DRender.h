@@ -18,6 +18,7 @@ enum ElementId
     SolidLabel,
     GradientBackground,
     RoundBorder,
+    SolidImage,
     QRImage = 1100,
     Base64Image = 1101,
     WireworldAutomaton = 1102,
@@ -594,7 +595,7 @@ public:
 protected:
     CColor color;
     CStringA text;
-    FLOAT opacity;
+    FLOAT opacity{ 1.0f };
 };
 
 class QRImageElementRenderer : public GraphicsImageRenderer<QRImageElement, QRImageElementRenderer>
@@ -625,7 +626,7 @@ public:
 protected:
     CStringA text;
     CStringA url;
-    FLOAT opacity;
+    FLOAT opacity{ 1.0f };
 };
 
 class Base64ImageElementRenderer : public GraphicsImageRenderer<Base64ImageElement, Base64ImageElementRenderer>
@@ -659,7 +660,7 @@ public:
 
 protected:
     CStringA text;
-    FLOAT opacity;
+    FLOAT opacity{ 1.0f };
 };
 
 class WireworldAutomatonImageElementRenderer : public GraphicsImageRenderer<WireworldAutomatonImageElement, WireworldAutomatonImageElementRenderer>
@@ -679,6 +680,39 @@ private:
     std::vector<INT> wires;
     std::vector<INT> heads;
     std::vector<INT> tails;
+};
+
+class SolidImageElement : public GraphicsElement<SolidImageElement>
+{
+public:
+    SolidImageElement();
+    ~SolidImageElement();
+
+    static CString GetElementTypeName();
+
+    cint GetTypeId()override;
+
+    const byte* GetDataPtr() const;
+    size_t GetDataSize() const;
+    void SetData(const byte*, size_t);
+    FLOAT GetOpacity()const;
+    void SetOpacity(FLOAT value);
+
+protected:
+    const byte* data{ nullptr };
+    size_t len{ 0 };
+    FLOAT opacity{ 1.0f };
+};
+
+class SolidImageElementRenderer : public GraphicsImageRenderer<SolidImageElement, SolidImageElementRenderer>
+{
+protected:
+    void CreateImage(std::shared_ptr<Direct2DRenderTarget> renderTarget)override;
+public:
+    void Render(CRect bounds)override;
+private:
+    const byte* ptr{ nullptr };
+    CComPtr<IWICBitmap> wic;
 };
 
 #pragma endregion Image
@@ -761,7 +795,7 @@ public:
 
 protected:
     CStringA text;
-    FLOAT opacity{ 0 };
+    FLOAT opacity{ 1.0f };
     cint type{ 0 };
 };
 
@@ -806,7 +840,7 @@ public:
 
 protected:
     CStringA text;
-    FLOAT opacity;
+    FLOAT opacity { 1.0f };
 };
 
 class X86WindowElementRenderer : public GraphicsImageRenderer<X86WindowElement, X86WindowElementRenderer>
@@ -861,7 +895,7 @@ public:
 
 protected:
 	CStringA text;
-	FLOAT opacity{ 0 };
+    FLOAT opacity{ 1.0f };
 	cint type{ 0 };
 };
 
@@ -907,7 +941,7 @@ public:
 
 protected:
     CStringA text;
-    FLOAT opacity{ 0 };
+    FLOAT opacity{ 1.0f };
     cint type{ 0 };
 };
 

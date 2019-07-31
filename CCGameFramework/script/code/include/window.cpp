@@ -5,6 +5,7 @@
 
 // 窗口
 #include "/include/fs"
+#include "/include/readfile"
 
 struct __window_create_struct__ {
     char* caption;
@@ -78,6 +79,7 @@ enum window_comctl_type {
     layout_grid,
     comctl_label,
     comctl_button,
+    comctl_image,
 };
 
 struct __window_create_comctl_struct__ {
@@ -171,6 +173,20 @@ int window_comctl_set_text(long handle, char* text) {
     interrupt 510;
 }
 
+struct __window_comctl_set_ptr_struct__ {
+    long handle;
+    char* ptr; int len;
+};
+
+int window_comctl_set_ptr(long handle, char* ptr, int len) {
+    __window_comctl_set_ptr_struct__ s;
+    s.handle = handle;
+    s.ptr = ptr;
+    s.len = len;
+    &s;
+    interrupt 511;
+}
+
 struct __window_get_comctl_struct__ {
     int handle;
     int comctl;
@@ -187,10 +203,13 @@ int window_get_handle(long handle) {
 }
 
 // ----------------------------------------
-// FLAG
+// LAYOUT
 
 int window_layout_linear_set_vertical_align(long handle) { window_comctl_set_flag(handle, 0); }
 int window_layout_linear_set_horizontal_align(long handle) { window_comctl_set_flag(handle, 1); }
+
+// ----------------------------------------
+// LABEL
 
 int window_comctl_label_set_vertical_align_top(long handle) { window_comctl_set_flag(handle, 10); }
 int window_comctl_label_set_vertical_align_middle(long handle) { window_comctl_set_flag(handle, 11); }
@@ -198,3 +217,14 @@ int window_comctl_label_set_vertical_align_bottom(long handle) { window_comctl_s
 int window_comctl_label_set_horizontal_align_left(long handle) { window_comctl_set_flag(handle, 13); }
 int window_comctl_label_set_horizontal_align_middle(long handle) { window_comctl_set_flag(handle, 14); }
 int window_comctl_label_set_horizontal_align_right(long handle) { window_comctl_set_flag(handle, 15); }
+
+// ----------------------------------------
+// IMAGE
+
+int window_comctl_image_set_ptr_from_url(long handle, char* path) {
+    char* out; int n;
+    if (readfile(path, &out, &n) == 0) {
+        window_comctl_set_ptr(handle, out, n);
+        free(out);
+    }
+}

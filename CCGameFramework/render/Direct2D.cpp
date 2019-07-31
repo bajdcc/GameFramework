@@ -18,6 +18,7 @@ static void InitRenderer()
     GradientBackgroundElementRenderer::Register();
     SolidLabelElementRenderer::Register();
     RoundBorderElementRenderer::Register();
+    SolidImageElementRenderer::Register();
     QRImageElementRenderer::Register();
     Base64ImageElementRenderer::Register();
     WireworldAutomatonImageElementRenderer::Register();

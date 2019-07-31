@@ -885,4 +885,17 @@ namespace clib {
             write_vfs(path, data);
         }
     }
+
+    void cvfs::load_bin(const string_t& path)
+    {
+        std::ifstream t(FILE_ROOT + path, std::ifstream::binary);
+        if (t) {
+            auto p = t.rdbuf();
+            auto size = p->pubseekoff(0, std::ios::end, std::ios::in);
+            p->pubseekpos(0, std::ios::in);
+            std::vector<byte> data((size_t)size);
+            p->sgetn((char*)data.data(), size);
+            write_vfs(path, data);
+        }
+    }
 }

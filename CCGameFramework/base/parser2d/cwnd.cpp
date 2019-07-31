@@ -662,7 +662,7 @@ namespace clib {
         return suc;
     }
 
-    comctl_base* cwindow::new_comctl(window_comctl_type t)
+    comctl_base* cwindow::new_comctl(cvm* vm, window_comctl_type t)
     {
         switch (t) {
         case layout_absolute: return new cwindow_layout_absolute();
@@ -670,7 +670,9 @@ namespace clib {
         case layout_grid: break;
         case comctl_label: return new cwindow_comctl_label();
         case comctl_button: return new cwindow_comctl_button();
+        case comctl_image: return new cwindow_comctl_image();
         }
+        vm->error("invalid comctl id");
         return nullptr;
     }
 
@@ -895,7 +897,7 @@ namespace clib {
             auto j = i % WINDOW_HANDLE_NUM;
             if (handles[j].type == comctl_none) {
                 handles[j].type = type;
-                handles[j].comctl = new_comctl(type);
+                handles[j].comctl = new_comctl(vm, type);
                 ATLASSERT(handles[j].comctl);
                 handles[j].comctl->set_id(j);
                 handles[j].comctl->set_rt(renderTarget, style);
@@ -1014,6 +1016,15 @@ namespace clib {
         need_repaint = true;
         bag.comctl->set_rt(renderTarget, s);
         return true;
+    }
+
+    bool cwindow::set_ptr(int h, const std::vector<byte>& data)
+    {
+        if (valid_handle(h) && handles[h].comctl->get_ptr()) {
+            handles[h].comctl->get_ptr()->set_data(data);
+            return true;
+        }
+        return false;
     }
 
     extern string_t limit_string(const string_t& s, uint len);
@@ -1152,6 +1163,11 @@ namespace clib {
     }
 
     cwindow_comctl_label* comctl_base::get_label()
+    {
+        return nullptr;
+    }
+
+    cwindow_comctl_ptr* comctl_base::get_ptr()
     {
         return nullptr;
     }
@@ -1505,5 +1521,58 @@ namespace clib {
     CSize cwindow_comctl_button::min_size() const
     {
         return background->GetRenderRect().Size();
+    }
+
+    cwindow_comctl_ptr::cwindow_comctl_ptr(int type) : comctl_base(type)
+    {
+    }
+
+    cwindow_comctl_ptr* cwindow_comctl_ptr::get_ptr()
+    {
+        return this;
+    }
+
+    cwindow_comctl_image::cwindow_comctl_image() : cwindow_comctl_ptr(cwindow::comctl_image)
+    {
+        img = SolidImageElement::Create();
+    }
+
+    cwindow_comctl_image* cwindow_comctl_image::get_image()
+    {
+        return this;
+    }
+
+    void cwindow_comctl_image::set_rt(std::shared_ptr<Direct2DRenderTarget> rt, cwindow_style::ref style)
+    {
+        cwindow_comctl_ptr::set_rt(rt, style);
+        img->GetRenderer()->SetRenderTarget(rt);
+    }
+
+    void cwindow_comctl_image::paint(const CRect& bounds)
+    {
+        img->SetRenderRect((bound).OfRect(bounds));
+        if (bound.Height() > bounds.Height() || bound.Width() > bounds.Width())
+            return;
+        if (bound.Height() > img->GetRenderRect().Height() || bound.Width() > img->GetRenderRect().Width())
+            return;
+        img->GetRenderer()->Render(img->GetRenderRect());
+    }
+
+    int cwindow_comctl_image::hit(int x, int y) const
+    {
+        if (this->img->GetRenderRect().PtInRect(CPoint(x, y)))
+            return id;
+        return 0;
+    }
+
+    CSize cwindow_comctl_image::min_size() const
+    {
+        return img->GetRenderer()->GetMinSize();
+    }
+
+    void cwindow_comctl_image::set_data(const std::vector<byte>& data)
+    {
+        img->SetData(data.data(), data.size());
+        img->GetRenderer()->SetRenderTarget(rt.lock());
     }
 }

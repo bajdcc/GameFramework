@@ -114,6 +114,7 @@ namespace clib {
         fs.load("/usr/test_command.txt");
         fs.load("/usr/test_lua.txt");
         fs.load("/init/init.txt");
+        fs.load_bin("/usr/github.png");
     }
 
     void cvm::init_global()
@@ -217,6 +218,14 @@ namespace clib {
         char c;
         while (c = vmm_get<char>(va++), c) ss << c;
         return ss.str();
+    }
+
+    void cvm::vmm_getmem(uint32_t va, int len, std::vector<byte>& data) const {
+        byte c;
+        for (auto i = 0; i < len; i++) {
+            c = vmm_get<byte>(va++);
+            data.push_back(c);
+        }
     }
 
     template<class T>
@@ -2965,7 +2974,6 @@ namespace clib {
             ctx->ax._i = -1;
             break;
         }
-
         case 510:
         {
             struct __window_comctl_set_text_struct__ {
@@ -2979,6 +2987,25 @@ namespace clib {
             if (is_window_handle(h)) {
                 auto wnd = handles[h].data.cwnd;
                 ctx->ax._i = wnd->set_text(c, text) ? 0 : -1;
+                break;
+            }
+            ctx->ax._i = -1;
+            break;
+        }
+        case 511:
+        {
+            struct __window_comctl_set_ptr_struct__ {
+                int handle; int id;
+                uint32 ptr; int len;
+            };
+            auto s = vmm_get<__window_comctl_set_ptr_struct__>(ctx->ax._ui);
+            auto h = s.handle;
+            auto c = s.id;
+            std::vector<byte> data;
+            vmm_getmem(s.ptr, s.len, data);
+            if (is_window_handle(h)) {
+                auto wnd = handles[h].data.cwnd;
+                ctx->ax._i = wnd->set_ptr(c, data) ? 0 : -1;
                 break;
             }
             ctx->ax._i = -1;

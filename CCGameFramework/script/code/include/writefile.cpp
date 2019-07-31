@@ -7,12 +7,13 @@
 #include "/include/memory"
 
 int __intern_write_file__(int handle, char* _input, int len) {
-    int i, r;
+    int i, r = 0;
     for (i = 0; i < len; i++) {
         r = write(handle, _input[i]);
-        if (r < 0) return r;
+        if (r < 0) { break; }
     }
-    return 0;
+    close(handle);
+    return r;
 }
 
 // 写入文件（成功返回零，失败为负）
