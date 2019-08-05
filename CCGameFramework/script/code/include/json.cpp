@@ -5,6 +5,8 @@
 
 // JSON解析
 
+#include "/include/string"
+
 char* json_parse(char* text) {
     text;
     interrupt 401;
@@ -70,6 +72,42 @@ int json_array_size(json_object* obj) {
     return obj->data.arr->len;
 }
 
+int json_obj_size(json_object* obj) {
+    return obj->data.obj->len;
+}
+
 json_object* json_array_get(json_object* obj, int index) {
     return (json_object*) * (unsigned int*)((int*)(&obj->data.arr->list) + index);
+}
+
+json_object* json_obj_get_1(json_object* obj, int index) {
+    return (json_object*) * (unsigned int*)((int*)(&obj->data.obj->list) + (index * 2));
+}
+
+json_object* json_obj_get_2(json_object* obj, int index) {
+    return (json_object*) * (unsigned int*)((int*)(&obj->data.obj->list) + (index * 2 + 1));
+}
+
+json_object* json_obj_get_int(json_object* obj, int key) {
+    int i;
+    int len = json_obj_size(obj);
+    for (i = 0; i < len; i++) {
+        json_object* k = json_obj_get_1(obj, i);
+        if (k->type == j_int && k->data.i == key) {
+            return json_obj_get_2(obj, i);
+        }
+    }
+    return (json_object*)0;
+}
+
+json_object* json_obj_get_string(json_object* obj, char* key) {
+    int i;
+    int len = json_obj_size(obj);
+    for (i = 0; i < len; i++) {
+        json_object* k = json_obj_get_1(obj, i);
+        if (k->type == j_string && strcmp(k->data.str, key) == 0) {
+            return json_obj_get_2(obj, i);
+        }
+    }
+    return (json_object*)0;
 }

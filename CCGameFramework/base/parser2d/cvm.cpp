@@ -2846,6 +2846,7 @@ namespace clib {
                 ctx->ax._ui = parse_json(root->child);
             }
             catch (const std::exception&) {
+                ctx->ax._ui = 0;
 #if LOG_SYSTEM
                 ATLTRACE("[SYSTEM] ERR  | JSON PARSE ERROR: %s\n", json.c_str());
 #endif
@@ -2890,7 +2891,8 @@ namespace clib {
             children.push_back(i->child->next);
             return;
         }
-        children.push_back(i);
+        children.push_back(i->child);
+        children.push_back(i->child->next);
         i = i->next;
         while (i != node) {
             children.push_back(i->child);
@@ -2972,20 +2974,20 @@ namespace clib {
             if (r == 0) { // NOT VISIT
                 if (params.back().empty()) { r = 1; continue; }
                 auto cur = params.back().front();
+                auto lnk = params_link.back().front();
+                if (lnk != -1) {
+                    links.push_back(std::make_pair(lnk, data.size()));
+                    params_link.back().pop_front();
+                }
                 if (cur->flag >= ast_json_string && cur->flag <= ast_json_double) {
-                    auto lnk = params_link.back().front();
-                    if (lnk != -1) {
-                        links.push_back(std::make_pair(lnk, data.size()));
-                        params_link.back().pop_front();
-                    }
                     memset(&o, 0, sizeof(o));
                     switch (cur->flag) {
                     case ast_json_string:
                     {
-                        o.type = j_char;
-                        o.data.str = data.size() + sizeof(o);
-                        links.push_back(std::make_pair(data.size() + 4, o.data.str));
+                        o.type = j_string;
+                        o.data.str = data.size() + sizeof(o.type) + sizeof(o.data.ul);
                         std::copy((byte*)& o.type, ((byte*)& o.type) + sizeof(o.type), std::back_inserter(data));
+                        links.push_back(std::make_pair(data.size(), o.data.str));
                         std::copy((byte*)& o.data.str, ((byte*)& o.data.str) + sizeof(o.data.ul), std::back_inserter(data));
                         auto s = cur->data._string;
                         auto i = 0;
@@ -3051,10 +3053,20 @@ namespace clib {
                     r = 1;
                     if (cur->flag == ast_json_obj) {
                         memset(&o, 0, sizeof(o));
+                        o.type = j_obj;
+                        o.data.obj = 0;
+                        std::copy((byte*)& o.type, ((byte*)& o.type) + sizeof(o.type), std::back_inserter(data));
+                        auto lnk = (int)data.size();
+                        std::copy((byte*)& o.data.c, ((byte*)& o.data.c) + sizeof(o.data.ul), std::back_inserter(data));
+                        links.push_back(std::make_pair(lnk, data.size()));
                         params.emplace_back();
                         ast_get_children2(cur, params.back());
                         params_link.emplace_back();
-                        for (size_t i = 0; i < params.back().size(); i++) {
+                        json_object_obj o;
+                        o.len = params.back().size();
+                        auto l = o.len / 2;
+                        std::copy((byte*)& l, ((byte*)& l) + sizeof(l), std::back_inserter(data));
+                        for (size_t i = 0; i < o.len; i++) {
                             params_link.back().push_back(data.size());
                             data.emplace_back();
                             data.emplace_back();
@@ -3065,7 +3077,7 @@ namespace clib {
                     else if (cur->flag == ast_json_list) {
                         memset(&o, 0, sizeof(o));
                         o.type = j_list;
-                        o.data.obj = 0;
+                        o.data.arr = 0;
                         std::copy((byte*)& o.type, ((byte*)& o.type) + sizeof(o.type), std::back_inserter(data));
                         auto lnk = (int)data.size();
                         std::copy((byte*)& o.data.c, ((byte*)& o.data.c) + sizeof(o.data.ul), std::back_inserter(data));
