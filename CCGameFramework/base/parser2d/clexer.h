@@ -80,6 +80,8 @@ namespace clib {
         int get_last_line() const;
         int get_last_column() const;
         string_t current() const;
+        string_t context() const;
+        int get_index() const;
 
         const err_record_t& recent_error() const;
 

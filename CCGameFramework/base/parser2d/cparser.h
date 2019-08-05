@@ -36,6 +36,7 @@ namespace clib {
     class csemantic {
     public:
         virtual backtrace_direction check(pda_edge_t, ast_node*) = 0;
+        virtual void error_handler(int, const std::vector<pda_trans>&, int&) = 0;
     };
 
     class cparser {

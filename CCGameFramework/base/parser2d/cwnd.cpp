@@ -938,6 +938,7 @@ namespace clib {
             std::make_tuple(layout_grid, "grid layout"),
             std::make_tuple(comctl_label, "label"),
             std::make_tuple(comctl_button, "button"),
+            std::make_tuple(comctl_image, "image"),
             std::make_tuple(comctl_end, "end"),
         };
         assert(t >= comctl_none && t < comctl_end);
@@ -1098,14 +1099,17 @@ namespace clib {
                 else { // 没访问过，进入
                     if (!printed.test(current)) {
                         ss << std::setfill(L' ') << std::setw(level * 2LL) << "";
-                        wsprintf(sz, L"#%d %S ", current, handle_typename(handles[current].type).c_str());
+                        wsprintf(sz, L"#%d %8S ", current, handle_typename(handles[current].type).c_str());
                         ss << sz;
                         const auto& ctl = handles[current].comctl;
                         const auto& b = ctl->get_bound();
                         const auto& ms = ctl->min_size();
-                        wsprintf(sz, L" Size= %dx%d, Loc= %d,%d,%d,%d, Min=%dx%d ",
-                            b.Width(), b.Height(), b.left, b.top, b.right, b.bottom,
-                            ms.cx, ms.cy);
+                        if (ctl->get_layout())
+                            wsprintf(sz, L" Min=%dx%d ", ms.cx, ms.cy);
+                        else
+                            wsprintf(sz, L" Size= %dx%d, Loc= %d,%d,%d,%d, Min=%dx%d ",
+                                b.Width(), b.Height(), b.left, b.top, b.right, b.bottom,
+                                ms.cx, ms.cy);
                         ss << sz;
                         if (this->comctl_focus == current)
                             ss << L"Focused ";

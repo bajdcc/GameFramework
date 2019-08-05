@@ -19,6 +19,7 @@
 #include "cnet.h"
 #include "cui.h"
 #include "cwnd.h"
+#include "../json/cjparser.h"
 
 namespace clib {
 
@@ -157,6 +158,7 @@ namespace clib {
         bool vmm_valid(uint32_t va) const;
         string_t vmm_getstr(uint32_t va) const;
         void vmm_getmem(uint32_t va, int len, std::vector<byte>& data) const;
+        void vmm_setmem(uint32_t va, int len, const std::vector<byte>& data);
         template<class T = int>
         T vmm_set(uint32_t va, T);
         void vmm_setstr(uint32_t va, const string_t& str);
@@ -204,6 +206,8 @@ namespace clib {
         void destroy_handle(int handle);
         int post_data(int handle, int code, int param1 = 0, int param2 = 0);
         bool is_window_handle(int handle) const;
+
+        uint32 parse_json(ast_node_json* node);
 
     private:
         /* 内核页表 = PTE_SIZE*PAGE_SIZE */

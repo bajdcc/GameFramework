@@ -378,6 +378,7 @@ namespace clib {
         cgen& operator=(const cgen&) = delete;
 
         backtrace_direction check(pda_edge_t, ast_node*) override;
+        void error_handler(int, const std::vector<pda_trans>&, int&) override;
 
         void gen(ast_node* node);
         void reset();

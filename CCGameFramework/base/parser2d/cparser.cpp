@@ -13,9 +13,12 @@
 #include "cast.h"
 #include "cunit.h"
 
+#define REPORT_ERROR 0
+#define REPORT_ERROR_FILE "parsing.log"
+
 #define TRACE_PARSING 0
 #define DUMP_PDA 0
-#define DUMP_PDA_FILE "PDA.txt"
+#define DUMP_PDA_FILE "PDA.log"
 #define DEBUG_AST 0
 #define CHECK_AST 0
 
@@ -422,6 +425,9 @@ namespace clib {
     }
 
     void cparser::program() {
+#if REPORT_ERROR
+        std::ofstream log(REPORT_ERROR_FILE, std::ios::app | std::ios::out);
+#endif
         base_type = l_none;
         next();
         state_stack.clear();
@@ -451,6 +457,7 @@ namespace clib {
         bks.push_back(bk_tmp);
         auto trans_id = -1;
         auto prev_idx = 0;
+        auto jump_state = -1;
         while (!bks.empty()) {
             auto bk = &bks.back();
             if (bk->direction == b_success || bk->direction == b_fail) {
@@ -458,7 +465,28 @@ namespace clib {
             }
             if (bk->direction == b_fallback) {
                 if (bk->trans_ids.empty()) {
-                    if (bks.size() > 1) {
+                    if (jump_state != -1) {
+                        bool suc = false;
+                        while (true) {
+                            if (bks.back().current_state != jump_state) {
+                                bks.pop_back();
+                                if (bks.empty()) {
+                                    break;
+                                }
+                            }
+                            else {
+                                jump_state = -1;
+                                suc = true;
+                                break;
+                            }
+                        }
+                        if (suc) {
+                            bks.back().direction = b_error;
+                            bk = &bks.back();
+                        }
+                        else break;
+                    }
+                    else if (bks.size() > 1) {
                         bks.pop_back();
                         bks.back().direction = b_error;
                         bk = &bks.back();
@@ -557,7 +585,13 @@ namespace clib {
 #if TRACE_PARSING
                             std::cout << "parsing error: " << current_state.label << std::endl;
 #endif
+#if REPORT_ERROR
+                            log << "parsing error: " << current_state.label << std::endl;
+#endif
                             bk->direction = b_error;
+                            /*if (semantic) {
+                                semantic->error_handler(state, current_state.trans, jump_state);
+                            }*/
                             break;
                         }
                     }
@@ -566,6 +600,9 @@ namespace clib {
                         if (!is_end) {
 #if TRACE_PARSING
                             std::cout << "parsing redundant code: " << current_state.label << std::endl;
+#endif
+#if REPORT_ERROR
+                            log << "parsing redundant code: " << current_state.label << std::endl;
 #endif
                             bk->direction = b_error;
                             break;
@@ -576,8 +613,29 @@ namespace clib {
                     ATLTRACE("[%d:%d:%d]%s State: %3d => To: %3d   -- Action: %-10s -- Rule: %s\n",
                         ast_cache_index, ast_stack.size(), bks.size(), is_end ? "*" : "", state, jump,
                         pda_edge_str(t.type).c_str(), current_state.label.c_str());
+
+#endif
+#if REPORT_ERROR
+                    {
+                        static char fmt[256];
+                        int line = 0, column = 0;
+                        if (ast_cache_index < ast_cache.size()) {
+                            line = ast_cache[ast_cache_index]->line;
+                            column = ast_cache[ast_cache_index]->column;
+                        }
+                        else {
+                            line = lexer->get_line();
+                            column = lexer->get_column();
+                        }
+                        sprintf(fmt, "[%d,%d:%d:%d:%d]%s State: %3d => To: %3d   -- Action: %-10s -- Rule: %s",
+                            line, column, ast_cache_index, ast_stack.size(),
+                            bks.size(), is_end ? "*" : "", state, jump,
+                            pda_edge_str(t.type).c_str(), current_state.label.c_str());
+                        log << fmt << std::endl;
+                    }
 #endif
                     do_trans(state, *bk, trans[trans_id]);
+                    auto old_state = state;
                     state = jump;
                     if (semantic) {
                         // DETERMINE LR JUMP BEFORE PARSING AST
@@ -585,6 +643,9 @@ namespace clib {
                         if (bk->direction == b_error) {
 #if TRACE_PARSING
                             std::cout << "parsing semantic error: " << current_state.label << std::endl;
+#endif
+#if REPORT_ERROR
+                            log << "parsing semantic error: " << current_state.label << std::endl;
 #endif
                             break;
                         }

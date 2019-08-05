@@ -15,7 +15,7 @@ int welcome() {
     put_string("# Type \"help\" for help.\n\n");
     restore_fg();
 }
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
     path_add("/bin");
     welcome();
     exec_service("/init/init");

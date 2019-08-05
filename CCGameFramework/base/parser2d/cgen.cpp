@@ -3501,4 +3501,8 @@ namespace clib {
         }
         return b_next;
     }
+
+    void cgen::error_handler(int state, const std::vector<pda_trans>& trans, int& jump)
+    {
+    }
 }

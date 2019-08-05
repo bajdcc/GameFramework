@@ -55,3 +55,6 @@ sleep 1 show
 echo 【BF语言】
 sleep 1 show
 /usr/test_bf
+echo 【JSON】
+sleep 1 show
+/usr/test_json

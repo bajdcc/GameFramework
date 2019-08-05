@@ -16,7 +16,6 @@
 #include "cgui.h"
 #include "cnet.h"
 #include "cmusic.h"
-#include "../json/cjparser.h"
 #include <ui\window\Window.h>
 
 #define REPORT_ERROR 1
@@ -225,6 +224,13 @@ namespace clib {
         for (auto i = 0; i < len; i++) {
             c = vmm_get<byte>(va++);
             data.push_back(c);
+        }
+    }
+
+    void cvm::vmm_setmem(uint32_t va, int len, const std::vector<byte>& data)
+    {
+        for (auto i = 0; i < len; i++) {
+            vmm_set<byte>(va++, data[i]);
         }
     }
 
@@ -2831,6 +2837,21 @@ namespace clib {
             vmm_setstr(ctx->ax._ui, s);
             break;
         }
+        case 402:
+        {
+            auto json = vmm_getstr(ctx->ax._ui);
+            try {
+                clib::cparser_json p(json);
+                auto root = p.parse();
+                ctx->ax._ui = parse_json(root->child);
+            }
+            catch (const std::exception&) {
+#if LOG_SYSTEM
+                ATLTRACE("[SYSTEM] ERR  | JSON PARSE ERROR: %s\n", json.c_str());
+#endif
+            }
+            break;
+        }
         default:
 #if LOG_SYSTEM
             ATLTRACE("[SYSTEM] ERR  | unknown interrupt: %d\n", ctx->ax._i);
@@ -2842,6 +2863,246 @@ namespace clib {
         return false;
     }
 
+    void ast_get_children(ast_node_json* node, std::list<ast_node_json*>& children) {
+        node = node->child;
+        if (node == nullptr)
+            return;
+        auto i = node;
+        if (i->next == i) {
+            children.push_back(i);
+            return;
+        }
+        children.push_back(i);
+        i = i->next;
+        while (i != node) {
+            children.push_back(i);
+            i = i->next;
+        }
+    }
+
+    void ast_get_children2(ast_node_json* node, std::list<ast_node_json*>& children) {
+        node = node->child;
+        if (node == nullptr)
+            return;
+        auto i = node;
+        if (i->next == i) {
+            children.push_back(i->child);
+            children.push_back(i->child->next);
+            return;
+        }
+        children.push_back(i);
+        i = i->next;
+        while (i != node) {
+            children.push_back(i->child);
+            children.push_back(i->child->next);
+            i = i->next;
+        }
+    }
+
+    uint32 cvm::parse_json(ast_node_json* node)
+    {
+        enum json_type {
+            j_none,
+            j_object,
+            j_array,
+            j_char,
+            j_uchar,
+            j_short,
+            j_ushort,
+            j_int,
+            j_uint,
+            j_long,
+            j_ulong,
+            j_float,
+            j_double,
+            j_string,
+            j_obj,
+            j_list,
+        };
+
+        struct json_object_obj_list {
+            uint32 name; // json_object
+            uint32 value; // json_object
+        };
+
+        struct json_object_obj {
+            uint32 len;
+            uint32 list; // json_object_obj_list
+        };
+
+        struct json_object_arr {
+            uint32 len;
+            uint32 list; // json_object
+        };
+
+        struct json_object {
+            int type;
+            union {
+                uint32 obj; // json_object_obj
+                uint32 arr; // json_object_arr
+                char c;
+                unsigned char uc;
+                short s;
+                unsigned short us;
+                int i;
+                unsigned int ui;
+                int64 l;
+                uint64 ul;
+                float f;
+                double d;
+                uint32 str;
+            } data;
+        };
+
+        std::vector<byte> data;
+        std::vector<std::tuple<int, int>> links;
+        std::vector<std::list<ast_node_json*>> params;
+        std::vector<std::list<int>> params_link;
+        std::vector<int> rets;
+        if (node == nullptr)
+            return 0;
+        params.emplace_back();
+        params[0].push_back(node);
+        params_link.emplace_back();
+        params_link[0].push_back(-1);
+        rets.push_back(0);
+        json_object o;
+        while (!params.empty()) {
+            auto& r = rets.back();
+            if (r == 0) { // NOT VISIT
+                if (params.back().empty()) { r = 1; continue; }
+                auto cur = params.back().front();
+                if (cur->flag >= ast_json_string && cur->flag <= ast_json_double) {
+                    auto lnk = params_link.back().front();
+                    if (lnk != -1) {
+                        links.push_back(std::make_pair(lnk, data.size()));
+                        params_link.back().pop_front();
+                    }
+                    memset(&o, 0, sizeof(o));
+                    switch (cur->flag) {
+                    case ast_json_string:
+                    {
+                        o.type = j_char;
+                        o.data.str = data.size() + sizeof(o);
+                        links.push_back(std::make_pair(data.size() + 4, o.data.str));
+                        std::copy((byte*)& o.type, ((byte*)& o.type) + sizeof(o.type), std::back_inserter(data));
+                        std::copy((byte*)& o.data.str, ((byte*)& o.data.str) + sizeof(o.data.ul), std::back_inserter(data));
+                        auto s = cur->data._string;
+                        auto i = 0;
+                        while (s[i]) {
+                            data.push_back(s[i++]);
+                        }
+                        data.emplace_back();
+                        i++;
+                        auto end = i % 4;
+                        if (end)
+                            for (auto j = end; j < 4; j++)
+                                data.emplace_back();
+                    }
+                    break;
+                    case ast_json_char:
+                        o.type = j_char;
+                        o.data.c = cur->data._char;
+                        break;
+                    case ast_json_uchar:
+                        o.type = j_uchar;
+                        o.data.uc = cur->data._uchar;
+                        break;
+                    case ast_json_short:
+                        o.type = j_short;
+                        o.data.s = cur->data._short;
+                        break;
+                    case ast_json_ushort:
+                        o.type = j_ushort;
+                        o.data.us = cur->data._ushort;
+                        break;
+                    case ast_json_int:
+                        o.type = j_int;
+                        o.data.i = cur->data._int;
+                        break;
+                    case ast_json_uint:
+                        o.type = j_uint;
+                        o.data.ui = cur->data._uint;
+                        break;
+                    case ast_json_long:
+                        o.type = j_long;
+                        o.data.l = cur->data._long;
+                        break;
+                    case ast_json_ulong:
+                        o.type = j_ulong;
+                        o.data.ul = cur->data._ulong;
+                        break;
+                    case ast_json_float:
+                        o.type = j_float;
+                        o.data.f = cur->data._float;
+                        break;
+                    case ast_json_double:
+                        o.type = j_double;
+                        o.data.d = cur->data._double;
+                        break;
+                    }
+                    if (cur->flag != ast_json_string) {
+                        std::copy((byte*)& o.type, ((byte*)& o.type) + sizeof(o.type), std::back_inserter(data));
+                        std::copy((byte*)& o.data.c, ((byte*)& o.data.c) + sizeof(o.data.ul), std::back_inserter(data));
+                    }
+                    params.back().pop_front();
+                }
+                else {
+                    r = 1;
+                    if (cur->flag == ast_json_obj) {
+                        memset(&o, 0, sizeof(o));
+                        params.emplace_back();
+                        ast_get_children2(cur, params.back());
+                        params_link.emplace_back();
+                        for (size_t i = 0; i < params.back().size(); i++) {
+                            params_link.back().push_back(data.size());
+                            data.emplace_back();
+                            data.emplace_back();
+                            data.emplace_back();
+                            data.emplace_back();
+                        }
+                    }
+                    else if (cur->flag == ast_json_list) {
+                        memset(&o, 0, sizeof(o));
+                        o.type = j_list;
+                        o.data.obj = 0;
+                        std::copy((byte*)& o.type, ((byte*)& o.type) + sizeof(o.type), std::back_inserter(data));
+                        auto lnk = (int)data.size();
+                        std::copy((byte*)& o.data.c, ((byte*)& o.data.c) + sizeof(o.data.ul), std::back_inserter(data));
+                        links.push_back(std::make_pair(lnk, data.size()));
+                        params.emplace_back();
+                        ast_get_children(cur, params.back());
+                        params_link.emplace_back();
+                        json_object_arr arr;
+                        arr.len = params.back().size();
+                        std::copy((byte*)& arr.len, ((byte*)& arr.len) + sizeof(arr.len), std::back_inserter(data));
+                        for (size_t i = 0; i < arr.len; i++) {
+                            params_link.back().push_back(data.size());
+                            data.emplace_back();
+                            data.emplace_back();
+                            data.emplace_back();
+                            data.emplace_back();
+                        }
+                    }
+                    else {
+                        error("invalid json");
+                    }
+                    rets.push_back(0);
+                }
+            }
+            else if (r == 1) { // VISITING
+                params.pop_back();
+                params_link.pop_back();
+                rets.pop_back();
+            }
+        }
+        auto vmdata = vmm_malloc(data.size());
+        vmm_setmem(vmdata, data.size(), data);
+        for (const auto& L : links) {
+            vmm_set<uint32>(vmdata + std::get<0>(L), vmdata + std::get<1>(L));
+        }
+        return vmdata;
+    }
 
     bool cvm::is_window_handle(int h) const
     {

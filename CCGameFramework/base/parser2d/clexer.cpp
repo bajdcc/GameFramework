@@ -185,6 +185,16 @@ LEX_T(t) clexer::get_store_##t(int index) const \
         return str.substr(last_index, index - last_index);
     }
 
+    string_t clexer::context() const
+    {
+        return str;
+    }
+
+    int clexer::get_index() const
+    {
+        return index;
+    }
+
     bool clexer::is_type(lexer_t type) const {
         return get_type() == type;
     }
