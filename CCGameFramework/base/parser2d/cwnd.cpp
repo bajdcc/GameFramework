@@ -9,7 +9,7 @@
 
 #define WINDOW_BORDER_X 5
 #define WINDOW_TITLE_Y 30
-#define WINDOW_HANG_MS 100ms
+#define WINDOW_HANG_MS 500ms
 #define WINDOW_HANG_BLUR 5
 #define WINDOW_CLOSE_BTN_X 20
 #define WINDOW_MIN_SIZE_X 100

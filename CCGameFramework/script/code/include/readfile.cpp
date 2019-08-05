@@ -36,6 +36,7 @@ void __intern_read_file__(int handle, char** out, int* len) {
         __intern_append_byte__(&s, (char)c);
         n++;
     }
+    __intern_append_byte__(&s, (char)0);
     close(handle);
     *out = s.text;
     *len = n;

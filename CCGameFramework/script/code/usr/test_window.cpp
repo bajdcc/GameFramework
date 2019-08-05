@@ -5,6 +5,8 @@
 #include "/include/string"
 #include "/include/xtoa_itoa"
 #include "/include/proc"
+#include "/include/readfile"
+#include "/include/json"
 int child;
 int read_file(int id, int handle) {
     int c;
@@ -13,8 +15,10 @@ int read_file(int id, int handle) {
     put_string("[INFO] Title: ");
     put_string(title);
     put_string("\n");
+    int t1id;
     int t3id;
     int t4id;
+    long t1;
     long t4;
     int style = style_win10;
     if (child) {
@@ -25,7 +29,9 @@ int read_file(int id, int handle) {
         long text3 = window_create_comctl(id, comctl_button);
         long text4 = window_create_comctl(id, comctl_button);
         long logo = window_create_comctl(id, comctl_image);
+        t1 = text;
         t4 = text4;
+        t1id = window_get_comctl(text);
         t3id = window_get_comctl(text3);
         t4id = window_get_comctl(text4);
         window_comctl_connect(window_get_base(id), text);
@@ -37,7 +43,7 @@ int read_file(int id, int handle) {
         window_comctl_set_text(text2, "Hello world!!!");
         window_comctl_set_text(text3, "Click me to be stuck!");
         window_comctl_set_text(text4, "style: win10");
-        window_comctl_set_bound(text, 10, 10, 200, 30);
+        window_comctl_set_bound(text, 10, 10, 600, 30);
         window_comctl_set_bound(text2, 10, 10, 200, 30);
         window_comctl_set_bound(text3, 10, 10, 200, 30);
         window_comctl_set_bound(text4, 10, 10, 200, 30);
@@ -66,6 +72,15 @@ int read_file(int id, int handle) {
         if (child && s.code == 0x201) {
             if (s.comctl == t3id)
                 sleep(6000); // BUSY STATE
+            else if (s.comctl == t1id) {
+                char* json; int len;
+                if (readfile("/http/v1.hitokoto.cn", &json, &len) == 0) {
+                    json_object* obj = json_parse_obj(json);
+                    window_comctl_set_text(t1, json_obj_get_string(obj, "hitokoto")->data.str);
+                    free(obj);
+                    free(json);
+                }
+            }
             else if (s.comctl == t4id) {
                 if (style == style_win10) {
                     window_set_style(id, style = style_win10_white);
