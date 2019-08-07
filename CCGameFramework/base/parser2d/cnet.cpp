@@ -17,12 +17,27 @@ namespace clib {
 
     int cnet::req_id = 0;
 
-    string_t cnet::http_get(const string_t& url) {
+    string_t cnet::http_get(const string_t& url, bool& post, string_t& postfield) {
         if (url.find("/http/") != string_t::npos) {
-            return "http://" + url.substr(6);
-        }
-        else if (url.find("/https/") != string_t::npos) {
-            return "https://" + url.substr(7);
+            auto u = url.substr(6);
+            string_t flag;
+            for (auto i = 0; i < u.length() && u[i] != '/'; i++) {
+                if (u[i] == '!') {
+                    flag = u.substr(0, i);
+                    u = u.substr(i + 1);
+                    break;
+                }
+            }
+            auto flags = std::split(flag, ',');
+            std::unordered_set<string_t> flagset(flags.begin(), flags.end());
+            auto prefix = flagset.find("https") != flagset.end() ? "https://" : "http://";
+            post = flagset.find("post") != flagset.end();
+            if (post) {
+                auto f = u.rfind('!');
+                postfield = u.substr(f + 1);
+                u = u.substr(0, f);
+            }
+            return prefix + u;
         }
         return "";
     }
@@ -42,7 +57,7 @@ namespace clib {
         if (*response->received == 0)
         {
             auto net = response->net;
-            net->set_response(response->text.c_str());
+            net->set_response(response->data);
         }
         else if (*response->received == 1)
         {
@@ -99,11 +114,13 @@ namespace clib {
         auto response = new net_http_response();
         auto post = request->post;
         auto postfield = request->postfield;
+        auto bin = request->bin;
         response->net = request->net;
         response->received = request->received;
         response->id = request->id;
         response->b64 = request->b64;
         response->post = request->post;
+        response->bin = request->bin;
         auto curl = curl_easy_init();
         delete request;
         request = nullptr;
@@ -149,27 +166,34 @@ namespace clib {
             curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response->code);
             if (res == CURLE_OK)
             {
-                char* content_type;
-                curl_easy_getinfo(curl, CURLINFO_CONTENT_TYPE, &content_type);
-                string_t text;
-                text.resize(bindata.size());
-                text.assign(bindata.begin(), bindata.end());
-                auto ct = CStringA(content_type);
-                if (ct.Find("UTF-8")) {
-                    response->text = CStringA(cnet::Utf8ToStringT(text.c_str()));
-                    auto success = true;
-                    for (size_t i = 0; i < text.length() && i < response->text.length(); ++i) {
-                        if (response->text[i] == 63 && text[i] < 0) {
-                            success = false;
-                            break;
+                if (bin) {
+                    response->data = bindata;
+                }
+                else {
+                    char* content_type;
+                    curl_easy_getinfo(curl, CURLINFO_CONTENT_TYPE, &content_type);
+                    string_t text;
+                    text.resize(bindata.size());
+                    text.assign(bindata.begin(), bindata.end());
+                    auto ct = CStringA(content_type);
+                    if (ct.Find("UTF-8")) {
+                        auto as = CStringA(cnet::Utf8ToStringT(text.c_str()));
+                        auto ast = string_t(as.GetBuffer(0));
+                        response->data = std::vector<char>(ast.begin(), ast.end());
+                        auto success = true;
+                        for (size_t i = 0; i < text.length() && i < response->data.size(); ++i) {
+                            if (response->data[i] == 63 && text[i] < 0) {
+                                success = false;
+                                break;
+                            }
+                        }
+                        if (!success) {
+                            response->data = std::vector<char>(text.begin(), text.end());
                         }
                     }
-                    if (!success) {
-                        response->text = text.c_str();
-                    }
+                    else
+                        response->data = std::vector<char>(text.begin(), text.end());
                 }
-                else
-                    response->text = text.c_str();
                 auto ev = window->get_event();
                 struct timeval tv;
                 auto evt = evtimer_new(ev, &pass_event, response);
@@ -188,7 +212,7 @@ namespace clib {
         th.detach();
     }
 
-    int net_http_get_internal(vfs_node_stream_net * net, bool b64 = false, bool post = false, string_t postfield = "")
+    int net_http_get_internal(vfs_node_stream_net * net, bool b64 = false, bool post = false, string_t postfield = "", bool bin = false)
     {
         auto request = new net_http_request();
         request->net = net;
@@ -196,6 +220,7 @@ namespace clib {
         request->b64 = b64;
         request->url = net->get_url();
         request->post = post;
+        request->bin = bin;
         if (post)
             request->postfield = postfield;
         auto ev = window->get_event();
@@ -208,14 +233,14 @@ namespace clib {
         return 0;
     }
 
-    int net_http_get(vfs_node_stream_net * net)
+    int net_http_get(vfs_node_stream_net* net, bool post, const string_t& postfield)
     {
-        return net_http_get_internal(net);
+        return net_http_get_internal(net, false, post, postfield);
     }
 
     vfs_node_stream_net::vfs_node_stream_net(const vfs_mod_query * mod, vfs_stream_t s, vfs_stream_call * call, const string_t & path) :
         vfs_node_dec(mod), stream(s), call(call) {
-        url = call->stream_net(stream, path);
+        url = call->stream_net(stream, path, post, postfield);
         if (url == "")
         {
             received = new int(2);
@@ -223,7 +248,7 @@ namespace clib {
         else
         {
             received = new int(0);
-            id = net_http_get(this);
+            id = net_http_get(this, post, postfield);
         }
     }
 
@@ -254,19 +279,19 @@ namespace clib {
         return received;
     }
 
-    void vfs_node_stream_net::set_response(const string_t & resp)
+    void vfs_node_stream_net::set_response(const std::vector<char> & resp)
     {
         content = resp;
         *received = 2;
     }
 
     bool vfs_node_stream_net::available() const {
-        return *received == 2 && idx < content.length();
+        return *received == 2 && idx < content.size();
     }
 
     int vfs_node_stream_net::index() const {
         if (*received == 0) return WAIT_CHAR;
-        return idx < content.length() ? content[idx] : READ_EOF;
+        return idx < content.size() ? content[idx] : READ_EOF;
     }
 
     void vfs_node_stream_net::advance() {

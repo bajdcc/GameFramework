@@ -119,7 +119,7 @@ namespace clib {
         string_t stream_callback(const string_t& path) override;
         vfs_node_dec* stream_create(const vfs_mod_query* mod, vfs_stream_t type, const string_t& path) override;
         int stream_index(vfs_stream_t type) override;
-        string_t stream_net(vfs_stream_t type, const string_t& path) override;
+        string_t stream_net(vfs_stream_t type, const string_t& path, bool& post, string_t& postfield) override;
         int stream_write(vfs_stream_t type, byte c) override;
         string_t stream_path(const string_t& path) override;
         cwindow* stream_getwnd(int id) override;
@@ -245,6 +245,7 @@ namespace clib {
             int id{ -1 };
             int parent{ -1 };
             std::unordered_set<int> child;
+            std::list<int> exited_child;
             ctx_state_t state{ CTS_DEAD };
             string_t path;
             uint mask{ 0 };

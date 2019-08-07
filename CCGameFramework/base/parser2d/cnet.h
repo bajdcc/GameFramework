@@ -18,7 +18,7 @@ namespace clib {
         cnet(const cnet&) = delete;
         cnet& operator=(const cnet&) = delete;
 
-        string_t http_get(const string_t& url);
+        string_t http_get(const string_t& url, bool& post, string_t& postfield);
 
         static CString Utf8ToStringT(LPCSTR str);
         static CString GBKToStringT(LPCSTR str);
@@ -46,15 +46,17 @@ namespace clib {
     public:
         string_t get_url() const;
         int* get_received() const;
-        void set_response(const string_t& resp);
+        void set_response(const std::vector<char>& resp);
 
     private:
         vfs_stream_t stream{ fss_none };
         vfs_stream_call* call{ nullptr };
         string_t url;
-        string_t content;
+        std::vector<char> content;
         int* received{ nullptr };
         int id{ -1 };
+        bool post{ false };
+        string_t postfield;
     };
 
     struct net_http_request
@@ -64,6 +66,7 @@ namespace clib {
         bool b64;
         bool post;
         string_t postfield;
+        bool bin;
         vfs_node_stream_net* net;
         int* received;
     };
@@ -72,9 +75,10 @@ namespace clib {
     {
         cint id;
         UINT code;
-        string_t text;
+        std::vector<char> data;
         bool b64;
         bool post;
+        bool bin;
         vfs_node_stream_net* net;
         int* received;
     };

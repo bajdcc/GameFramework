@@ -125,7 +125,7 @@ namespace clib {
         global_state.input_success = false;
         global_state.input_read_ptr = -1;
         global_state.input_code = 0;
-        global_state.input_single = 0;
+        global_state.input_single = false;
         global_state.hostname = "ccos";
         global_state.gui = false;
         global_state.gui_blur = 0.0f;
@@ -1654,6 +1654,7 @@ namespace clib {
             if (ctx->parent != -1) {
                 auto& parent = tasks[ctx->parent];
                 parent.child.erase(ctx->id);
+                parent.exited_child.push_back(ctx->id);
                 if (parent.state == CTS_ZOMBIE)
                     destroy(ctx->parent);
                 else if (parent.state == CTS_WAIT)
@@ -1667,6 +1668,7 @@ namespace clib {
             ctx->stacktrace.clear();
             ctx->stacktrace_pc.clear();
             ctx->stacktrace_dbg.clear();
+            ctx->exited_child.clear();
             ctx->ips = 0ULL;
             ctx->ips_disp = 0ULL;
             while (!ctx->sigs.empty())ctx->sigs.pop();
@@ -1838,6 +1840,7 @@ namespace clib {
         ctx->output_redirect = -1;
         ctx->input_stop = old_ctx->input_stop;
         ctx->handles = old_ctx->handles;
+        ctx->exited_child.clear();
         for (auto& h : ctx->handles) {
             handles[h].refs++;
         }
@@ -2055,6 +2058,8 @@ namespace clib {
                     wsprintf(sz, L"%-18s %9s", L"Input Lock:", L"None");
                 else
                     wsprintf(sz, L"%-18s %9d", L"Input Lock:", global_state.input_lock);
+                ss << sz << std::endl;
+                wsprintf(sz, L"%-18s %9s", L"Input Single:", global_state.input_single ? L"Yes" : L"No");
                 ss << sz << std::endl;
                 std::string str;
                 if (global_state.input_waiting_list.empty())
@@ -2285,10 +2290,10 @@ namespace clib {
         return -1;
     }
 
-    string_t cvm::stream_net(vfs_stream_t type, const string_t& path) {
+    string_t cvm::stream_net(vfs_stream_t type, const string_t& path, bool& post, string_t& postfield) {
         switch (type) {
         case fss_net: {
-            return net.http_get(path);
+            return net.http_get(path, post, postfield);
         }
         default:
             break;
@@ -2848,7 +2853,7 @@ namespace clib {
             catch (const std::exception&) {
                 ctx->ax._ui = 0;
 #if LOG_SYSTEM
-                ATLTRACE("[SYSTEM] ERR  | JSON PARSE ERROR: %s\n", json.c_str());
+                ATLTRACE("[SYSTEM] ERR  | JSON PARSE ERROR: %s\n", json.substr(0, 100).c_str());
 #endif
             }
             break;
@@ -3050,7 +3055,10 @@ namespace clib {
                     params.back().pop_front();
                 }
                 else {
-                    r = 1;
+                    if (params.back().size() == 1)
+                        r = 1;
+                    else
+                        params.back().pop_front();
                     if (cur->flag == ast_json_obj) {
                         memset(&o, 0, sizeof(o));
                         o.type = j_obj;
@@ -3536,13 +3544,14 @@ namespace clib {
             ctx->ax._i = ctx->id;
             break;
         case 52: {
-            if (!ctx->child.empty()) {
+            if (ctx->exited_child.empty()) {
                 ctx->state = CTS_WAIT;
                 ctx->pc += INC_PTR;
                 return true;
             }
             else {
-                ctx->ax._i = -1;
+                ctx->ax._i = ctx->exited_child.front();
+                ctx->exited_child.pop_front();
             }
         }
                  break;

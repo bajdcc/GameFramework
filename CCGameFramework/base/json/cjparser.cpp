@@ -153,6 +153,12 @@ namespace clib {
             ast.set_str(node, ss.str());
             return node;
         }
+        if (lexer.is_type(l_identifier)) {
+            auto node = ast.new_node(ast_json_string);
+            ast.set_str(node, lexer.get_identifier());
+            match_type(l_identifier);
+            return node;
+        }
         error("invalid type");
         return nullptr;
     }

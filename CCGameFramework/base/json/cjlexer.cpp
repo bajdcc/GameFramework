@@ -565,12 +565,12 @@ LEX_T(t) clexer_json::get_store_##t(int index) const \
         uint i;
         for (i = index + 1; i < length && (isalnum(str[i]) || str[i] == '_'); i++);
         auto s = str.substr(index, i - index);
-        auto kw = mapKeyword.find(s);
+        /*auto kw = mapKeyword.find(s);
         if (kw != mapKeyword.end()) { // 哈希查找关键字
             bags._keyword = kw->second;
             move(s.length());
             return l_keyword;
-        }
+        }*/
         // 普通变量名
         bags._identifier = s;
         move(s.length());

@@ -897,6 +897,7 @@ namespace clib {
                 cvm::global_state.input_read_ptr = 0;
                 cvm::global_state.input_success = true;
                 cvm::global_state.input_code = 0;
+                cvm::global_state.input_single = false;
                 input_state = false;
             }
             else {
