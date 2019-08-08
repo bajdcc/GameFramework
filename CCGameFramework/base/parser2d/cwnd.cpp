@@ -509,6 +509,10 @@ namespace clib {
 
     int cwindow::handle_msg(const window_msg& msg)
     {
+        if (msg.code >= 0x800) {
+            post_data(msg.code, msg.param1, msg.param2, msg.comctl);
+            return 0;
+        }
         time_handler = std::chrono::system_clock::now();
         if (msg.comctl != -1) {
             if (valid_handle(msg.comctl)) {

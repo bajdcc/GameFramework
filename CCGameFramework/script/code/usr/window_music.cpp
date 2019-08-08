@@ -43,9 +43,8 @@ int read_file(int id, int handle) {
     __window_msg_struct__ s;
     int i = 0;
     while (c = window_get_msg(handle, &s), c < 0x1000) {
-        window_default_msg(id, &s);
-        if (s.code == 0x201) {
-            if (s.comctl == t2id) {
+        if (s.code == 0x201 || s.code == 0x888) {
+            if (s.comctl == t2id || s.code == 0x888) {
                 if (child != -1) {
                     newline();
                     send_signal(child, 99);
@@ -53,6 +52,9 @@ int read_file(int id, int handle) {
                 }
                 if ((child = fork()) == -1) {
                     play(song_names[i], song_id[i]);
+                    s.code = 0x888;
+                    s.comctl = -1;
+                    window_default_msg(id, &s);
                     exit(0);
                 }
                 else {
@@ -60,6 +62,9 @@ int read_file(int id, int handle) {
                     if (i >= sizeof(song_names) / sizeof(int*)) i = 0;
                 }
             }
+        }
+        if (s.code < 0x800) {
+            window_default_msg(id, &s);
         }
     }
     send_signal(child, 99);
@@ -157,7 +162,7 @@ void play(char* name, int id) {
             json_object* s = json_array_get(songs, id);
             char* downurl = malloc(200);
             int sid = json_obj_get_string(s, "id")->data.i; 
-           char* tmp = malloc(20);
+            char* tmp = malloc(20);
             i32toa(sid, tmp);
             strcpy(downurl, "/tmp/");
             strcat(downurl, tmp);
@@ -190,7 +195,8 @@ void play(char* name, int id) {
             put_string(downurl);
             put_string("\n");
             shell(downurl);
-            put_string("\n");
+            newline();
+            put_string("Play OK\n");
             free(tmp);
             free(downurl);
         FAILED:
