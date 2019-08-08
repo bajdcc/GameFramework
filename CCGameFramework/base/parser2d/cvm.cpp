@@ -26,6 +26,8 @@
 #define LOG_SYSTEM 1
 #define LOG_MAX 10
 
+#define KILL_SIGNAL 99
+
 int g_argc;
 char** g_argv;
 
@@ -395,6 +397,21 @@ namespace clib {
     cvm::~cvm() {
         free(pgd_kern);
         free(pte_kern);
+        reset();
+    }
+
+    void cvm::reset() {
+        // 释放句柄
+        for (int i = 0; i < TASK_NUM; ++i) {
+            if (tasks[i].flag & CTX_VALID) {
+                ctx = &tasks[i];
+                const auto handles = ctx->handles;
+                for (auto& h : handles) {
+                    destroy_handle(h);
+                }
+            }
+        }
+        ctx = nullptr;
     }
 
     bool cvm::run(int cycle, int& cycles) {
@@ -2290,10 +2307,10 @@ namespace clib {
         return -1;
     }
 
-    string_t cvm::stream_net(vfs_stream_t type, const string_t& path, bool& post, string_t& postfield) {
+    string_t cvm::stream_net(vfs_stream_t type, const string_t& path, bool& post, string_t& postfield, bool& bin) {
         switch (type) {
         case fss_net: {
-            return net.http_get(path, post, postfield);
+            return net.http_get(path, post, postfield, bin);
         }
         default:
             break;
@@ -2316,9 +2333,22 @@ namespace clib {
         return -1;
     }
 
-    string_t cvm::stream_path(const string_t& path)
+    bool cvm::stream_path(const string_t& path, std::vector<byte>& data)
     {
-        return fs.get_realpath(path);
+        if (fs.read_vfs(path, data)) {
+            return true;
+        }
+        auto p = fs.get_realpath(path);
+        std::ifstream ifs(p, std::ios::binary);
+        if (ifs) {
+            auto p = ifs.rdbuf();
+            auto size = p->pubseekoff(0, std::ios::end, std::ios::in);
+            p->pubseekpos(0, std::ios::in);
+            data.resize((size_t)size);
+            p->sgetn((char*)data.data(), size);
+            return true;
+        }
+        return false;
     }
 
     cwindow* cvm::stream_getwnd(int handle)
@@ -3522,7 +3552,26 @@ namespace clib {
             auto right = ctx->ax._ui & 0xFFFF;
             if (left >= 0 && left < TASK_NUM) {
                 if (tasks[left].flag & CTX_VALID) {
-                    tasks[left].sigs.push(right);
+                    if (right == KILL_SIGNAL) {
+                        if (ctx->child.find(left) != ctx->child.end()) {
+                            std::vector<int> childs;
+                            childs.push_back(left);
+                            size_t i = 0, j = childs.size();
+                            while (i < j) {
+                                for (const auto& cc : tasks[childs[i]].child) {
+                                    childs.push_back(cc);
+                                    j++;
+                                }
+                                i++;
+                            }
+                            for (const auto& cc : childs) {
+                                destroy(cc);
+                            }
+                        }
+                    }
+                    else {
+                        tasks[left].sigs.push(right);
+                    }
                 }
             }
         }

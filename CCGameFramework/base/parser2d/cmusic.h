@@ -39,6 +39,7 @@ namespace clib {
         int idx{ 0 };
         int now{ 0 };
         int last{ -1 };
+        std::vector<byte> data;
     };
 }
 

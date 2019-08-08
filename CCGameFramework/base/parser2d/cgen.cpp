@@ -595,6 +595,7 @@ namespace clib {
     }
 
     int type_exp_t::size(sym_size_t t, int level) const {
+        if (!base) return 0;
         return base->size(t, level);
     }
 
@@ -1031,6 +1032,7 @@ namespace clib {
     int sym_binop_t::size(sym_size_t t, int level) const {
         if (t == x_inc)
             return 0;
+        if (!base) return 0;
         return base->size(t, level);
     }
 
@@ -3177,9 +3179,10 @@ namespace clib {
                     if (id->base->matrix[0] != (int)list->exps.size())
                         error(id, "allocate: array size not equal");
                     auto old_ptr = id->base->ptr;
-                    id->base->ptr = 0;
+                    if (id->base->ptr > 0)id->base->ptr--;
                     auto c = id->get_cast(); // GET TYPE
                     id->base->ptr = old_ptr;
+                    std::vector<std::tuple<size_t, string_t>> string_writeback;
                     for (auto& exp : list->exps) {
                         if (exp->get_type() == s_unop) {
                             auto v1 = std::dynamic_pointer_cast<sym_unop_t>(exp);
@@ -3232,9 +3235,13 @@ namespace clib {
                                     std::back_inserter(data));
                             }
                             else {
-                                error(var, "allocate: array item not support string");
+                                string_writeback.push_back(std::make_tuple(data.size(), node->data._string));
+                                std::copy((char*)& node->data._string, (char*)& node->data._string + sizeof(void*), std::back_inserter(data));
                             }
                         }
+                    }
+                    for (const auto& swr : string_writeback) {
+                        *(uint32*)& data[std::get<0>(swr)] = DATA_BASE | load_string(std::get<1>(swr));
                     }
                 }
                 else {
@@ -3265,7 +3272,7 @@ namespace clib {
                     if (id->base->matrix[0] != (int)list->exps.size())
                         error(id, "allocate: array size not equal");
                     auto old_ptr = id->base->ptr;
-                    id->base->ptr = 0;
+                    if (id->base->ptr > 0)id->base->ptr--;
                     auto c = id->get_cast(); // GET TYPE
                     id->base->ptr = old_ptr;
                     // L_VALUE

@@ -19,8 +19,17 @@ namespace clib {
             return;
         }
         zplay = libZPlay::CreateZPlay();
-        auto p = call->stream_path(path.substr(6));
-        auto result = zplay->OpenFile(p.c_str(), libZPlay::sfAutodetect);
+        if (!call->stream_path(path.substr(6), data)) {
+            ATLTRACE("[SYSTEM] PLAY | file not exists: %s\n", path);
+            zplay->Release();
+            zplay = nullptr;
+            return;
+        }
+        auto type = libZPlay::sfAutodetect;
+        if (path.length() > 4 && path.substr(path.length() - 4) == ".mp3") {
+            type = libZPlay::sfMp3;
+        }
+        auto result = zplay->OpenStream(0, 0, data.data(), data.size(), type);
         if (result == 0) {
             ATLTRACE("[SYSTEM] PLAY | libzplay error: %s\n", zplay->GetError());
             zplay->Release();

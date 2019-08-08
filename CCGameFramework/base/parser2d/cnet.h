@@ -18,7 +18,7 @@ namespace clib {
         cnet(const cnet&) = delete;
         cnet& operator=(const cnet&) = delete;
 
-        string_t http_get(const string_t& url, bool& post, string_t& postfield);
+        string_t http_get(const string_t& url, bool& post, string_t& postfield, bool& bin);
 
         static CString Utf8ToStringT(LPCSTR str);
         static CString GBKToStringT(LPCSTR str);
@@ -57,6 +57,7 @@ namespace clib {
         int id{ -1 };
         bool post{ false };
         string_t postfield;
+        bool bin{ false };
     };
 
     struct net_http_request

@@ -169,9 +169,9 @@ namespace clib {
     class vfs_stream_call {
     public:
         virtual int stream_index(vfs_stream_t type) = 0;
-        virtual string_t stream_net(vfs_stream_t type, const string_t& path, bool& post, string_t& postfield) = 0;
+        virtual string_t stream_net(vfs_stream_t type, const string_t& path, bool& post, string_t& postfield, bool& bin) = 0;
         virtual int stream_write(vfs_stream_t type, byte c) = 0;
-        virtual string_t stream_path(const string_t& path) = 0;
+        virtual bool stream_path(const string_t& path, std::vector<byte>& data) = 0;
         virtual cwindow* stream_getwnd(int id) = 0;
     };
 

@@ -119,9 +119,9 @@ namespace clib {
         string_t stream_callback(const string_t& path) override;
         vfs_node_dec* stream_create(const vfs_mod_query* mod, vfs_stream_t type, const string_t& path) override;
         int stream_index(vfs_stream_t type) override;
-        string_t stream_net(vfs_stream_t type, const string_t& path, bool& post, string_t& postfield) override;
+        string_t stream_net(vfs_stream_t type, const string_t& path, bool& post, string_t& postfield, bool& bin) override;
         int stream_write(vfs_stream_t type, byte c) override;
-        string_t stream_path(const string_t& path) override;
+        bool stream_path(const string_t& path, std::vector<byte>& data) override;
         cwindow* stream_getwnd(int id) override;
 
         void paint_window(const CRect& bounds);
@@ -208,6 +208,8 @@ namespace clib {
         bool is_window_handle(int handle) const;
 
         uint32 parse_json(ast_node_json* node);
+
+        void reset();
 
     private:
         /* 内核页表 = PTE_SIZE*PAGE_SIZE */

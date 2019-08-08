@@ -94,38 +94,39 @@ LEX_T(t) clexer_json::get_store_##t(int index) const \
         if (isalpha(c) || c == '_') { // 变量名或关键字
             type = next_alpha();
         }
-        else if (isdigit(c) /*|| (c == '-' && isdigit(local(1)))*/) { // 数字
-         /*if (c == '-') {
-             move(1);
-             type = next_digit();
-             if (type == l_error)
-                 return type;
-             switch (type) {
-                 case l_char:
-                     bags._char = -bags._char;
-                     break;
-                 case l_short:
-                     bags._short = -bags._short;
-                     break;
-                 case l_int:
-                     bags._int = -bags._int;
-                     break;
-                 case l_long:
-                     bags._long = -bags._long;
-                     break;
-                 case l_float:
-                     bags._float = -bags._float;
-                     break;
-                 case l_double:
-                     bags._double = -bags._double;
-                     break;
-                 default:
-                     break;
-             }
-             return type;
-         } else {*/
-            type = next_digit();
-            //}
+        else if (isdigit(c) || (c == '-' && isdigit(local(1)))) { // 数字
+            if (c == '-') {
+                move(1);
+                type = next_digit();
+                if (type == l_error)
+                    return type;
+                switch (type) {
+                case l_char:
+                    bags._char = -bags._char;
+                    break;
+                case l_short:
+                    bags._short = -bags._short;
+                    break;
+                case l_int:
+                    bags._int = -bags._int;
+                    break;
+                case l_long:
+                    bags._long = -bags._long;
+                    break;
+                case l_float:
+                    bags._float = -bags._float;
+                    break;
+                case l_double:
+                    bags._double = -bags._double;
+                    break;
+                default:
+                    break;
+                }
+                return type;
+            }
+            else {
+                type = next_digit();
+            }
         }
         else if (isspace(c)) { // 空白字符
             type = next_space();

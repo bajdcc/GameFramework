@@ -7,7 +7,14 @@
 #include "/include/proc"
 #include "/include/readfile"
 #include "/include/json"
-void play(char *name);
+#include "/include/shell"
+void play(char *name, int id);
+char* song_names[0] = {
+    "New World",
+    "Faded",
+};
+int song_id[0] = { 0, 0 };
+int child = -1;
 int read_file(int id, int handle) {
     int c;
     window_layout_linear_set_vertical_align(window_get_base(id));
@@ -34,17 +41,28 @@ int read_file(int id, int handle) {
     window_comctl_label_set_horizontal_align_middle(text4);
     int t2id = window_get_comctl(text2);
     __window_msg_struct__ s;
+    int i = 0;
     while (c = window_get_msg(handle, &s), c < 0x1000) {
         window_default_msg(id, &s);
         if (s.code == 0x201) {
             if (s.comctl == t2id) {
-                if (fork() == -1) {
-                    play("New World");
+                if (child != -1) {
+                    newline();
+                    send_signal(child, 99);
+                    child = -1;
+                }
+                if ((child = fork()) == -1) {
+                    play(song_names[i], song_id[i]);
                     exit(0);
+                }
+                else {
+                    i++;
+                    if (i >= sizeof(song_names) / sizeof(int*)) i = 0;
                 }
             }
         }
     }
+    send_signal(child, 99);
     switch (c) {
     case 0x2000:
         // put_string("[INFO] Read to the end.");
@@ -101,7 +119,7 @@ int main(int argc, char **argv) {
     return 0;
 }
 
-void play(char* name) {
+void play(char* name, int id) {
     char* path = malloc(100);
     strcpy(path, "/http/post!music.163.com/api/search/suggest/web!s=");
     strcat(path, name);
@@ -123,6 +141,7 @@ void play(char* name) {
             put_int(N);
             put_string("\n");
             int i;
+            if (N == 0) goto FAILED;
             for (i = 0; i < N; i++) {
                 put_string(" --> ["); put_int(i); put_string("] ");
                 json_object* s = json_array_get(songs, i);
@@ -132,6 +151,48 @@ void play(char* name) {
                 put_string(json_obj_get_string(s, "name")->data.str);
                 put_string("\n");
             }
+            put_string("Choose: ");
+            put_int(id);
+            put_string("\n");
+            json_object* s = json_array_get(songs, id);
+            char* downurl = malloc(200);
+            int sid = json_obj_get_string(s, "id")->data.i; 
+           char* tmp = malloc(20);
+            i32toa(sid, tmp);
+            strcpy(downurl, "/tmp/");
+            strcat(downurl, tmp);
+            strcat(downurl, ".mp3");
+            if (!exists(downurl)) {
+                put_string("Saved to ");
+                put_string(downurl);
+                put_string("\n");
+                strcpy(downurl, "cat /http/bin!music.163.com/song/media/outer/url?id=");
+                strcat(downurl, tmp);
+                strcat(downurl, ".mp3 > /tmp/");
+                strcat(downurl, tmp);
+                strcat(downurl, ".mp3");
+                put_string("# ");
+                put_string(downurl);
+                put_string("\n");
+                shell(downurl);
+                put_string("Download OK\n");
+            }
+            else {
+                put_string("OK, ");
+                put_string(downurl);
+                put_string(" exists\n");
+            }
+            put_string("Playing\n");
+            strcpy(downurl, "cat /music/tmp/");
+            strcat(downurl, tmp);
+            strcat(downurl, ".mp3");
+            put_string("# ");
+            put_string(downurl);
+            put_string("\n");
+            shell(downurl);
+            put_string("\n");
+            free(tmp);
+            free(downurl);
         FAILED:
             free(obj);
         }

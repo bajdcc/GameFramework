@@ -17,11 +17,11 @@ namespace clib {
 
     int cnet::req_id = 0;
 
-    string_t cnet::http_get(const string_t& url, bool& post, string_t& postfield) {
+    string_t cnet::http_get(const string_t& url, bool& post, string_t& postfield, bool& bin) {
         if (url.find("/http/") != string_t::npos) {
             auto u = url.substr(6);
             string_t flag;
-            for (auto i = 0; i < u.length() && u[i] != '/'; i++) {
+            for (size_t i = 0; i < u.length() && u[i] != '/'; i++) {
                 if (u[i] == '!') {
                     flag = u.substr(0, i);
                     u = u.substr(i + 1);
@@ -32,6 +32,7 @@ namespace clib {
             std::unordered_set<string_t> flagset(flags.begin(), flags.end());
             auto prefix = flagset.find("https") != flagset.end() ? "https://" : "http://";
             post = flagset.find("post") != flagset.end();
+            bin = flagset.find("bin") != flagset.end();
             if (post) {
                 auto f = u.rfind('!');
                 postfield = u.substr(f + 1);
@@ -233,14 +234,14 @@ namespace clib {
         return 0;
     }
 
-    int net_http_get(vfs_node_stream_net* net, bool post, const string_t& postfield)
+    int net_http_get(vfs_node_stream_net* net, bool post, const string_t& postfield, bool bin)
     {
-        return net_http_get_internal(net, false, post, postfield);
+        return net_http_get_internal(net, false, post, postfield, bin);
     }
 
     vfs_node_stream_net::vfs_node_stream_net(const vfs_mod_query * mod, vfs_stream_t s, vfs_stream_call * call, const string_t & path) :
         vfs_node_dec(mod), stream(s), call(call) {
-        url = call->stream_net(stream, path, post, postfield);
+        url = call->stream_net(stream, path, post, postfield, bin);
         if (url == "")
         {
             received = new int(2);
@@ -248,7 +249,7 @@ namespace clib {
         else
         {
             received = new int(0);
-            id = net_http_get(this, post, postfield);
+            id = net_http_get(this, post, postfield, bin);
         }
     }
 
