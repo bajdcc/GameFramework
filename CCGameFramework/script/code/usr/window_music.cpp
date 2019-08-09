@@ -8,12 +8,18 @@
 #include "/include/readfile"
 #include "/include/json"
 #include "/include/shell"
+#include "/include/sys"
 void play(char *name, int id);
 char* song_names[0] = {
-    "New World",
+    "Take me hand",
     "Faded",
+    "Nevada",
+    "New world",
+    "Closer",
+    "Intro",
+    "Journey",
 };
-int song_id[0] = { 0, 0 };
+int song_id[0] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, };
 int child = -1;
 int read_file(int id, int handle) {
     int c;

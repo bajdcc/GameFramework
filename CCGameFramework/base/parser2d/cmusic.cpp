@@ -71,7 +71,9 @@ namespace clib {
 
     bool vfs_node_stream_music::available() const {
         if (success) {
-            return now < all;
+            libZPlay::TStreamStatus status;
+            zplay->GetStatus(&status);
+            return status.fPlay == 1;
         }
         return false;
     }
