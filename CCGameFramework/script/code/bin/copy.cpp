@@ -6,6 +6,7 @@
 #include "/include/arg"
 #include "/include/fs"
 int handle;
+int suc;
 struct string {
     char *text;
     int capacity;
@@ -53,7 +54,7 @@ void run(node *list) {
     while (prev) {
         int h = open((prev->text).text);
         load(h);
-        copy(h, handle);
+        suc += copy(h, handle) == 0 ? 1 : 0;
         close(h);
         prev = prev->prev;
     }
@@ -87,11 +88,15 @@ void bat() {
     run(list);
 }
 int main(int argc, char** argv) {
+    suc = 0;
     char* path = arg_string(1, argc, argv);
     touch(path);
     handle = open(path);
     bat();
-    free(path);
     close(handle);
+    if (suc == 0) {
+        rm(path);
+    }
+    free(path);
     return 0;
 }

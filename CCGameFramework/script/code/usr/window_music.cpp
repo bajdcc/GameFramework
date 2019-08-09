@@ -174,7 +174,9 @@ void play(char* name, int id, long mid) {
             strcpy(downurl, "/tmp/");
             strcat(downurl, tmp);
             strcat(downurl, ".mp3");
-            if (!exists(downurl)) {
+            int size = fsize(downurl);
+            if (size <= 0) {
+                if (size == 0) rm(downurl);
                 put_string("Saved to ");
                 put_string(downurl);
                 put_string("\n");

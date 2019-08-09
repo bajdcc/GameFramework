@@ -893,9 +893,9 @@ namespace clib {
 
     bool cvfs::can_mod(const vfs_node::ref & node, int mod) const {
         if (mod != -1) {
-            if (node->mod[0].rwx[mod] != '-')
-                return true;
-            if (node->owner != current_user) {
+            if (node->owner == current_user)
+                return node->mod[0].rwx[mod] != '-';
+            else {
                 if (node->mod[1].rwx[mod] != '-')
                     return true;
                 if (node->mod[2].rwx[mod] != '-')

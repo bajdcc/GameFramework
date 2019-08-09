@@ -160,7 +160,7 @@ namespace clib {
                 }
             }
             reset_ips();
-            for (int i = 0; i < ticks; ++i) {
+            for (int i = 0; i < ticks + cycle_speed; ++i) {
                 tick();
             }
         }

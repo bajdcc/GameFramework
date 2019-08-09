@@ -50,15 +50,15 @@ void run(node* list, char* sig) {
     }
     char* cmd = malloc(256);
     while (prev) {
-        put_string("[!] ");
+        //put_string("[!] ");
         strcpy(cmd, "signal ");
         strcat(cmd, sig);
         strcat(cmd, " ");
         strcat(cmd, (prev->text).text);
-        put_string(cmd);
-        newline();
+        //put_string(cmd);
+        //newline();
         shell(cmd);
-        newline();
+        //newline();
         prev = prev->prev;
     }
 }

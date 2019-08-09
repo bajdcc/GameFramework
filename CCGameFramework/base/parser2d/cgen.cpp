@@ -2591,6 +2591,19 @@ namespace clib {
 #endif
                 if (has_impl) {
                     if (old_func) {
+                        {
+                            if (old_func->params.size() != func->params.size()) {
+                                error(asts[0], "conflict declaration in function: " + func->to_string() +
+                                    ", with: " + old_func->to_string() + ", wrong params");
+                            }
+                            for (size_t i = 0; i < old_func->params.size(); i++) {
+                                if (old_func->params[i]->base->to_string() != func->params[i]->base->to_string()) {
+                                    error(asts[0], "conflict declaration in function: " + func->to_string() +
+                                        ", with: " + old_func->to_string() + ", wrong param type, need: " +
+                                        old_func->params[i]->to_string() + ", but got: " + func->params[i]->to_string());
+                                }
+                            }
+                        }
                         for (auto& addr : old_func->write_backs) {
                             edit(addr, func->addr);
                         }

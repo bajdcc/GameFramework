@@ -109,13 +109,13 @@ namespace clib {
         fs.mkdir("/log");
         fs.func("/log/info", this);
         fs.func("/log/err", this);
-        fs.as_root(false);
         fs.load("/usr/logo.txt");
         fs.load("/usr/badapple.txt");
         fs.load("/usr/test_command.txt");
         fs.load("/usr/test_lua.txt");
         fs.load("/init/init.txt");
         fs.load_bin("/usr/github.png");
+        fs.as_root(false);
     }
 
     void cvm::init_global()
@@ -3679,7 +3679,11 @@ namespace clib {
             vfs_node_dec* dec = nullptr;
             if (path[0] != '/') {
                 auto s = 0;
-                for (auto& p : ctx->paths) {
+                decltype(ctx->paths) ps;
+                auto pwd = fs.get_pwd();
+                ps.push_back(pwd == "/" ? "" : pwd);
+                std::copy(ctx->paths.begin(), ctx->paths.end(), std::back_inserter(ps));
+                for (auto& p : ps) {
                     auto pp = p + '/' + path;
                     s = fs.get(pp, &dec, this);
                     if (s == 0)

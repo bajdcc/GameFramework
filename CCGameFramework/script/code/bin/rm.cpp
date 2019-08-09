@@ -14,7 +14,7 @@ int main(int argc, char **argv) {
                 break;
             case -2:
                 set_fg(240, 0, 0);
-                put_string("[ERROR] File is locked.");
+                put_string("[ERROR] Permission denied.");
                 restore_fg();
                 break;
             case -3:

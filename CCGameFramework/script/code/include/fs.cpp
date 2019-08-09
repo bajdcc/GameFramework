@@ -69,3 +69,17 @@ int load(int handle) {
     handle;
     interrupt 75;
 }
+int fsize(char* path) { // ERR:<0  OK:>=0
+    int handle = open(path);
+    if (handle >= 0) {
+        int n = 0; int c;
+        while (c = read(handle), c < 0x1000) {
+            n++;
+        }
+        close(handle);
+        return n;
+    }
+    else {
+        return handle;
+    }
+}
