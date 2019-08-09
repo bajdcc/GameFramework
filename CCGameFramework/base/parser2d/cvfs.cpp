@@ -41,6 +41,16 @@ namespace clib {
 
     }
 
+    bool vfs_node_dec::set_data(const std::vector<byte>& data)
+    {
+        return false;
+    }
+
+    bool vfs_node_dec::get_data(std::vector<byte>& data) const
+    {
+        return false;
+    }
+
     vfs_node_dec::vfs_node_dec(const vfs_mod_query* mod) : mod(mod) {}
 
     vfs_node_solid::vfs_node_solid(const vfs_mod_query* mod, const vfs_node::ref& ref) :
@@ -122,6 +132,28 @@ namespace clib {
         else if (f->second == v_read)
             n->handles_read.remove(handle);
         n->handles.erase(handle);
+    }
+
+    bool vfs_node_solid::set_data(const std::vector<byte>& data)
+    {
+        auto n = node.lock();
+        if (!n)
+            return false;
+        if (!mod->can_mod(n, 1))
+            return false;
+        n->data = data;
+        return true;
+    }
+
+    bool vfs_node_solid::get_data(std::vector<byte>& data) const
+    {
+        auto n = node.lock();
+        if (!n)
+            return false;
+        if (!mod->can_mod(n, 0))
+            return false;
+        data = n->data;
+        return true;
     }
 
     // -----------------------------------------

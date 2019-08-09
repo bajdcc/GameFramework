@@ -8,12 +8,8 @@
 
 #include "../parser2d/memory.h"
 
-#ifndef AST_NODE_MEM
-#define AST_NODE_MEM (32 * 1024)
-#endif
-#ifndef AST_STR_MEM
-#define AST_STR_MEM (16 * 1024)
-#endif
+#define JSON_AST_NODE_MEM (32 * 1024)
+#define JSON_AST_STR_MEM (16 * 1024)
 
 namespace clib {
 
@@ -105,8 +101,8 @@ namespace clib {
         void init();
 
     private:
-        memory_pool<AST_NODE_MEM> nodes; // 全局AST结点内存管理
-        memory_pool<AST_STR_MEM> strings; // 全局字符串管理
+        memory_pool<JSON_AST_NODE_MEM> nodes; // 全局AST结点内存管理
+        memory_pool<JSON_AST_STR_MEM> strings; // 全局字符串管理
         ast_node_json *root; // 根结点
         ast_node_json *current; // 当前结点
     };

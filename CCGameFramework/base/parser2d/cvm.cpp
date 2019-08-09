@@ -1411,6 +1411,7 @@ namespace clib {
             if (k % 4 != 0)
                 log << std::endl;
             log << "---------------- STACK END >>>>" << std::endl << std::endl;
+            log << get_stacktrace() << std::endl << std::endl;
             log << (str + ", PATH: " + ctx->path + ", SOURCE: " + source()) << std::endl;
         }
 #endif
@@ -1539,7 +1540,7 @@ namespace clib {
                 vmm_set(argvs + INC_PTR * i, str);
             }
             vmm_pushstack(ctx->sp, tmp);
-            ctx->stacktrace_pc.push_back((ctx->entry * INC_PTR));
+            ctx->stacktrace_pc.push_back((ctx->entry * INC_PTR) | ctx->base);
         }
         ctx->flag |= CTX_USER_MODE;
         if (old_ctx) {
@@ -3810,7 +3811,59 @@ namespace clib {
                 tasks[ctx->ax._i].flag |= CTX_SERVICE;
                 tasks[ctx->ax._i].flag &= ~CTX_FOREGROUND;
             }
-            break;
+        }
+                 break;
+        case 74: {
+            struct __copy_struct__ {
+                int from, to;
+            };
+            auto s = vmm_get<__copy_struct__>(ctx->ax._ui);
+            if (ctx->handles.find(s.from) != ctx->handles.end() &&
+                ctx->handles.find(s.to) != ctx->handles.end()) {
+                auto& from = handles[s.from];
+                auto& to = handles[s.to];
+                if (from.type == h_file && to.type == h_file) {
+                    std::vector<byte> data;
+                    if (from.data.file->get_data(data) && to.data.file->set_data(data)) {
+                        ctx->ax._i = 0;
+                    }
+                    else {
+                        ctx->ax._i = -3;
+                    }
+                }
+                else {
+                    ctx->ax._i = -2;
+                }
+            }
+            else {
+                ctx->ax._i = -1;
+            }
+        }
+                 break;
+        case 75: {
+            {
+                auto h = ctx->ax._i;
+                if (ctx->handles.find(h) != ctx->handles.end()) {
+                    auto dec = handles[h].data.file;
+                    auto t = dec->get_handle(h);
+                    if (t == v_none)
+                        dec->add_handle(h, v_read);
+                    else if (t != v_read) {
+                        ctx->ax._i = READ_ERROR;
+                        break;
+                    }
+                    ctx->ax._i = dec->index();
+                    if (ctx->ax._i == WAIT_CHAR) {
+                        ctx->pc -= INC_PTR;
+                        ctx->ax._i = h;
+                        return true;
+                    }
+                    ctx->ax._i = 0;
+                }
+                else {
+                    ctx->ax._i = READ_ERROR;
+                }
+            }
         }
                  break;
         case 80:

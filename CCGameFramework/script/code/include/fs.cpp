@@ -55,3 +55,17 @@ int exists(char*s) {
     close(fd);
     return 1;
 }
+struct __copy_struct__ {
+    int from, to;
+};
+int copy(int from, int to) {
+    __copy_struct__ s;
+    s.from = from;
+    s.to = to;
+    &s;
+    interrupt 74;
+}
+int load(int handle) {
+    handle;
+    interrupt 75;
+}

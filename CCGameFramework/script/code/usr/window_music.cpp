@@ -9,7 +9,7 @@
 #include "/include/json"
 #include "/include/shell"
 #include "/include/sys"
-void play(char *name, int id);
+void play(char *name, int id, long mid);
 char* song_names[0] = {
     "Take me hand",
     "Faded",
@@ -37,7 +37,7 @@ int read_file(int id, int handle) {
     window_comctl_set_text(text2, "播放");
     window_comctl_set_text(text3, "");
     window_comctl_set_text(text4, "");
-    window_comctl_set_bound(text, 10, 10, 300, 30);
+    window_comctl_set_bound(text, 10, 10, 200, 30);
     window_comctl_set_bound(text2, 10, 10, 200, 30);
     window_comctl_set_bound(text3, 10, 10, 200, 30);
     window_comctl_set_bound(text4, 10, 10, 200, 30);
@@ -57,7 +57,7 @@ int read_file(int id, int handle) {
                     child = -1;
                 }
                 if ((child = fork()) == -1) {
-                    play(song_names[i], song_id[i]);
+                    play(song_names[i], song_id[i], text);
                     s.code = 0x888;
                     s.comctl = -1;
                     window_default_msg(id, &s);
@@ -130,7 +130,7 @@ int main(int argc, char **argv) {
     return 0;
 }
 
-void play(char* name, int id) {
+void play(char* name, int id, long mid) {
     char* path = malloc(100);
     strcpy(path, "/http/post!music.163.com/api/search/suggest/web!s=");
     strcat(path, name);
@@ -168,6 +168,7 @@ void play(char* name, int id) {
             json_object* s = json_array_get(songs, id);
             char* downurl = malloc(200);
             int sid = json_obj_get_string(s, "id")->data.i; 
+            window_comctl_set_text(mid, json_obj_get_string(s, "name")->data.str);
             char* tmp = malloc(20);
             i32toa(sid, tmp);
             strcpy(downurl, "/tmp/");
@@ -177,9 +178,9 @@ void play(char* name, int id) {
                 put_string("Saved to ");
                 put_string(downurl);
                 put_string("\n");
-                strcpy(downurl, "cat /http/bin!music.163.com/song/media/outer/url?id=");
+                strcpy(downurl, "echo /http/bin!music.163.com/song/media/outer/url?id=");
                 strcat(downurl, tmp);
-                strcat(downurl, ".mp3 > /tmp/");
+                strcat(downurl, ".mp3 | copy /tmp/");
                 strcat(downurl, tmp);
                 strcat(downurl, ".mp3");
                 put_string("# ");

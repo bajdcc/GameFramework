@@ -1,5 +1,6 @@
 #include "/include/io"
 #include "/include/fs"
+#include "/include/arg"
 int read_file(int handle) {
     int c;
     while (c = read(handle), c < 0x1000) {
@@ -19,7 +20,8 @@ int read_file(int handle) {
 }
 int main(int argc, char **argv) {
     if (argc > 1) {
-        int handle = open(argv[1]);
+        char* path = arg_string(1, argc, argv);
+        int handle = open(path);
         switch (handle) {
             default:
                 // put_string("[INFO] Success.");
@@ -41,6 +43,7 @@ int main(int argc, char **argv) {
                 restore_fg();
                 break;
         }
+        free(path);
     }
     return 0;
 }

@@ -105,6 +105,8 @@ namespace clib {
         virtual vfs_op_t get_handle(int handle);
         virtual void remove_handle(int handle);
         virtual ~vfs_node_dec() = default;
+        virtual bool set_data(const std::vector<byte>& data);
+        virtual bool get_data(std::vector<byte>& data) const;
     protected:
         explicit vfs_node_dec(const vfs_mod_query*);
         uint idx{ 0 };
@@ -122,6 +124,8 @@ namespace clib {
         void add_handle(int handle, vfs_op_t type) override;
         vfs_op_t get_handle(int handle) override;
         void remove_handle(int handle) override;
+        bool set_data(const std::vector<byte>& data) override;
+        bool get_data(std::vector<byte>& data) const override;
     protected:
         explicit vfs_node_solid(const vfs_mod_query*, const vfs_node::ref& ref);
         vfs_node::weak_ref node;

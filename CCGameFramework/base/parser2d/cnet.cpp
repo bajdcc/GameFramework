@@ -181,7 +181,7 @@ namespace clib {
                         auto as = CStringA(cnet::Utf8ToStringT(text.c_str()));
                         auto ast = string_t(as.GetBuffer(0));
                         response->data = std::vector<char>(ast.begin(), ast.end());
-                        auto success = true;
+                        /*auto success = true;
                         for (size_t i = 0; i < text.length() && i < response->data.size(); ++i) {
                             if (response->data[i] == 63 && text[i] < 0) {
                                 success = false;
@@ -190,7 +190,7 @@ namespace clib {
                         }
                         if (!success) {
                             response->data = std::vector<char>(text.begin(), text.end());
-                        }
+                        }*/
                     }
                     else
                         response->data = std::vector<char>(text.begin(), text.end());
@@ -263,6 +263,18 @@ namespace clib {
         {
             *received = 1;
         }
+    }
+
+    bool vfs_node_stream_net::get_data(std::vector<byte>& data) const
+    {
+        std::transform(
+            content.cbegin(),
+            content.cend(),
+            std::back_inserter(data),
+            [](const char c) {
+                return (byte)c;
+            });
+        return true;
     }
 
     vfs_node_dec* vfs_node_stream_net::create(const vfs_mod_query* mod, vfs_stream_t s, vfs_stream_call* call, const string_t& path)
