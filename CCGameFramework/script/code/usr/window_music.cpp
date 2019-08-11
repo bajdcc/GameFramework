@@ -174,9 +174,10 @@ void play(char* name, int id, long mid) {
             strcpy(downurl, "/tmp/");
             strcat(downurl, tmp);
             strcat(downurl, ".mp3");
-            int size = fsize(downurl);
-            if (size <= 0) {
-                if (size == 0) rm(downurl);
+            free(obj);
+            int empty = fempty(downurl);
+            if (empty < 0 || empty == 1) {
+                if (empty == 1) rm(downurl);
                 put_string("Saved to ");
                 put_string(downurl);
                 put_string("\n");
@@ -209,7 +210,7 @@ void play(char* name, int id, long mid) {
             free(tmp);
             free(downurl);
         FAILED:
-            free(obj);
+            ;
         }
         else {
             put_string("Parsing json failed.\n");

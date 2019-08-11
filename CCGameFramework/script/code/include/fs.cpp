@@ -83,3 +83,14 @@ int fsize(char* path) { // ERR:<0  OK:>=0
         return handle;
     }
 }
+int fempty(char* path) { // ERR:<0  YES:1  NO:0
+    int handle = open(path);
+    if (handle >= 0) {
+        int val = read(handle) < 0x1000 ? 0 : 1;
+        close(handle);
+        return val;
+    }
+    else {
+        return handle;
+    }
+}
