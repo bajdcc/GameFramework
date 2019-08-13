@@ -32,6 +32,7 @@ namespace clib {
         int available() const;
 
         void copy_from(const cmem& mem);
+        void dump_str(std::ostream& os) const;
 
     private:
         uint32_t new_page(uint32_t size);

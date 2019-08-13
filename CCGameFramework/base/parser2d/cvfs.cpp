@@ -126,7 +126,8 @@ namespace clib {
     {
         auto n = node.lock();
         auto f = n->handles.find(handle);
-        assert(f != n->handles.end());
+        if (f == n->handles.end())
+            return;
         if (f->second == v_write)
             n->handles_write.remove(handle);
         else if (f->second == v_read)

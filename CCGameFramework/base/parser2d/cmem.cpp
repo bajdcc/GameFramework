@@ -191,7 +191,7 @@ namespace clib {
         if (OFFSET_INDEX(size)) {
             memory_free.insert(
                 std::make_pair(page + size,
-                (memory.size() * PAGE_SIZE - page) - OFFSET_INDEX(size)));
+                memory.size() * PAGE_SIZE - page - size));
         }
 #if LOG_MEM
         ATLTRACE("[SYSTEM] MEM  | # ALLOC ==> %08X\n", page);
@@ -218,6 +218,25 @@ namespace clib {
 
     void cmem::error(const string_t & str) const {
         throw cexception(ex_mem, str);
+    }
+
+    void cmem::dump_str(std::ostream& os) const {
+        static char sz[200];
+        sprintf(sz, "PAGE: %d, FREE: %d", memory_page.size(), available_size);
+        os << sz << std::endl;
+        for (auto& f : memory_free) {
+            sprintf(sz, "FREE: %08X, SIZE: %08X", f.first, f.second);
+            os << sz << std::endl;
+        }
+        for (auto& f : memory_used) {
+            sprintf(sz, "USED: %08X, SIZE: %08X", f.first, f.second);
+            os << sz << std::endl;
+        }
+        for (auto& f : memory_page) {
+            sprintf(sz, "PAGE: %08X", f);
+            os << sz << std::endl;
+        }
+        //check();
     }
 
     void cmem::dump() const {

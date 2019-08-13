@@ -1580,6 +1580,7 @@ namespace clib {
 
     void cwindow_comctl_image::set_data(const std::vector<byte>& data)
     {
+        img->GetRenderer()->SetRenderTarget(nullptr);
         img->SetData(data.data(), data.size());
         img->GetRenderer()->SetRenderTarget(rt.lock());
     }

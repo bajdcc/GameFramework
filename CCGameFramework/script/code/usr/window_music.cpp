@@ -9,7 +9,7 @@
 #include "/include/json"
 #include "/include/shell"
 #include "/include/sys"
-void play(char *name, int id, long mid);
+void play(char *name, int id);
 char* song_names[0] = {
     "Take me hand",
     "Faded",
@@ -21,43 +21,42 @@ char* song_names[0] = {
 };
 int song_id[0] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, };
 int child = -1;
+long text, text2, text3, text4;
 int read_file(int id, int handle) {
     int c;
     window_layout_linear_set_vertical_align(window_get_base(id));
     window_set_style(id, style_win10_white);
-    long text = window_create_comctl(id, comctl_label);
-    long text2 = window_create_comctl(id, comctl_button);
-    long text3 = window_create_comctl(id, comctl_button);
-    long text4 = window_create_comctl(id, comctl_button);
+    text = window_create_comctl(id, comctl_button);
+    text2 = window_create_comctl(id, comctl_label);
+    text3 = window_create_comctl(id, comctl_label);
+    text4 = window_create_comctl(id, comctl_image);
     window_comctl_connect(window_get_base(id), text);
     window_comctl_connect(window_get_base(id), text2);
     window_comctl_connect(window_get_base(id), text3);
     window_comctl_connect(window_get_base(id), text4);
-    window_comctl_set_text(text, "歌名");
-    window_comctl_set_text(text2, "播放");
+    window_comctl_set_text(text, "播放");
+    window_comctl_set_text(text2, "");
     window_comctl_set_text(text3, "");
-    window_comctl_set_text(text4, "");
     window_comctl_set_bound(text, 10, 10, 200, 30);
     window_comctl_set_bound(text2, 10, 10, 200, 30);
     window_comctl_set_bound(text3, 10, 10, 200, 30);
-    window_comctl_set_bound(text4, 10, 10, 200, 30);
+    window_comctl_set_bound(text4, 10, 10, 200, 200);
     window_comctl_label_set_horizontal_align_middle(text);
     window_comctl_label_set_horizontal_align_middle(text2);
     window_comctl_label_set_horizontal_align_middle(text3);
-    window_comctl_label_set_horizontal_align_middle(text4);
-    int t2id = window_get_comctl(text2);
+    int t1id = window_get_comctl(text);
     __window_msg_struct__ s;
     int i = 0;
     while (c = window_get_msg(handle, &s), c < 0x1000) {
         if (s.code == 0x201 || s.code == 0x888) {
-            if (s.comctl == t2id || s.code == 0x888) {
+            if (s.comctl == t1id || s.code == 0x888) {
                 if (child != -1) {
                     newline();
                     send_signal(child, 99);
                     child = -1;
                 }
                 if ((child = fork()) == -1) {
-                    play(song_names[i], song_id[i], text);
+                    play(song_names[i], song_id[i]);
                     s.code = 0x888;
                     s.comctl = -1;
                     window_default_msg(id, &s);
@@ -92,8 +91,8 @@ int main(int argc, char **argv) {
     s.caption = "在线听歌";
     s.left = 50;
     s.top = 50;
-    s.width = 400;
-    s.height = 300;
+    s.width = 210;
+    s.height = 310;
     int id = window_create(&s);
     put_string("Create test window: ");
     put_hex(id);
@@ -130,7 +129,7 @@ int main(int argc, char **argv) {
     return 0;
 }
 
-void play(char* name, int id, long mid) {
+void play(char* name, int id) {
     char* path = malloc(100);
     strcpy(path, "/http/post!music.163.com/api/search/suggest/web!s=");
     strcat(path, name);
@@ -168,17 +167,41 @@ void play(char* name, int id, long mid) {
             json_object* s = json_array_get(songs, id);
             char* downurl = malloc(200);
             int sid = json_obj_get_string(s, "id")->data.i; 
-            window_comctl_set_text(mid, json_obj_get_string(s, "name")->data.str);
+            window_comctl_set_text(text2, json_obj_get_string(s, "name")->data.str);
+            window_comctl_set_text(text3, json_obj_get_string(json_array_get(json_obj_get_string(s, "artists"), 0), "name")->data.str);
+            char* picurl = json_obj_get_string(json_obj_get_string(json_obj_get_string(s, "album"), "artist"), "img1v1Url")->data.str;
+            int picurl_free = 0;
             char* tmp = malloc(20);
             i32toa(sid, tmp);
+            {
+                strcpy(path, "/http/post!music.163.com/api/song/detail!id=");
+                strcat(path, tmp);
+                strcat(path, "&ids=[");
+                strcat(path, tmp);
+                strcat(path, "]");
+                put_string("Open: "); put_string(path); put_string("\n");
+                char* json2; int len2;
+                if (readfile(path, &json2, &len2) == 0) {
+                    json_object* obj2 = json_parse_obj(json2);
+                    if (obj2) {
+                        char* pic = json_obj_get_string(json_obj_get_string(json_array_get(json_obj_get_string(obj2, "songs"), 0), "album"), "picUrl")->data.str;
+                        put_string("Image: "); put_string(pic); put_string("\n");
+                        picurl_free = 1;
+                        picurl = malloc(strlen(pic) + 1);
+                        strcpy(picurl, pic);
+                        free(obj2);
+                    }
+                    free(json2);
+                }
+            }
+            // MP3
             strcpy(downurl, "/tmp/");
             strcat(downurl, tmp);
             strcat(downurl, ".mp3");
-            free(obj);
             int empty = fempty(downurl);
             if (empty < 0 || empty == 1) {
                 if (empty == 1) rm(downurl);
-                put_string("Saved to ");
+                put_string("Saved music to ");
                 put_string(downurl);
                 put_string("\n");
                 strcpy(downurl, "echo /http/bin!music.163.com/song/media/outer/url?id=");
@@ -197,6 +220,40 @@ void play(char* name, int id, long mid) {
                 put_string(downurl);
                 put_string(" exists\n");
             }
+            // PIC
+            strcpy(downurl, "/tmp/");
+            strcat(downurl, tmp);
+            strcat(downurl, ".jpg");
+            empty = fempty(downurl);
+            if (empty < 0 || empty == 1) {
+                if (empty == 1) rm(downurl);
+                put_string("Saved pic to ");
+                put_string(downurl);
+                put_string("\n");
+                strcpy(downurl, "echo /http/bin!");
+                strcat(downurl, picurl + 7);
+                strcat(downurl, " | copy /tmp/");
+                strcat(downurl, tmp);
+                strcat(downurl, ".jpg");
+                put_string("# ");
+                put_string(downurl);
+                put_string("\n");
+                shell(downurl);
+                put_string("Download OK\n");
+            }
+            else {
+                put_string("OK, ");
+                put_string(downurl);
+                put_string(" exists\n");
+            }
+            free(obj);
+            free(picurl);
+            // PLAY
+            put_string("Setting pic\n");
+            strcpy(downurl, "/tmp/");
+            strcat(downurl, tmp);
+            strcat(downurl, ".jpg");
+            //window_comctl_image_set_ptr_from_url(text4, downurl);
             put_string("Playing\n");
             strcpy(downurl, "cat /music/tmp/");
             strcat(downurl, tmp);
@@ -209,6 +266,7 @@ void play(char* name, int id, long mid) {
             put_string("Play OK\n");
             free(tmp);
             free(downurl);
+            free(picurl);
         FAILED:
             ;
         }

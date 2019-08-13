@@ -21,6 +21,9 @@
 #define REPORT_ERROR 1
 #define REPORT_ERROR_FILE "error.log"
 
+#define REPORT_MEMORY 1
+#define REPORT_MEMORY_FILE "mem.log"
+
 #define LOG_INS 0
 #define LOG_STACK 0
 #define LOG_SYSTEM 1
@@ -270,10 +273,12 @@ namespace clib {
 #if LOG_SYSTEM
         ATLTRACE("[SYSTEM] MEM  | Invalid VA: %08X\n", va);
 #endif
+#if REPORT_ERROR
         {
             std::ofstream log(REPORT_ERROR_FILE, std::ios::app | std::ios::out);
             log << std::endl << "VMM::GET invalid ptr: " << std::hex << va << std::endl;
         }
+#endif
         error("vmm::get error");
         return vmm_get<T>(va);
     }
@@ -308,11 +313,13 @@ namespace clib {
 #if LOG_SYSTEM
         ATLTRACE("[SYSTEM] MEM  | Invalid VA: %08X\n", va);
 #endif
+#if REPORT_ERROR
         {
             std::ofstream log(REPORT_ERROR_FILE, std::ios::app | std::ios::out);
             log << std::endl << "VMM::SET invalid ptr: " << std::hex << va <<
                 ", value: " << std::hex << va << std::endl;
         }
+#endif
         error("vmm::set error");
         return vmm_set(va, value);
     }
@@ -330,14 +337,35 @@ namespace clib {
     }
 
     uint32_t cvm::vmm_malloc(uint32_t size) {
-        return vmm_pa2va(ctx->heap, ctx->pool->alloc(size));
+        auto r = vmm_pa2va(ctx->heap, ctx->pool->alloc(size));
+#if REPORT_MEMORY
+        {
+            static char sz2[200];
+            sprintf(sz2, "[%4d] %-20s : ALLOC %8d -> %08X (%d)", ctx->id, ctx->path.c_str(), size, r, ctx->pool->page_size());
+            std::ofstream log(REPORT_MEMORY_FILE, std::ios::app | std::ios::out);
+            log << sz2 << std::endl;
+            //ctx->pool->dump_str(log);
+        }
+#endif
+        return r;
     }
 
     uint32_t cvm::vmm_free(uint32_t addr) {
-        if ((addr & 0xF0000000) != HEAP_BASE) {
+        if ((addr & HEAP_BASE) != HEAP_BASE) {
+            error("free: invalid ptr");
             return 0;
         }
-        return ctx->pool->free(K2U(addr));
+        auto r = ctx->pool->free(K2U(addr));
+#if REPORT_MEMORY
+        {
+            static char sz2[200];
+            sprintf(sz2, "[%4d] %-20s : FREE  %08X -> %8d", ctx->id, ctx->path.c_str(), addr, r);
+            std::ofstream log(REPORT_MEMORY_FILE, std::ios::app | std::ios::out);
+            log << sz2 << std::endl;
+            //ctx->pool->dump_str(log);
+        }
+#endif
+        return r;
     }
 
     uint32_t cvm::vmm_memset(uint32_t va, uint32_t value, uint32_t count) {
@@ -3536,10 +3564,10 @@ namespace clib {
         }
         case 30:
             if (ctx->ax._i != 0)
-                ctx->ax._i = vmm_malloc(ctx->ax._ui);
+                ctx->ax._ui = vmm_malloc(ctx->ax._ui);
             break;
         case 31:
-            ctx->ax._i = vmm_free(ctx->ax._ui);
+            ctx->ax._ui = vmm_free(ctx->ax._ui);
             break;
         case 40:
             destroy(ctx->id);

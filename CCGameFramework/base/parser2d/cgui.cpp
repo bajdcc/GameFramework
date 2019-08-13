@@ -327,9 +327,11 @@ namespace clib {
                     log << "[SYSTEM] ERR  | RUNTIME ERROR: " << e.message() << std::endl;
                 }
 #endif
-                vm.reset();
-                gen.reset();
+                exited = true;
                 running = false;
+                //vm.reset();
+                //gen.reset();
+                //running = false;
             }
         }
         else {
@@ -869,6 +871,7 @@ namespace clib {
     void cgui::input(int c) {
         if (c == 3) {
             cvm::global_state.interrupt = true;
+            cmd_state = false;
             if (input_state) {
                 ptr_x = ptr_rx;
                 ptr_y = ptr_ry;
