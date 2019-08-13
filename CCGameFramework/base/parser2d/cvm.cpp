@@ -21,8 +21,10 @@
 #define REPORT_ERROR 1
 #define REPORT_ERROR_FILE "error.log"
 
-#define REPORT_MEMORY 1
+#define REPORT_MEMORY 0
 #define REPORT_MEMORY_FILE "mem.log"
+
+#define REPORT_DEBUG_FILE "debug.log"
 
 #define LOG_INS 0
 #define LOG_STACK 0
@@ -40,41 +42,17 @@ namespace clib {
 
     cvm::global_state_t cvm::global_state;
 
-    uint32_t cvm::pmm_alloc(bool reusable) {
-        if (!reusable) {
-            memory_kernel.emplace_back();
-            memory_kernel.back().resize(PAGE_SIZE * 2);
-            std::fill(memory_kernel.back().begin(), memory_kernel.back().end(), 0);
-            kernel_pages++;
-            return PAGE_ALIGN_UP((uint32)memory_kernel.back().data());
-        }
-        auto ptr = (uint32_t)memory.alloc_array<byte>(PAGE_SIZE * 2);
-        if (!ptr)
-            error("alloc page failed");
+    uint32_t cvm::pmm_alloc() {
+        ctx->pages.emplace_back();
+        ctx->pages.back().resize(PAGE_SIZE * 2);
+        std::fill(ctx->pages.back().begin(), ctx->pages.back().end(), 0);
+        auto ptr = PAGE_ALIGN_UP((uint32)ctx->pages.back().data());
         ctx->allocation.push_back(ptr);
-        auto page = PAGE_ALIGN_UP(ptr);
-        memset((void*)page, 0, PAGE_SIZE);
-        return page;
+        return ptr;
     }
 
     void cvm::vmm_init() {
-        pgd_kern = (pde_t*)malloc(PTE_SIZE * sizeof(pde_t));
-        memset(pgd_kern, 0, PTE_SIZE * sizeof(pde_t));
-        pte_kern = (pte_t*)malloc(PTE_COUNT * PTE_SIZE * sizeof(pte_t));
-        memset(pte_kern, 0, PTE_COUNT * PTE_SIZE * sizeof(pte_t));
-        pgdir = pgd_kern;
-
         uint32_t i;
-
-        // map 4G memory, physcial address = virtual address
-        for (i = 0; i < PTE_SIZE; i++) {
-            pgd_kern[i] = (uint32_t)pte_kern[i] | PTE_P | PTE_R | PTE_K;
-        }
-
-        uint32_t* pte = (uint32_t*)pte_kern;
-        for (i = 1; i < PTE_COUNT * PTE_SIZE; i++) {
-            pte[i] = (i << 12) | PTE_P | PTE_R | PTE_K; // i是页表号
-        }
 
         for (i = 0; i < TASK_NUM; ++i) {
             tasks[i].flag = 0;
@@ -155,27 +133,8 @@ namespace clib {
 
     // 虚页映射
     // va = 虚拟地址  pa = 物理地址
-    void cvm::vmm_map(uint32_t va, uint32_t pa, uint32_t flags) {
-        uint32_t pde_idx = PDE_INDEX(va); // 页目录号
-        uint32_t pte_idx = PTE_INDEX(va); // 页表号
-
-        pte_t* pte = (pte_t*)(pgdir[pde_idx] & PAGE_MASK); // 页表
-
-        if (!pte) { // 缺页
-            if (va >= USER_BASE) { // 若是用户地址则转换
-                pte = (pte_t*)pmm_alloc(false); // 申请物理页框，用作新页表
-                pgdir[pde_idx] = (uint32_t)pte | PTE_P | flags; // 设置页表
-                pte[pte_idx] = (pa & PAGE_MASK) | PTE_P | flags; // 设置页表项
-            }
-            else { // 内核地址不转换
-                pte = (pte_t*)(pgd_kern[pde_idx] & PAGE_MASK); // 取得内核页表
-                pgdir[pde_idx] = (uint32_t)pte | PTE_P | flags; // 设置页表
-            }
-        }
-        else { // pte存在
-            assert(!pte[pte_idx]);
-            pte[pte_idx] = (pa & PAGE_MASK) | PTE_P | flags; // 设置页表项
-        }
+    void cvm::vmm_map(uint32_t va, uint32_t pa) {
+        ctx->pgdir.insert(std::make_pair(PAGE_INDEX(va), pa));
 #if LOG_SYSTEM
         ATLTRACE("[SYSTEM] MEM  | MAP: PA= %p, VA= %p\n", (void*)pa, (void*)va);
 #endif
@@ -183,38 +142,20 @@ namespace clib {
 
     // 释放虚页
     void cvm::vmm_unmap(uint32_t va) {
-        uint32_t pde_idx = PDE_INDEX(va);
-        uint32_t pte_idx = PTE_INDEX(va);
-
-        pte_t* pte = (pte_t*)(pgdir[pde_idx] & PAGE_MASK);
-
-        if (!pte) {
-#if LOG_SYSTEM
-            ATLTRACE("[SYSTEM] MEM  | UNMAP: VA= %p (EMPTY PTE)\n", (void*)va);
-#endif
-            return;
-        }
-
+        ctx->pgdir.erase(PAGE_INDEX(va));
 #if LOG_SYSTEM
         ATLTRACE("[SYSTEM] MEM  | UNMAP: VA= %p\n", (void*)va);
 #endif
-        pte[pte_idx] = 0; // 清空页表项，此时有效位为零
     }
 
     // 是否已分页
     int cvm::vmm_ismap(uint32_t va, uint32_t* pa) const {
-        uint32_t pde_idx = PDE_INDEX(va);
-        uint32_t pte_idx = PTE_INDEX(va);
-
-        pte_t* pte = (pte_t*)(pgdir[pde_idx] & PAGE_MASK);
-        if (!pte) {
-            return 0; // 页表不存在
+        auto f = ctx->pgdir.find(PAGE_INDEX(va));
+        if (f != ctx->pgdir.end()) {
+            *pa = f->second;
+            return 1;
         }
-        if (pte[pte_idx] != 0 && (pte[pte_idx] & PTE_P) && pa) {
-            *pa = pte[pte_idx] & PAGE_MASK; // 计算物理页面
-            return 1; // 页面存在
-        }
-        return 0; // 页表项不存在
+        return 0;
     }
 
     string_t cvm::vmm_getstr(uint32_t va) const {
@@ -246,7 +187,7 @@ namespace clib {
         if (!(ctx->flag & CTX_KERNEL))
             va |= ctx->mask;
         uint32_t pa;
-        if (OFFSET_INDEX(va) == OFFSET_INDEX(va + sizeof(T) - 1)) {
+        if (PAGE_INDEX(va) == PAGE_INDEX(va + sizeof(T) - 1)) {
             if (vmm_ismap(va, &pa)) {
                 return *(T*)((byte*)pa + OFFSET_INDEX(va));
             }
@@ -332,12 +273,8 @@ namespace clib {
         vmm_set(va + len, '\0');
     }
 
-    uint32_t vmm_pa2va(uint32_t base, uint32_t pa) {
-        return base + (pa & (SEGMENT_MASK));
-    }
-
     uint32_t cvm::vmm_malloc(uint32_t size) {
-        auto r = vmm_pa2va(ctx->heap, ctx->pool->alloc(size));
+        auto r = ctx->heap | (ctx->pool->alloc(size) & SEGMENT_MASK);
 #if REPORT_MEMORY
         {
             static char sz2[200];
@@ -352,10 +289,9 @@ namespace clib {
 
     uint32_t cvm::vmm_free(uint32_t addr) {
         if ((addr & HEAP_BASE) != HEAP_BASE) {
-            error("free: invalid ptr");
             return 0;
         }
-        auto r = ctx->pool->free(K2U(addr));
+        auto r = ctx->pool->free(addr & SEGMENT_MASK);
 #if REPORT_MEMORY
         {
             static char sz2[200];
@@ -423,8 +359,6 @@ namespace clib {
     }
 
     cvm::~cvm() {
-        free(pgd_kern);
-        free(pte_kern);
         reset();
     }
 
@@ -483,7 +417,7 @@ namespace clib {
         if (!ctx)
             error("no process!");
 #if LOG_STACK
-        std::ofstream log(REPORT_ERROR_FILE, std::ios::app | std::ios::out);
+        std::ofstream log(REPORT_DEBUG_FILE, std::ios::app | std::ios::out);
 #endif
         for (auto i = 0; i < cycle; ++i) {
             i++;
@@ -1341,6 +1275,7 @@ namespace clib {
             }
             if (ctx->debug) {
                 log << std::endl << "---------------- STACK BEGIN <<<< " << std::endl;
+                log << std::endl << source() << std::endl;
                 std::stringstream a;
                 CStringA b;
                 b.Format("AX: %08X BX: %08X BP: %08X SP: %08X PC: %08X", ctx->ax._u._1, ctx->ax._u._2, ctx->bp, ctx->sp, ctx->pc);
@@ -1381,7 +1316,7 @@ namespace clib {
         auto len = pdb->code_len;
         auto addr = (PDB_ADDR*)& pdb->data;
         auto code = (char*)(addr + len);
-        auto pc = K2U(ctx->pc) / INC_PTR;
+        auto pc = (ctx->pc & SEGMENT_MASK) / INC_PTR;
         uint idx = 0;
         auto found = false;
         for (uint i = 0; i < len; i++, addr++) {
@@ -1402,7 +1337,7 @@ namespace clib {
 
     string_t cvm::get_func_info(int pc) const
     {
-        pc = K2U(pc) / INC_PTR;
+        pc = pc / INC_PTR;
         auto f = ctx->stacktrace_dbg.find(pc);
         if (f != ctx->stacktrace_dbg.end())
             return f->second;
@@ -1464,7 +1399,7 @@ namespace clib {
         // TODO: VALID PE FILE
         uint32_t pa;
         ctx->poolsize = PAGE_SIZE;
-        ctx->mask = U2K(ctx->id);
+        ctx->mask = 0;
         ctx->entry = pe->entry;
         ctx->stack = STACK_BASE | ctx->mask;
         ctx->data = DATA_BASE | ctx->mask;
@@ -1505,7 +1440,7 @@ namespace clib {
             for (uint32_t i = 0, start = 0; start < text_size; ++i, start += size) {
                 auto new_page = (uint32_t)pmm_alloc();
                 ctx->text_mem.push_back(new_page);
-                vmm_map(ctx->base + PAGE_SIZE * i, new_page, PTE_U | PTE_P); // 用户代码空间
+                vmm_map(ctx->base + PAGE_SIZE * i, new_page); // 用户代码空间
                 if (vmm_ismap(ctx->base + PAGE_SIZE * i, &pa)) {
                     auto s = start + size > text_size ? (text_size & (size - 1)) : size;
                     for (uint32_t j = 0; j < s; ++j) {
@@ -1525,7 +1460,7 @@ namespace clib {
             for (uint32_t i = 0, start = 0; start < data_size; ++i, start += size) {
                 auto new_page = (uint32_t)pmm_alloc();
                 ctx->data_mem.push_back(new_page);
-                vmm_map(ctx->data + PAGE_SIZE * i, new_page, PTE_U | PTE_P | PTE_R); // 用户数据空间
+                vmm_map(ctx->data + PAGE_SIZE * i, new_page); // 用户数据空间
                 if (vmm_ismap(ctx->data + PAGE_SIZE * i, &pa)) {
                     auto s = start + size > data_size ? ((sint)data_size & (size - 1)) : size;
                     for (auto j = 0; j < s; ++j) {
@@ -1541,7 +1476,7 @@ namespace clib {
         {
             auto new_page = (uint32_t)pmm_alloc();
             ctx->stack_mem.push_back(new_page);
-            vmm_map(ctx->stack, new_page, PTE_U | PTE_P | PTE_R); // 用户栈空间
+            vmm_map(ctx->stack, new_page); // 用户栈空间
         }
         ctx->flag &= ~CTX_KERNEL;
         {
@@ -1650,7 +1585,7 @@ namespace clib {
         {
             PE* pe = (PE*)ctx->file.data();
             ctx->poolsize = PAGE_SIZE;
-            ctx->mask = U2K(ctx->id);
+            ctx->mask = 0;
             ctx->entry = pe->entry;
             ctx->stack = STACK_BASE | ctx->mask;
             ctx->data = DATA_BASE | ctx->mask;
@@ -1679,11 +1614,6 @@ namespace clib {
             {
                 for (int i = 0; i < ctx->pool->page_size(); ++i) {
                     vmm_unmap(ctx->heap + PAGE_SIZE * i);
-                }
-            }
-            {
-                for (auto& a : ctx->allocation) {
-                    memory.free_array((byte*)a);
                 }
             }
             ctx->child.clear();
@@ -1804,7 +1734,7 @@ namespace clib {
         // TODO: VALID PE FILE
         uint32_t pa;
         ctx->poolsize = PAGE_SIZE;
-        ctx->mask = U2K(ctx->id);
+        ctx->mask = 0;
         ctx->entry = old_ctx->entry;
         ctx->stack = STACK_BASE | ctx->mask;
         ctx->data = DATA_BASE | ctx->mask;
@@ -1828,7 +1758,7 @@ namespace clib {
                     (byte*)(old_ctx->text_mem[i]) + PAGE_SIZE,
                     (byte*)new_page);
                 ctx->text_mem.push_back(new_page);
-                vmm_map(ctx->base + PAGE_SIZE * i, new_page, PTE_U | PTE_P | PTE_R); // 用户代码空间
+                vmm_map(ctx->base + PAGE_SIZE * i, new_page); // 用户代码空间
                 if (!vmm_ismap(ctx->base + PAGE_SIZE * i, &pa)) {
                     destroy(ctx->id);
                     error("fork: text segment copy failed");
@@ -1845,7 +1775,7 @@ namespace clib {
                 std::copy((byte*)(old_ctx->data_mem[i]),
                     (byte*)(old_ctx->data_mem[i]) + PAGE_SIZE,
                     (byte*)new_page);
-                vmm_map(ctx->data + PAGE_SIZE * i, new_page, PTE_U | PTE_P | PTE_R); // 用户数据空间
+                vmm_map(ctx->data + PAGE_SIZE * i, new_page); // 用户数据空间
                 if (!vmm_ismap(ctx->data + PAGE_SIZE * i, &pa)) {
                     destroy(ctx->id);
                     error("fork: data segment copy failed");
@@ -1859,7 +1789,7 @@ namespace clib {
             std::copy((byte*)(old_ctx->stack_mem[0]),
                 (byte*)(old_ctx->stack_mem[0]) + PAGE_SIZE,
                 (byte*)new_page);
-            vmm_map(ctx->stack, new_page, PTE_U | PTE_P | PTE_R); // 用户栈空间
+            vmm_map(ctx->stack, new_page); // 用户栈空间
             if (!vmm_ismap(ctx->stack, &pa)) {
                 destroy(ctx->id);
                 error("fork: stack segment copy failed");
@@ -1914,7 +1844,7 @@ namespace clib {
     void cvm::map_page(uint32_t addr, uint32_t id) {
         uint32_t pa;
         auto va = (ctx->heap | ctx->mask) | (PAGE_SIZE * id);
-        vmm_map(va, addr, PTE_U | PTE_P | PTE_R);
+        vmm_map(va, addr);
 #if LOG_SYSTEM
         ATLTRACE("[SYSTEM] MEM  | Map: PA= %p, VA= %p\n", (void*)addr, (void*)va);
 #endif
@@ -2119,15 +2049,16 @@ namespace clib {
                 }
                 wsprintf(sz, L"%-18s %9S", L"Input Waiting:  ", str.c_str()); ss << sz << std::endl;
             }
-            wsprintf(sz, L"%-18s %9d", L"Memory Total:", memory.DEFAULT_ALLOC_MEMORY_SIZE); ss << sz << std::endl;
-            wsprintf(sz, L"%-18s %9d", L"Memory Using:", (memory.DEFAULT_ALLOC_BLOCK_SIZE - memory.available()) * memory.BLOCK_SIZE); ss << sz << std::endl;
-            wsprintf(sz, L"%-18s %9d", L"Memory Free:", memory.available() * memory.BLOCK_SIZE); ss << sz << std::endl;
-            int pages = 0, heaps = 0, heaps_a = 0;
+            wsprintf(sz, L"%-18s %9d", L"Memory Total:", 0); ss << sz << std::endl;
+            wsprintf(sz, L"%-18s %9d", L"Memory Using:", 0); ss << sz << std::endl;
+            wsprintf(sz, L"%-18s %9d", L"Memory Free:", 0); ss << sz << std::endl;
+            int pages = 0, heaps = 0, heaps_a = 0, kernel_pages = 0;
             for (auto i = 0; i < TASK_NUM; ++i) {
                 if (tasks[i].flag & CTX_VALID) {
                     pages += tasks[i].allocation.size();
                     heaps += tasks[i].pool->page_size();
                     heaps_a += tasks[i].pool->available();
+                    kernel_pages += tasks[i].pgdir.size();
                 }
             }
             wsprintf(sz, L"%-18s %9d", L"Heap Total:", heaps * PAGE_SIZE); ss << sz << std::endl;
@@ -2206,15 +2137,16 @@ namespace clib {
                 }
                 else if (op == "mem") {
                     std::stringstream ss;
-                    sprintf(sz, "%-18s %d", "Memory Total:", memory.DEFAULT_ALLOC_MEMORY_SIZE); ss << sz << std::endl;
-                    sprintf(sz, "%-18s %d", "Memory Using:", (memory.DEFAULT_ALLOC_BLOCK_SIZE - memory.available()) * memory.BLOCK_SIZE); ss << sz << std::endl;
-                    sprintf(sz, "%-18s %d", "Memory Free:", memory.available() * memory.BLOCK_SIZE); ss << sz << std::endl;
-                    int pages = 0, heaps = 0, heaps_a = 0;
+                    sprintf(sz, "%-18s %d", "Memory Total:", 0); ss << sz << std::endl;
+                    sprintf(sz, "%-18s %d", "Memory Using:", 0); ss << sz << std::endl;
+                    sprintf(sz, "%-18s %d", "Memory Free:", 0); ss << sz << std::endl;
+                    int pages = 0, heaps = 0, heaps_a = 0, kernel_pages = 0;
                     for (auto i = 0; i < TASK_NUM; ++i) {
                         if (tasks[i].flag & CTX_VALID) {
                             pages += tasks[i].allocation.size();
                             heaps += tasks[i].pool->page_size();
                             heaps_a += tasks[i].pool->available();
+                            kernel_pages += tasks[i].pgdir.size();
                         }
                     }
                     sprintf(sz, "%-18s %d", "Heap Total:", heaps * PAGE_SIZE); ss << sz << std::endl;

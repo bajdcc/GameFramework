@@ -253,7 +253,7 @@ void play(char* name, int id) {
             strcpy(downurl, "/tmp/");
             strcat(downurl, tmp);
             strcat(downurl, ".jpg");
-            //window_comctl_image_set_ptr_from_url(text4, downurl);
+            window_comctl_image_set_ptr_from_url(text4, downurl);
             put_string("Playing\n");
             strcpy(downurl, "cat /music/tmp/");
             strcat(downurl, tmp);

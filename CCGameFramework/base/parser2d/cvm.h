@@ -45,34 +45,8 @@ namespace clib {
 #define PAGE_ALIGN_UP(x) (((x) + PAGE_SIZE - 1) & PAGE_MASK)
 
 /* 分析地址 */
-#define PDE_INDEX(x) (((x) >> 22) & 0x3ff)  // 获得地址对应的页目录号
-#define PTE_INDEX(x) (((x) >> 12) & 0x3ff)  // 获得页表号
-#define OFFSET_INDEX(x) ((x) & 0xfff)       // 获得页内偏移
-
-// 页目录项、页表项用uint32表示即可
-    typedef uint32_t pde_t;
-    typedef uint32_t pte_t;
-
-    /* 页目录大小 1024 */
-#define PDE_SIZE (PAGE_SIZE/sizeof(pte_t))
-/* 页表大小 1024 */
-#define PTE_SIZE (PAGE_SIZE/sizeof(pde_t))
-/* 页表总数 1024*PTE_SIZE*PAGE_SIZE = 4G */
-#define PTE_COUNT 1024
-
-/* CPU */
-#define CR0_PG  0x80000000
-
-/* pde&pdt attribute */
-#define PTE_P   0x1     // 有效位 Present
-#define PTE_R   0x2     // 读写位 Read/Write, can be read&write when set
-#define PTE_U   0x4     // 用户位 User / Kern
-#define PTE_K   0x0     // 内核位 User / Kern
-#define PTE_W   0x8     // 写回 Write through
-#define PTE_D   0x10    // 不缓存 Cache disable
-#define PTE_A   0x20    // 可访问 Accessed
-#define PTE_S   0x40    // Page size, 0 for 4kb pre page
-#define PTE_G   0x80    // Ignored
+#define PAGE_INDEX(x)   ((x) & 0xfffff000)       // 获得页表号
+#define OFFSET_INDEX(x) ((x) & 0x00000fff)       // 获得页内偏移
 
 /* 用户代码段基址 */
 #define USER_BASE 0xc0000000
@@ -85,13 +59,7 @@ namespace clib {
 /* 段掩码 */
 #define SEGMENT_MASK 0x0fffffff
 
-/* 物理内存(单位：16B)，越多越好！ */
-#define PHY_MEM (256 * 1024)
-
 #define PE_MAGIC "ccos"
-
-#define U2K(addr) ((uint) ((addr) << 20) & 0x0ff00000)
-#define K2U(addr) ((uint) ((addr) & 0x000fffff))
 
 #define TASK_NUM 256
 #define HANDLE_NUM 1024
@@ -142,11 +110,11 @@ namespace clib {
 
     private:
         // 申请页框
-        uint32_t pmm_alloc(bool reusable = true);
+        uint32_t pmm_alloc();
         // 初始化页表
         void vmm_init();
         // 虚页映射
-        void vmm_map(uint32_t va, uint32_t pa, uint32_t flags);
+        void vmm_map(uint32_t va, uint32_t pa);
         // 解除映射
         void vmm_unmap(uint32_t va);
         // 查询分页情况
@@ -212,16 +180,6 @@ namespace clib {
         void reset();
 
     private:
-        /* 内核页表 = PTE_SIZE*PAGE_SIZE */
-        pde_t* pgd_kern{ nullptr };
-        /* 内核页表内容 = PTE_COUNT*PTE_SIZE*PAGE_SIZE */
-        pde_t* pte_kern{ nullptr };
-        /* 物理内存(1 block=16B) */
-        memory_pool<PHY_MEM> memory;
-        /* 页表 */
-        pde_t* pgdir{ nullptr };
-        /* 内核页表内存 */
-        std::vector<std::vector<byte>> memory_kernel;
         int pids{ 0 };
 
         enum ctx_flag_t {
@@ -289,6 +247,8 @@ namespace clib {
             std::unordered_map<uint32_t, string_t> stacktrace_dbg;
             std::unique_ptr<cmem> pool;
             std::queue<uint16_t> sigs;
+            std::vector<std::vector<byte>> pages;
+            std::unordered_map<uint32, uint32> pgdir;
             // SYSTEM CALL
             std::chrono::system_clock::time_point record_now;
             decimal waiting_ms{ 0 };
@@ -320,7 +280,6 @@ namespace clib {
         int set_cycle_id{ -1 };
         std::unordered_set<int> set_resize_id;
         std::array<handle_t, HANDLE_NUM> handles;
-        int kernel_pages{ 0 };
         std::vector<cwindow*> wnds;
         friend class cwindow;
 
