@@ -239,6 +239,7 @@ namespace clib {
         string_t get_realpath(const string_t& path);
 
         static void convert_utf8_to_gbk(string_t& str);
+        uint64 size() const;
 
     private:
         vfs_node::ref new_node(vfs_file_t type);

@@ -709,10 +709,55 @@ class SolidImageElementRenderer : public GraphicsImageRenderer<SolidImageElement
 protected:
     void CreateImage(std::shared_ptr<Direct2DRenderTarget> renderTarget)override;
 public:
+    SolidImageElementRenderer();
     void Render(CRect bounds)override;
 private:
+    HRESULT GetRawFrame(UINT uFrameIndex);
+    HRESULT GetGlobalMetadata();
+    HRESULT GetBackgroundColor(CComPtr<IWICMetadataQueryReader> pMetadataQueryReader);
+
+    HRESULT ComposeNextFrame();
+    HRESULT DisposeCurrentFrame();
+    HRESULT OverlayNextFrame();
+
+    HRESULT SaveComposedFrame();
+    HRESULT RestoreSavedFrame();
+    HRESULT ClearCurrentFrameArea();
+
+    HRESULT CalculateDrawRectangle(D2D1_RECT_F& drawRect, const CRect& rcClient);
+
+    bool IsLastFrame() const;
+    bool EndOfAnimation() const;
+private:
+    enum DISPOSAL_METHODS
+    {
+        DM_UNDEFINED = 0,
+        DM_NONE = 1,
+        DM_BACKGROUND = 2,
+        DM_PREVIOUS = 3
+    };
     const byte* ptr{ nullptr };
-    CComPtr<IWICBitmap> wic;
+    std::chrono::system_clock::time_point timer;
+    // Refer: https://code.msdn.microsoft.com/windowsapps/Windows-Imaging-Component-65abbc6a
+    CComPtr<ID2D1BitmapRenderTarget> m_pFrameComposeRT;
+    CComPtr<ID2D1Bitmap> m_pRawFrame;
+    CComPtr<ID2D1Bitmap> m_pSavedFrame; // The temporary bitmap used for disposal 3 method
+    CComPtr<IWICImagingFactory> m_pIWICFactory;
+    CComPtr<IWICBitmapDecoder> m_pDecoder;
+    D2D1_COLOR_F    m_backgroundColor;
+
+    unsigned int    m_uNextFrameIndex{ 0 };
+    unsigned int    m_uTotalLoopCount{ 0 };  // The number of loops for which the animation will be played
+    unsigned int    m_uLoopNumber{ 0 };      // The current animation loop number (e.g. 1 when the animation is first played)
+    bool            m_fHasLoop{ false };     // Whether the gif has a loop
+    unsigned int    m_cFrames{ 0 };
+    unsigned int    m_uFrameDisposal{ 0 };
+    unsigned int    m_uFrameDelay{ 0 };
+    unsigned int    m_cxGifImage{ 0 };
+    unsigned int    m_cyGifImage{ 0 };
+    unsigned int    m_cxGifImagePixel{ 0 };  // Width of the displayed image in pixel calculated using pixel aspect ratio
+    unsigned int    m_cyGifImagePixel{ 0 };  // Height of the displayed image in pixel calculated using pixel aspect ratio
+    D2D1_RECT_F     m_framePosition{ 0, 0, 0, 0 };
 };
 
 #pragma endregion Image

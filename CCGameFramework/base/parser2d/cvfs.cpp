@@ -856,6 +856,26 @@ namespace clib {
         delete[] wszGBK;
     }
 
+    static uint64 sum_fs(const std::shared_ptr<vfs_node>& node)
+    {
+        if (node->type == fs_dir) {
+            uint64 s = 0ULL;
+            for (const auto& c : node->children) {
+                s += sum_fs(c.second);
+            }
+            return s;
+        }
+        else if (node->type == fs_file) {
+            return node->data.size();
+        }
+        return 0ULL;
+    }
+
+    uint64 cvfs::size() const
+    {
+        return sum_fs(root);
+    }
+
     int cvfs::rm(const string_t & path) {
         auto p = combine(pwd, path);
         auto node = get_node(p);

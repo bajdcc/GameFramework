@@ -81,6 +81,7 @@ namespace clib {
         fs.load("/usr/test_lua.txt");
         fs.load("/init/init.txt");
         fs.load_bin("/usr/github.png");
+        fs.load_bin("/usr/loading.gif");
         fs.as_root(false);
         fs.mkdir("/pipe");
         fs.mkdir("/semaphore");
@@ -1326,7 +1327,7 @@ namespace clib {
 
     string_t cvm::get_func_info(int pc) const
     {
-        pc = pc / INC_PTR;
+        pc = (pc & SEGMENT_MASK) / INC_PTR;
         auto f = ctx->stacktrace_dbg.find(pc);
         if (f != ctx->stacktrace_dbg.end())
             return f->second;
@@ -1923,7 +1924,7 @@ namespace clib {
                         i,
                         get_ips_disp(tasks[i]->ips_disp),
                         limit_string(tasks[i]->cmd, 18).c_str(),
-                        tasks[i]->allocation.size());
+                        tasks[i]->allocation.size() + tasks[i]->pgdir.size());
                     ss << sz << std::endl;
                 }
             }
@@ -2056,6 +2057,7 @@ namespace clib {
             wsprintf(sz, L"%-18s %9d", L"Heap Free:", heaps_a); ss << sz << std::endl;
             wsprintf(sz, L"%-18s %9d", L"Kernel Page:", kernel_pages); ss << sz << std::endl;
             wsprintf(sz, L"%-18s %9d", L"User Page:", pages); ss << sz << std::endl;
+            wsprintf(sz, L"%-18s %9I64u", L"File system:", fs.size()); ss << sz << std::endl;
             return CString(ss.str().c_str());
         }
         return CString(ss.str().c_str());

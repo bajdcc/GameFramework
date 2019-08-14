@@ -29,6 +29,7 @@ int read_file(int id, int handle) {
         long text3 = window_create_comctl(id, comctl_button);
         long text4 = window_create_comctl(id, comctl_button);
         long logo = window_create_comctl(id, comctl_image);
+        long logo2 = window_create_comctl(id, comctl_image);
         t1 = text;
         t4 = text4;
         t1id = window_get_comctl(text);
@@ -39,6 +40,7 @@ int read_file(int id, int handle) {
         window_comctl_connect(window_get_base(id), text3);
         window_comctl_connect(window_get_base(id), text4);
         window_comctl_connect(window_get_base(id), logo);
+        window_comctl_connect(window_get_base(id), logo2);
         window_comctl_set_text(text, "Hello world!!");
         window_comctl_set_text(text2, "Hello world!!!");
         window_comctl_set_text(text3, "Click me to be stuck!");
@@ -48,11 +50,13 @@ int read_file(int id, int handle) {
         window_comctl_set_bound(text3, 10, 10, 200, 30);
         window_comctl_set_bound(text4, 10, 10, 200, 30);
         window_comctl_set_bound(logo, 10, 10, 44, 44);
+        window_comctl_set_bound(logo2, 10, 10, 45, 45);
         window_comctl_label_set_horizontal_align_middle(text);
         window_comctl_label_set_horizontal_align_middle(text2);
         window_comctl_label_set_horizontal_align_middle(text3);
         window_comctl_label_set_horizontal_align_middle(text4);
         window_comctl_image_set_ptr_from_url(logo, "/usr/github.png");
+        window_comctl_image_set_ptr_from_url(logo2, "/usr/loading.gif");
     }
     else {
         window_set_text(id, "- Test window 2 -");
