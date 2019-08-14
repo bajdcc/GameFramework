@@ -281,6 +281,7 @@ namespace clib {
         std::unordered_set<int> set_resize_id;
         std::array<std::unique_ptr<handle_t>, HANDLE_NUM> handles;
         std::vector<cwindow*> wnds;
+        CRect draw_bounds;
         friend class cwindow;
 
     public:

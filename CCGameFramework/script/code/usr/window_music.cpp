@@ -19,6 +19,7 @@ char* song_names[0] = {
     "Closer",
     "Intro",
     "Journey",
+    "Ferrari",
 };
 int song_id[0] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, };
 int child = -1;
@@ -251,7 +252,6 @@ void play(char* name, int id) {
                 put_string(" exists\n");
             }
             free(obj);
-            free(picurl);
             // PLAY
             put_string("Setting pic\n");
             strcpy(downurl, "/tmp/");
@@ -270,7 +270,7 @@ void play(char* name, int id) {
             put_string("Play OK\n");
             free(tmp);
             free(downurl);
-            if (picurl_free) free(picurl);
+            if (picurl_free == 1) free(picurl);
         FAILED:
             ;
         }

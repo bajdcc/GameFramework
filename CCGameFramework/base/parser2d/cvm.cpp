@@ -2011,7 +2011,8 @@ namespace clib {
             }
         }
         else if (t == D_WINDOW) {
-            wsprintf(sz, L"Cursor: %d,%d", global_state.mouse_x, global_state.mouse_y);
+            auto tl = draw_bounds.TopLeft();
+            wsprintf(sz, L"Cursor: %d,%d", global_state.mouse_x - tl.x, global_state.mouse_y - tl.y);
             ss << sz << std::endl << std::endl;
             for (const auto& w : wnds) {
                 ss << w->to_string() << std::endl;
@@ -2457,7 +2458,7 @@ namespace clib {
     int cvm::post_data(int h, int code, int param1, int param2)
     {
         if (h >= 0 && h < HANDLE_NUM) {
-            if (handles[h] || handles[h]->type != h_window) {
+            if (!handles[h] || handles[h]->type != h_window) {
                 return -1;
             }
             auto wnd = handles[h]->data.cwnd;
@@ -3902,6 +3903,7 @@ namespace clib {
 
     void cvm::paint_window(const CRect& bounds)
     {
+        draw_bounds = bounds;
         if (wnds.empty())
             return;
         for (auto& wnd : wnds) {

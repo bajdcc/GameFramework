@@ -414,6 +414,8 @@ namespace clib {
         {
             if (!(self_size || self_drag))
                 return false;
+            if (n == 211)
+                return false;
         }
         if (bag.close_text->GetRenderRect().PtInRect(pt)) {
             if (n == 201 && !self_size && !self_drag) {
@@ -760,6 +762,7 @@ namespace clib {
             else if (code == WM_MOUSELEAVE)
             {
                 bag.border->SetColor(style->get_color(cwindow_style::c_window_border_lost));
+                bag.close_bg->SetColor(style->get_color(cwindow_style::c_window_close_bg_lost));
                 self_hovered = false;
                 self_drag = false;
                 self_size = false;
