@@ -570,7 +570,7 @@ void SolidImageElementRenderer::Render(CRect bounds)
                     //d2dRenderTarget->DrawBitmap(bitmap, drawRect);
                     d2dRenderTarget->DrawBitmap(
                         bitmap,
-                        D2D1::RectF((FLOAT)bounds.left + drawRect.left, (FLOAT)bounds.top + drawRect.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
+                        D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
                         e->GetOpacity(),
                         D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR
                     );

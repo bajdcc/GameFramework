@@ -3254,7 +3254,8 @@ namespace clib {
                         }
                     }
                     for (const auto& swr : string_writeback) {
-                        *(uint32*)& data[std::get<0>(swr)] = DATA_BASE | load_string(std::get<1>(swr));
+                        uint32 addr = load_string(std::get<1>(swr));
+                        *(uint32*)& data[std::get<0>(swr)] = DATA_BASE | addr;
                     }
                 }
                 else {
