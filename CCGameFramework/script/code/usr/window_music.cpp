@@ -12,6 +12,7 @@
 void play(char *name, int id);
 char* song_names[0] = {
     "Take me hand",
+    "まっしろな雪",
     "Faded",
     "Nevada",
     "New world",
@@ -68,7 +69,10 @@ int read_file(int id, int handle) {
                 }
             }
         }
-        if (s.code < 0x800) {
+        else if (s.code == 0x214) {
+
+        }
+        else if (s.code < 0x800) {
             window_default_msg(id, &s);
         }
     }
@@ -266,7 +270,7 @@ void play(char* name, int id) {
             put_string("Play OK\n");
             free(tmp);
             free(downurl);
-            free(picurl);
+            if (picurl_free) free(picurl);
         FAILED:
             ;
         }

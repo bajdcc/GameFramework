@@ -61,8 +61,8 @@ namespace clib {
 
 #define PE_MAGIC "ccos"
 
-#define TASK_NUM 256
-#define HANDLE_NUM 1024
+#define TASK_NUM 65536
+#define HANDLE_NUM 65536
 #define BIG_DATA_NUM 512
 
 #define LOG_VM 1
@@ -262,7 +262,7 @@ namespace clib {
         };
         context_t* ctx{ nullptr };
         int available_tasks{ 0 };
-        std::array<context_t, TASK_NUM> tasks;
+        std::array< std::unique_ptr<context_t>, TASK_NUM> tasks;
         cvfs fs;
         cnet net;
 
@@ -279,7 +279,7 @@ namespace clib {
         int available_handles{ 0 };
         int set_cycle_id{ -1 };
         std::unordered_set<int> set_resize_id;
-        std::array<handle_t, HANDLE_NUM> handles;
+        std::array<std::unique_ptr<handle_t>, HANDLE_NUM> handles;
         std::vector<cwindow*> wnds;
         friend class cwindow;
 

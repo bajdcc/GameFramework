@@ -740,7 +740,7 @@ namespace clib {
     void cwindow::set_caption(const string_t& text)
     {
         if (caption == text) return;
-        vm->handles[handle].name = text;
+        vm->handles[handle]->name = text;
         caption = text;
         bag.title_text->SetText(CString(CStringA(caption.c_str())));
     }

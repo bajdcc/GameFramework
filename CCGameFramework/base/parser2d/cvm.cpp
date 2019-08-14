@@ -52,18 +52,6 @@ namespace clib {
     }
 
     void cvm::vmm_init() {
-        uint32_t i;
-
-        for (i = 0; i < TASK_NUM; ++i) {
-            tasks[i].flag = 0;
-            tasks[i].id = i;
-            tasks[i].parent = -1;
-            tasks[i].state = CTS_DEAD;
-        }
-        for (i = 0; i < HANDLE_NUM; ++i) {
-            handles[i].type = h_none;
-        }
-
         init_fs();
         init_global();
     }
@@ -79,9 +67,6 @@ namespace clib {
         fs.mkdir("/proc");
         fs.mkdir("/handle");
         fs.mkdir("/dev");
-        fs.mkdir("/pipe");
-        fs.mkdir("/semaphore");
-        fs.mkdir("/mutex");
         fs.func("/dev/random", this);
         fs.func("/dev/null", this);
         fs.func("/dev/console", this);
@@ -97,6 +82,9 @@ namespace clib {
         fs.load("/init/init.txt");
         fs.load_bin("/usr/github.png");
         fs.as_root(false);
+        fs.mkdir("/pipe");
+        fs.mkdir("/semaphore");
+        fs.mkdir("/mutex");
     }
 
     void cvm::init_global()
@@ -365,8 +353,8 @@ namespace clib {
     void cvm::reset() {
         // 释放句柄
         for (int i = 0; i < TASK_NUM; ++i) {
-            if (tasks[i].flag & CTX_VALID) {
-                ctx = &tasks[i];
+            if (tasks[i] && tasks[i]->flag & CTX_VALID) {
+                ctx = tasks[i].get();
                 const auto handles = ctx->handles;
                 for (auto& h : handles) {
                     destroy_handle(h);
@@ -379,12 +367,13 @@ namespace clib {
     bool cvm::run(int cycle, int& cycles) {
         int c;
         for (int i = 0; i < TASK_NUM; ++i) {
-            if (tasks[i].flag & CTX_VALID) {
-                if (tasks[i].state == CTS_RUNNING) {
-                    ctx = &tasks[i];
+            if (tasks[i] && tasks[i]->flag & CTX_VALID) {
+                if (tasks[i]->state == CTS_RUNNING) {
+                    ctx = tasks[i].get();
                     c = 0;
                     exec(cycle, c);
-                    tasks[i].ips += c;
+                    if (tasks[i])
+                        tasks[i]->ips += c;
                     cycles += c;
                 }
             }
@@ -393,10 +382,10 @@ namespace clib {
             global_state.interrupt = false;
             std::vector<int> foreground_pids;
             for (int i = 1; i < TASK_NUM; ++i) {
-                if ((tasks[i].flag & CTX_VALID) &&
-                    !(tasks[i].flag & CTX_SERVICE) &&
-                    (tasks[i].flag & CTX_FOREGROUND) &&
-                    tasks[i].parent != 0)
+                if (tasks[i] && (tasks[i]->flag & CTX_VALID) &&
+                    !(tasks[i]->flag & CTX_SERVICE) &&
+                    (tasks[i]->flag & CTX_FOREGROUND) &&
+                    tasks[i]->parent != 0)
                     foreground_pids.push_back(i);
             }
 #if LOG_SYSTEM
@@ -1536,7 +1525,7 @@ namespace clib {
 
     void cvm::destroy(int id) {
         auto old_ctx = ctx;
-        ctx = &tasks[id];
+        ctx = tasks[id].get();
         {
             if (global_state.input_lock == ctx->id) {
                 global_state.input_lock = -1;
@@ -1556,13 +1545,13 @@ namespace clib {
                     cgui::singleton().resize(0, 0);
                 }
             }
-            if (ctx->output_redirect != -1 && tasks[ctx->output_redirect].flag & CTX_VALID) {
+            if (ctx->output_redirect != -1 && tasks[ctx->output_redirect] && tasks[ctx->output_redirect]->flag & CTX_VALID) {
                 if (!ctx->input_queue.empty()) {
                     std::copy(ctx->input_queue.begin(), ctx->input_queue.end(),
-                        std::back_inserter(tasks[ctx->output_redirect].input_queue));
+                        std::back_inserter(tasks[ctx->output_redirect]->input_queue));
                     ctx->input_redirect = -1;
                 }
-                tasks[ctx->output_redirect].input_stop = true;
+                tasks[ctx->output_redirect]->input_stop = true;
                 ctx->output_redirect = -1;
             }
         }
@@ -1628,7 +1617,7 @@ namespace clib {
             }
             ctx->handles.clear();
             if (ctx->parent != -1) {
-                auto& parent = tasks[ctx->parent];
+                auto& parent = *(tasks[ctx->parent].get());
                 parent.child.erase(ctx->id);
                 parent.exited_child.push_back(ctx->id);
                 if (parent.state == CTS_ZOMBIE)
@@ -1654,6 +1643,7 @@ namespace clib {
                 fs.rm(ss.str());
             }
         }
+        tasks[id].reset(nullptr);
         ctx = old_ctx;
         available_tasks--;
     }
@@ -1700,8 +1690,8 @@ namespace clib {
         auto pid = cgui::singleton().compile(file, args, pt);
         if (pid >= 0) { // SUCCESS
             ctx->child.insert(pid);
-            tasks[pid].parent = ctx->id;
-            tasks[pid].paths = ctx->paths;
+            tasks[pid]->parent = ctx->id;
+            tasks[pid]->paths = ctx->paths;
 #if LOG_SYSTEM
             ATLTRACE("[SYSTEM] PROC | Exec: Parent= #%d, Child= #%d\n", ctx->id, pid);
 #endif
@@ -1818,7 +1808,7 @@ namespace clib {
         ctx->handles = old_ctx->handles;
         ctx->exited_child.clear();
         for (auto& h : ctx->handles) {
-            handles[h].refs++;
+            handles[h]->refs++;
         }
         available_tasks++;
         if (set_resize_id.find(old_ctx->id) != set_resize_id.end()) {
@@ -1926,14 +1916,14 @@ namespace clib {
         if (t == D_PS) {
             ss << L"[STATE] [FLAG] [PID] [IPS] [COMMAND LINE]     [PAGE]" << std::endl;
             for (auto i = 0; i < TASK_NUM; ++i) {
-                if (tasks[i].flag & CTX_VALID) {
+                if (tasks[i] && tasks[i]->flag & CTX_VALID) {
                     wsprintf(sz, L"%7S  %04X   %4d %5s %-18S   %4d",
-                        state_string(tasks[i].state),
-                        tasks[i].flag,
+                        state_string(tasks[i]->state),
+                        tasks[i]->flag,
                         i,
-                        get_ips_disp(tasks[i].ips_disp),
-                        limit_string(tasks[i].cmd, 18).c_str(),
-                        tasks[i].allocation.size());
+                        get_ips_disp(tasks[i]->ips_disp),
+                        limit_string(tasks[i]->cmd, 18).c_str(),
+                        tasks[i]->allocation.size());
                     ss << sz << std::endl;
                 }
             }
@@ -1942,8 +1932,8 @@ namespace clib {
             auto root_id = -1;
             std::unordered_map<int, std::list<int>> deps;
             for (auto i = 0; i < TASK_NUM; ++i) {
-                if (tasks[i].flag & CTX_VALID) {
-                    const auto& p = tasks[i].parent;
+                if (tasks[i] && tasks[i]->flag & CTX_VALID) {
+                    const auto& p = tasks[i]->parent;
                     if (p != -1) {
                         auto f = deps.find(p);
                         if (f == deps.end()) {
@@ -1963,7 +1953,7 @@ namespace clib {
             // 多叉树的非递归前序遍历
             while (current != -1) {
                 if (visited.test(current)) { // 访问过了，查看有无兄弟
-                    auto parent = tasks[current].parent;
+                    auto parent = tasks[current]->parent;
                     if (deps.find(parent) != deps.end()) { // 还有未访问的兄弟
                         auto brother = deps[parent].front(); // 进入兄弟节点
                         deps[parent].pop_front(); // 除去此节点
@@ -1980,9 +1970,9 @@ namespace clib {
                     if (!printed.test(current)) {
                         ss << std::setfill(L' ') << std::setw(level * 2LL) << "";
                         static TCHAR sz2[64];
-                        const auto& I = tasks[current].input_redirect;
-                        const auto& O = tasks[current].output_redirect;
-                        const auto& Q = tasks[current].input_queue.size();
+                        const auto& I = tasks[current]->input_redirect;
+                        const auto& O = tasks[current]->output_redirect;
+                        const auto& Q = tasks[current]->input_queue.size();
                         if (I == -1 && O == -1)
                             sz2[0] = 0;
                         else if (I != -1 && O == -1)
@@ -1991,7 +1981,7 @@ namespace clib {
                             wsprintf(sz2, L"(O=%d) ", O);
                         else
                             wsprintf(sz2, L"(I=%d,O=%d,Q=%d) ", I, O, Q);
-                        wsprintf(sz, L"#%d %s%S", current, sz2, limit_string(tasks[current].cmd, 30).c_str());
+                        wsprintf(sz, L"#%d %s%S", current, sz2, limit_string(tasks[current]->cmd, 30).c_str());
                         ss << sz << std::endl;
                         printed.set(current);
                     }
@@ -2005,7 +1995,7 @@ namespace clib {
                     }
                     else { // 没有孩子（或孩子访问完），回到父节点
                         visited.set(current);
-                        current = tasks[current].parent;
+                        current = tasks[current]->parent;
                         level--;
                     }
                 }
@@ -2013,9 +2003,9 @@ namespace clib {
         }
         else if (t == D_HANDLE) {
             for (auto i = 0; i < HANDLE_NUM; ++i) {
-                if (handles[i].type != h_none) {
-                    wsprintf(sz, L"%4d | %6S | %S", i, handle_typename(handles[i].type).c_str(),
-                        limit_string(handles[i].name, 30).c_str());
+                if (handles[i] && handles[i]->type != h_none) {
+                    wsprintf(sz, L"%4d | %6S | %S", i, handle_typename(handles[i]->type).c_str(),
+                        limit_string(handles[i]->name, 30).c_str());
                     ss << sz << std::endl;
                 }
             }
@@ -2049,18 +2039,17 @@ namespace clib {
                 }
                 wsprintf(sz, L"%-18s %9S", L"Input Waiting:  ", str.c_str()); ss << sz << std::endl;
             }
-            wsprintf(sz, L"%-18s %9d", L"Memory Total:", 0); ss << sz << std::endl;
-            wsprintf(sz, L"%-18s %9d", L"Memory Using:", 0); ss << sz << std::endl;
-            wsprintf(sz, L"%-18s %9d", L"Memory Free:", 0); ss << sz << std::endl;
-            int pages = 0, heaps = 0, heaps_a = 0, kernel_pages = 0;
+            int mems = 0, pages = 0, heaps = 0, heaps_a = 0, kernel_pages = 0;
             for (auto i = 0; i < TASK_NUM; ++i) {
-                if (tasks[i].flag & CTX_VALID) {
-                    pages += tasks[i].allocation.size();
-                    heaps += tasks[i].pool->page_size();
-                    heaps_a += tasks[i].pool->available();
-                    kernel_pages += tasks[i].pgdir.size();
+                if (tasks[i] && tasks[i]->flag & CTX_VALID) {
+                    mems += tasks[i]->pages.size();
+                    pages += tasks[i]->allocation.size();
+                    heaps += tasks[i]->pool->page_size();
+                    heaps_a += tasks[i]->pool->available();
+                    kernel_pages += tasks[i]->pgdir.size();
                 }
             }
+            wsprintf(sz, L"%-18s %9d", L"Memory Total:", mems * PAGE_SIZE); ss << sz << std::endl;
             wsprintf(sz, L"%-18s %9d", L"Heap Total:", heaps * PAGE_SIZE); ss << sz << std::endl;
             wsprintf(sz, L"%-18s %9d", L"Heap Using:", heaps * PAGE_SIZE - heaps_a); ss << sz << std::endl;
             wsprintf(sz, L"%-18s %9d", L"Heap Free:", heaps_a); ss << sz << std::endl;
@@ -2079,36 +2068,36 @@ namespace clib {
             std::smatch res;
             if (std::regex_match(path, res, re)) {
                 auto id = std::stoi(res[1].str());
-                if (!(tasks[id].flag & CTX_VALID)) {
+                if (!(tasks[id] && tasks[id]->flag & CTX_VALID)) {
                     return "\033FFFF00000\033[ERROR] Invalid pid.\033S4\033";
                 }
                 const auto& op = res[2].str();
                 if (op == "exe") {
-                    return tasks[id].path;
+                    return tasks[id]->path;
                 }
                 else if (op == "parent") {
-                    sprintf(sz, "%d", tasks[id].parent);
+                    sprintf(sz, "%d", tasks[id]->parent);
                     return sz;
                 }
                 else if (op == "heap_size") {
-                    sprintf(sz, "%d", tasks[id].pool->page_size());
+                    sprintf(sz, "%d", tasks[id]->pool->page_size());
                     return sz;
                 }
                 else if (op == "path") {
                     std::stringstream ss;
-                    std::copy(tasks[id].paths.begin(), tasks[id].paths.end(),
+                    std::copy(tasks[id]->paths.begin(), tasks[id]->paths.end(),
                         std::ostream_iterator<string_t>(ss, "\n"));
                     return ss.str();
                 }
                 else if (op == "dep") {
-                    auto deps = cgui::singleton().get_dep(tasks[id].path);
+                    auto deps = cgui::singleton().get_dep(tasks[id]->path);
                     std::stringstream ss;
                     std::copy(deps.begin(), deps.end(),
                         std::ostream_iterator<string_t>(ss, "\n"));
                     return ss.str();
                 }
                 else if (op == "cmd") {
-                    return tasks[id].cmd;
+                    return tasks[id]->cmd;
                 }
             }
         }
@@ -2122,14 +2111,14 @@ namespace clib {
                     std::stringstream ss;
                     ss << "\033FFFA0A0A0\033[STATE] \033S4\033[FLAG] [PID] [PPID]\033FFFB3B920\033 [COMMAND LINE]     \033FFF51C2A8\033[PAGE]\033S4\033" << std::endl;
                     for (auto i = 0; i < TASK_NUM; ++i) {
-                        if (tasks[i].flag & CTX_VALID) {
+                        if (tasks[i] && tasks[i]->flag & CTX_VALID) {
                             sprintf(sz, "\033FFFA0A0A0\033%7s \033S4\033 %04X   %4d   %4d \033FFFB3B920\033%-18s \033FFF51C2A8\033  %4d\033S4\033",
-                                state_string(tasks[i].state),
-                                tasks[i].flag,
+                                state_string(tasks[i]->state),
+                                tasks[i]->flag,
                                 i,
-                                tasks[i].parent,
-                                limit_string(tasks[i].cmd, 18).c_str(),
-                                tasks[i].allocation.size());
+                                tasks[i]->parent,
+                                limit_string(tasks[i]->cmd, 18).c_str(),
+                                tasks[i]->allocation.size());
                             ss << sz << std::endl;
                         }
                     }
@@ -2137,18 +2126,17 @@ namespace clib {
                 }
                 else if (op == "mem") {
                     std::stringstream ss;
-                    sprintf(sz, "%-18s %d", "Memory Total:", 0); ss << sz << std::endl;
-                    sprintf(sz, "%-18s %d", "Memory Using:", 0); ss << sz << std::endl;
-                    sprintf(sz, "%-18s %d", "Memory Free:", 0); ss << sz << std::endl;
-                    int pages = 0, heaps = 0, heaps_a = 0, kernel_pages = 0;
+                    int mems = 0, pages = 0, heaps = 0, heaps_a = 0, kernel_pages = 0;
                     for (auto i = 0; i < TASK_NUM; ++i) {
-                        if (tasks[i].flag & CTX_VALID) {
-                            pages += tasks[i].allocation.size();
-                            heaps += tasks[i].pool->page_size();
-                            heaps_a += tasks[i].pool->available();
-                            kernel_pages += tasks[i].pgdir.size();
+                        if (tasks[i] && tasks[i]->flag & CTX_VALID) {
+                            mems += tasks[i]->pages.size();
+                            pages += tasks[i]->allocation.size();
+                            heaps += tasks[i]->pool->page_size();
+                            heaps_a += tasks[i]->pool->available();
+                            kernel_pages += tasks[i]->pgdir.size();
                         }
                     }
+                    sprintf(sz, "%-18s %d", "Memory Total:", mems * PAGE_SIZE); ss << sz << std::endl;
                     sprintf(sz, "%-18s %d", "Heap Total:", heaps * PAGE_SIZE); ss << sz << std::endl;
                     sprintf(sz, "%-18s %d", "Heap Using:", heaps * PAGE_SIZE - heaps_a); ss << sz << std::endl;
                     sprintf(sz, "%-18s %d", "Heap Free:", heaps_a); ss << sz << std::endl;
@@ -2210,19 +2198,19 @@ namespace clib {
             std::smatch res;
             if (std::regex_match(path, res, re)) {
                 auto id = std::stoi(res[1].str());
-                if (handles[id].type == h_none) {
+                if (handles[id] && handles[id]->type == h_none) {
                     return "\033FFFF00000\033[ERROR] Invalid handle.\033S4\033";
                 }
                 const auto& op = res[2].str();
                 if (op == "type") {
-                    return handle_typename(handles[id].type);
+                    return handle_typename(handles[id]->type);
                 }
                 else if (op == "name") {
-                    return handles[id].name;
+                    return handles[id]->name;
                 }
                 else {
-                    if (handles[id].type == h_window) {
-                        return handles[id].data.cwnd->handle_fs(res[3].str());
+                    if (handles[id] && handles[id]->type == h_window) {
+                        return handles[id]->data.cwnd->handle_fs(res[3].str());
                     }
                     return "\033FFFF00000\033[ERROR] Invalid handle.\033S4\033";
                 }
@@ -2316,10 +2304,10 @@ namespace clib {
     {
         if (handle < 0 || handle >= HANDLE_NUM)
             error("stream_getwnd: invalid handle");
-        if (handles[handle].type != h_window) {
+        if (handles[handle]->type != h_window) {
             error("stream_getwnd: invalid type");
         }
-        return handles[handle].data.cwnd;
+        return handles[handle]->data.cwnd;
     }
 
     const char* cvm::state_string(cvm::ctx_state_t type) {
@@ -2345,9 +2333,10 @@ namespace clib {
         auto end = TASK_NUM + pids;
         for (int i = pids; i < end; ++i) {
             auto j = i % TASK_NUM;
-            if (!(tasks[j].flag & CTX_VALID)) {
-                tasks[j].flag |= CTX_VALID;
-                ctx = &tasks[j];
+            if (!tasks[j]) {
+                tasks[j] = std::make_unique<context_t>();
+                tasks[j]->flag |= CTX_VALID;
+                ctx = tasks[j].get();
                 pids = (j + 1) % TASK_NUM;
                 ctx->id = j;
                 {
@@ -2380,9 +2369,10 @@ namespace clib {
         auto end = HANDLE_NUM + handle_ids;
         for (int i = handle_ids; i < end; ++i) {
             auto j = i % HANDLE_NUM;
-            if (handles[j].type == h_none) {
-                handles[j].type = type;
-                handles[j].refs = 1;
+            if (!handles[j]) {
+                handles[j] = std::make_unique<handle_t>();
+                handles[j]->type = type;
+                handles[j]->refs = 1;
                 handle_ids = (j + 1) % HANDLE_NUM;
                 available_handles++;
                 ctx->handles.insert(j);
@@ -2432,14 +2422,14 @@ namespace clib {
     void cvm::destroy_handle(int handle) {
         if (handle < 0 || handle >= HANDLE_NUM)
             error("invalid handle");
-        if (handles[handle].type != h_none) {
+        if (handles[handle] && handles[handle]->type != h_none) {
             ctx->handles.erase(handle);
-            if (handles[handle].refs > 1) {
-                handles[handle].refs--;
+            if (handles[handle]->refs > 1) {
+                handles[handle]->refs--;
                 return;
             }
-            handles[handle].refs = 0;
-            auto h = &handles[handle];
+            handles[handle]->refs = 0;
+            auto h = handles[handle].get();
             if (h->type == h_file) {
                 auto dec = h->data.file;
                 dec->remove_handle(handle);
@@ -2451,7 +2441,7 @@ namespace clib {
                 auto dec = h->data.cwnd;
                 delete dec;
             }
-            h->type = h_none;
+            handles[handle].reset(nullptr);
             available_handles--;
             {
                 std::stringstream ss;
@@ -2467,10 +2457,10 @@ namespace clib {
     int cvm::post_data(int h, int code, int param1, int param2)
     {
         if (h >= 0 && h < HANDLE_NUM) {
-            if (handles[h].type != h_window) {
+            if (handles[h] || handles[h]->type != h_window) {
                 return -1;
             }
-            auto wnd = handles[h].data.cwnd;
+            auto wnd = handles[h]->data.cwnd;
             wnd->post_data(code, param1, param2);
             if (code == WM_SETFOCUS) {
                 if (wnds.size() > 1 && wnds.back() != wnd) {
@@ -2516,12 +2506,17 @@ namespace clib {
 
     int cvm::output(int id) {
         if (ctx->output_redirect != -1) {
-            if (id == 0) {
-                tasks[ctx->output_redirect].input_queue.push_back(ctx->ax._c);
+            if (tasks[ctx->output_redirect]) {
+                if (id == 0) {
+                    tasks[ctx->output_redirect]->input_queue.push_back(ctx->ax._c);
+                }
+                else {
+                    auto s = output_fmt(id);
+                    while (*s) tasks[ctx->output_redirect]->input_queue.push_back(*s++);
+                }
             }
             else {
-                auto s = output_fmt(id);
-                while (*s) tasks[ctx->output_redirect].input_queue.push_back(*s++);
+                ctx->output_redirect = -1;
             }
         }
         else if (global_state.input_lock == -1) {
@@ -3117,7 +3112,7 @@ namespace clib {
 
     bool cvm::is_window_handle(int h) const
     {
-        return ctx->handles.find(h) != ctx->handles.end() && handles[h].type == h_window;
+        return ctx->handles.find(h) != ctx->handles.end() && handles[h]->type == h_window;
     }
 
     bool cvm::wnd(int id)
@@ -3131,11 +3126,11 @@ namespace clib {
             };
             auto s = vmm_get<__window_create_struct__>(ctx->ax._ui);
             auto h = new_handle(h_window);
-            handles[h].name = vmm_getstr(s.caption);
-            handles[h].data.cwnd = new cwindow(this, h, handles[h].name,
+            handles[h]->name = vmm_getstr(s.caption);
+            handles[h]->data.cwnd = new cwindow(this, h, handles[h]->name,
                 CRect(s.left, s.top, s.left + s.width, s.top + s.height));
-            wnds.push_back(handles[h].data.cwnd);
-            handles[h].data.cwnd->init();
+            wnds.push_back(handles[h]->data.cwnd);
+            handles[h]->data.cwnd->init();
             ctx->ax._i = h;
             break;
         }
@@ -3144,7 +3139,7 @@ namespace clib {
             auto s = vmm_get<cwindow::window_msg2>(ctx->ax._ui);
             auto h = s.handle;
             if (is_window_handle(h)) {
-                auto wnd = handles[h].data.cwnd;
+                auto wnd = handles[h]->data.cwnd;
                 ctx->ax._i = wnd->handle_msg(s.msg);
                 break;
             }
@@ -3160,7 +3155,7 @@ namespace clib {
             auto s = vmm_get<__window_create_comctl_struct__>(ctx->ax._ui);
             auto h = s.handle;
             if (is_window_handle(h)) {
-                auto wnd = handles[h].data.cwnd;
+                auto wnd = handles[h]->data.cwnd;
                 ctx->ax._u._1 = h;
                 ctx->ax._u._2 = wnd->create_comctl(s.type);
                 break;
@@ -3172,7 +3167,7 @@ namespace clib {
         {
             auto h = ctx->ax._i;
             if (is_window_handle(h)) {
-                auto wnd = handles[h].data.cwnd;
+                auto wnd = handles[h]->data.cwnd;
                 ctx->ax._u._1 = h;
                 ctx->ax._u._2 = wnd->get_base();
                 break;
@@ -3190,7 +3185,7 @@ namespace clib {
             auto h = s.handle;
             auto c = s.child;
             if (h == c && is_window_handle(h)) {
-                auto wnd = handles[h].data.cwnd;
+                auto wnd = handles[h]->data.cwnd;
                 ctx->ax._i = wnd->connect(s.id, s.cid) ? 0 : -1;
                 break;
             }
@@ -3206,7 +3201,7 @@ namespace clib {
             auto s = vmm_get<__window_comctl_set_flag_struct__>(ctx->ax._ui);
             auto h = s.handle;
             if (is_window_handle(h)) {
-                auto wnd = handles[h].data.cwnd;
+                auto wnd = handles[h]->data.cwnd;
                 ctx->ax._i = wnd->set_flag(s.id, s.flag) ? 0 : -1;
                 break;
             }
@@ -3222,7 +3217,7 @@ namespace clib {
             auto s = vmm_get<__window_set_style_struct__>(ctx->ax._ui);
             auto h = s.handle;
             if (is_window_handle(h)) {
-                auto wnd = handles[h].data.cwnd;
+                auto wnd = handles[h]->data.cwnd;
                 ctx->ax._i = wnd->set_style(s.style) ? 0 : -1;
                 break;
             }
@@ -3239,7 +3234,7 @@ namespace clib {
             auto h = s.handle;
             auto c = s.id;
             if (is_window_handle(h)) {
-                auto wnd = handles[h].data.cwnd;
+                auto wnd = handles[h]->data.cwnd;
                 ctx->ax._i = wnd->set_bound(c, CRect(s.left, s.top, s.right, s.bottom)) ? 0 : -1;
                 break;
             }
@@ -3257,7 +3252,7 @@ namespace clib {
             auto c = s.id;
             auto text = vmm_getstr(s.text);
             if (is_window_handle(h)) {
-                auto wnd = handles[h].data.cwnd;
+                auto wnd = handles[h]->data.cwnd;
                 ctx->ax._i = wnd->set_text(c, text) ? 0 : -1;
                 break;
             }
@@ -3270,15 +3265,47 @@ namespace clib {
                 int handle; int id;
                 uint32 ptr; int len;
             };
-            auto s = vmm_get<__window_comctl_set_ptr_struct__>(ctx->ax._ui);
-            auto h = s.handle;
-            auto c = s.id;
+            auto s_ = vmm_get<__window_comctl_set_ptr_struct__>(ctx->ax._ui);
+            auto h = s_.handle;
+            auto c = s_.id;
             std::vector<byte> data;
-            vmm_getmem(s.ptr, s.len, data);
-            if (is_window_handle(h)) {
-                auto wnd = handles[h].data.cwnd;
-                ctx->ax._i = wnd->set_ptr(c, data) ? 0 : -1;
-                break;
+            vmm_getmem(s_.ptr, s_.len, data);
+            data.push_back(0);
+            auto path = std::string((char*)data.data());
+            vfs_node_dec* dec = nullptr;
+            {
+                if (path[0] != '/') {
+                    auto s = 0;
+                    decltype(ctx->paths) ps;
+                    auto pwd = fs.get_pwd();
+                    ps.push_back(pwd == "/" ? "" : pwd);
+                    std::copy(ctx->paths.begin(), ctx->paths.end(), std::back_inserter(ps));
+                    for (auto& p : ps) {
+                        auto pp = p + '/' + path;
+                        s = fs.get(pp, &dec, this);
+                        if (s == 0)
+                            break;
+                    }
+                    if (s != 0) {
+                        ctx->ax._i = s;
+                        break;
+                    }
+                }
+                else {
+                    auto s = fs.get(path, &dec, this);
+                    if (s != 0) {
+                        ctx->ax._i = s;
+                        break;
+                    }
+                }
+            }
+            if (dec && is_window_handle(h)) {
+                data.clear();
+                if (dec->get_data(data)) {
+                    auto wnd = handles[h]->data.cwnd;
+                    ctx->ax._i = wnd->set_ptr(c, data) ? 0 : -1;
+                    break;
+                }
             }
             ctx->ax._i = -1;
             break;
@@ -3367,9 +3394,9 @@ namespace clib {
                         ctx->pc += INC_PTR;
                         // INPUT COMPLETE
                         for (auto& _id : global_state.input_waiting_list) {
-                            if (tasks[_id].flag & CTX_VALID) {
-                                assert(tasks[_id].state == CTS_WAIT);
-                                tasks[_id].state = CTS_RUNNING;
+                            if (tasks[_id] && tasks[_id]->flag & CTX_VALID) {
+                                assert(tasks[_id]->state == CTS_WAIT);
+                                tasks[_id]->state = CTS_RUNNING;
                             }
                         }
                         global_state.input_lock = -1;
@@ -3400,9 +3427,9 @@ namespace clib {
                 if (global_state.input_success) {
                     // INPUT INTERRUPT
                     for (auto& _id : global_state.input_waiting_list) {
-                        if (tasks[_id].flag & CTX_VALID) {
-                            assert(tasks[_id].state == CTS_WAIT);
-                            tasks[_id].state = CTS_RUNNING;
+                        if (tasks[_id] && tasks[_id]->flag & CTX_VALID) {
+                            assert(tasks[_id]->state == CTS_WAIT);
+                            tasks[_id]->state = CTS_RUNNING;
                         }
                     }
                     global_state.input_lock = -1;
@@ -3449,9 +3476,9 @@ namespace clib {
                         ctx->pc += INC_PTR;
                         // INPUT COMPLETE
                         for (auto& _id : global_state.input_waiting_list) {
-                            if (tasks[_id].flag & CTX_VALID) {
-                                assert(tasks[_id].state == CTS_WAIT);
-                                tasks[_id].state = CTS_RUNNING;
+                            if (tasks[_id] && tasks[_id]->flag & CTX_VALID) {
+                                assert(tasks[_id]->state == CTS_WAIT);
+                                tasks[_id]->state = CTS_RUNNING;
                             }
                         }
                         ctx->flag &= ~CTX_INPUT;
@@ -3512,14 +3539,14 @@ namespace clib {
             auto left = ctx->ax._ui >> 16;
             auto right = ctx->ax._ui & 0xFFFF;
             if (left >= 0 && left < TASK_NUM) {
-                if (tasks[left].flag & CTX_VALID) {
+                if (tasks[left] && tasks[left]->flag & CTX_VALID) {
                     if (right == KILL_SIGNAL) {
                         if (ctx->child.find(left) != ctx->child.end()) {
                             std::vector<int> childs;
                             childs.push_back(left);
                             size_t i = 0, j = childs.size();
                             while (i < j) {
-                                for (const auto& cc : tasks[childs[i]].child) {
+                                for (const auto& cc : tasks[childs[i]]->child) {
                                     childs.push_back(cc);
                                     j++;
                                 }
@@ -3531,7 +3558,7 @@ namespace clib {
                         }
                     }
                     else {
-                        tasks[left].sigs.push(right);
+                        tasks[left]->sigs.push(right);
                     }
                 }
             }
@@ -3568,13 +3595,13 @@ namespace clib {
         case 53: {
             ctx->ax._i = exec_file(vmm_getstr(ctx->ax._ui));
             if (ctx->ax._i >= 0 && ctx->ax._i < TASK_NUM)
-                tasks[ctx->ax._i].state = CTS_WAIT;
+                tasks[ctx->ax._i]->state = CTS_WAIT;
             break;
         }
         case 54: {
             if (ctx->ax._i >= 0 && ctx->ax._i < TASK_NUM) {
                 if (ctx->child.find(ctx->ax._i) != ctx->child.end())
-                    tasks[ctx->ax._i].state = CTS_RUNNING;
+                    tasks[ctx->ax._i]->state = CTS_RUNNING;
             }
             break;
         }
@@ -3588,8 +3615,8 @@ namespace clib {
             auto right = ctx->ax._ui & 0xFFFF;
             if ((left == ctx->id || ctx->child.find(left) != ctx->child.end()) &&
                 (right == ctx->id || ctx->child.find(right) != ctx->child.end())) {
-                tasks[right].input_redirect = left;
-                tasks[left].output_redirect = right;
+                tasks[right]->input_redirect = left;
+                tasks[left]->output_redirect = right;
             }
             break;
         }
@@ -3669,15 +3696,15 @@ namespace clib {
                 logging(CString(s));
             }
 #endif
-            handles[h].name = path;
-            handles[h].data.file = dec;
+            handles[h]->name = path;
+            handles[h]->data.file = dec;
             ctx->ax._i = h;
         }
                  break;
         case 66: {
             auto h = ctx->ax._i;
             if (ctx->handles.find(h) != ctx->handles.end()) {
-                auto dec = handles[h].data.file;
+                auto dec = handles[h]->data.file;
                 auto t = dec->get_handle(h);
                 if (t == v_none)
                     dec->add_handle(h, v_read);
@@ -3724,7 +3751,7 @@ namespace clib {
             auto h = ctx->ax._ui >> 16;
             auto c = (ctx->ax._ui & 0xFFFF) - 0x1000;
             if (ctx->handles.find(h) != ctx->handles.end()) {
-                auto dec = handles[h].data.file;
+                auto dec = handles[h]->data.file;
                 auto t = dec->get_handle(h);
                 if (t == v_none)
                     dec->add_handle(h, v_write);
@@ -3742,7 +3769,7 @@ namespace clib {
         case 70: {
             auto h = ctx->ax._i;
             if (ctx->handles.find(h) != ctx->handles.end()) {
-                auto dec = handles[h].data.file;
+                auto dec = handles[h]->data.file;
                 auto t = dec->get_handle(h);
                 if (t == v_none)
                     dec->add_handle(h, v_write);
@@ -3771,9 +3798,9 @@ namespace clib {
                  break;
         case 73: {
             ctx->ax._i = exec_file(vmm_getstr(ctx->ax._ui));
-            if (ctx->ax._i >= 0 && ctx->ax._i < TASK_NUM) {
-                tasks[ctx->ax._i].flag |= CTX_SERVICE;
-                tasks[ctx->ax._i].flag &= ~CTX_FOREGROUND;
+            if (ctx->ax._i >= 0 && ctx->ax._i < TASK_NUM && tasks[ctx->ax._i]) {
+                tasks[ctx->ax._i]->flag |= CTX_SERVICE;
+                tasks[ctx->ax._i]->flag &= ~CTX_FOREGROUND;
             }
         }
                  break;
@@ -3784,11 +3811,11 @@ namespace clib {
             auto s = vmm_get<__copy_struct__>(ctx->ax._ui);
             if (ctx->handles.find(s.from) != ctx->handles.end() &&
                 ctx->handles.find(s.to) != ctx->handles.end()) {
-                auto& from = handles[s.from];
-                auto& to = handles[s.to];
-                if (from.type == h_file && to.type == h_file) {
+                auto from = handles[s.from].get();
+                auto to = handles[s.to].get();
+                if (from->type == h_file && to->type == h_file) {
                     std::vector<byte> data;
-                    if (from.data.file->get_data(data) && to.data.file->set_data(data)) {
+                    if (from->data.file->get_data(data) && to->data.file->set_data(data)) {
                         ctx->ax._i = 0;
                     }
                     else {
@@ -3808,7 +3835,7 @@ namespace clib {
             {
                 auto h = ctx->ax._i;
                 if (ctx->handles.find(h) != ctx->handles.end()) {
-                    auto dec = handles[h].data.file;
+                    auto dec = handles[h]->data.file;
                     auto t = dec->get_handle(h);
                     if (t == v_none)
                         dec->add_handle(h, v_read);
@@ -3885,9 +3912,9 @@ namespace clib {
     void cvm::reset_ips()
     {
         for (int i = 0; i < TASK_NUM; ++i) {
-            if (tasks[i].flag & CTX_VALID) {
-                tasks[i].ips_disp = tasks[i].ips;
-                tasks[i].ips = 0ULL;
+            if (tasks[i] && tasks[i]->flag & CTX_VALID) {
+                tasks[i]->ips_disp = tasks[i]->ips;
+                tasks[i]->ips = 0ULL;
             }
         }
     }
@@ -3936,10 +3963,10 @@ namespace clib {
 
     int cvm::cursor() const
     {
-        if (global_state.window_hover != -1) {
-            auto h = handles[global_state.window_hover];
-            if (h.type = h_window) {
-                return h.data.cwnd->get_cursor();
+        if (global_state.window_hover != -1 && handles[global_state.window_hover]) {
+            const auto& h = handles[global_state.window_hover].get();
+            if (h->type = h_window) {
+                return h->data.cwnd->get_cursor();
             }
         }
         return 1;

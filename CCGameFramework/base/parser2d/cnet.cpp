@@ -267,6 +267,7 @@ namespace clib {
 
     bool vfs_node_stream_net::get_data(std::vector<byte>& data) const
     {
+        if (*received != 2) return false;
         std::transform(
             content.cbegin(),
             content.cend(),

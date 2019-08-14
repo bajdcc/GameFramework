@@ -221,7 +221,7 @@ Direct2D::~Direct2D()
 
 void Direct2D::ReportLiveObjects()
 {
-#ifdef _DEBUG
+#if 0
     HRESULT hr;
     HMODULE hDxgiDebug = GetModuleHandle(_T("Dxgidebug.dll"));
     if (!hDxgiDebug) return;

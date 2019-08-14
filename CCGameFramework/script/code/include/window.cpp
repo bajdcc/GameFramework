@@ -6,6 +6,7 @@
 // 窗口
 #include "/include/fs"
 #include "/include/readfile"
+#include "/include/string"
 
 struct __window_create_struct__ {
     char* caption;
@@ -222,9 +223,5 @@ int window_comctl_label_set_horizontal_align_right(long handle) { window_comctl_
 // IMAGE
 
 int window_comctl_image_set_ptr_from_url(long handle, char* path) {
-    char* out; int n;
-    if (readfile(path, &out, &n) == 0) {
-        window_comctl_set_ptr(handle, out, n);
-        free(out);
-    }
+    window_comctl_set_ptr(handle, path, strlen(path));
 }
