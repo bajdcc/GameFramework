@@ -2705,6 +2705,19 @@ namespace clib {
                 else
                     ctx->ax._i = global_state.ui->get_height();
             }
+            else if (ctx->ax._i >= 11 || ctx->ax._i <= 14)
+            {
+                if (draw_bounds.IsRectEmpty()) {
+                    ctx->pc -= INC_PTR;
+                    return true;
+                }
+                switch (ctx->ax._i) {
+                case 11: ctx->ax._i = draw_bounds.left; break;
+                case 12: ctx->ax._i = draw_bounds.top; break;
+                case 13: ctx->ax._i = draw_bounds.right; break;
+                case 14: ctx->ax._i = draw_bounds.bottom; break;
+                }
+            }
             else if (ctx->ax._i >= 4 && ctx->ax._i <= 7)
             {
                 if (ctx->ax._i == 7) {

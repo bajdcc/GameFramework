@@ -16,9 +16,26 @@ int welcome() {
     restore_fg();
 }
 int main(int argc, char** argv) {
+    put_string("\f");
+    put_string("Starting OS...\n");
     path_add("/bin");
-    welcome();
+    put_string("Starting service...\n");
+    shell("touch ");
     exec_service("/init/init");
+    int i;
+    for (i = 0;; i++) {
+        if (fempty("/pipe/sys_entry_shell_start") > 0) {
+            newline();
+            shell("cat /pipe/sys_entry_shell_start");
+            shell("rm /pipe/sys_entry_shell_start");
+            sleep(100);
+            break;
+        }
+        sleep(200);
+        put_string("Waiting... ");
+        put_int(i / 5); put_string("\r");
+    }
+    welcome();
     exec("sh"); wait();
     exec("/init/exit"); wait();
     return 0;

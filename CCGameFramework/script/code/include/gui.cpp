@@ -39,6 +39,26 @@ int gui_reset() {
     return gui_enable(8);
 }
 
+int gui_get_left() {
+    return gui_enable(11);
+}
+int gui_get_top() {
+    return gui_enable(12);
+}
+int gui_get_right() {
+    return gui_enable(13);
+}
+int gui_get_bottom() {
+    return gui_enable(14);
+}
+int gui_get_width() {
+    return gui_get_right() - gui_get_left();
+}
+int gui_get_height() {
+    return gui_get_bottom() - gui_get_top();
+}
+
+
 int gui_move_to(int x, int y) {
     x << 16 | y;
     interrupt 302;

@@ -570,7 +570,9 @@ void SolidImageElementRenderer::Render(CRect bounds)
                     //d2dRenderTarget->DrawBitmap(bitmap, drawRect);
                     d2dRenderTarget->DrawBitmap(
                         bitmap,
-                        D2D1::RectF((FLOAT)bounds.left + drawRect.left, (FLOAT)bounds.top + drawRect.top,
+                        D2D1::RectF(
+                            __max(bounds.left + drawRect.left, (FLOAT)bounds.left),
+                            __max(bounds.top + drawRect.top, (FLOAT)bounds.top),
                             __min(bounds.left + drawRect.right, (FLOAT)bounds.right),
                             __min(bounds.top + drawRect.bottom, (FLOAT)bounds.bottom)),
                         e->GetOpacity(),
