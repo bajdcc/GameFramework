@@ -1,4 +1,5 @@
 #include "/include/io"
+#include "/include/fs"
 #include "/include/shell"
 // WELCOME
 int welcome() {
@@ -24,11 +25,13 @@ int main(int argc, char** argv) {
     exec_service("/init/init");
     int i;
     for (i = 0;; i++) {
-        if (fempty("/pipe/sys_entry_shell_start") > 0) {
+        int handle = open("/pipe/sys_entry_shell_start");
+        if (handle >= 0) {
+            close(handle);
+            sleep(100);
             newline();
             shell("cat /pipe/sys_entry_shell_start");
-            shell("rm /pipe/sys_entry_shell_start");
-            sleep(100);
+            sleep(1000);
             break;
         }
         sleep(200);

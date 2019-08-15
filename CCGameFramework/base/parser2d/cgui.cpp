@@ -547,6 +547,9 @@ namespace clib {
                 if (y != rows - 1) {
                     y++;
                 }
+                else {
+                    new_line();
+                }
             }
             else {
                 x++;

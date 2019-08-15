@@ -162,7 +162,8 @@ namespace clib {
     vfs_node_pipe::vfs_node_pipe(const vfs_mod_query* mod, const vfs_node::ref& ref) :
         vfs_node_solid(mod, ref) {
         auto n = node.lock();
-        n->pipe = std::make_unique<std::queue<byte>>();
+        if (!n->pipe)
+            n->pipe = std::make_unique<std::queue<byte>>();
     }
 
     int vfs_node_pipe::count(vfs_op_t t) const

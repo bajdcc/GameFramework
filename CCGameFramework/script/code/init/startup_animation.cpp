@@ -72,7 +72,7 @@ int read_file(int id, int handle) {
     close(handle);
     close(id);
     shell("touch /pipe/sys_entry_shell_start");
-    shell("echo pipe Boot complete > /pipe/sys_entry_shell_start");
+    shell("echo Boot complete > /pipe/sys_entry_shell_start");
 }
 int main(int argc, char** argv) {
     __window_create_struct__ s;
