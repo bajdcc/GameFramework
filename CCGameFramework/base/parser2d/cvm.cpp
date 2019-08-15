@@ -3918,9 +3918,12 @@ namespace clib {
 
     void cvm::paint_window(const CRect& bounds)
     {
-        draw_bounds = bounds;
-        if (wnds.empty())
-            return;
+        if (draw_bounds.Size() != bounds.Size()) {
+            draw_bounds = bounds;
+            for (auto& wnd : wnds) {
+                wnd->post_data(WM_COMMAND, 1, 0, -1);
+            }
+        }
         for (auto& wnd : wnds) {
             wnd->paint(bounds);
         }

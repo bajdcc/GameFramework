@@ -991,7 +991,13 @@ namespace clib {
     bool cwindow::set_bound(int h, const CRect& bound)
     {
         if (valid_handle(h)) {
-            handles[h].comctl->set_bound(bound);
+            if (h == base_id) {
+                location = bound;
+                need_repaint = true;
+            }
+            else {
+                handles[h].comctl->set_bound(bound);
+            }
             return true;
         }
         return false;

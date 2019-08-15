@@ -52,6 +52,13 @@ int read_file(int id, int handle) {
             free(fmt);
             free(str);
         }
+        else if (s.code == 0x111 && s.param1 == 1) {
+            int left = gui_get_width() / 2 - 150;
+            int top = gui_get_height() / 2 - 100;
+            int width = 300;
+            int height = 200;
+            window_comctl_set_bound(window_get_base(id), left, top, left + width, top + height);
+        }
         else if (s.code == 0x214 || s.code == 0x216 || s.code == 0x10) {
 
         }
