@@ -19,19 +19,19 @@ public:
     using MSGMAP = std::unordered_map<UINT, CString>;
     LPCTSTR DebugGetMessageName(UINT message);
 
-    void SetEventBase(struct event_base *);
+    void SetEventBase(struct event_base*);
 
-    static friend void msg_timer(evutil_socket_t fd, short event, void *arg);
+    static friend void msg_timer(evutil_socket_t fd, short event, void* arg);
 
 private:
-    int m_nDisablePumpCount;
-    UINT m_nMsgLast;
-    MSG m_msg;
+    int m_nDisablePumpCount{ 0 };
+    UINT m_nMsgLast{ 0 };
+    MSG m_msg{ 0 };
     CPoint m_ptMousePos;
     MSGMAP m_msgMap;
 
-    struct event_base *evbase;
-    struct event msgtimer;
+    struct event_base* evbase{ nullptr };
+    struct event msgtimer {0};
 };
 
 #endif

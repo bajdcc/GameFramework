@@ -99,6 +99,8 @@ namespace clib {
                 return CColor(Gdiplus::Color::Black);
             case c_window_close_btn:
                 return CColor(Gdiplus::Color::Black);
+            case c_window_close_btn_lost:
+                return CColor(Gdiplus::Color::Black);
             case c_window_close_bg:
                 return CColor(236, 108, 96);
             case c_window_close_bg_lost:
@@ -186,6 +188,8 @@ namespace clib {
         case c_window_title_text:
             return CColor(Gdiplus::Color::Black);
         case c_window_close_btn:
+            return CColor(Gdiplus::Color::White);
+        case c_window_close_btn_lost:
             return CColor(Gdiplus::Color::Black);
         case c_window_close_bg:
             return CColor(232, 17, 35);
@@ -402,20 +406,21 @@ namespace clib {
         self_client = CPoint(x, y);
         auto pt = self_client + -root->GetRenderRect().TopLeft();
         if (self_drag && n == 211 && cvm::global_state.window_hover == handle) {
-            post_data(WM_MOVING, x, y); // 发送本窗口MOVNG
+            post_data(WM_MOVING, x, y); // 发送本窗口MOVING
             return true;
         }
         if (self_size && n == 211 && cvm::global_state.window_hover == handle) {
             post_data(WM_NCCALCSIZE, self_min_size.cx, self_min_size.cy);
-            post_data(WM_SIZING, x, y); // 发送本窗口MOVNG
+            post_data(WM_SIZING, x, y); // 发送本窗口SIZING
             return true;
         }
         if (pt.x < 0 || pt.y < 0 || pt.x >= location.Width() || pt.y >= location.Height())
         {
-            if (!(self_size || self_drag))
+            if (!(self_size || self_drag) || n == 211) {
+                if (comctl_hover != -1)
+                    comctl_hover = -1;
                 return false;
-            if (n == 211)
-                return false;
+            }
         }
         if (bag.close_text->GetRenderRect().PtInRect(pt)) {
             if (n == 201 && !self_size && !self_drag) {
@@ -424,10 +429,12 @@ namespace clib {
             }
             else if (n == 211) {
                 bag.close_bg->SetColor(style->get_color(cwindow_style::c_window_close_bg));
+                bag.close_text->SetColor(style->get_color(cwindow_style::c_window_close_btn));
             }
         }
         else if (n == 211) {
             bag.close_bg->SetColor(style->get_color(cwindow_style::c_window_close_bg_lost));
+            bag.close_text->SetColor(style->get_color(cwindow_style::c_window_close_btn_lost));
         }
         if (n == 200) {
             int cx, cy;
@@ -625,7 +632,7 @@ namespace clib {
         f.size = 20;
         f.fontFamily = "微软雅黑";
         bag.title_text->SetFont(f);
-        bag.close_text->SetColor(style->get_color(cwindow_style::c_window_close_btn));
+        bag.close_text->SetColor(style->get_color(cwindow_style::c_window_close_btn_lost));
         bag.close_text->SetRenderRect(CRect(r.Width() - close_btn_x, 0, r.Width(), title_y));
         bag.close_text->SetText(_T("×"));
         bag.close_text->SetFont(f);
@@ -763,6 +770,7 @@ namespace clib {
             {
                 bag.border->SetColor(style->get_color(cwindow_style::c_window_border_lost));
                 bag.close_bg->SetColor(style->get_color(cwindow_style::c_window_close_bg_lost));
+                bag.close_text->SetColor(style->get_color(cwindow_style::c_window_close_btn_lost));
                 self_hovered = false;
                 self_drag = false;
                 self_size = false;

@@ -49,7 +49,7 @@ BOOL WindowMsgLoop::Event()
 
         BOOL ret = PumpMessage();
 
-        if (m_msg.message != WM_MOUSEMOVE)
+        if (m_msg.message != WM_MOUSEMOVE && m_msg.message != WM_IME_NOTIFY && m_msg.message != WM_CHAR)
             return ret;
     }
 }
@@ -421,7 +421,7 @@ LPCTSTR WindowMsgLoop::DebugGetMessageName(UINT message)
     {
         // Window message registered with 'RegisterWindowMessage'
         //  (actually a USER atom)
-        if (GetClipboardFormatName(message, msgBuffer, sizeof(msgBuffer) * sizeof(TCHAR)))
+        if (GetClipboardFormatName(message, msgBuffer, sizeof(msgBuffer)))
             return msgBuffer;
     }
     auto found = m_msgMap.find(message);

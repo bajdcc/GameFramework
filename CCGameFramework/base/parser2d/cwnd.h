@@ -40,6 +40,7 @@ namespace clib {
             c_window_background,
             c_window_title_text,
             c_window_close_btn,
+            c_window_close_btn_lost,
             c_window_close_bg,
             c_window_close_bg_lost,
             c_window_border_def,

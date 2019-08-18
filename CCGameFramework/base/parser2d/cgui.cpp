@@ -111,6 +111,7 @@ namespace clib {
             cvm::global_state.input_read_ptr = -1;
             cvm::global_state.input_success = false;
             cvm::global_state.input_code = 0;
+            input_state = false;
             reset_cmd();
             reset_cycles();
             reset_ips();
@@ -187,11 +188,10 @@ namespace clib {
 
         for (auto i = 0; i < rows; ++i) {
             for (auto j = 0; j < cols; ++j) {
-                static WORD wd;
                 ascii = true;
                 c = buffer[i * cols + j];
-                if (c < 0) {
-                    wd = (((BYTE)c) << 8) | ((BYTE)buffer[i * cols + j + 1]);
+                if (c < 0 && (i != rows - 1 || j != cols - 1)) {
+                    WORD wd = (((BYTE)c) << 8) | ((BYTE)buffer[i * cols + j + 1]);
                     if (wd >= 0x8140 && wd <= 0xFEFE) { // GBK
                         if (j < cols - 1)
                             ascii = false;
@@ -296,7 +296,7 @@ namespace clib {
 
     void cgui::draw_window(const CRect& bounds)
     {
-        if(vm)
+        if (vm)
             vm->paint_window(bounds);
     }
 
@@ -396,14 +396,32 @@ namespace clib {
             }
         }
         else if (c == '\b') {
+            auto ascii = true;
+            if (ptr_x != 0 || ptr_y != 0) {
+                auto cc = buffer[ptr_y * cols + ptr_x - 1];
+                if (cc < 0) {
+                    WORD wd = (((BYTE)cc) << 8) | ((BYTE)buffer[ptr_y * cols + ptr_x]);
+                    if (wd >= 0x8140 && wd <= 0xFEFE) { // GBK
+                        ascii = false;
+                    }
+                }
+            }
             if (ptr_mx == -1 && ptr_my == -1 && ptr_x > 0) {
                 forward(ptr_x, ptr_y, false);
                 draw_char('\u0000');
+                if (!ascii) {
+                    forward(ptr_x, ptr_y, false);
+                    draw_char('\u0000');
+                }
             }
             else {
                 if (ptr_mx + ptr_my * cols < ptr_x + ptr_y * cols) {
                     forward(ptr_x, ptr_y, false);
                     draw_char('\u0000');
+                    if (!ascii) {
+                        forward(ptr_x, ptr_y, false);
+                        draw_char('\u0000');
+                    }
                     if (!(ptr_x == ptr_rx && ptr_y == ptr_ry)) {
                         for (auto i = ptr_y * cols + ptr_x; i < ptr_ry * cols + ptr_rx; ++i) {
                             buffer[i] = buffer[i + 1];
@@ -415,6 +433,9 @@ namespace clib {
                         colors_fg[ptr_ry * cols + ptr_rx] = color_fg;
                     }
                     forward(ptr_rx, ptr_ry, false);
+                    if (!ascii) {
+                        forward(ptr_rx, ptr_ry, false);
+                    }
                 }
             }
         }
@@ -547,9 +568,6 @@ namespace clib {
                 if (y != rows - 1) {
                     y++;
                 }
-                else {
-                    new_line();
-                }
             }
             else {
                 x++;
@@ -650,7 +668,7 @@ namespace clib {
     CString cgui::get_disp(cvm::disp_t t) const
     {
         if (vm) {
-                return vm->get_disp(t);
+            return vm->get_disp(t);
         }
         return CString();
     }
