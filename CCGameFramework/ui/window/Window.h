@@ -248,6 +248,8 @@ protected:
 
     void Timer(cint id);
 
+    void ToggleFullscreen();
+
     friend int ui_clear_scene(lua_State *L);
     friend int ui_add_obj(lua_State *L);
     friend int ui_update_obj(lua_State *L);
@@ -277,6 +279,8 @@ private:
     std::unordered_set<struct event*> evts;
     std::unordered_set<std::vector<byte>*> lua_ptrs;
     std::mutex lua_ptrs_mutex;
+    bool fullScreen{ false };
+    CSize fullScreenSize;
 };
 
 extern Window *window;

@@ -1314,6 +1314,9 @@ static void PostKeyLuaMsg(lua_State *L, WindowEvent evt, const KeyInfo& info)
 
 void Window::KeyDown(const KeyInfo& info)
 {
+    if (info.code == VK_F11) {
+        ToggleFullscreen();
+    }
     PostKeyLuaMsg(L, WE_KeyDown, info);
 }
 
@@ -1343,4 +1346,19 @@ void Window::Timer(cint id)
     lua_pushinteger(L, WE_Timer);
     lua_pushinteger(L, id);
     lua_call(L, 2, 0);
+}
+
+void Window::ToggleFullscreen()
+{
+    fullScreen = !fullScreen;
+    if (fullScreen) {
+        fullScreenSize = GetNonClientWindowSize();
+        SetStyle(WS_OVERLAPPEDWINDOW, false);
+        SetWindowPos(handle, NULL, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), NULL);
+    }
+    else {
+        SetStyle(WS_OVERLAPPEDWINDOW, true);
+        SetWindowPos(handle, NULL, 0, 0, fullScreenSize.cx, fullScreenSize.cy, SWP_SHOWWINDOW);
+        Center();
+    }
 }
