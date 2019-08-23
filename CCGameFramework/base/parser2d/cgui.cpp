@@ -94,11 +94,120 @@ namespace clib {
         if (t) {
             return true;
         }
-        std::vector<byte> data;
-        if (vm->read_vfs(name, data)) {
+        if (vm->exist_vfs(name)) {
             return true;
         }
         return false;
+    }
+
+    bool cgui::exist_bin(const string_t& name)
+    {
+        std::smatch res;
+        string_t path;
+        if (std::regex_match(name, res, re_path)) {
+            path = BIN_ROOT + res[0].str() + ".bin";
+        }
+        if (path.empty())
+            return false;
+        std::ifstream t(path);
+        if (!t) {
+            return false;
+        }
+        if (cache.find(name) != cache.end())
+            return true;
+        std::ifstream ifs(path, std::ios::binary);
+        if (ifs) {
+            auto p = ifs.rdbuf();
+            auto size = p->pubseekoff(0, std::ios::end, std::ios::in);
+            p->pubseekpos(0, std::ios::in);
+            std::vector<byte> data;
+            data.resize((size_t)size);
+            p->sgetn((char*)data.data(), size);
+            cache.insert(std::make_pair(name, data));
+            return true;
+        }
+        return false;
+    }
+
+    bool cgui::save_bin(const string_t& name)
+    {
+        std::smatch res;
+        string_t path;
+        if (std::regex_match(name, res, re_path)) {
+            path = BIN_ROOT + res[0].str() + ".bin";
+        }
+        if (path.empty())
+            return false;
+        std::ofstream ofs(path, std::ios::binary);
+        if (ofs) {
+            const auto& data = cache.at(name);
+            ofs.write((const char*)data.data(), data.size());
+            return true;
+        }
+        return false;
+    }
+
+    bool ConvertFileTimeToLocalTime(const FILETIME* lpFileTime, SYSTEMTIME* lpSystemTime)
+    {
+        if (!lpFileTime || !lpSystemTime) {
+            return false;
+        }
+        FILETIME ftLocal;
+        FileTimeToLocalFileTime(lpFileTime, &ftLocal);
+        FileTimeToSystemTime(&ftLocal, lpSystemTime);
+        return true;
+    }
+
+    bool ConvertLocalTimeToFileTime(const SYSTEMTIME* lpSystemTime, FILETIME* lpFileTime)
+    {
+        if (!lpSystemTime || !lpFileTime) {
+            return false;
+        }
+
+        FILETIME ftLocal;
+        SystemTimeToFileTime(lpSystemTime, &ftLocal);
+        LocalFileTimeToFileTime(&ftLocal, lpFileTime);
+        return true;
+    }
+
+    bool cgui::get_fs_time(const string_t& name, const string_t& ext, std::vector<string_t>& time)
+    {
+        std::smatch res;
+        string_t path;
+        if (std::regex_match(name, res, re_path)) {
+            path = BIN_ROOT + res[0].str() + ext;
+        }
+        if (path.empty())
+            return false;
+
+        HANDLE hFile;
+        // Create, Access, Write
+        FILETIME ft[3];
+        SYSTEMTIME st[3];
+
+        auto pp = CString(CStringA(path.c_str()));
+
+        hFile = CreateFile(pp, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
+        if (INVALID_HANDLE_VALUE == hFile) {
+            return false;
+        }
+        GetFileTime(hFile, &ft[0], &ft[1], &ft[2]);
+        for (auto i = 0; i < 3; i++) {
+            ConvertFileTimeToLocalTime(&ft[i], &st[i]);
+            CStringA buf;
+            buf.Format("%04d-%02d-%02d %02d:%02d:%02d.%03d",
+                st[i].wYear,
+                st[i].wMonth,
+                st[i].wDay,
+                st[i].wHour,
+                st[i].wMinute,
+                st[i].wSecond,
+                st[i].wMilliseconds);
+            time.push_back(buf.GetBuffer(0));
+        }
+
+        CloseHandle(hFile);
+        return true;
     }
 
     void cgui::reset() {
@@ -818,7 +927,31 @@ namespace clib {
             return -1;
         auto fail_errno = -1;
         auto new_path = path;
+        auto bin_exist = false;
         if (path[0] != '/') {
+            for (auto& p : paths) {
+                auto pp = p + '/' + path;
+                if (exist_bin(pp)) {
+                    new_path = pp;
+                    bin_exist = true;
+                    break;
+                }
+            }
+        }
+        else if (exist_bin(new_path)) {
+            bin_exist = true;
+        }
+        if (bin_exist) {
+            // 判断生成的二进制文件是否最新
+            // 即：生成时间大于代码修改时间
+            // 失败的话，就删除cache缓存
+            std::vector<string_t> t1, t2;
+            if (get_fs_time(new_path, ".cpp", t1) && get_fs_time(new_path, ".bin", t2) && t1[2] > t2[2]) {
+                // FAILED
+                cache.erase(new_path);
+            }
+        }
+        else if (path[0] != '/') {
             for (auto& p : paths) {
                 auto pp = p + '/' + path;
                 if (exist_file(pp)) {
@@ -848,6 +981,7 @@ namespace clib {
             auto file = gen.file();
             p.clear_ast();
             cache.insert(std::make_pair(new_path, file));
+            save_bin(new_path);
             return vm->load(new_path, file, args);
         }
         catch (const cexception& e) {

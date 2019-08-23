@@ -12,6 +12,7 @@
 #include "memory.h"
 
 #define FILE_ROOT "./script/code"
+#define BIN_ROOT "./script/code"
 #define WAIT_CHAR 0x10000
 #define DELAY_CHAR 0x10001
 #define READ_EOF 0x2000
@@ -219,6 +220,7 @@ namespace clib {
         string_t get_user() const;
         string_t get_pwd() const;
         int get(const string_t& path, vfs_node_dec** dec = nullptr, vfs_func_t* f = nullptr) const;
+        bool exist_vfs(const string_t& path) const;
         bool read_vfs(const string_t& path, std::vector<byte>& data) const;
         bool write_vfs(const string_t& path, const std::vector<byte>& data);
 

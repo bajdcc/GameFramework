@@ -80,6 +80,7 @@ namespace clib {
 
         void map_page(uint32_t addr, uint32_t id) override;
         void as_root(bool flag);
+        bool exist_vfs(const string_t& path) const;
         bool read_vfs(const string_t& path, std::vector<byte>& data) const;
         bool write_vfs(const string_t& path, const std::vector<byte>& data);
 

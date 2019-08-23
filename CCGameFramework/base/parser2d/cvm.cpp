@@ -1849,6 +1849,10 @@ namespace clib {
         fs.as_root(flag);
     }
 
+    bool cvm::exist_vfs(const string_t& path) const {
+        return fs.exist_vfs(path);
+    }
+
     bool cvm::read_vfs(const string_t& path, std::vector<byte>& data) const {
         return fs.read_vfs(path, data);
     }

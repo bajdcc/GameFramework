@@ -99,6 +99,9 @@ namespace clib {
 
         string_t load_file(const string_t& name);
         bool exist_file(const string_t& name);
+        bool exist_bin(const string_t& name);
+        bool save_bin(const string_t& name);
+        bool get_fs_time(const string_t& name, const string_t& ext, std::vector<string_t>& time);
         void reset();
 
     private:

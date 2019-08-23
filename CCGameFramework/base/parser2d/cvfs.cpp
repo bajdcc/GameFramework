@@ -585,6 +585,16 @@ namespace clib {
         return -2;
     }
 
+    bool cvfs::exist_vfs(const string_t& path) const
+    {
+        auto node = get_node(path);
+        if (!node)
+            return false;
+        if (node->type != fs_file)
+            return false;
+        return true;
+    }
+
     bool cvfs::read_vfs(const string_t & path, std::vector<byte> & data) const {
         auto node = get_node(path);
         if (!node)
