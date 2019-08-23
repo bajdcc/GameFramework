@@ -403,13 +403,13 @@ namespace clib {
         };
         static char result[32];
         if (year == timeptr->tm_year) {
-            sprintf(result, "%.3s%3d %.2d:%.2d",
+            snprintf(result, sizeof(result), "%.3s%3d %.2d:%.2d",
                 mon_name[timeptr->tm_mon],
                 timeptr->tm_mday, timeptr->tm_hour,
                 timeptr->tm_min);
         }
         else {
-            sprintf(result, "%.3s%3d %5d",
+            snprintf(result, sizeof(result), "%.3s%3d %5d",
                 //wday_name[timeptr->tm_wday],
                 mon_name[timeptr->tm_mon],
                 timeptr->tm_mday,
@@ -417,6 +417,8 @@ namespace clib {
         }
         return result;
     }
+
+    extern string_t limit_string(const string_t& s, uint len);
 
     void cvfs::ll(const string_t & name, const vfs_node::ref & node, std::ostream & os) const {
         if (!node)
@@ -428,14 +430,14 @@ namespace clib {
             "BCDD29", // magic
         };
         static char fmt[256];
-        sprintf(fmt, "\033FFFA0A0A0\033%c%9s \033FFFB3B920\033%4s \033S4\033%9d \033FFF51C2A8\033%s \033FFF%s\033%s\033S4\033",
+        snprintf(fmt, sizeof(fmt), "\033FFFA0A0A0\033%c%9s \033FFFB3B920\033%4s \033S4\033%9d \033FFF51C2A8\033%s \033FFF%s\033%s\033S4\033",
             node->type == fs_dir ? 'd' : '-',
             (char*)node->mod,
             account[node->owner].name.data(),
             node->data.size(),
             file_time(node->time.create),
             types[(int)node->type],
-            name.data());
+            limit_string(name, 40).data());
         os << fmt << std::endl;
     }
 

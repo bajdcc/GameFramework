@@ -43,6 +43,7 @@ namespace clib {
         fss_semaphore,
         fss_mutex,
         fss_window,
+        fss_uuid,
     };
 
     enum vfs_op_t {

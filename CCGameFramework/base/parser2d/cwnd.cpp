@@ -1120,15 +1120,15 @@ namespace clib {
                 else { // 没访问过，进入
                     if (!printed.test(current)) {
                         ss << std::setfill(L' ') << std::setw(level * 2LL) << "";
-                        wsprintf(sz, L"#%d %8S ", current, handle_typename(handles[current].type).c_str());
+                        _snwprintf(sz, sizeof(sz) / sizeof(sz[0]), L"#%d %8S ", current, handle_typename(handles[current].type).c_str());
                         ss << sz;
                         const auto& ctl = handles[current].comctl;
                         const auto& b = ctl->get_bound();
                         const auto& ms = ctl->min_size();
                         if (ctl->get_layout())
-                            wsprintf(sz, L" Min=%dx%d ", ms.cx, ms.cy);
+                            _snwprintf(sz, sizeof(sz) / sizeof(sz[0]), L" Min=%dx%d ", ms.cx, ms.cy);
                         else
-                            wsprintf(sz, L" Size= %dx%d, Loc= %d,%d,%d,%d, Min=%dx%d ",
+                            _snwprintf(sz, sizeof(sz) / sizeof(sz[0]), L" Size= %dx%d, Loc= %d,%d,%d,%d, Min=%dx%d ",
                                 b.Width(), b.Height(), b.left, b.top, b.right, b.bottom,
                                 ms.cx, ms.cy);
                         ss << sz;

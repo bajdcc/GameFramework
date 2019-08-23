@@ -70,6 +70,7 @@ namespace clib {
         fs.func("/dev/random", this);
         fs.func("/dev/null", this);
         fs.func("/dev/console", this);
+        fs.func("/dev/uuid", this);
         fs.magic("/http", this, fss_net);
         fs.magic("/music", this, fss_music);
         fs.mkdir("/log");
@@ -267,7 +268,7 @@ namespace clib {
 #if REPORT_MEMORY
         {
             static char sz2[200];
-            sprintf(sz2, "[%4d] %-20s : ALLOC %8d -> %08X (%d)", ctx->id, ctx->path.c_str(), size, r, ctx->pool->page_size());
+            snprintf(sz2, "[%4d] %-20s : ALLOC %8d -> %08X (%d)", ctx->id, ctx->path.c_str(), size, r, ctx->pool->page_size());
             std::ofstream log(REPORT_MEMORY_FILE, std::ios::app | std::ios::out);
             log << sz2 << std::endl;
             //ctx->pool->dump_str(log);
@@ -284,7 +285,7 @@ namespace clib {
 #if REPORT_MEMORY
         {
             static char sz2[200];
-            sprintf(sz2, "[%4d] %-20s : FREE  %08X -> %8d", ctx->id, ctx->path.c_str(), addr, r);
+            snprintf(sz2, "[%4d] %-20s : FREE  %08X -> %8d", ctx->id, ctx->path.c_str(), addr, r);
             std::ofstream log(REPORT_MEMORY_FILE, std::ios::app | std::ios::out);
             log << sz2 << std::endl;
             //ctx->pool->dump_str(log);
@@ -1826,7 +1827,7 @@ namespace clib {
         std::stringstream ss;
         for (auto i = ctx->stacktrace_pc.rbegin(); i != ctx->stacktrace_pc.rend(); i++) {
             auto& s = *i;
-            sprintf(sz, "[%08X]", s | ctx->mask);
+            snprintf(sz, sizeof(sz), "[%08X]", s | ctx->mask);
             ss << sz << " " << get_func_info(s) << std::endl;
         }
         return ss.str();
@@ -1893,23 +1894,23 @@ namespace clib {
             return s;
         }
         else {
-            return s.substr(0, len);
+            return s.substr(0, __max(0, len - 3)) + "...";
         }
     }
 
     LPCTSTR get_ips_disp(uint64 ips) {
         static TCHAR _ipsf[32];
         if (ips < 1e3) {
-            wsprintf(_ipsf, L"%I64u", ips);
+            _snwprintf(_ipsf, sizeof(_ipsf) / sizeof(_ipsf[0]), L"%I64u", ips);
         }
         else if (ips < 1e6) {
-            wsprintf(_ipsf, L"%I64uK", ips / 1000ULL);
+            _snwprintf(_ipsf, sizeof(_ipsf) / sizeof(_ipsf[0]), L"%I64uK", ips / 1000ULL);
         }
         else if (ips < 1e9) {
-            wsprintf(_ipsf, L"%I64uM", ips / 1000000ULL);
+            _snwprintf(_ipsf, sizeof(_ipsf) / sizeof(_ipsf[0]), L"%I64uM", ips / 1000000ULL);
         }
         else {
-            wsprintf(_ipsf, L"%I64uG", ips / 1000000000ULL);
+            _snwprintf(_ipsf, sizeof(_ipsf) / sizeof(_ipsf[0]), L"%I64uG", ips / 1000000000ULL);
         }
         return _ipsf;
     }
@@ -1922,7 +1923,7 @@ namespace clib {
             ss << L"[STATE] [FLAG] [PID] [IPS] [COMMAND LINE]     [PAGE]" << std::endl;
             for (auto i = 0; i < TASK_NUM; ++i) {
                 if (tasks[i] && tasks[i]->flag & CTX_VALID) {
-                    wsprintf(sz, L"%7S  %04X   %4d %5s %-18S   %4d",
+                    _snwprintf(sz, sizeof(sz) / sizeof(sz[0]), L"%7S  %04X   %4d %5s %-18S   %4d",
                         state_string(tasks[i]->state),
                         tasks[i]->flag,
                         i,
@@ -1981,12 +1982,12 @@ namespace clib {
                         if (I == -1 && O == -1)
                             sz2[0] = 0;
                         else if (I != -1 && O == -1)
-                            wsprintf(sz2, L"(I=%d,Q=%d) ", I, Q);
+                            _snwprintf(sz2, sizeof(sz2) / sizeof(sz2[0]), L"(I=%d,Q=%d) ", I, Q);
                         else if (I == -1 && O != -1)
-                            wsprintf(sz2, L"(O=%d) ", O);
+                            _snwprintf(sz2, sizeof(sz2) / sizeof(sz2[0]), L"(O=%d) ", O);
                         else
-                            wsprintf(sz2, L"(I=%d,O=%d,Q=%d) ", I, O, Q);
-                        wsprintf(sz, L"#%d %s%S", current, sz2, limit_string(tasks[current]->cmd, 30).c_str());
+                            _snwprintf(sz2, sizeof(sz2) / sizeof(sz2[0]), L"(I=%d,O=%d,Q=%d) ", I, O, Q);
+                        _snwprintf(sz, sizeof(sz2) / sizeof(sz2[0]), L"#%d %s%S", current, sz2, limit_string(tasks[current]->cmd, 30).c_str());
                         ss << sz << std::endl;
                         printed.set(current);
                     }
@@ -2009,15 +2010,16 @@ namespace clib {
         else if (t == D_HANDLE) {
             for (auto i = 0; i < HANDLE_NUM; ++i) {
                 if (handles[i] && handles[i]->type != h_none) {
-                    wsprintf(sz, L"%4d | %6S | %S", i, handle_typename(handles[i]->type).c_str(),
-                        limit_string(handles[i]->name, 30).c_str());
+                    auto nm = CString(CStringA(limit_string(handles[i]->name, 30).c_str()));
+                    _snwprintf(sz, sizeof(sz) / sizeof(sz[0]), L"%4d | %6S | %s", i, handle_typename(handles[i]->type).c_str(),
+                        nm.GetBuffer(0));
                     ss << sz << std::endl;
                 }
             }
         }
         else if (t == D_WINDOW) {
             auto tl = draw_bounds.TopLeft();
-            wsprintf(sz, L"Cursor: %d,%d", global_state.mouse_x - tl.x, global_state.mouse_y - tl.y);
+            _snwprintf(sz, sizeof(sz) / sizeof(sz[0]), L"Cursor: %d,%d", global_state.mouse_x - tl.x, global_state.mouse_y - tl.y);
             ss << sz << std::endl << std::endl;
             for (const auto& w : wnds) {
                 ss << w->to_string() << std::endl;
@@ -2027,11 +2029,11 @@ namespace clib {
             std::wstringstream ss;
             {
                 if (global_state.input_lock == -1)
-                    wsprintf(sz, L"%-18s %9s", L"Input Lock:", L"None");
+                    _snwprintf(sz, sizeof(sz) / sizeof(sz[0]), L"%-18s %9s", L"Input Lock:", L"None");
                 else
-                    wsprintf(sz, L"%-18s %9d", L"Input Lock:", global_state.input_lock);
+                    _snwprintf(sz, sizeof(sz) / sizeof(sz[0]), L"%-18s %9d", L"Input Lock:", global_state.input_lock);
                 ss << sz << std::endl;
-                wsprintf(sz, L"%-18s %9s", L"Input Single:", global_state.input_single ? L"Yes" : L"No");
+                _snwprintf(sz, sizeof(sz) / sizeof(sz[0]), L"%-18s %9s", L"Input Single:", global_state.input_single ? L"Yes" : L"No");
                 ss << sz << std::endl;
                 std::string str;
                 if (global_state.input_waiting_list.empty())
@@ -2043,7 +2045,7 @@ namespace clib {
                     str = ss2.str();
                     str.pop_back();
                 }
-                wsprintf(sz, L"%-18s %9S", L"Input Waiting:  ", str.c_str()); ss << sz << std::endl;
+                _snwprintf(sz, sizeof(sz) / sizeof(sz[0]), L"%-18s %9S", L"Input Waiting:  ", str.c_str()); ss << sz << std::endl;
             }
             int mems = 0, pages = 0, heaps = 0, heaps_a = 0, kernel_pages = 0;
             for (auto i = 0; i < TASK_NUM; ++i) {
@@ -2055,13 +2057,13 @@ namespace clib {
                     kernel_pages += tasks[i]->pgdir.size();
                 }
             }
-            wsprintf(sz, L"%-18s %9d", L"Memory Total:", mems * PAGE_SIZE); ss << sz << std::endl;
-            wsprintf(sz, L"%-18s %9d", L"Heap Total:", heaps * PAGE_SIZE); ss << sz << std::endl;
-            wsprintf(sz, L"%-18s %9d", L"Heap Using:", heaps * PAGE_SIZE - heaps_a); ss << sz << std::endl;
-            wsprintf(sz, L"%-18s %9d", L"Heap Free:", heaps_a); ss << sz << std::endl;
-            wsprintf(sz, L"%-18s %9d", L"Kernel Page:", kernel_pages); ss << sz << std::endl;
-            wsprintf(sz, L"%-18s %9d", L"User Page:", pages); ss << sz << std::endl;
-            wsprintf(sz, L"%-18s %9I64u", L"File system:", fs.size()); ss << sz << std::endl;
+            _snwprintf(sz, sizeof(sz) / sizeof(sz[0]), L"%-18s %9d", L"Memory Total:", mems * PAGE_SIZE); ss << sz << std::endl;
+            _snwprintf(sz, sizeof(sz) / sizeof(sz[0]), L"%-18s %9d", L"Heap Total:", heaps * PAGE_SIZE); ss << sz << std::endl;
+            _snwprintf(sz, sizeof(sz) / sizeof(sz[0]), L"%-18s %9d", L"Heap Using:", heaps * PAGE_SIZE - heaps_a); ss << sz << std::endl;
+            _snwprintf(sz, sizeof(sz) / sizeof(sz[0]), L"%-18s %9d", L"Heap Free:", heaps_a); ss << sz << std::endl;
+            _snwprintf(sz, sizeof(sz) / sizeof(sz[0]), L"%-18s %9d", L"Kernel Page:", kernel_pages); ss << sz << std::endl;
+            _snwprintf(sz, sizeof(sz) / sizeof(sz[0]), L"%-18s %9d", L"User Page:", pages); ss << sz << std::endl;
+            _snwprintf(sz, sizeof(sz), L"%-18s %9I64u", L"File system:", fs.size()); ss << sz << std::endl;
             return CString(ss.str().c_str());
         }
         return CString(ss.str().c_str());
@@ -2083,11 +2085,11 @@ namespace clib {
                     return tasks[id]->path;
                 }
                 else if (op == "parent") {
-                    sprintf(sz, "%d", tasks[id]->parent);
+                    snprintf(sz, sizeof(sz), "%d", tasks[id]->parent);
                     return sz;
                 }
                 else if (op == "heap_size") {
-                    sprintf(sz, "%d", tasks[id]->pool->page_size());
+                    snprintf(sz, sizeof(sz), "%d", tasks[id]->pool->page_size());
                     return sz;
                 }
                 else if (op == "path") {
@@ -2119,7 +2121,7 @@ namespace clib {
                     ss << "\033FFFA0A0A0\033[STATE] \033S4\033[FLAG] [PID] [PPID]\033FFFB3B920\033 [COMMAND LINE]     \033FFF51C2A8\033[PAGE]\033S4\033" << std::endl;
                     for (auto i = 0; i < TASK_NUM; ++i) {
                         if (tasks[i] && tasks[i]->flag & CTX_VALID) {
-                            sprintf(sz, "\033FFFA0A0A0\033%7s \033S4\033 %04X   %4d   %4d \033FFFB3B920\033%-18s \033FFF51C2A8\033  %4d\033S4\033",
+                            snprintf(sz, sizeof(sz), "\033FFFA0A0A0\033%7s \033S4\033 %04X   %4d   %4d \033FFFB3B920\033%-18s \033FFF51C2A8\033  %4d\033S4\033",
                                 state_string(tasks[i]->state),
                                 tasks[i]->flag,
                                 i,
@@ -2143,12 +2145,12 @@ namespace clib {
                             kernel_pages += tasks[i]->pgdir.size();
                         }
                     }
-                    sprintf(sz, "%-18s %d", "Memory Total:", mems * PAGE_SIZE); ss << sz << std::endl;
-                    sprintf(sz, "%-18s %d", "Heap Total:", heaps * PAGE_SIZE); ss << sz << std::endl;
-                    sprintf(sz, "%-18s %d", "Heap Using:", heaps * PAGE_SIZE - heaps_a); ss << sz << std::endl;
-                    sprintf(sz, "%-18s %d", "Heap Free:", heaps_a); ss << sz << std::endl;
-                    sprintf(sz, "%-18s %d", "Kernel Page:", kernel_pages); ss << sz << std::endl;
-                    sprintf(sz, "%-18s %d", "User Page:", pages); ss << sz << std::endl;
+                    snprintf(sz, sizeof(sz), "%-18s %d", "Memory Total:", mems * PAGE_SIZE); ss << sz << std::endl;
+                    snprintf(sz, sizeof(sz), "%-18s %d", "Heap Total:", heaps * PAGE_SIZE); ss << sz << std::endl;
+                    snprintf(sz, sizeof(sz), "%-18s %d", "Heap Using:", heaps * PAGE_SIZE - heaps_a); ss << sz << std::endl;
+                    snprintf(sz, sizeof(sz), "%-18s %d", "Heap Free:", heaps_a); ss << sz << std::endl;
+                    snprintf(sz, sizeof(sz), "%-18s %d", "Kernel Page:", kernel_pages); ss << sz << std::endl;
+                    snprintf(sz, sizeof(sz), "%-18s %d", "User Page:", pages); ss << sz << std::endl;
                     return ss.str();
                 }
                 else if (op == "time") {
@@ -2220,6 +2222,26 @@ namespace clib {
                         return handles[id]->data.cwnd->handle_fs(res[3].str());
                     }
                     return "\033FFFF00000\033[ERROR] Invalid handle.\033S4\033";
+                }
+            }
+        }
+        else if (path.substr(0, 5) == "/dev/") {
+            static string_t pat{ R"(/dev/([a-z_]+))" };
+            static std::regex re(pat);
+            std::smatch res;
+            if (std::regex_match(path, res, re)) {
+                const auto& op = res[1].str();
+                if (op == "uuid") {
+                    GUID guid;
+                    if (S_OK == CoCreateGuid(&guid)) {
+                        snprintf(sz, sizeof(sz),
+                            "%08X-%04X-%04x-%02X%02X-%02X%02X%02X%02X%02X%02X",
+                            guid.Data1, guid.Data2, guid.Data3,
+                            guid.Data4[0], guid.Data4[1], guid.Data4[2],
+                            guid.Data4[3], guid.Data4[4], guid.Data4[5],
+                            guid.Data4[6], guid.Data4[7]);
+                        return sz;
+                    }
                 }
             }
         }
@@ -2487,25 +2509,25 @@ namespace clib {
         static char str[256];
         switch (id) {
         case 1:
-            sprintf(str, "%d", ctx->ax._i);
+            snprintf(str, sizeof(str), "%d", ctx->ax._i);
             break;
         case 2:
-            sprintf(str, "%p", ctx->ax._p);
+            snprintf(str, sizeof(str), "%p", ctx->ax._p);
             break;
         case 4:
-            sprintf(str, "%f", ctx->ax._f);
+            snprintf(str, sizeof(str), "%f", ctx->ax._f);
             break;
         case 6:
-            sprintf(str, "%f", ctx->ax._d);
+            snprintf(str, sizeof(str), "%f", ctx->ax._d);
             break;
         case 7:
-            sprintf(str, "%lld", ctx->ax._q);
+            snprintf(str, sizeof(str), "%lld", ctx->ax._q);
             break;
         case 9:
-            sprintf(str, "%llu", ctx->ax._uq);
+            snprintf(str, sizeof(str), "%llu", ctx->ax._uq);
             break;
         default:
-            sprintf(str, "[Invalid format]");
+            snprintf(str, sizeof(str), "[Invalid format]");
             break;
         }
         return str;
@@ -3319,6 +3341,8 @@ namespace clib {
                     }
                 }
             }
+            std::unique_ptr<vfs_node_dec> dec_ref;
+            if (dec) dec_ref.reset(dec);
             if (dec && is_window_handle(h)) {
                 data.clear();
                 if (dec->get_data(data)) {

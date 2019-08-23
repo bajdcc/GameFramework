@@ -627,7 +627,7 @@ namespace clib {
                             line = lexer->get_line();
                             column = lexer->get_column();
                         }
-                        sprintf(fmt, "[%d,%d:%d:%d:%d]%s State: %3d => To: %3d   -- Action: %-10s -- Rule: %s",
+                        snprintf(fmt, sizeof(fmt), "[%d,%d:%d:%d:%d]%s State: %3d => To: %3d   -- Action: %-10s -- Rule: %s",
                             line, column, ast_cache_index, ast_stack.size(),
                             bks.size(), is_end ? "*" : "", state, jump,
                             pda_edge_str(t.type).c_str(), current_state.label.c_str());

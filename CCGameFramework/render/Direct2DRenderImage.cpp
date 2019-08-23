@@ -538,7 +538,7 @@ void SolidImageElementRenderer::Render(CRect bounds)
                     bitmap,
                     D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
                     e->GetOpacity(),
-                    D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR
+                    D2D1_BITMAP_INTERPOLATION_MODE_LINEAR
                 );
             }
         }

@@ -222,18 +222,18 @@ namespace clib {
 
     void cmem::dump_str(std::ostream& os) const {
         static char sz[200];
-        sprintf(sz, "PAGE: %d, FREE: %d", memory_page.size(), available_size);
+        snprintf(sz, sizeof(sz), "PAGE: %d, FREE: %d", memory_page.size(), available_size);
         os << sz << std::endl;
         for (auto& f : memory_free) {
-            sprintf(sz, "FREE: %08X, SIZE: %08X", f.first, f.second);
+            snprintf(sz, sizeof(sz), "FREE: %08X, SIZE: %08X", f.first, f.second);
             os << sz << std::endl;
         }
         for (auto& f : memory_used) {
-            sprintf(sz, "USED: %08X, SIZE: %08X", f.first, f.second);
+            snprintf(sz, sizeof(sz), "USED: %08X, SIZE: %08X", f.first, f.second);
             os << sz << std::endl;
         }
         for (auto& f : memory_page) {
-            sprintf(sz, "PAGE: %08X", f);
+            snprintf(sz, sizeof(sz), "PAGE: %08X", f);
             os << sz << std::endl;
         }
         //check();

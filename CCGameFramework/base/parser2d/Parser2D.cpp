@@ -134,13 +134,13 @@ int Parser2DEngine::SetType(cint value)
 static char* ipsf(double ips) {
     static char _ipsf[32];
     if (ips < 1e3) {
-        sprintf(_ipsf, "%.1f", ips);
+        snprintf(_ipsf, sizeof(_ipsf), "%.1f", ips);
     }
     else if (ips < 1e6) {
-        sprintf(_ipsf, "%.1fK", ips * 1e-3);
+        snprintf(_ipsf, sizeof(_ipsf), "%.1fK", ips * 1e-3);
     }
     else if (ips < 1e9) {
-        sprintf(_ipsf, "%.1fM", ips * 1e-6);
+        snprintf(_ipsf, sizeof(_ipsf), "%.1fM", ips * 1e-6);
     }
     return _ipsf;
 }
