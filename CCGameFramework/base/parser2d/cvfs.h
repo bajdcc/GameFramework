@@ -44,6 +44,7 @@ namespace clib {
         fss_mutex,
         fss_window,
         fss_uuid,
+        fss_server,
     };
 
     enum vfs_op_t {

@@ -58,3 +58,6 @@ sleep 1 show
 echo 【JSON】
 sleep 1 show
 /usr/test_json
+echo 【服务器】
+sleep 1 show
+/usr/test_server

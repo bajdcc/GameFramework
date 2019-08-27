@@ -11,11 +11,13 @@
 // Windows 头文件: 
 #include <windows.h>
 
+/*
 #ifdef _DEBUG
 #pragma push_macro("new")
 #undef new
 #define new new(_NORMAL_BLOCK, __FILE__, __LINE__)  
 #endif
+*/
 
 // C 运行时头文件
 #include <stdlib.h>
@@ -48,10 +50,6 @@
 #include <iomanip>
 
 #include <crtdbg.h>
-
-#ifdef _DEBUG
-#pragma pop_macro("new")
-#endif
 
 #define _ATL_CSTRING_EXPLICIT_CONSTRUCTORS      // 某些 CString 构造函数将是显式的
 
@@ -118,3 +116,10 @@
 #pragma comment(lib, "lib\\iodev_usb")
 #pragma comment(lib, "lib\\memory")
 #pragma comment(lib, "lib\\stubs")
+
+#pragma comment(lib, "lib\\pthreadVC2")
+#ifdef _DEBUG
+#pragma comment(lib, "lib\\libmicrohttpd_d")
+#else
+#pragma comment(lib, "lib\\libmicrohttpd")
+#endif

@@ -320,4 +320,159 @@ namespace clib {
     int vfs_node_stream_net::truncate() {
         return -1;
     }
+
+    int vfs_node_stream_server::net_server_thread(
+        void* cls,
+        MHD_Connection* connection,
+        const char* url,
+        const char* method,
+        const char* version,
+        const char* upload_data,
+        size_t* upload_data_size,
+        void** ptr)
+    {
+        auto server = (vfs_node_stream_server*)cls;
+        MHD_Response* response;
+        int ret;
+
+        if (0 != strcmp(method, "GET"))
+            return MHD_NO; /* unexpected method */
+        if (0 != *upload_data_size)
+            return MHD_NO; /* upload data in a GET!? */
+        *ptr = NULL; /* clear context pointer */
+        pthread_mutex_lock(&server->enter);
+        server->ref++;
+        server->gen_req(url);
+        if (server->state == 5) {
+            pthread_mutex_unlock(&server->enter);
+            return MHD_NO;
+        }
+        auto size = server->resp.size();
+        auto data = (char*)malloc(size);
+        CopyMemory(data, server->resp.data(), size);
+        server->reset();
+        response = MHD_create_response_from_buffer(size,
+            (void*)data,
+            MHD_RESPMEM_MUST_FREE);
+        server->ref--;
+        pthread_mutex_unlock(&server->enter);
+        ret = MHD_queue_response(connection,
+            MHD_HTTP_OK,
+            response);
+        MHD_destroy_response(response);
+        return ret;
+    }
+
+    vfs_node_stream_server::vfs_node_stream_server(const vfs_mod_query* mod, vfs_stream_t s, vfs_stream_call* call, const string_t& path, int port) :
+        vfs_node_dec(mod), stream(s), call(call), port(port) {
+        daemon = MHD_start_daemon(MHD_USE_THREAD_PER_CONNECTION,
+            port,
+            NULL,
+            NULL,
+            &net_server_thread,
+            this,
+            MHD_OPTION_END);
+        if (!daemon) {
+            state = 3;
+            return;
+        }
+        sem_init(&sem, 0, 0);
+        pthread_mutex_init(&enter, nullptr);
+        state = 1;
+    }
+
+    vfs_node_stream_server::~vfs_node_stream_server()
+    {
+        auto ref2 = ref;
+        state = 5;
+        for (auto i = 0; i < ref2; i++) {
+            sem_post(&sem);
+        }
+        if (daemon)
+            MHD_stop_daemon(daemon);
+        if (sem)
+            sem_destroy(&sem);
+        if (enter)
+            pthread_mutex_destroy(&enter);
+    }
+
+    vfs_node_dec* vfs_node_stream_server::create(const vfs_mod_query* mod, vfs_stream_t s, vfs_stream_call* call, const string_t& path)
+    {
+        static string_t pat{ R"(/server/([0-9]{1,5}))" };
+        static std::regex re(pat);
+        std::smatch res;
+        if (std::regex_match(path, res, re)) {
+            auto op = res[1].str();
+            int port = atoi(op.c_str());
+            if (port > 0 && port < 65536) {
+                return new vfs_node_stream_server(mod, s, call, path, port);
+            }
+        }
+        return nullptr;
+    }
+
+    void vfs_node_stream_server::gen_req(const char* url)
+    {
+        std::stringstream ss;
+        ss << "{";
+        ss << "url:\"" << url << "\"";
+        ss << "}";
+        req_string = ss.str();
+        state = 2;
+        sem_wait(&sem);
+    }
+
+    void vfs_node_stream_server::reset()
+    {
+        state = 1;
+        req_string.clear();
+        resp.clear();
+        idx = 0;
+    }
+
+    bool vfs_node_stream_server::available() const {
+        return state == 2 && idx < req_string.size();
+    }
+
+    int vfs_node_stream_server::index() const {
+        if (state == 3)
+            return READ_ERROR;
+        if (state == 2) {
+            if (idx < req_string.size())
+                return req_string[idx];
+            return READ_EOF;
+        }
+        return WAIT_CHAR;
+    }
+
+    void vfs_node_stream_server::advance() {
+        if (available())
+            idx++;
+    }
+
+    int vfs_node_stream_server::write(byte c) {
+        if (state != 2)
+            return -1;
+        resp.push_back(c);
+        return 0;
+    }
+
+    int vfs_node_stream_server::truncate() {
+        if (state != 2)
+            return -1;
+        state = 4;
+        sem_post(&sem);
+        return 0;
+    }
+
+    bool vfs_node_stream_server::set_data(const std::vector<byte>& data)
+    {
+        if (state != 2)
+            return false;
+        resp.resize(data.size());
+        std::copy(data.begin(), data.end(), resp.begin());
+        state = 4;
+        sem_post(&sem);
+        return true;
+    }
 }

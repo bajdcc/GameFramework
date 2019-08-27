@@ -76,6 +76,7 @@ namespace clib {
         fs.mkdir("/log");
         fs.func("/log/info", this);
         fs.func("/log/err", this);
+        fs.magic("/server", this, fss_server);
         fs.load("/usr/logo.txt");
         fs.load("/usr/badapple.txt");
         fs.load("/usr/test_command.txt");
@@ -1886,6 +1887,9 @@ namespace clib {
         else if (path.substr(0, 6) == "/music") {
             return fss_music;
         }
+        else if (path.substr(0, 7) == "/server") {
+            return fss_server;
+        }
         return fss_none;
     }
 
@@ -2260,6 +2264,9 @@ namespace clib {
         }
         if (type == fss_window) {
             return vfs_node_stream_window::create(mod, type, this, path);
+        }
+        if (type == fss_server) {
+            return vfs_node_stream_server::create(mod, type, this, path);
         }
         if (type != fss_none) {
             return vfs_node_stream::create(mod, type, this);

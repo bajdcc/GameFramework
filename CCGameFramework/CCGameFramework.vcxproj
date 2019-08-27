@@ -257,6 +257,7 @@ xcopy /r /y /e "$(ProjectDir)dll" "$(TargetDir)"</Command>
     <ClInclude Include="base\json\cjdom.h" />
     <ClInclude Include="base\json\cjlexer.h" />
     <ClInclude Include="base\json\cjparser.h" />
+    <ClInclude Include="base\libmicrohttpd\microhttpd.h" />
     <ClInclude Include="base\libqrencode\bitstream.h" />
     <ClInclude Include="base\libqrencode\config.h" />
     <ClInclude Include="base\libqrencode\mask.h" />
@@ -303,6 +304,9 @@ xcopy /r /y /e "$(ProjectDir)dll" "$(TargetDir)"</Command>
     <ClInclude Include="base\pe2d\math\vector2.h" />
     <ClInclude Include="base\pe2d\math\vector3.h" />
     <ClInclude Include="base\pe2d\PhysicsEngine2D.h" />
+    <ClInclude Include="base\pthread\pthread.h" />
+    <ClInclude Include="base\pthread\sched.h" />
+    <ClInclude Include="base\pthread\semaphore.h" />
     <ClInclude Include="base\utils.h" />
     <ClInclude Include="base\bochs\bx_debug\debug.h" />
     <ClInclude Include="base\bochs\gui\siminterface.h" />

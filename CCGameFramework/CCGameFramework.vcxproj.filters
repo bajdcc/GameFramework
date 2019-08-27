@@ -541,6 +541,18 @@
     <ClInclude Include="base\parser2d\cwnd.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="base\pthread\pthread.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\pthread\sched.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\pthread\semaphore.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\libmicrohttpd\microhttpd.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
