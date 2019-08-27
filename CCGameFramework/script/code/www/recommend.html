@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>recommend</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <style type="text/css">a,abbr,acronym,address,applet,article,aside,audio,b,big,blockquote,body,canvas,caption,center,cite,code,dd,del,details,dfn,div,dl,dt,em,embed,fieldset,figcaption,figure,footer,form,h1,h2,h3,h4,h5,h6,header,hgroup,html,i,iframe,img,ins,kbd,label,legend,li,mark,menu,nav,object,ol,output,p,pre,q,ruby,s,samp,section,small,span,strike,strong,sub,summary,sup,table,tbody,td,tfoot,th,thead,time,tr,tt,u,ul,var,video{margin:0;padding:0;border:0}body{font-family:Helvetica,arial,freesans,clean,sans-serif;font-size:14px;line-height:1.6;color:#333;background-color:#fff;padding:20px;max-width:960px;margin:0 auto}body>:first-child{margin-top:0!important}body>:last-child{margin-bottom:0!important}blockquote,dl,ol,p,pre,table,ul{margin:15px 0}h1,h2,h3,h4,h5,h6{margin:20px 0 10px;padding:0;font-weight:700;-webkit-font-smoothing:antialiased}h1 code,h1 tt,h2 code,h2 tt,h3 code,h3 tt,h4 code,h4 tt,h5 code,h5 tt,h6 code,h6 tt{font-size:inherit}h1{font-size:28px;color:#000}h2{font-size:24px;border-bottom:1px solid #ccc;color:#000}h3{font-size:18px}h4{font-size:16px}h5{font-size:14px}h6{color:#777;font-size:14px}body>h1:first-child,body>h1:first-child+h2,body>h2:first-child,body>h3:first-child,body>h4:first-child,body>h5:first-child,body>h6:first-child{margin-top:0;padding-top:0}a:first-child h1,a:first-child h2,a:first-child h3,a:first-child h4,a:first-child h5,a:first-child h6{margin-top:0;padding-top:0}h1+p,h2+p,h3+p,h4+p,h5+p,h6+p{margin-top:10px}a{color:#4183C4;text-decoration:none}a:hover{text-decoration:underline}ol,ul{padding-left:30px}ol li ol:first-of-type,ol li ul:first-of-type,ol li>:first-child,ul li ol:first-of-type,ul li ul:first-of-type,ul li>:first-child{margin-top:0}ol ol,ol ul,ul ol,ul ul{margin-bottom:0}dl{padding:0}dl dt{font-size:14px;font-weight:700;font-style:italic;padding:0;margin:15px 0 5px}dl dt:first-child{padding:0}dl dt>:first-child{margin-top:0}dl dt>:last-child{margin-bottom:0}dl dd{margin:0 0 15px;padding:0 15px}dl dd>:first-child{margin-top:0}dl dd>:last-child{margin-bottom:0}code,pre,tt{font-size:12px;font-family:Consolas,"Liberation Mono",Courier,monospace}code,tt{margin:0 0;padding:0 0;white-space:nowrap;border:1px solid #eaeaea;background-color:#f8f8f8;border-radius:3px}pre>code{margin:0;padding:0;white-space:pre;border:none;background:0 0}pre{background-color:#f8f8f8;border:1px solid #ccc;font-size:13px;line-height:19px;overflow:auto;padding:6px 10px;border-radius:3px}pre code,pre tt{background-color:transparent;border:none}kbd{-moz-border-bottom-colors:none;-moz-border-left-colors:none;-moz-border-right-colors:none;-moz-border-top-colors:none;background-color:#DDD;background-image:linear-gradient(#F1F1F1,#DDD);background-repeat:repeat-x;border-color:#DDD #CCC #CCC #DDD;border-image:none;border-radius:2px 2px 2px 2px;border-style:solid;border-width:1px;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;line-height:10px;padding:1px 4px}blockquote{border-left:4px solid #DDD;padding:0 15px;color:#777}blockquote>:first-child{margin-top:0}blockquote>:last-child{margin-bottom:0}hr{clear:both;margin:15px 0;height:0;overflow:hidden;border:none;background:0 0;border-bottom:4px solid #ddd;padding:0}table th{font-weight:700}table td,table th{border:1px solid #ccc;padding:6px 13px}table tr{border-top:1px solid #ccc;background-color:#fff}table tr:nth-child(2n){background-color:#f8f8f8}img{max-width:100%}</style>
+<style type="text/css">.highlight{background:#fff}.highlight .c{color:#998;font-style:italic}.highlight .err{color:#a61717;background-color:#e3d2d2}.highlight .k{font-weight:700}.highlight .o{font-weight:700}.highlight .cm{color:#998;font-style:italic}.highlight .cp{color:#999;font-weight:700}.highlight .c1{color:#998;font-style:italic}.highlight .cs{color:#999;font-weight:700;font-style:italic}.highlight .gd{color:#000;background-color:#fdd}.highlight .gd .x{color:#000;background-color:#faa}.highlight .ge{font-style:italic}.highlight .gr{color:#a00}.highlight .gh{color:#999}.highlight .gi{color:#000;background-color:#dfd}.highlight .gi .x{color:#000;background-color:#afa}.highlight .go{color:#888}.highlight .gp{color:#555}.highlight .gs{font-weight:700}.highlight .gu{color:#aaa}.highlight .gt{color:#a00}.highlight .kc{font-weight:700}.highlight .kd{font-weight:700}.highlight .kp{font-weight:700}.highlight .kr{font-weight:700}.highlight .kt{color:#458;font-weight:700}.highlight .m{color:#099}.highlight .s{color:#d14}.highlight .na{color:teal}.highlight .nb{color:#0086B3}.highlight .nc{color:#458;font-weight:700}.highlight .no{color:teal}.highlight .ni{color:purple}.highlight .ne{color:#900;font-weight:700}.highlight .nf{color:#900;font-weight:700}.highlight .nn{color:#555}.highlight .nt{color:navy}.highlight .nv{color:teal}.highlight .ow{font-weight:700}.highlight .w{color:#bbb}.highlight .mf{color:#099}.highlight .mh{color:#099}.highlight .mi{color:#099}.highlight .mo{color:#099}.highlight .sb{color:#d14}.highlight .sc{color:#d14}.highlight .sd{color:#d14}.highlight .s2{color:#d14}.highlight .se{color:#d14}.highlight .sh{color:#d14}.highlight .si{color:#d14}.highlight .sx{color:#d14}.highlight .sr{color:#009926}.highlight .s1{color:#d14}.highlight .ss{color:#990073}.highlight .bp{color:#999}.highlight .vc{color:teal}.highlight .vg{color:teal}.highlight .vi{color:teal}.highlight .il{color:#099}.pl-c{color:#969896}.pl-c1,.pl-mdh,.pl-mm,.pl-mp,.pl-mr,.pl-s1 .pl-v,.pl-s3,.pl-sc,.pl-sv{color:#0086b3}.pl-e,.pl-en{color:#795da3}.pl-s1 .pl-s2,.pl-smi,.pl-smp,.pl-stj,.pl-vo,.pl-vpf{color:#333}.pl-ent{color:#63a35c}.pl-k,.pl-s,.pl-st{color:#a71d5d}.pl-pds,.pl-s1,.pl-s1 .pl-pse .pl-s2,.pl-sr,.pl-sr .pl-cce,.pl-sr .pl-sra,.pl-sr .pl-sre,.pl-src,.pl-v{color:#df5000}.pl-id{color:#b52a1d}.pl-ii{background-color:#b52a1d;color:#f8f8f8}.pl-sr .pl-cce{color:#63a35c;font-weight:700}.pl-ml{color:#693a17}.pl-mh,.pl-mh .pl-en,.pl-ms{color:#1d3e81;font-weight:700}.pl-mq{color:teal}.pl-mi{color:#333;font-style:italic}.pl-mb{color:#333;font-weight:700}.pl-md,.pl-mdhf{background-color:#ffecec;color:#bd2c00}.pl-mdht,.pl-mi1{background-color:#eaffea;color:#55a532}.pl-mdr{color:#795da3;font-weight:700}.pl-mo{color:#1d3e81}.task-list{padding-left:10px;margin-bottom:0}.task-list li{margin-left:20px}.task-list-item{list-style-type:none;padding-left:10px}.task-list-item label{font-weight:400}.task-list-item.enabled label{cursor:pointer}.task-list-item+.task-list-item{margin-top:3px}.task-list-item-checkbox{display:inline-block;margin-left:-20px;margin-right:3px;vertical-align:1px}</style>
+</head>
+
+<body>
+    <h1 id="Recommend">Recommend</h1>
+    <h4 id="Author: bajdcc"><em>Author: bajdcc</em></h4>
+    <hr>
+    <h1 id="1. Books">1. Books</h1>
+    <h2 id="1.1 Java">1.1 Java</h2>
+    <h4 id="1.1.1 Programming">1.1.1 Programming</h4>
+    <ul>
+        <li>&#x300A;Java&#x5F00;&#x53D1;&#x5B9E;&#x6218;1200&#x4F8B;&#x300B;</li>
+        <li>&#x300A;Java23&#x79CD;&#x8BBE;&#x8BA1;&#x6A21;&#x5F0F;&#x300B;</li>
+        <li>&#x300A;&#x75AF;&#x72C2;JAVA&#x8BB2;&#x4E49;&#x300B;</li>
+        <li><em>Thinking In Java</em></li>
+        <li><em>Head First Java</em></li>
+    </ul>
+    <h4 id="1.1.2 J2EE">1.1.2 J2EE</h4>
+    <ul>
+        <li>&#x300A;Java Web&#x5F00;&#x53D1;&#x5B9E;&#x6218;1200&#x4F8B;&#x300B;</li>
+        <li>&#x300A;JSP WEB&#x9AD8;&#x7EA7;&#x7F16;&#x7A0B;&#x300B;</li>
+        <li>&#x300A;J2EE Spring Stucts Hibernate&#x67B6;&#x6784;&#x300B;</li>
+        <li>&#x300A;Hibernate&#x5B9E;&#x6218;&#x300B;</li>
+        <li>&#x300A;Struts2&#x5165;&#x95E8;&#x6559;&#x7A0B;&#x300B;</li>
+        <li><em>Jave Spring Live</em></li>
+        <li><em>Head First Servlet and JSP</em></li>
+    </ul>
+    <h4 id="1.1.3 Android">1.1.3 Android</h4>
+    <ul>
+        <li>&#x300A;Android&#x7CFB;&#x7EDF;&#x539F;&#x7406;&#x53CA;&#x5F00;&#x53D1;&#x8981;&#x70B9;&#x8BE6;&#x89E3;&#x300B;</li>
+        <li>&#x300A;Android 4.0&#x7F51;&#x7EDC;&#x7F16;&#x7A0B;&#x8BE6;&#x89E3;&#x300B;</li>
+        <li>&#x300A;Android&#x5E94;&#x7528;&#x6848;&#x4F8B;&#x5F00;&#x53D1;&#x5927;&#x5168;&#x300B;</li>
+    </ul>
+    <h2 id="1.2 Web Front-End">1.2 Web Front-End</h2>
+    <h4 id="1.2.1 HTML &amp; CSS">1.2.1 HTML &amp; CSS</h4>
+    <ul>
+        <li>&#x300A;HTML&#x4E0E;XHTML&#x6743;&#x5A01;&#x6307;&#x5357;&#x300B;</li>
+        <li>&#x300A;HTML5&#x4E0E;CSS3&#x6743;&#x5A01;&#x6307;&#x5357;&#x300B;</li>
+        <li>&#x300A;Web&#x7F16;&#x7A0B;&#x5165;&#x95E8;&#x7ECF;&#x5178;&#xFF1A;HTML&#x3001;XHTML&#x548C;CSS&#x300B;</li>
+    </ul>
+    <h4 id="1.2.2 JavaScript">1.2.2 JavaScript</h4>
+    <ul>
+        <li>&#x300A;JavaScript&#x5165;&#x95E8;&#x7ECF;&#x5178;&#x300B;</li>
+        <li>&#x300A;&#x7CBE;&#x901A;JavaScript&#x300B;</li>
+        <li>&#x300A;JavaScript&#x6743;&#x5A01;&#x6307;&#x5357;&#x300B;</li>
+        <li>&#x300A;JavaScript DOM&#x7F16;&#x7A0B;&#x827A;&#x672F;&#x300B;</li>
+        <li><em>Head First Javascipt</em></li>
+    </ul>
+    <h4 id="1.2.3 jQuery">1.2.3 jQuery</h4>
+    <ul>
+        <li>&#x300A;&#x950B;&#x5229;&#x7684;jQuery&#x300B;</li>
+        <li>&#x300A;jQuery&#x5B9E;&#x6218;&#x300B;</li>
+        <li>&#x300A;jQuery&#x6743;&#x5A01;&#x6307;&#x5357;&#x300B;</li>
+    </ul>
+    <h2 id="1.3 Database">1.3 Database</h2>
+    <ul>
+        <li>&#x300A;SQL&#x57FA;&#x7840;&#x6559;&#x7A0B;&#x300B;</li>
+        <li>&#x300A;&#x6DF1;&#x5165;&#x7406;&#x89E3;MySQL&#x300B;</li>
+    </ul>
+    <h2 id="1.4 Script">1.4 Script</h2>
+    <h4 id="1.4.1 Python">1.4.1 Python</h4>
+    <ul>
+        <li>&#x300A;Python&#x6838;&#x5FC3;&#x7F16;&#x7A0B;&#x300B;</li>
+        <li><em>Programming Python</em></li>
+        <li><em>Thinking In Python</em></li>
+    </ul>
+    <h4 id="1.4.2 Bash">1.4.2 Bash</h4>
+    <ul>
+        <li>&#x300A;Bash&#x4E2D;&#x6587;&#x6587;&#x6863;&#x300B;</li>
+    </ul>
+    <h4 id="1.4.3 Lua">1.4.3 Lua</h4>
+    <ul>
+        <li>&#x300A;Lua&#x7A0B;&#x5E8F;&#x8BBE;&#x8BA1;&#x300B;</li>
+        <li>&#x300A;Lua&#x9AD8;&#x7EA7;&#x6559;&#x7A0B;&#x300B;</li>
+    </ul>
+    <h2 id="1.5 Other Web Programming Languages">1.5 Other Web Programming Languages</h2>
+    <h4 id="1.5.1 PHP">1.5.1 PHP</h4>
+    <ul>
+        <li>&#x300A;PHP&#x5F00;&#x53D1;&#x5B9E;&#x6218;1200&#x4F8B;&#x300B;</li>
+        <li>&#x300A;&#x6DF1;&#x5165;PHP&#x9762;&#x5411;&#x5BF9;&#x8C61;&#x3001;&#x6A21;&#x5F0F;&#x4E0E;&#x5B9E;&#x8DF5;&#x300B;</li>
+        <li>&#x300A;PHP&#x4ECE;&#x5165;&#x95E8;&#x5230;&#x7CBE;&#x901A;&#x300B;</li>
+    </ul>
+    <h4 id="1.5.2 Node.js">1.5.2 Node.js</h4>
+    <ul>
+        <li>&#x300A;Node.js&#x5F00;&#x53D1;&#x6307;&#x5357;&#x300B;</li>
+    </ul>
+    <h4 id="1.5.3 ASP.NET">1.5.3 ASP.NET</h4>
+    <ul>
+        <li>&#x300A;ASP.NET&#x5F00;&#x53D1;&#x5B9E;&#x6218;1200&#x4F8B;&#x300B;</li>
+    </ul>
+    <h2 id="1.6 Operating System">1.6 Operating System</h2>
+    <ul>
+        <li>&#x300A;Linux&#x5185;&#x6838;&#x8BBE;&#x8BA1;&#x4E0E;&#x5B9E;&#x73B0;&#x300B;</li>
+        <li>&#x300A;Linux&#x5185;&#x6838;0.11&#x5B8C;&#x5168;&#x6CE8;&#x91CA;&#x300B;</li>
+        <li>&#x300A;Ubuntu Linux&#x4ECE;&#x5165;&#x95E8;&#x5230;&#x7CBE;&#x901A;&#x300B;</li>
+        <li>&#x300A;Unix&#x7F16;&#x7A0B;&#x827A;&#x672F;&#x300B;</li>
+        <li>&#x300A;Unix&#x7F51;&#x7EDC;&#x7F16;&#x7A0B;&#x300B;</li>
+    </ul>
+    <h2 id="1.7 Networking">1.7 Networking</h2>
+    <ul>
+        <li>&#x300A;HTTP&#x6743;&#x5A01;&#x6307;&#x5357;&#x300B;</li>
+        <li>&#x300A;TCP/IP&#x8BE6;&#x89E3;&#x5377;&#x300B;</li>
+        <li><em>Head First Networking</em></li>
+    </ul>
+    <h2 id="1.8 Regex">1.8 Regex</h2>
+    <ul>
+        <li>&#x300A;&#x6B63;&#x5219;&#x8868;&#x8FBE;&#x5F0F;&#x5165;&#x95E8;&#x7ECF;&#x5178;&#x300B;</li>
+        <li>&#x300A;&#x7CBE;&#x901A;&#x6B63;&#x5219;&#x8868;&#x8FBE;&#x5F0F;&#x300B;</li>
+    </ul>
+    <hr>
+    <h1 id="2. Websites">2. Websites</h1>
+    <h2 id="2.1 China">2.1 China</h2>
+    <ul>
+        <li><a href="http://www.infoq.com/cn/" target="_blank" rel="external">http://www.infoq.com/cn/</a></li>
+        <li><a href="http://zhihu.com/" target="_blank" rel="external">http://zhihu.com/</a></li>
+        <li><a href="http://www.v2ex.com/" target="_blank" rel="external">http://www.v2ex.com/</a></li>
+        <li><a href="http://segmentfault.com/" target="_blank" rel="external">http://segmentfault.com/</a></li>
+        <li><a href="http://www.oschina.net/" target="_blank" rel="external">http://www.oschina.net/</a></li>
+        <li><a href="http://cnblogs.com/" target="_blank" rel="external">http://cnblogs.com/</a></li>
+        <li><a href="http://csdn.net/" target="_blank" rel="external">http://csdn.net/</a></li>
+        <li><a href="http://www.51cto.com/" target="_blank" rel="external">http://www.51cto.com/</a></li>
+    </ul>
+    <h2 id="2.2 Foreign">2.2 Foreign</h2>
+    <ul>
+        <li><a href="http://stackoverflow.com/" target="_blank" rel="external">http://stackoverflow.com/</a></li>
+        <li><a href="http://www.codeproject.com" target="_blank" rel="external">http://www.codeproject.com</a></li>
+        <li><a href="https://www.quora.com/" target="_blank" rel="external">https://www.quora.com/</a></li>
+        <li><a href="https://news.ycombinator.com" target="_blank" rel="external">https://news.ycombinator.com</a></li>
+        <li><a href="http://msdn.com/" target="_blank" rel="external">http://msdn.com/</a></li>
+    </ul>
+</body>
+
+</html>

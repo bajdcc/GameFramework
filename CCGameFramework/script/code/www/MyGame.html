@@ -1,0 +1,473 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="GENERATOR" content="Microsoft FrontPage 4.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<title>Gamest Bajdcc</title>
+</head>
+
+<body bgcolor="silver" style="cursor:hand;">
+<div id="showlayer" style="position:absolute;top:0px;left:4px;width:200px;height:110px;">
+人物名称：&nbsp;[<span id=t_name style="cursor:wait;">#NaN!</span>]<br>
+等级：&nbsp;<span id=t_level>#NaN!</span><br>
+经验：&nbsp;<span id=t_exping>#NaN!</span>/<span id=t_exped>#NaN!</span><br>
+金钱：&nbsp;$<span id=t_money>#NaN!</span><br>
+体力：&nbsp;<span id=t_useblood>#NaN!</span>/<span id=t_blood>#NaN!</span><br>
+攻击：&nbsp;<span id=t_att>#NaN!</span><br>
+防御：&nbsp;<span id=t_def>#NaN!</span><br>
+<span style="background-color:#AAAAAA;position:absolute;width:200px;height:18px;" id="t_bloodback"></span>
+<span style="background-color:#EE0000;position:absolute;width:200px;height:18px;" id="t_bloodfront"></span>
+</div>
+<span id="t_bloodpercent" style="position:absolute;top:127px;left:84px;width:45px;height:18px;">
+</span>
+<div id="maplayer" style="position:absolute;top:164px;left:4px;width:200px;height:200px;">
+当前地图：&nbsp;[<span id=t_map style="cursor:hand;">#NaN!</span>]<br>
+通往地图：&nbsp;<br><span id=t_wayto style="cursor:hand;">#NaN!</span><br>
+怪物：&nbsp;<br><span id=t_animal style="cursor:hand;">#NaN!</span><br>
+</div>
+<span id="t_process" style="position:absolute;cursor:help;
+top:344px;left:4px;width:200px;height:40px;">#NaN!</span>
+<div id="animallayer" style="position:absolute;top:0px;left:204px;width:200px;height:144px;visibility:hidden;">
+怪物名称：&nbsp;[<span id="t_An">无</span>]
+<span onclick="Game.RunOut();" id="t_Run" style="position:absolute;top:18px;left:94px;">逃跑</span><br>
+等级：&nbsp;<span id="t_Al">0</span><br>
+经验：&nbsp;<span id="t_Ae">0</span><br>
+金钱：&nbsp;<span id="t_Am">0</span><br>
+体力：&nbsp;<span id="t_Au">0</span>/<span id="t_Ab">0</span><br>
+攻击：&nbsp;<span id="t_Aa">0</span><br>
+防御：&nbsp;<span id="t_Ad">0</span><br>
+<span style="background-color:#AAAAAA;position:absolute;width:200px;height:18px;" id="t_abb"></span>
+<span style="background-color:green;position:absolute;width:200px;height:18px;" id="t_abf"></span>
+<span id="t_abp" style="position:absolute;top:127px;left:92px;width:45px;height:18px;">0%</span>
+</div>
+<div id="peoplelayer" style="position:absolute;top:164px;left:204px;width:200px;height:218px;">
+人物：&nbsp;<br><span id=t_people style="cursor:hand;">#NaN!</span>
+</div>
+<div id="talklayer" style="position:absolute;top:384px;left:4px;width:400px;height:90px;">
+<span id=t_Rr></span><span id=t_Rrr></span>
+</div>
+<div id="telllayer" style="position:absolute;top:470px;left:4px;width:400px;height:110px;visibility:hidden;">
+任务名称：<span id=t_Rn></span><br>
+任务目标：<span id=t_Ra></span><br>
+进度：<span id=t_Rx></span>/<span id=t_Ry></span><br>
+任务人：<span id=t_Rp></span><br>
+任务人地点：<span id=t_Rw></span><br>
+奖励：<span id=t_Rd></span><br>
+</div>
+<div id="menulayer" style="position:absolute;top:2px;left:900px;width:100px;visibility:visible;">
+<input type="button" style="color:black;font-size:16;" onclick="Game.warning();" value="  刷新  ">
+<input type="button" style="color:black;font-size:16;" onclick="Game.GameStatus(1);" value="  载入  ">
+<input type="button" style="color:black;font-size:16;" onclick="Game.GameStatus(2);" value="  保存  ">
+<input type="button" style="color:black;font-size:16;" onclick="self.close();" value="  关闭  ">
+</div>
+<span id=t_display style="background-color=#EFEFEF;position:absolute;visibility:hidden;border:solid 2px lightblue;
+padding:15px 20px 20px 25px;"></span>
+<div id="goodslayer" style="visibility:visible;position:absolute;top:0px;left:404px;width:200px;height:362px;">
+..::| 道具店 |::..
+<br><span onclick="Game.Bought(10,'Useblood+=5;',4)">$8 -- 体力+20(4秒)</span>
+<br><span onclick="Game.Bought(10,'Useblood+=20;',1)">$10 -- 体力+20</span>
+<br><span onclick="Game.Bought(25,'Useblood+=10;',5)">$25 -- 体力+50(5秒)</span>
+<br><span onclick="Game.Bought(32,'Useblood+=50;',1)">$32 -- 体力+50</span>
+<br><span onclick="Game.Bought(50,'Useblood+=10;',10)">$50 -- 体力+100(10秒)</span>
+<br><span onclick="Game.Bought(60,'Useblood+=100;',1)">$60 -- 体力+100</span>
+<br><span onclick="Game.Bought(150,'exping+=60;',2)">$150 -- 经验+60(2秒)</span>
+</div>
+<div id="passlayer" style="visibility:visible;position:absolute;top:528px;left:825px;width:177px;height:18px;"
+ onmouseover="t_pw.focus();" onmouseout="t_pw.blur();">
+<input type=password id="t_pw"><input type=button onclick="eval(t_pw.value);t_pw.value='';t_pw.focus();" value="::">
+</div>
+<script language="JavaScript">
+function Game() {
+////全局变量：id,i,m,mm,pp,s,aa,rand,attA,attB,monN,expN,r,dp,dpid,msg,Aid,rid,rev,Ri,Re,fa,edr,alp[a-f]
+////初始设置	
+  this.Name="bajdcc";				//名称
+  this.level=1;					//等级
+  this.Uplevel=100;				//等级上限
+  this.exping=0;				//当前经验
+  this.money=0;					//金钱
+  this.ADD_blood=1;				//每秒加生命
+  this.ADD_time=1000;				//恢复时间(毫秒)
+  this.ADD_att=3;				//每升一级加攻击
+  this.ADD_def=3;				//每升一级加防御
+  this.ADD_life=15;				//每升一级加体力
+  this.blood=100;				//生命值
+  this.att=6;					//攻击
+  this.def=6;					//防御
+  this.Useblood=this.blood;			//体力使用
+  this.exped=new Array();			//经验集合
+  this.map=new Array();				//地图集合
+  this.animal=new Array();			//怪物集合 animal无s
+  this.people=new Array();			//人物集合
+  this.role=new Array();			//任务集合 核心
+  this.goods=new Array();			//物品集合
+  this.good=0;					//物品数量
+  this.fightN=false;				//是否战斗状态
+  this.fightA=0;				//怪物战斗编号
+  this.maping=0;				//当前地图
+  this.winN=new Array();			//杀死怪物次数
+  this.onrole=false;				//是否任务中
+    for	(i=1;i<=this.Uplevel;i++)		//经验
+      {this.exped[i]=i*(i+1)*(i+2)/3;}  
+  this.map=[					//地图 eval escape parse..
+  [0,"村庄",2,[1,2],1,[0],3,[0,1,2]],		//编号，名称
+  [1,"树林1",2,[0,3],2,[0,1],0,0],			//通往个数，编号
+  [2,"草丛1",2,[0,4],3,[0,1,2],0,0],		//怪物个数(max 4)，怪物编号
+  [3,"树林2",2,[1,5],2,[2,4],0,0],		//人物个数，编号(无则0) 
+  [4,"草丛2",2,[2,6],3,[2,3,4],0,0],
+  [5,"森林1",3,[6,3,7],4,[3,5,4,6],0,0],		//核心	
+  [6,"草丛3",2,[4,5],2,[3,5],0,0],
+  [7,"森林2",2,[5,8],3,[6,7,8],0,0],		
+  [8,"森林3",2,[7,9],2,[7,8],0,0],
+  [9,"火山1",2,[8,10],1,[9],0,0],
+  [10,"火山2",1,[9],1,[10],0,0]
+  ];
+  this.animal=[					//名称，级，体，攻，防，金，经,N秒，－N滴血
+  ["白兔",1,28,7,5,2,5,3,2,"草"],
+  ["小黄狗",2,35,11,9,5,3,5,2,"土"],
+  ["小花蛇",3,42,14,12,9,6,3,5,"草"],
+  ["野猫",4,52,18,20,12,9,4,6,"土"],
+  ["毒蛇",6,78,25,27,18,14,5,8,"土"],
+  ["BOSS-鼠王",5,250,50,48,120,30,10,10,"BOSS"],		//核心	
+  ["灰鸟",8,102,32,34,28,20,8,9,"飞"],
+  ["白狼",9,141,40,35,39,28,10,9,"爪"],
+  ["BOSS-猎豹",10,2000,100,100,300,50,20,20,"BOSS"],
+  ["火鸡",11,182,45,40,43,34,15,5,"土"],
+  ["BOSS-烈焰",15,12000,500,500,5000,5000,60,300,"BOSS"]
+  ];  
+  this.people=[
+  [0,"村长","罗克先生",0,"我是村长我最大，<br>我的地盘我做主。<br>……"], 	//编号……所属地图号，常用语言
+  [1,"村长的儿子","摩西",0,"……真无聊。<br>你能和我一起玩吗？"],
+  [2,"摩西的玩伴","纳斯",0,"摩西，和我玩吧。<br>你干嘛不理我？<br>呜呜……"]
+  ];
+  this.role=[
+    [  	//====0未做1过程中2完成. //....name,==,msg	    ID ,*NUMBER				Add mon,exp
+      [0,"帮村长抓白兔","我很饿，麻烦你帮我抓三只白兔来。","好吧。","请你找别人吧，我很忙。",0,3,"谢啦，这下可以吃兔肉了……","不用客气。",20,10],
+      [0,"小黄狗事件","最近村内很多人被小黄狗咬伤了，请你去处理掉十只。","我马上去。","……恐怕我不行。",1,10,"你是我们村的大英雄！","这是我应该做的。",60,50]
+    ],
+    [
+      [0,"逃跑的小白兔","我心爱的一只小白兔逃跑了，你能把它抓来吗？","当然可以。","不行，我可抓不着。",0,1,"谢谢你！","小菜一碟。",15,10],
+      [0,"处理小黄狗","我调查了一下，原来是小黄狗把它抓走了，你能帮我吗？","可以。","我现在很累啊。",1,1,"非常感谢！","用不着这样。",12,15]
+    ],
+    [
+      [0,"恶毒的小花蛇","小花蛇曾经把我的宠物咬死了，所以……","绝对没问题！","所以什么？",2,1,"谢谢你……","我能理解你。",15,22]
+    ]
+  ];
+  this.goods=[  //0加体力，1加经，2任务  N NN, 买进钱，卖出钱
+    [0,0,"水果",20,5,2,],
+    [1,0,"面包",50,12,6],
+    [2,0,"鸡腿",100,20,9],
+    [3,0,"牛肉",180,32,14]
+  ];
+  this.visit = function(obj,a) {
+  var gener = ["hidden","visible"];
+  obj.style.visibility = gener[a];
+  }
+  this.show = function() {					//展示
+  this.percent=Math.round(this.Useblood/this.blood*100);
+  t_name.innerHTML=this.Name;
+  t_level.innerHTML=this.level;
+  t_money.innerHTML=this.money;
+  t_exping.innerHTML=this.exping;
+  t_exped.innerHTML=this.exped[this.level];
+  t_useblood.innerHTML=this.Useblood;
+  t_blood.innerHTML=this.blood;
+  t_att.innerHTML=this.att;
+  t_def.innerHTML=this.def;
+  t_bloodfront.style.width=this.percent*2;
+  t_bloodpercent.innerHTML="&nbsp;"+this.percent+"%";
+  }
+  this.Ashow = function() {
+  this.ap=Math.round(this.A_u/this.A_b*100);
+  t_An.innerHTML=this.A_n;  t_Al.innerHTML=this.A_l;  t_Ab.innerHTML=this.A_b;
+  t_Aa.innerHTML=this.A_a;  t_Ad.innerHTML=this.A_d;  t_Am.innerHTML=this.A_m;
+  t_Ae.innerHTML=this.A_e;  t_Au.innerHTML=this.A_u;
+  t_abf.style.width=this.ap*2;
+  t_abp.innerHTML="&nbsp;"+this.ap+"%";
+  }  
+  this.maper = function(id) { 					//核心
+  var m=this.map[this.maping][1];var s="";t_wayto.innerHTML=s;t_animal.innerHTML=s;
+  t_map.innerHTML="<span onclick=\"setTimeout(\'Game.maper(0);\',1000);\">"+this.map[id][1]+"</span>";
+  var mm=this.map[id][3];var aa=this.map[id][5];var pp=this.map[id][7];
+  for (i=1;i<=this.map[id][2];i++) {
+  s+="<span onclick=\"Game.maper("+mm[i-1];
+  s+=");\">["+this.map[mm[i-1]][1];
+  s+="]</span>";
+   t_wayto.innerHTML+=s;s="";
+  }
+  for (i=1;i<=this.map[id][4];i++) {kip=this.animal[aa[i-1]];
+  s+="<span onmousemove=\"Game.showmsg(1,\'["+kip[0]+"] 属性：";
+  s+="<br>类型："+kip[1]+"级"+kip[9]+"系";
+  s+="<br>攻击："+kip[3];
+  s+="<br>防御："+kip[4];
+  s+="<br>体力："+kip[2];
+  s+="<br>金钱："+kip[5];
+  s+="<br>魔法："+kip[7]*kip[8]+"\')\"";
+  s+=" onclick=\"Game.fight("+aa[i-1];
+  s+=");\" onmouseout=\"Game.showmsg(0,0)\">["+kip[1]+"级]";
+  s+="["+kip[0]+"]</span><br>";
+   t_animal.innerHTML+=s;s="";
+  } 
+  if (this.map[id][6]!=0) {
+  for (i=1;i<=this.map[id][6];i++) {jip=this.people[pp[i-1]];
+  s+="<span onmousemove=\"Game.showmsg(1,\'"+jip[2]+"：<br>";
+  s+=jip[4]+"\')\" ";
+  s+="onmouseout=\"Game.showmsg(0,0)\" ";  
+  s+="onclick=\"Game.playevent("+jip[0]+")\">";
+  s+=jip[1]+"<br>::[";
+  s+=jip[2]+"]</span><br>";
+   t_people.innerHTML=s;
+  } s=""; } else {t_people.innerHTML="当前地图无人物！";} 
+  t_process.innerHTML=this.Name+"从"+m+"到"+t_map.innerHTML;
+  this.maping=id;
+  }
+  this.fight = function(obj) {	pit=this.animal[obj];			//核心
+  t_process.innerHTML="战斗中……";
+  this.visit(maplayer,0);
+
+  this.visit(animallayer,1);
+  this.visit(menulayer,0);
+  this.visit(goodslayer,0);
+  this.visit(peoplelayer,0);
+  this.A_n=pit[0];  this.A_l=pit[1];
+  this.A_b=pit[2];  this.A_u=pit[2];
+  this.A_a=pit[3];  this.A_d=pit[4];
+  this.A_m=pit[5];  this.A_e=pit[6];
+  this.A_s=pit[7];  this.A_t=pit[8];
+  this.Ashow();this.fightN=true;this.fightA=obj;
+  setTimeout("clearInterval(Game.delblood)",Game.A_s*1000+3000);
+  setTimeout('t_process.innerHTML=Game.Name+"将在"+Game.A_s+"秒内持续受到"+Game.A_n+Game.A_t+"点伤害！"',1000);
+  setTimeout("Game.Fatt();Game.delblood=setInterval('Game.Useblood-=Game.A_t;t_useblood.innerHTML=Game.Useblood;',1000);",3000);
+  }
+  this.Fatt = function() {
+    if (this.fightN==true) {
+  attA=this.randomN();
+  if ((this.att+attA)>this.A_d) {this.A_u-=(this.att-this.A_d+attA);
+     t_process.innerHTML=(this.A_n+" 受到 "+this.Name+"<br>"+eval(this.att-this.A_d+attA)+" 点伤害！<br>")}
+    else {t_process.innerHTML=this.A_n+" 闪避！<br>无法攻击！";}
+   if (this.A_u>0) {setTimeout("Game.Fdef()",500);}
+    else {this.A_u=0;this.win();}
+   this.Ashow();
+  atta=0;
+  } else { this.RunSuc(); } }
+  this.Fdef = function() {
+    if (this.fightN==true) {
+  attB=this.randomN();
+   if ((this.A_a+attB)>this.def) {this.Useblood-=(this.A_a-this.def+attB);
+     t_process.innerHTML=(this.Name+" 受到 "+this.A_n+"<br>"+eval(this.A_a-this.def+attB)+" 点伤害！")}
+    else {t_process.innerHTML=(this.Name+" 闪避了"+this.A_n+"的攻击！");}
+   if (this.Useblood>0) {setTimeout("Game.Fatt()",500);}
+    else {this.Useblood=0;t_process.innerHTML=this.Name+" 被 "+this.A_n+" 打败！";}
+  attB=0;
+  } else { this.RunSuc(); } }
+  this.win = function() {
+  this.visit(animallayer,0);
+  this.fightN=false;
+  if (this.onrole==true) {Game.roles(Game.fightA);}
+  t_process.innerHTML="";
+  t_process.innerHTML=this.Name+"战胜了"+this.A_n+"！";
+  monN=Math.round(this.randomN()/2)+this.A_m;expN=Math.round(this.randomN()/2)+this.A_e;
+  this.money+=monN;this.exping+=expN;
+  t_process.innerHTML+="<br>获得"+monN+"金钱和"+expN+"经验值！";
+  monN=0;expN=0;
+  setTimeout("Game.visit(maplayer,1);Game.visit(menulayer,1);Game.visit(peoplelayer,1);Game.visit(goodslayer,1);",1000);
+  }
+  this.randomN = function() {					//攻防附加值
+  rand=(Math.floor(Math.random()*100));				//0～99伪随机数
+  if (rand>=0&&rand<50)   {return 1;}
+  if (rand>=50&&rand<80)  {return 2;}
+  if (rand>=80&&rand<95)  {return 3;}
+  if (rand>=95&&rand<=98) {return 5;}
+  if (rand>98&&rand<=99) {return 10;}
+  }
+  this.showmsg = function(dpid,dp) {
+  if (dpid==1) { t_display.innerHTML=dp;
+  t_display.style.left = event.x+10;
+  t_display.style.top = event.y+15;
+  this.visit(t_display,1);}
+  if (dpid==0) { t_display.innerHTML="";
+  this.visit(t_display,0);
+  t_display.style.left = 0;
+  t_display.style.top = 0;
+   }
+  } 
+  this.playevent=function(Aid) {
+  if (this.onrole==true) {t_process.innerHTML="你现在正在做任务！";this.endrole(Aid);}
+  else {
+   for (i=0;i<this.role[Aid].length;i++) {
+    if (this.role[Aid][i][0]!=0&&i==(this.role[Aid].length-1)) {t_process.innerHTML="你当前无任务！";this.endrole(Aid);}
+    if (this.role[Aid][i][0]==0) {this.playrole(Aid,i);break;}  //Aid人 i任务编号
+  }  }
+  }
+  this.playrole=function(rid,rev) {
+  this.visit(maplayer,0);
+  this.visit(menulayer,0);
+  this.visit(peoplelayer,0);
+  this.talkman=this.people[rid][1]+" "+this.people[rid][2]+"：<br>"+this.role[rid][rev][2];
+  t_process.innerHTML="和"+this.people[rid][1]+"对话中……";
+  t_Rr.innerHTML=(Game.talkman);
+  var s="";
+  s+="<br><span onclick=\"Game.runrole("+rid+","+rev+")\">&emsp;::";
+  s+=this.role[rid][rev][3]+"</span><br>";
+  s+="<span onclick=\"Game.norole("+rid+")\">&emsp;::";
+  s+=this.role[rid][rev][4]+"</span>";this.talk=s;
+  t_Rrr.innerHTML=Game.talk;s="";
+  this.visit(talklayer,1);
+  }
+  this.runrole=function(Ri,Re) {
+  this.eventrole=this.role[Ri][Re];
+  this.onrole=true;this.eventrole[0]=1;
+  t_process.innerHTML="领取任务：<br>"+this.eventrole[1];
+  t_Rn.innerHTML=this.eventrole[1];
+  t_Ra.innerHTML=this.animal[this.eventrole[5]][0];
+  t_Rx.innerHTML=0;t_Ry.innerHTML=this.eventrole[6];
+  t_Rp.innerHTML=this.people[Ri][1]+"::"+this.people[Ri][2];
+  t_Rw.innerHTML=this.map[this.people[Ri][3]][1];
+  t_Rd.innerHTML=this.eventrole[9]+"金钱&"+this.eventrole[10]+"经验";
+  this.visit(talklayer,0);
+  this.visit(telllayer,1);
+  this.visit(maplayer,1);
+  this.visit(peoplelayer,1);
+  this.winN[this.eventrole[5]]=0;
+  }
+  this.roles=function(fa) {
+  if (fa==this.eventrole[5]&&this.onrole==true) {
+  this.winN[this.eventrole[5]]+=1;
+  t_Rx.innerHTML=this.winN[this.eventrole[5]];
+  }
+  if (this.winN[this.eventrole[5]]==this.eventrole[6]) {
+  this.visit(talklayer,1);
+  this.visit(peoplelayer,1);
+  this.visit(menulayer,1);
+  t_Rr.innerHTML="任务\""+this.eventrole[1]+"\"已完成！<br>&nbsp;::"+this.eventrole[7];
+  t_Rrr.innerHTML="<br>&nbsp;::"+this.eventrole[8];
+  t_Rrr.innerHTML+="<br>获得"+this.eventrole[9]+"金钱和"+this.eventrole[10]+"经验值！";
+  this.money+=this.eventrole[9];this.exping+=this.eventrole[10];
+  setTimeout("Game.visit(talklayer,0);Game.visit(telllayer,0);t_Rr.innerHTML='';t_Rrr.innerHTML='';",5000);
+  this.onrole=false;this.eventrole[0]=2;
+  this.winN[this.eventrole[5]]=0;
+  this.onrole=false;
+  }  }
+  this.endrole=function(edr) {
+  this.visit(talklayer,1);
+  this.visit(peoplelayer,0);
+  t_Rr.innerHTML=this.people[edr][1]+"&nbsp;"+this.people[edr][2]+"：<br>";
+  t_Rrr.innerHTML=this.people[edr][4];
+  setTimeout("Game.visit(talklayer,0);Game.visit(peoplelayer,1);",3000);
+  }
+  this.norole=function() {
+  t_process.innerHTML="你取消了任务！";
+  this.visit(menulayer,1);
+  this.visit(maplayer,1);
+  this.visit(talklayer,0);
+  this.visit(peoplelayer,1);
+  }
+  this.RunOut = function() {
+  this.runN=(Math.floor(Math.random()*4));		//难度4
+  if (this.runN==0) {this.fightN=false;t_Run.innerHTML='逃跑';}
+    else {t_Run.disabled=true;
+    t_Run.innerHTML="逃跑失败！";
+    setTimeout("t_Run.disabled=false;t_Run.innerHTML='逃跑';",2000);
+    }
+  }
+  this.RunSuc=function() {
+  t_process.innerHTML="逃跑成功！";
+  this.fightN=false;
+  this.visit(animallayer,0);
+  this.visit(goodslayer,1);
+  setTimeout("Game.visit(maplayer,1);Game.visit(menulayer,1);Game.visit(peoplelayer,1);",2000);
+  }
+  this.Bought=function(num,obj,t) {
+  if (this.money<num) {t_process.innerHTML="钱不够！";}
+    else {this.money-=num;t_process.innerHTML="道具使用成功！";
+    this.B_obj=obj;this.B_t=t;
+    this.adk=setInterval("Game."+Game.B_obj,1000);setTimeout("clearInterval(Game.adk);",Game.B_t*1000+1);
+    this.visit(goodslayer,0);setTimeout("Game.visit(goodslayer,1);",Game.B_t*1000+2);
+    }
+  }
+
+  this.GameStatus = function(msg) {
+  if (msg==1) {
+  fso = new ActiveXObject("Scripting.FileSystemObject");
+  f = fso.OpenTextFile("F:/Folder/MyPage/MyGame/MyGame.txt",1);
+  inf = f.ReadLine();
+  inf_role = f.ReadLine();
+  var k = inf_role.split(";");
+  for (i=0;i<k.length-1;i++) {
+    for (j=0;j<k[i].split(",").length-1;j++) {
+      this.role[i][j][0]=k[i].split(",")[j];} }
+  var r = inf.split(";");
+  this.Name=r[0];
+  this.level=eval(r[1]);
+  this.exp=eval(this.exped[this.level]);
+  this.exping=eval(r[2]);
+  this.money=eval(r[3]);
+  this.ADD_blood=eval(r[4]);
+  this.blood=eval(r[5]);
+  this.Useblood=eval(r[6]);
+  this.att=eval(r[7]);
+  this.def=eval(r[8]);
+  this.maping=eval(r[9]);
+  this.maper(this.maping);
+  t_process.innerHTML="载入成功！";
+  r="";f.close();
+  } 
+  if (msg==2) {
+  fso = new ActiveXObject("Scripting.FileSystemObject");
+  g = fso.OpenTextFile("F:/MyPage/MyGame/MyGame.txt",2);
+  var r=";";var s="";
+  s+=(this.Name+r);
+  s+=(this.level+r);
+  s+=(this.exping+r);
+  s+=(this.money+r);
+  s+=(this.ADD_blood+r);
+  s+=(this.blood+r);
+  s+=(this.Useblood+r);
+  s+=(this.att+r);
+  s+=(this.def+r);
+  s+=(this.maping);
+  g.WriteLine(s);
+  s="";
+  for (i=0;i<this.role.length;i++) {
+    for (j=0;j<this.role[i].length;j++) {
+      s+=this.role[i][j][0]+",";}s+=";";}
+  g.WriteLine(s);
+  t_process.innerHTML="保存成功！";
+  g.close();r="";s="";
+  } }
+
+  this.Timer = function() {
+  if (this.Useblood<=0) {this.warning();} 	//是否死亡
+
+  if (this.Useblood<this.blood)
+  {this.Useblood+=this.ADD_blood;}   				//每秒定时加血
+  if (this.Useblood>=this.blood)
+  {this.Useblood=this.blood;}
+  
+  if (this.exping>=this.exped[this.level]&&this.level<=(this.Uplevel-1))
+      {this.level++;this.blood+=this.ADD_life;			//升级
+      this.att+=this.ADD_att;this.def+=this.ADD_def;
+      if (this.level%10==0) {this.ADD_blood++;}
+      t_process.innerHTML=this.Name+"升级了！";}
+  
+  this.show();
+  }
+  this.warning=function() {alert("页面可能会出现错误或人物已经死亡，请按回车键刷新！\n\n此为Beta测试版\n\n\n    ----All Produced/Designed/Typed/Tested By Bajdcc\n\n    QQ:442037959")
+  location.reload();
+  }
+  
+  
+}  //Game结束
+var Game = new Game();
+Game.show();
+setInterval("Game.Timer()",Game.ADD_time);
+Game.maper(Game.maping);
+t_process.innerHTML="初始化成功，<br>开始游戏！";
+//设置
+window.onerror=Game.warning;
+
+
+</script>
+
+</body>
+
+</html>

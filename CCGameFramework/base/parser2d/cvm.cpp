@@ -84,6 +84,7 @@ namespace clib {
         fs.load("/init/init.txt");
         fs.load_bin("/usr/github.png");
         fs.load_bin("/usr/loading.gif");
+        fs.load_dir("/www");
         fs.as_root(false);
         fs.mkdir("/pipe");
         fs.mkdir("/semaphore");

@@ -96,6 +96,7 @@ namespace clib {
     class comctl_base {
     public:
         comctl_base(int type);
+        virtual ~comctl_base() = default;
         virtual void set_rt(std::shared_ptr<Direct2DRenderTarget> rt, cwindow_style::ref);
         virtual void paint(const CRect& bounds);
         comctl_base* get_parent() const;

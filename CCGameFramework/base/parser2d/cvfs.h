@@ -12,6 +12,7 @@
 #include "memory.h"
 
 #define FILE_ROOT "./script/code"
+#define WFILE_ROOT _T(FILE_ROOT)
 #define BIN_ROOT "./script/code"
 #define WAIT_CHAR 0x10000
 #define DELAY_CHAR 0x10001
@@ -237,6 +238,8 @@ namespace clib {
         int rm_safe(const string_t& path);
         void load(const string_t& path);
         void load_bin(const string_t& path);
+        void load_dir(const string_t& path);
+        void load_dir_rec(const CString& path);
 
         static void split_path(const string_t& path, std::vector<string_t>& args, char c);
         static string_t get_filename(const string_t& path);

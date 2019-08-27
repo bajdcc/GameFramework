@@ -964,4 +964,40 @@ namespace clib {
             write_vfs(path, data);
         }
     }
+
+    void cvfs::load_dir_rec(const CString& path)
+    {
+        WIN32_FIND_DATA FindFileData;
+        auto pa = string_t(CStringA(path).GetBuffer(0));
+        auto p = WFILE_ROOT + path + _T("/*");
+        auto hListFile = FindFirstFile(p.GetBuffer(0), &FindFileData);
+        if (hListFile == INVALID_HANDLE_VALUE)
+            return;
+        else
+        {
+            do
+            {
+                auto name = CString(FindFileData.cFileName);
+                if(name == _T(".") || name == _T(".."))
+                    continue;
+                if (FindFileData.dwFileAttributes & FILE_ATTRIBUTE_ENCRYPTED)
+                    continue;
+                if (FindFileData.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN)
+                    continue;
+                if (FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+                    load_dir_rec(path + _T("/") + name);
+                else
+                {
+                    string_t nm(CStringA(name).GetBuffer(0));
+                    load_bin(pa + "/" + nm);
+                }
+            } while (FindNextFile(hListFile, &FindFileData));
+            FindClose(hListFile);
+        }
+    }
+
+    void cvfs::load_dir(const string_t& path)
+    {
+        load_dir_rec(CString(CStringA(path.c_str())));
+    }
 }

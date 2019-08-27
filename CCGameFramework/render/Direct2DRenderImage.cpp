@@ -476,7 +476,7 @@ void SolidImageElementRenderer::CreateImage(std::shared_ptr<Direct2DRenderTarget
             }
             // Create a decoder for the gif file
             m_pDecoder.Release();
-            auto hr = m_pIWICFactory->CreateDecoderFromStream(
+            auto hr = Direct2D::Singleton().GetWICImagingFactory()->CreateDecoderFromStream(
                 stream,
                 nullptr,
                 WICDecodeMetadataCacheOnLoad,
@@ -515,11 +515,6 @@ void SolidImageElementRenderer::CreateImage(std::shared_ptr<Direct2DRenderTarget
             e->SetData(nullptr, 0);
         }
     }
-}
-
-SolidImageElementRenderer::SolidImageElementRenderer()
-{
-    m_pIWICFactory = Direct2D::Singleton().GetWICImagingFactory();
 }
 
 void SolidImageElementRenderer::Render(CRect bounds)
@@ -583,6 +578,14 @@ void SolidImageElementRenderer::Render(CRect bounds)
         }
     }
     GraphicsImageRenderer::Render(bounds);
+}
+
+void SolidImageElementRenderer::FinalizeInternal()
+{
+    m_pRawFrame.Release();
+    m_pSavedFrame.Release();
+    m_pDecoder.Release();
+    m_pFrameComposeRT.Release();
 }
 
 
@@ -773,7 +776,7 @@ HRESULT SolidImageElementRenderer::GetRawFrame(UINT uFrameIndex)
     if (SUCCEEDED(hr))
     {
         // Format convert to 32bppPBGRA which D2D expects
-        hr = m_pIWICFactory->CreateFormatConverter(&pConverter);
+        hr = Direct2D::Singleton().GetWICImagingFactory()->CreateFormatConverter(&pConverter);
     }
 
     if (SUCCEEDED(hr))
@@ -974,7 +977,7 @@ HRESULT SolidImageElementRenderer::GetBackgroundColor(
     // Get the color from the palette
     if (SUCCEEDED(hr))
     {
-        hr = m_pIWICFactory->CreatePalette(&pWicPalette);
+        hr = Direct2D::Singleton().GetWICImagingFactory()->CreatePalette(&pWicPalette);
     }
 
     if (SUCCEEDED(hr))

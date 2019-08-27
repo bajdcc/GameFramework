@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>堆排序动画演示</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="author" content="Ben Frederickson">
+  <link rel="canonical" href="http://www.benfrederickson.com/heap-visualization/" />
+  <link rel="stylesheet" href="https://cdn.bootcss.com/font-awesome/4.3.0/css/font-awesome.css">
+  <link href="https://cdn.bootcss.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet">
+  <!--[if lt IE 9]>
+      <script src="//html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+</head>
+
+<body>
+
+
+  <script src="https://cdn.bootcss.com/d3/3.5.7/d3.min.js"></script>
+
+
+  <script src="heap-vis.js"></script>
+
+
+
+
+  <div class="svgcheck well">
+    <h5>Note: you need Javascript enabled and a SVG compatible browser to view the diagrams here!</h5>
+    <p>Its looking like you're missing javascript, or are running an old web browser that doesn't support SVG. If no diagrams
+      show up then you might want to consider loading this up in a different browser. I've tested this with Chrome, Safari
+      and Firefox only.</div>
+
+
+  <script>
+    function hasSVG() {
+      return document.implementation.hasFeature("http://www.w3.org/TR/SVG11/feature#BasicStructure",
+        "1.1");
+    }
+    if (hasSVG()) {
+      d3.select(".svgcheck").attr("style", "display:none");
+    }
+  </script>
+
+
+
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+        <br>
+        <h1 id="title" class="text-center" style="font-family:'楷体'">堆排序</h1><br>
+        <div class="heap">
+
+          <div class="heap-viz"></div>
+          <table class="centered-block" style="margin-left: auto !important; margin-right: auto !important;">
+            <tr>
+              <td>
+                <div>
+                  <br><br>
+                  <div class="btn-group">
+                    <button type="button" class="btn btn-default pause-button">
+  <span class="glyphicon glyphicon-pause"></span>
+  <span class="glyphicon glyphicon-play" style="display:none"></span>
+  <span class="pause-label"> 暂停</span></button>
+                    <button type="button" class="btn btn-default restart-button"><span class="glyphicon glyphicon-repeat"></span> 重新开始</button>
+                    <div class="btn-group">
+                      <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">深度<span class="caret"></span></button>
+                      <ul class="dropdown-menu" role="menu">
+                        <li><a class="heap1">1</a></li>
+                        <li><a class="heap3">2</a></li>
+                        <li><a class="heap7">3</a></li>
+                        <li><a class="heap15">4</a></li>
+                        <li><a class="heap31">5</a></li>
+                      </ul>
+                    </div>
+                    <div class="btn-group">
+                      <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+    速度 <span class="caret"></span>
+  </button>
+                      <ul class="dropdown-menu" role="menu">
+                        <li><a class="speed1">慢速</a></li>
+                        <li><a class="speed2">正常</a></li>
+                        <li><a class="speed3">快速</a></li>
+                        <li><a class="speed4">极快</a></li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.bootcss.com/jquery/3.1.1/jquery.min.js"></script>
+  <script src="https://cdn.bootcss.com/bootstrap/3.3.0/js/bootstrap.min.js"></script>
+  <script>
+    $(document).ready(function () { createHeapVis(d3.select(".heap")) });
+  </script>
+
+</body>
+
+</html>

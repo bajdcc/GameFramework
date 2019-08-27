@@ -1,0 +1,75 @@
+<html>
+<head>
+<title>Force——Bajdcc</title>
+<meta http-equiv=Content-Type content="text/html; charset=utf-8">
+</head>
+
+<body>
+
+<script language="JavaScript">
+var c_width=document.body.clientWidth/2;
+var c_height=document.body.clientHeight/2;
+var at=1;
+var FG=0.1;
+var GM=0.5;
+var t=1;
+var Usemain=false;
+
+function dedot(x,y,vx,vy,m) {
+this.x=x;
+this.y=y;
+this.vx=vx;
+this.vy=vy;
+this.nx=0;
+this.ny=0;
+this.ax=0;
+this.ay=0;
+this.dax=0;
+this.day=0;
+this.m=m;
+}
+var dot=new Array();
+dot[0]=new dedot(-400,0,0,14,3);
+dot[1]=new dedot(-300,0,0,7,1);
+dot[2]=new dedot(0,0,0,0,1);
+for (i in dot) {
+document.write("<div id='dotN' style='position:absolute;left:0;top:0;'><font size=80>·"+i+"</font></div>")
+}
+function setdot() {
+ad=Math.sqrt((dot[0].x-dot[1].x)*(dot[0].x-dot[1].x)+(dot[0].y-dot[1].y)*(dot[0].y-dot[1].y));
+ad1=Math.sqrt((dot[2].x-dot[1].x)*(dot[2].x-dot[1].x)+(dot[2].y-dot[1].y)*(dot[2].y-dot[1].y));
+
+
+dot[0].dax=((dot[1].x+dot[0].x)/2-dot[0].x)/ad*dot[1].m*dot[0].m;
+dot[0].day=((dot[1].y+dot[0].y)/2-dot[0].y)/ad*dot[1].m*dot[0].m;
+
+dot[1].dax=-((dot[1].x+dot[2].x)/2-dot[2].x)/ad1*dot[1].m*dot[2].m;
+dot[1].day=-((dot[1].y+dot[2].y)/2-dot[2].y)/ad1*dot[1].m*dot[2].m;
+
+
+
+for (i in dot) {
+dot[i].ax=dot[i].dax;
+dot[i].ay=dot[i].day;
+
+dot[i].vx+=dot[i].dax*at;
+dot[i].vy+=dot[i].day*at;
+
+dot[i].x+=dot[i].vx*at+0.5*dot[i].vx*at;
+dot[i].y+=dot[i].vy*at+0.5*dot[i].vy*at;
+
+dotN[i].style.left=c_width+dot[i].x;
+dotN[i].style.top=c_height+dot[i].y;
+}
+with (Math) {
+window.status="坐标："+round(dot[1].x)+"::"+round(dot[1].y)+"   速度："+round(dot[1].vx)+"::"+round(dot[1].vy)+"   加速度："+round(dot[1].ax)+"::"+round(dot[1].ay);}
+
+}
+setTimeout("startdot()",500);
+function startdot() {
+setInterval("setdot()",30);
+}
+</script>
+
+</body>
+</html>

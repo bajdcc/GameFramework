@@ -709,8 +709,8 @@ class SolidImageElementRenderer : public GraphicsImageRenderer<SolidImageElement
 protected:
     void CreateImage(std::shared_ptr<Direct2DRenderTarget> renderTarget)override;
 public:
-    SolidImageElementRenderer();
     void Render(CRect bounds)override;
+    void FinalizeInternal()override;
 private:
     HRESULT GetRawFrame(UINT uFrameIndex);
     HRESULT GetGlobalMetadata();
@@ -742,7 +742,6 @@ private:
     CComPtr<ID2D1BitmapRenderTarget> m_pFrameComposeRT;
     CComPtr<ID2D1Bitmap> m_pRawFrame;
     CComPtr<ID2D1Bitmap> m_pSavedFrame; // The temporary bitmap used for disposal 3 method
-    CComPtr<IWICImagingFactory> m_pIWICFactory;
     CComPtr<IWICBitmapDecoder> m_pDecoder;
     D2D1_COLOR_F    m_backgroundColor;
 

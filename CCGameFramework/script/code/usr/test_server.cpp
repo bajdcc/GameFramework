@@ -45,7 +45,14 @@ int read_file(int handle) {
         json_object* obj = json_parse_obj(s.text);
         if (obj) {
             char* url = json_obj_get_string(obj, "url")->data.str;
-            int f = open(url);
+            if (strlen(url) == 1) url = "/index.html";
+            char* local = malloc(strlen(url) + 10);
+            strcpy(local, "/www");
+            strcat(local, url);
+            put_string(local);
+            put_string(" ");
+            int f = open(local);
+            free(local);
             if (f < 0) {
                 write_string(handle, "File not found.");
                 truncate(handle);
