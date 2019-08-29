@@ -553,6 +553,12 @@
     <ClInclude Include="base\libmicrohttpd\microhttpd.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="base\zlib\zconf.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\zlib\zlib.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">

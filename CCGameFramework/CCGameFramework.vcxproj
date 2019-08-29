@@ -311,6 +311,8 @@ xcopy /r /y /e "$(ProjectDir)dll" "$(TargetDir)"</Command>
     <ClInclude Include="base\bochs\bx_debug\debug.h" />
     <ClInclude Include="base\bochs\gui\siminterface.h" />
     <ClInclude Include="base\bochs\iodev\iodev.h" />
+    <ClInclude Include="base\zlib\zconf.h" />
+    <ClInclude Include="base\zlib\zlib.h" />
     <ClInclude Include="lua\lapi.h" />
     <ClInclude Include="lua\lauxlib.h" />
     <ClInclude Include="lua\lcode.h" />

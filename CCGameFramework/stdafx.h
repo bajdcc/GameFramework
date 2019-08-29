@@ -123,3 +123,4 @@
 #else
 #pragma comment(lib, "lib\\libmicrohttpd")
 #endif
+#pragma comment(lib, "lib\\zlib")

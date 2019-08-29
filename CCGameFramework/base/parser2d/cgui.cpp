@@ -13,6 +13,7 @@
 #include "../../ui/gdi/Gdi.h"
 #include "Parser2D.h"
 #include <ui\window\Window.h>
+#include <zlib\zlib.h>
 
 #define AST_FILE "ast.log"
 
@@ -123,8 +124,28 @@ namespace clib {
             std::vector<byte> data;
             data.resize((size_t)size);
             p->sgetn((char*)data.data(), size);
-            cache.insert(std::make_pair(name, data));
-            return true;
+            if (data.size() < 12) {
+                return false;
+            }
+            if (strcmp((const char*)data.data(), "CCOS") == 0) {
+                auto size2 = *((uLongf*)(data.data() + 8));
+                if (size2 != data.size() - 12)
+                    return false;
+                if (strcmp((const char*)data.data() + 4, "TEXT") == 0) {
+                    data.erase(data.begin(), data.begin() + 12);
+                    cache.insert(std::make_pair(name, data));
+                    return true;
+                }
+                else if (strcmp((const char*)data.data() + 4, "ZLIB") == 0) {
+                    uLongf newsize;
+                    std::vector<byte> newdata(size2);
+                    auto r = uncompress(newdata.data(), &newsize, data.data() + 12, data.size() - 12);
+                    if (r == Z_OK && newsize == size2) {
+                        cache.insert(std::make_pair(name, newdata));
+                        return true;
+                    }
+                }
+            }
         }
         return false;
     }
@@ -141,7 +162,20 @@ namespace clib {
         std::ofstream ofs(path, std::ios::binary);
         if (ofs) {
             const auto& data = cache.at(name);
-            ofs.write((const char*)data.data(), data.size());
+            std::vector<byte> output(compressBound(data.size()));
+            uLongf size;
+            auto r = compress(output.data(), &size, data.data(), data.size());
+            if (r == Z_OK) {
+                ofs.write("CCOSZLIB", 8);
+                ofs.write((const char*)& size, 4);
+                ofs.write((const char*)output.data(), size);
+            }
+            else {
+                ofs.write("CCOSTEXT", 8);
+                size = data.size();
+                ofs.write((const char*)& size, 4);
+                ofs.write((const char*)data.data(), data.size());
+            }
             return true;
         }
         return false;
