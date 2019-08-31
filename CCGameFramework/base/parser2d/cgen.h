@@ -380,7 +380,7 @@ namespace clib {
         backtrace_direction check(pda_edge_t, ast_node*) override;
         void error_handler(int, const std::vector<pda_trans>&, int&) override;
 
-        void gen(ast_node* node);
+        void gen(const string_t& page, ast_node* node);
         void reset();
         std::vector<byte> file() const;
 
@@ -401,7 +401,7 @@ namespace clib {
         void allocate(sym_id_t::ref id, const type_exp_t::ref& init, int delta = 0);
         sym_id_t::ref add_id(const type_base_t::ref&, sym_class_t, ast_node*, const type_exp_t::ref&, int = 0);
 
-        sym_t::ref find_symbol(const string_t& name);
+        sym_t::ref find_symbol(ast_node* node);
         sym_var_t::ref primary_node(ast_node* node);
 
         bool get_line(int, string_t&, int&) const;
@@ -411,6 +411,20 @@ namespace clib {
         sym_list_t::ref exp_list(const std::vector<sym_t::ref>& exps);
 
         type_exp_t::ref to_exp(sym_t::ref s);
+
+    private:
+        enum macro_t {
+            m_none,
+            m_line,
+            m_column,
+            m_func,
+            m_file,
+        };
+        std::unordered_map<string_t, macro_t> macros;
+        std::list<std::vector<char>> macro_data;
+        void init_macro();
+
+        const string_t& coll_str(coll_t);
 
     public:
         static std::stringstream log_out;
@@ -430,6 +444,7 @@ namespace clib {
         std::vector<std::tuple<int, string_t>> incs;
         std::vector<std::tuple<int, string_t>> pdbs;
         int labeled_id{ -1 };
+        string_t page;
     };
 }
 

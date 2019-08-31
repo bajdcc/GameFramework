@@ -1011,7 +1011,7 @@ namespace clib {
                 log << std::endl << std::endl;
             }
 #endif
-            gen.gen(root);
+            gen.gen(new_path, root);
             auto file = gen.file();
             p.clear_ast();
             cache.insert(std::make_pair(new_path, file));

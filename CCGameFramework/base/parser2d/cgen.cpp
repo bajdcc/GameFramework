@@ -648,7 +648,7 @@ namespace clib {
 
     gen_t sym_var_t::gen_lvalue(igen & gen) {
         if (node->flag == ast_string) {
-            gen.emit(IMM, DATA_BASE | gen.load_string(node->data._string));
+            gen.emit(IMM, DATA_BASE | (uint32)gen.load_string(node->data._string));
             base = std::make_shared<type_base_t>(l_char, 1);
             return g_no_load;
         }
@@ -673,7 +673,7 @@ namespace clib {
             gen.emit(IMX, node->data._ins._1, node->data._ins._2); // 载入8字节
             break;
         case ast_string:
-            gen.emit(IMM, DATA_BASE | gen.load_string(node->data._string));
+            gen.emit(IMM, DATA_BASE | (uint32)gen.load_string(node->data._string));
             break;
         case ast_keyword: {
             if (AST_IS_KEYWORD_K(node, k_true))
@@ -1510,10 +1510,20 @@ namespace clib {
     // --------------------------------------------------------------
 
     cgen::cgen() {
+        init_macro();
         reset();
     }
 
-    void cgen::gen(ast_node * node) {
+    void cgen::init_macro()
+    {
+        macros.insert(std::make_pair("__LINE__", m_line));
+        macros.insert(std::make_pair("__COLUMN__", m_column));
+        macros.insert(std::make_pair("__FUNC__", m_func));
+        macros.insert(std::make_pair("__FILE__", m_file));
+    }
+
+    void cgen::gen(const string_t& page, ast_node * node) {
+        this->page = page;
         gen_rec(node, 0);
         if (!func_write_backs.empty()) {
             std::stringstream ss;
@@ -1528,6 +1538,7 @@ namespace clib {
     }
 
     void cgen::reset() {
+        page.clear();
         symbols.clear();
         symbols.emplace_back();
         tmp.clear();
@@ -1545,6 +1556,7 @@ namespace clib {
         func_write_backs.clear();
         log_out.str("");
         labeled_id = -1;
+        macro_data.clear();
     }
 
     template <class T>
@@ -3383,7 +3395,8 @@ namespace clib {
         return new_id;
     }
 
-    sym_t::ref cgen::find_symbol(const string_t & name) {
+    sym_t::ref cgen::find_symbol(ast_node* node) {
+        auto name = string_t(node->data._string);
         for (auto i = (int)symbols.size() - 1; i > 0; i--) {
             auto f = symbols[i].find(name);
             if (f != symbols[i].end()) {
@@ -3407,6 +3420,83 @@ namespace clib {
                 return f->second;
             }
         }
+        auto f2 = macros.find(name);
+        if (f2 != macros.end()) {
+            switch (f2->second) {
+            case m_line:
+            {
+                auto t = std::make_shared<type_base_t>(l_int, 0);
+                macro_data.emplace_back();
+                auto& d = macro_data.back();
+                d.insert(d.end(), sizeof(ast_node), '\0');
+                auto n = (ast_node*)& d.front();
+                CopyMemory(n, node, sizeof(ast_node));
+                n->flag = ast_int;
+                string_t page; int L;
+                if (get_line(n->line, page, L)) {
+                    n->data._int = L;
+                }
+                else {
+                    n->data._int = n->line;
+                }
+                return std::make_shared<sym_var_t>(t, n);
+            }
+            case m_column:
+            {
+                auto t = std::make_shared<type_base_t>(l_int, 0);
+                macro_data.emplace_back();
+                auto& d = macro_data.back();
+                d.insert(d.end(), sizeof(ast_node), '\0');
+                auto n = (ast_node*)& d.front();
+                CopyMemory(n, node, sizeof(ast_node));
+                n->flag = ast_int;
+                n->data._int = n->column;
+                return std::make_shared<sym_var_t>(t, n);
+            }
+            case m_func:
+            {
+                if (ctx.lock()) {
+                    auto _ctx = ctx.lock();
+                    if (_ctx->get_type() == s_function) {
+                        auto func = std::dynamic_pointer_cast<sym_func_t>(_ctx);
+                        auto t = std::make_shared<type_base_t>(l_char, 1);
+                        macro_data.emplace_back();
+                        auto& d = macro_data.back();
+                        d.insert(d.end(), sizeof(ast_node), '\0');
+                        auto n = (ast_node*)& d.front();
+                        CopyMemory(n, node, sizeof(ast_node));
+                        n->flag = ast_string;
+                        macro_data.emplace_back();
+                        auto& d2 = macro_data.back();
+                        std::copy(func->id.begin(), func->id.end(), std::back_inserter(d2));
+                        d2.push_back('\0');
+                        auto n2 = (char*)& d2[0];
+                        n->data._string = n2;
+                        return std::make_shared<sym_var_t>(t, n);
+                    }
+                }
+            }
+            case m_file:
+            {
+                auto t = std::make_shared<type_base_t>(l_char, 1);
+                macro_data.emplace_back();
+                auto& d = macro_data.back();
+                d.insert(d.end(), sizeof(ast_node), '\0');
+                auto n = (ast_node*)& d.front();
+                CopyMemory(n, node, sizeof(ast_node));
+                n->flag = ast_string;
+                macro_data.emplace_back();
+                auto& d2 = macro_data.back();
+                std::copy(page.begin(), page.end(), std::back_inserter(d2));
+                d2.push_back('\0');
+                auto n2 = (char*)& d2[0];
+                n->data._string = n2;
+                return std::make_shared<sym_var_t>(t, n);
+            }
+            default:
+                error(node, "invalid macro: " + name);
+            }
+        }
         return nullptr;
     }
 
@@ -3419,7 +3509,7 @@ namespace clib {
                 t = std::make_shared<type_base_t>(l_int, 0);
                 return std::make_shared<sym_var_t>(t, node);
             }
-            auto sym = find_symbol(node->data._string);
+            auto sym = find_symbol(node);
             if (!sym)
                 error(node, "undefined id: " + string_t(node->data._string));
             if (sym->get_type() == s_id || sym->get_type() == s_function) {
@@ -3429,6 +3519,9 @@ namespace clib {
             if (sym->get_type() == s_struct) {
                 t = std::dynamic_pointer_cast<type_typedef_t>(sym);
                 return std::make_shared<sym_var_id_t>(t, node, sym);
+            }
+            if (sym->get_type() == s_var) {
+                return std::dynamic_pointer_cast<sym_var_t>(sym);
             }
             error(node, "required id but got: " + sym->to_string());
         }
