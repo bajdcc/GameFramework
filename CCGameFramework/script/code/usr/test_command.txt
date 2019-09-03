@@ -61,3 +61,6 @@ sleep 1 show
 echo 【服务器】
 sleep 1 show
 /usr/test_server
+echo 【Base64】
+sleep 1 show
+/usr/test_base64

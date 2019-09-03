@@ -1030,8 +1030,6 @@ namespace clib {
     }
 
     int sym_binop_t::size(sym_size_t t, int level) const {
-        if (t == x_inc)
-            return 0;
         if (!base) return 0;
         return base->size(t, level);
     }

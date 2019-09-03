@@ -15,6 +15,15 @@
 #include <ui\window\Window.h>
 #include <zlib\zlib.h>
 
+#ifdef REPORT_ERROR
+#undef REPORT_ERROR
+#endif
+#define REPORT_ERROR 1
+#ifdef REPORT_ERROR_FILE
+#undef REPORT_ERROR_FILE
+#endif
+#define REPORT_ERROR_FILE "runtime.log"
+
 #define AST_FILE "ast.log"
 
 #define LOG_AST 0

@@ -29,6 +29,7 @@ int main(int argc, char **argv) {
         case 19: shell("test_bf");
         case 20: shell("test_json");
         case 21: shell("test_server");
+        case 22: shell("test_base64");
     }
     return 0;
 }
