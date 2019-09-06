@@ -203,6 +203,7 @@ namespace clib {
         int ebp{ 0 }, ebp_local{ 0 };
         int entry{ 0 };
         bool implemented{ false };
+        bool ellipsis{ false };
         std::vector<int> write_backs;
         std::unordered_map<string_t, int> labels;
         std::vector<std::tuple<int, string_t, int, int>> labels_writeback;

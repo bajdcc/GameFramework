@@ -1488,8 +1488,8 @@ namespace clib {
             vmm_pushstack(ctx->sp, PUSH);
             auto tmp = ctx->sp;
             auto argvs = vmm_malloc(_argc * INC_PTR);
-            vmm_pushstack(ctx->sp, _argc);
             vmm_pushstack(ctx->sp, argvs);
+            vmm_pushstack(ctx->sp, _argc);
             for (size_t i = 0; i < _argc; i++) {
                 auto str = vmm_malloc(args[i].length() + 1);
                 vmm_setstr(str, args[i]);

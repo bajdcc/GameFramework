@@ -21,7 +21,6 @@ int main(int argc, char** argv) {
     put_string("Starting OS...\n");
     path_add("/bin");
     put_string("Starting service...\n");
-    shell("touch ");
     exec_service("/init/init");
     int i;
     for (i = 0;; i++) {

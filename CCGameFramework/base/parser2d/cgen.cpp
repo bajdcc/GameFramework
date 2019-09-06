@@ -526,23 +526,35 @@ namespace clib {
         assert(list->get_type() == s_list);
         auto args = std::dynamic_pointer_cast<sym_list_t>(list);
         auto & exps = args->exps;
-        if (exps.size() != params.size()) {
+        if (ellipsis) {
+            if (exps.size() < params.size()) {
+                gen.error(line, column, "invoke: argument size not equal, required: " + to_string() +
+                    ", but got: " + args->to_string());
+            }
+        }
+        else if (exps.size() != params.size()) {
             gen.error(line, column, "invoke: argument size not equal, required: " + to_string() +
                 ", but got: " + args->to_string());
         }
         auto total_size = 0;
-        for (size_t i = 0; i < exps.size(); ++i) {
+        for (auto i = ((int)exps.size()) - 1; i >= 0; --i) {
             exps[i]->gen_rvalue(gen);
             auto exp_type = exps[i]->base->get_cast();
-            auto param_type = params[i]->base->get_cast();
-            auto s = cast_find(exp_type, param_type);
-            if (s == -1)
-                gen.error(line, column, "invoke: argument unsupported cast, required: " + params[i]->to_string() +
-                    ", but got: " + exps[i]->to_string() + ", func: " + to_string());
-            if (s != 0) {
-                gen.emit(CAST, s);
+            int c = 0;
+            if (i >= (int)params.size()) {
+                c = exp_type == t_struct ? exps[i]->size(x_size) : cast_size(exp_type);
             }
-            auto c = param_type == t_struct ? params[i]->size(x_size) : cast_size(param_type);
+            else {
+                auto param_type = params[i]->base->get_cast();
+                auto s = cast_find(exp_type, param_type);
+                if (s == -1)
+                    gen.error(line, column, "invoke: argument unsupported cast, required: " + params[i]->to_string() +
+                        ", but got: " + exps[i]->to_string() + ", func: " + to_string());
+                if (s != 0) {
+                    gen.emit(CAST, s);
+                }
+                c = param_type == t_struct ? params[i]->size(x_size) : cast_size(param_type);
+            }
             gen.emit(PUSH, c);
             total_size += c;
         }
@@ -2557,8 +2569,12 @@ namespace clib {
                 symbols[0].insert(std::make_pair(nodes[0]->data._string, func));
                 std::unordered_set<string_t> ids;
                 auto ptr = 0;
+                auto ellipsis = false;
                 for (size_t i = 2, j = 0; i < asts.size() && j < tmp.size(); ++i) {
                     auto& pa = asts[i];
+                    if (ellipsis) {
+                        error(pa, "invalid param after ellipsis: ", true);
+                    }
                     if (AST_IS_ID(pa)) {
                         const auto& pt = std::dynamic_pointer_cast<type_t>(tmp.back()[j]);
                         pt->ptr = ptr;
@@ -2586,15 +2602,19 @@ namespace clib {
                     else if (AST_IS_OP_N(pa, op_times)) {
                         ptr++;
                     }
+                    else if (AST_IS_OP_N(pa, op_ellipsis)) {
+                        ellipsis = true;
+                    }
                     else {
                         error(pa, "invalid param: ", true);
                     }
                 }
+                func->ellipsis = ellipsis;
                 func->ebp += sizeof(void*);
                 func->ebp_local = func->ebp;
                 for (auto& param : func->params) {
-                    param->addr = func->ebp - param->addr;
-                    param->addr_end = func->ebp - param->addr_end;
+                    param->addr += 2 * sizeof(void*);
+                    param->addr_end += 2 * sizeof(void*);
                 }
 #if LOG_TYPE
                 log_out << "[DEBUG] Func: " << ctx.lock()->to_string() << std::endl;
@@ -3346,8 +3366,8 @@ namespace clib {
                 error(id, "allocate: invalid init value");
             auto size = align4(type->size(x_size));
             auto func = std::dynamic_pointer_cast<sym_func_t>(ctx.lock());
-            id->addr = func->ebp + size - 4;
-            id->addr_end = func->ebp;
+            id->addr = func->ebp;
+            id->addr_end = func->ebp + size;
             func->ebp += size;
         }
         else if (id->clazz == z_struct_var) {
