@@ -21,7 +21,7 @@
 #define REPORT_ERROR 1
 #define REPORT_ERROR_FILE "error.log"
 
-#define REPORT_MEMORY 1
+#define REPORT_MEMORY 0
 #define REPORT_MEMORY_FILE "mem.log"
 
 #define REPORT_DEBUG_FILE "debug.log"
@@ -619,6 +619,7 @@ namespace clib {
                       break;
             case CALL: {
                 vmm_pushstack(ctx->sp, ctx->pc);
+                ctx->stacktrace_pc2.push_back(ctx->pc);
                 ctx->pc = ctx->base + (ctx->ax._ui) * INC_PTR;
                 ctx->stacktrace_pc.push_back(ctx->pc);
             } /* call subroutine */
@@ -648,6 +649,7 @@ namespace clib {
                 }
                 ctx->pc = (uint32_t)vmm_popstack(ctx->sp);
                 ctx->stacktrace_pc.pop_back();
+                ctx->stacktrace_pc2.pop_back();
             } /* restore call frame and PC */
                       break;
             case LEA: {
@@ -1304,12 +1306,17 @@ namespace clib {
 
     string_t cvm::source() const
     {
+        return source(ctx->pc);
+    }
+
+    string_t cvm::source(uint pc) const
+    {
         auto pe = (PE*)ctx->file.data();
         auto pdb = (PDB*)(&pe->data + pe->data_len + pe->text_len);
         auto len = pdb->code_len;
         auto addr = (PDB_ADDR*)& pdb->data;
         auto code = (char*)(addr + len);
-        auto pc = (ctx->pc & SEGMENT_MASK) / INC_PTR;
+        pc = (pc & SEGMENT_MASK) / INC_PTR;
         uint idx = 0;
         auto found = false;
         for (uint i = 0; i < len; i++, addr++) {
@@ -1497,6 +1504,7 @@ namespace clib {
             }
             vmm_pushstack(ctx->sp, tmp);
             ctx->stacktrace_pc.push_back((ctx->entry * INC_PTR) | ctx->base);
+            ctx->stacktrace_pc2.push_back(0);
         }
         ctx->flag |= CTX_USER_MODE;
         if (old_ctx) {
@@ -1636,6 +1644,7 @@ namespace clib {
             ctx->input_queue.clear();
             ctx->stacktrace.clear();
             ctx->stacktrace_pc.clear();
+            ctx->stacktrace_pc2.clear();
             ctx->stacktrace_dbg.clear();
             ctx->exited_child.clear();
             ctx->ips = 0ULL;
@@ -1799,6 +1808,7 @@ namespace clib {
         ctx->heap = old_ctx->heap;
         ctx->stacktrace = old_ctx->stacktrace;
         ctx->stacktrace_pc = old_ctx->stacktrace_pc;
+        ctx->stacktrace_pc2 = old_ctx->stacktrace_pc2;
         ctx->stacktrace_dbg = old_ctx->stacktrace_dbg;
         ctx->sigs = old_ctx->sigs;
         ctx->pc = old_ctx->pc;
@@ -1827,10 +1837,12 @@ namespace clib {
     {
         static char sz[32];
         std::stringstream ss;
-        for (auto i = ctx->stacktrace_pc.rbegin(); i != ctx->stacktrace_pc.rend(); i++) {
-            auto& s = *i;
+        auto L = (int)ctx->stacktrace_pc.size();
+        for (auto i = L; i >= 0; i--) {
+            const auto& s = ctx->stacktrace_pc[i];
+            const auto& s2 = ctx->stacktrace_pc2[i];
             snprintf(sz, sizeof(sz), "[%08X]", s | ctx->mask);
-            ss << sz << " " << get_func_info(s) << std::endl;
+            ss << sz << " " << get_func_info(s) << "   => " << source(s2) << std::endl;
         }
         return ss.str();
     }
