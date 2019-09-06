@@ -30,6 +30,7 @@ int main(int argc, char **argv) {
         case 20: shell("test_json");
         case 21: shell("test_server");
         case 22: shell("test_base64");
+        case 23: shell("test_format");
     }
     return 0;
 }

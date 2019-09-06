@@ -64,3 +64,6 @@ sleep 1 show
 echo 【Base64】
 sleep 1 show
 /usr/test_base64
+echo 【格式化】
+sleep 1 show
+/usr/test_format
