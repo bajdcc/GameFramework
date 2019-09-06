@@ -53,3 +53,23 @@ char *strcat(char *dst, char *src) {
     while (*s++ = *src++);
     return dst;
 }
+char* strstr(char* src, char* sub)
+{
+    char* bp, * sp;
+    if (src == (char*)0 || sub == (char*)0)
+    {
+        return src;
+    }
+    while (*src)
+    {
+        bp = src;
+        sp = sub;
+        do
+        {
+            if (!*sp)
+                return src;
+        } while (*bp++ == *sp++);
+        src++;
+    }
+    return (char*)0;
+}
