@@ -21,7 +21,7 @@
 #define REPORT_ERROR 1
 #define REPORT_ERROR_FILE "error.log"
 
-#define REPORT_MEMORY 0
+#define REPORT_MEMORY 1
 #define REPORT_MEMORY_FILE "mem.log"
 
 #define REPORT_DEBUG_FILE "debug.log"
@@ -270,10 +270,10 @@ namespace clib {
 #if REPORT_MEMORY
         {
             static char sz2[200];
-            snprintf(sz2, "[%4d] %-20s : ALLOC %8d -> %08X (%d)", ctx->id, ctx->path.c_str(), size, r, ctx->pool->page_size());
+            snprintf(sz2, sizeof(sz2), "[%4d] %-20s : ALLOC %8d -> %08X (%d)", ctx->id, ctx->path.c_str(), size, r, ctx->pool->page_size());
             std::ofstream log(REPORT_MEMORY_FILE, std::ios::app | std::ios::out);
             log << sz2 << std::endl;
-            //ctx->pool->dump_str(log);
+            ctx->pool->dump_str(log);
         }
 #endif
         return r;
@@ -287,7 +287,7 @@ namespace clib {
 #if REPORT_MEMORY
         {
             static char sz2[200];
-            snprintf(sz2, "[%4d] %-20s : FREE  %08X -> %8d", ctx->id, ctx->path.c_str(), addr, r);
+            snprintf(sz2, sizeof(sz2), "[%4d] %-20s : FREE  %08X -> %8d", ctx->id, ctx->path.c_str(), addr, r);
             std::ofstream log(REPORT_MEMORY_FILE, std::ios::app | std::ios::out);
             log << sz2 << std::endl;
             //ctx->pool->dump_str(log);

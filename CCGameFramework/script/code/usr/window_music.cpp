@@ -9,6 +9,7 @@
 #include "/include/json"
 #include "/include/shell"
 #include "/include/sys"
+#include "/include/format"
 void play(char *name, int id);
 char* song_names[0] = {
     "Take me hand",
@@ -135,9 +136,7 @@ int main(int argc, char **argv) {
 }
 
 void play(char* name, int id) {
-    char* path = malloc(100);
-    strcpy(path, "/http/post!music.163.com/api/search/suggest/web!s=");
-    strcat(path, name);
+    char* path = format("/http/post!music.163.com/api/search/suggest/web!s=%s", name);
     put_string("Open: "); put_string(path); put_string("\n");
     char* json; int len;
     if (readfile(path, &json, &len) == 0) {
@@ -179,11 +178,8 @@ void play(char* name, int id) {
             char* tmp = malloc(20);
             i32toa(sid, tmp);
             {
-                strcpy(path, "/http/post!music.163.com/api/song/detail!id=");
-                strcat(path, tmp);
-                strcat(path, "&ids=[");
-                strcat(path, tmp);
-                strcat(path, "]");
+                free(path);
+                path = format("/http/post!music.163.com/api/song/detail!id=%s&ids=[%s]", tmp, tmp);
                 put_string("Open: "); put_string(path); put_string("\n");
                 char* json2; int len2;
                 if (readfile(path, &json2, &len2) == 0) {
@@ -209,11 +205,8 @@ void play(char* name, int id) {
                 put_string("Saved music to ");
                 put_string(downurl);
                 put_string("\n");
-                strcpy(downurl, "echo /http/bin!music.163.com/song/media/outer/url?id=");
-                strcat(downurl, tmp);
-                strcat(downurl, ".mp3 | copy /tmp/");
-                strcat(downurl, tmp);
-                strcat(downurl, ".mp3");
+                free(downurl);
+                downurl = format("echo /http/bin!music.163.com/song/media/outer/url?id=%s.mp3 | copy /tmp/%s.mp3", tmp, tmp);
                 put_string("# ");
                 put_string(downurl);
                 put_string("\n");
@@ -235,11 +228,8 @@ void play(char* name, int id) {
                 put_string("Saved pic to ");
                 put_string(downurl);
                 put_string("\n");
-                strcpy(downurl, "echo /http/bin!");
-                strcat(downurl, picurl + 7);
-                strcat(downurl, " | copy /tmp/");
-                strcat(downurl, tmp);
-                strcat(downurl, ".jpg");
+                free(downurl);
+                downurl = format("echo /http/bin!%s | copy /tmp/%s.jpg", picurl + 7, tmp);
                 put_string("# ");
                 put_string(downurl);
                 put_string("\n");

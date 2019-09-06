@@ -24,7 +24,7 @@ void __varg_append_char(__varg_string* s, char c) {
     if (s->length >= s->capacity - 2) {
         s->capacity <<= 1;
         char* new_text = malloc(s->capacity);
-        strcpy(new_text, s->text);
+        strncpy(new_text, s->text, s->length);
         free(s->text);
         s->text = new_text;
     }
