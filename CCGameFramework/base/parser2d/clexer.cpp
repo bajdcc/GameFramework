@@ -728,6 +728,9 @@ LEX_T(t) clexer::get_store_##t(int index) const \
                 }
                 else {
                     auto j = i - 2;
+                    if (j == index) {
+                        i++; break;
+                    }
                     for (; j > 0 && str[j] == '\\'; --j);
                     if (j == i - 2) {
                         i++;

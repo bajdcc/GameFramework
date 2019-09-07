@@ -58,6 +58,7 @@ int read_file(int id, int handle, char* playlist) {
     int i = 0;
     char* ptr = begin;
     char* ids = malloc(32);
+    *ids = '\0';
     while (c = window_get_msg(handle, &s), c < 0x1000) {
         if (s.code == 0x201 || s.code == 0x888) {
             if (s.comctl == t1id || s.code == 0x888) {
@@ -65,16 +66,29 @@ int read_file(int id, int handle, char* playlist) {
                     newline();
                     send_signal(child, 99);
                     child = -1;
+                    sleep(200);
+                }
+                if (*ids != '\0') {
+                    char* downurl = format("rm /tmp/%s.mp3", ids);
+                    put_string(downurl);
+                    put_string("\n");
+                    shell(downurl);
+                    free(downurl);
+                    downurl = format("rm /tmp/%s.jpg", ids);
+                    put_string(downurl);
+                    put_string("\n");
+                    shell(downurl);
+                    free(downurl);
                 }
                 put_string("Searching...\n");
                 char* ptr2 = strstr(ptr, "href=\"/song?id=");
                 *ids = '\0';
                 if (ptr2) {
                     put_string("Ptr2: "); put_hex(ptr2); put_string("\n");
-                    char* ptr3 = strstr(ptr2, ">");
+                    char* ptr3 = strstr(ptr2 + 15, "\"");
                     if (ptr3) {
                         put_string("Ptr3: "); put_hex(ptr3); put_string("\n");
-                        int len = ((int)((unsigned int)ptr3 - (unsigned int)ptr2)) - 16;
+                        int len = ((int)(ptr3 - ptr2)) - 15;
                         strncpy(ids, ptr2 + 15, len);
                         ids[len] = '\0';
                         put_string("Id: "); put_string(ids); put_string("\n");
@@ -180,6 +194,10 @@ void play(char* id) {
             char* name = json_obj_get_string(json_array_get(json_obj_get_string(obj, "songs"), 0), "name")->data.str;
             put_string("Name: "); put_string(name); put_string("\n");
             window_comctl_set_text(text2, name);
+            // Artist
+            char* artist = json_obj_get_string(json_array_get(json_obj_get_string(json_array_get(json_obj_get_string(obj, "songs"), 0), "artists"), 0), "name")->data.str;
+            put_string("Artist: "); put_string(artist); put_string("\n");
+            window_comctl_set_text(text3, artist);
             // Image
             char* pic = json_obj_get_string(json_obj_get_string(json_array_get(json_obj_get_string(obj, "songs"), 0), "album"), "picUrl")->data.str;
             put_string("Image: "); put_string(pic); put_string("\n");

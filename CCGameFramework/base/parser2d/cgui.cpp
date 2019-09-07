@@ -136,16 +136,17 @@ namespace clib {
             if (data.size() < 12) {
                 return false;
             }
-            if (strcmp((const char*)data.data(), "CCOS") == 0) {
-                auto size2 = *((uLongf*)(data.data() + 8));
-                if (size2 != data.size() - 12)
-                    return false;
-                if (strcmp((const char*)data.data() + 4, "TEXT") == 0) {
+            if (strncmp((const char*)data.data(), "CCOS", 4) == 0) {
+                if (strncmp((const char*)data.data() + 4, "TEXT", 4) == 0) {
+                    auto size2 = *((uLongf*)(data.data() + 8));
+                    if (size2 != data.size() - 12)
+                        return false;
                     data.erase(data.begin(), data.begin() + 12);
                     cache.insert(std::make_pair(name, data));
                     return true;
                 }
-                else if (strcmp((const char*)data.data() + 4, "ZLIB") == 0) {
+                else if (strncmp((const char*)data.data() + 4, "ZLIB", 4) == 0) {
+                    auto size2 = *((uLongf*)(data.data() + 8));
                     uLongf newsize;
                     std::vector<byte> newdata(size2);
                     auto r = uncompress(newdata.data(), &newsize, data.data() + 12, data.size() - 12);
@@ -176,7 +177,8 @@ namespace clib {
             auto r = compress(output.data(), &size, data.data(), data.size());
             if (r == Z_OK) {
                 ofs.write("CCOSZLIB", 8);
-                ofs.write((const char*)& size, 4);
+                auto size2 = data.size();
+                ofs.write((const char*)& size2, 4);
                 ofs.write((const char*)output.data(), size);
             }
             else {
@@ -973,7 +975,7 @@ namespace clib {
         auto bin_exist = false;
         if (path[0] != '/') {
             for (auto& p : paths) {
-                auto pp = p + '/' + path;
+                auto pp = p == "/" ? ('/' + path) : (p + '/' + path);
                 if (exist_bin(pp)) {
                     new_path = pp;
                     bin_exist = true;

@@ -1837,7 +1837,7 @@ namespace clib {
     {
         static char sz[32];
         std::stringstream ss;
-        auto L = (int)ctx->stacktrace_pc.size();
+        auto L = (int)ctx->stacktrace_pc.size() - 1;
         for (auto i = L; i >= 0; i--) {
             const auto& s = ctx->stacktrace_pc[i];
             const auto& s2 = ctx->stacktrace_pc2[i];

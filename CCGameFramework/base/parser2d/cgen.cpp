@@ -342,6 +342,9 @@ namespace clib {
         else if (clazz == z_struct_var) {
             gen.emit(IMM, addr);
         }
+        else if (clazz == z_function) {
+            gen.error(line, column, "function id cannot be modified");
+        }
         return g_ok;
     }
 
