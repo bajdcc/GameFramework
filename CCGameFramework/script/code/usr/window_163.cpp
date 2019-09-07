@@ -1,17 +1,15 @@
-#include "/include/io"
 #include "/include/window"
 #include "/include/fs"
-#include "/include/memory"
 #include "/include/string"
-#include "/include/xtoa_itoa"
 #include "/include/proc"
 #include "/include/readfile"
 #include "/include/json"
 #include "/include/shell"
 #include "/include/sys"
 #include "/include/format"
+#include "/include/gui"
 int child = -1;
-long text, text2, text3, text4;
+long text, text2, text3, text4, text5;
 char* list = "2966520976";
 void play(char* id);
 char* down_playlist(char* id);
@@ -39,21 +37,27 @@ int read_file(int id, int handle, char* playlist) {
     text2 = window_create_comctl(id, comctl_label);
     text3 = window_create_comctl(id, comctl_label);
     text4 = window_create_comctl(id, comctl_image);
+    text5 = window_create_comctl(id, comctl_button);
     window_comctl_connect(window_get_base(id), text);
+    window_comctl_connect(window_get_base(id), text5);
     window_comctl_connect(window_get_base(id), text2);
     window_comctl_connect(window_get_base(id), text3);
     window_comctl_connect(window_get_base(id), text4);
     window_comctl_set_text(text, "播放");
     window_comctl_set_text(text2, "");
     window_comctl_set_text(text3, "");
+    window_comctl_set_text(text5, "控制");
     window_comctl_set_bound(text, 10, 10, 200, 30);
     window_comctl_set_bound(text2, 10, 10, 200, 30);
     window_comctl_set_bound(text3, 10, 10, 200, 30);
     window_comctl_set_bound(text4, 10, 10, 200, 200);
+    window_comctl_set_bound(text5, 10, 10, 200, 30);
     window_comctl_label_set_horizontal_align_middle(text);
     window_comctl_label_set_horizontal_align_middle(text2);
     window_comctl_label_set_horizontal_align_middle(text3);
+    window_comctl_label_set_horizontal_align_middle(text5);
     int t1id = window_get_comctl(text);
+    int t5id = window_get_comctl(text5);
     __window_msg_struct__ s;
     int i = 0;
     char* ptr = begin;
@@ -68,6 +72,7 @@ int read_file(int id, int handle, char* playlist) {
                     child = -1;
                     sleep(200);
                 }
+                window_comctl_set_text(text5, "控制");
                 if (*ids != '\0') {
                     char* downurl = format("rm /tmp/%s.mp3", ids);
                     put_string(downurl);
@@ -109,6 +114,23 @@ int read_file(int id, int handle, char* playlist) {
                     exit(0);
                 }
             }
+            else if (s.comctl == t5id) {
+                int n = gui_music_ctrl(0);
+                switch (n) {
+                case 0:
+                    window_comctl_set_text(text5, "状态：无音乐");
+                    break;
+                case 1:
+                    window_comctl_set_text(text5, "状态：播放中");
+                    break;
+                case 2:
+                    window_comctl_set_text(text5, "状态：暂停");
+                    break;
+                case 3:
+                    window_comctl_set_text(text5, "状态：播放中");
+                    break;
+                }
+            }
         }
         else if (s.code == 0x214) {
 
@@ -144,7 +166,7 @@ int main(int argc, char** argv) {
     s.left = 50;
     s.top = 50;
     s.width = 210;
-    s.height = 310;
+    s.height = 320;
     int id = window_create(&s);
     put_string("Create test window: ");
     put_hex(id);

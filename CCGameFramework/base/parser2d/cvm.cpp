@@ -2857,6 +2857,21 @@ namespace clib {
             evtimer_add(evt, &tv);
         }
         break;
+        case 380:
+        {
+            auto n = ctx->ax._i;
+            auto zplay = fs.get_zplay();
+            if (n == 0) {
+                if (zplay) {
+                    libZPlay::TStreamStatus status;
+                    zplay->GetStatus(&status);
+                    if (status.fPause) { ctx->ax._i = 1; zplay->Resume(); }
+                    else if (status.fPlay) { ctx->ax._i = 2; zplay->Pause(); }
+                    else { ctx->ax._i = 3; zplay->Play(); }
+                }
+            }
+        }
+        break;
         default:
 #if LOG_SYSTEM
             ATLTRACE("[SYSTEM] ERR  | unknown interrupt: %d\n", ctx->ax._i);

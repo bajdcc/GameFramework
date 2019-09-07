@@ -10,6 +10,7 @@
 #include <map>
 #include <memory>
 #include "memory.h"
+#include <libzplay\libzplay.h>
 
 #define FILE_ROOT "./script/code"
 #define WFILE_ROOT _T(FILE_ROOT)
@@ -247,6 +248,8 @@ namespace clib {
 
         static void convert_utf8_to_gbk(string_t& str);
         uint64 size() const;
+
+        libZPlay::ZPlay* get_zplay() const;
 
     private:
         vfs_node::ref new_node(vfs_file_t type);

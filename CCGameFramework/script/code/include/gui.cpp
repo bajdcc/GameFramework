@@ -161,3 +161,8 @@ int gui_hsl2rgb(int h, int s, int l) {
         return r << 16 | g << 8 | b;
     }
 }
+
+int gui_music_ctrl(int n) {
+    n;
+    interrupt 380;
+}

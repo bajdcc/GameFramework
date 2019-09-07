@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <fstream>
 #include "cvfs.h"
+#include "cmusic.h"
 #include "cexception.h"
 
 namespace clib {
@@ -887,6 +888,11 @@ namespace clib {
     uint64 cvfs::size() const
     {
         return sum_fs(root);
+    }
+
+    libZPlay::ZPlay* cvfs::get_zplay() const
+    {
+        return vfs_node_stream_music::zplay;
     }
 
     int cvfs::rm(const string_t & path) {

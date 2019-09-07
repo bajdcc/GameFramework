@@ -73,7 +73,7 @@ namespace clib {
         if (success) {
             libZPlay::TStreamStatus status;
             zplay->GetStatus(&status);
-            return status.fPlay == 1;
+            return status.fPlay == 1 || status.fPause == 1;
         }
         return false;
     }
