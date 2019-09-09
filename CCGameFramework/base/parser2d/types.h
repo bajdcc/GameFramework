@@ -257,7 +257,9 @@ struct base_lexer_t<obj> \
 #define OP_INS(t) lexer_op2ins(t)
 
     const string_t& ins_str(ins_t);
+    int ins_ops(ins_t t);
 #define INS_STRING(t) ins_str(t)
+#define INS_OPNUM(t) ins_ops(t)
 
     enum coll_t {
         c_program,

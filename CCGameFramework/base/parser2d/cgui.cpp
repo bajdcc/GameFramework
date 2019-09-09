@@ -10,6 +10,7 @@
 #include <sstream>
 #include "cgui.h"
 #include "cexception.h"
+#include "crev.h"
 #include "../../ui/gdi/Gdi.h"
 #include "Parser2D.h"
 #include <ui\window\Window.h>
@@ -143,6 +144,9 @@ namespace clib {
                         return false;
                     data.erase(data.begin(), data.begin() + 12);
                     cache.insert(std::make_pair(name, data));
+                    vm->as_root(true);
+                    vm->write_vfs(name + ".bin", crev::conv(data));
+                    vm->as_root(false);
                     return true;
                 }
                 else if (strncmp((const char*)data.data() + 4, "ZLIB", 4) == 0) {
@@ -152,6 +156,9 @@ namespace clib {
                     auto r = uncompress(newdata.data(), &newsize, data.data() + 12, data.size() - 12);
                     if (r == Z_OK && newsize == size2) {
                         cache.insert(std::make_pair(name, newdata));
+                        vm->as_root(true);
+                        vm->write_vfs(name + ".bin", crev::conv(newdata));
+                        vm->as_root(false);
                         return true;
                     }
                 }
@@ -172,6 +179,9 @@ namespace clib {
         std::ofstream ofs(path, std::ios::binary);
         if (ofs) {
             const auto& data = cache.at(name);
+            vm->as_root(true);
+            vm->write_vfs(name + ".bin", crev::conv(data));
+            vm->as_root(false);
             std::vector<byte> output(compressBound(data.size()));
             uLongf size;
             auto r = compress(output.data(), &size, data.data(), data.size());

@@ -559,6 +559,9 @@
     <ClInclude Include="base\zlib\zlib.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="base\parser2d\crev.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -952,6 +955,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="base\parser2d\cwnd.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\parser2d\crev.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

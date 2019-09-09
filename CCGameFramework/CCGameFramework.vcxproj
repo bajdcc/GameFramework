@@ -275,6 +275,7 @@ xcopy /r /y /e "$(ProjectDir)dll" "$(TargetDir)"</Command>
     <ClInclude Include="base\parser2d\cgui.h" />
     <ClInclude Include="base\parser2d\clexer.h" />
     <ClInclude Include="base\parser2d\cmusic.h" />
+    <ClInclude Include="base\parser2d\crev.h" />
     <ClInclude Include="base\parser2d\cui.h" />
     <ClInclude Include="base\parser2d\cwnd.h" />
     <ClInclude Include="base\parser2d\Parser2D.h" />
@@ -442,6 +443,7 @@ xcopy /r /y /e "$(ProjectDir)dll" "$(TargetDir)"</Command>
     <ClCompile Include="base\parser2d\cgui.cpp" />
     <ClCompile Include="base\parser2d\clexer.cpp" />
     <ClCompile Include="base\parser2d\cmusic.cpp" />
+    <ClCompile Include="base\parser2d\crev.cpp" />
     <ClCompile Include="base\parser2d\cui.cpp" />
     <ClCompile Include="base\parser2d\cwnd.cpp" />
     <ClCompile Include="base\parser2d\Parser2D.cpp" />

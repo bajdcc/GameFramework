@@ -3,6 +3,7 @@
 #include "/include/shell"
 #include "/include/string"
 #include "/include/xtoa_atoi"
+#include "/include/format"
 int async = 0;
 struct string {
     char *text;
@@ -56,7 +57,9 @@ void run(node *list) {
         else {
             int i = fork();
             if (i == -1) {
-                shell((prev->text).text);
+                char* _cmd = format("%s > /dev/null", (prev->text).text);
+                shell(_cmd);
+                free(_cmd);
                 return;
             }
         }

@@ -424,6 +424,7 @@ namespace clib {
 
     void vfs_node_stream_server::reset()
     {
+        error = 0;
         state = 1;
         req_string.clear();
         resp.clear();
@@ -458,8 +459,14 @@ namespace clib {
     }
 
     int vfs_node_stream_server::truncate() {
-        if (state != 2)
+        if (state != 2) {
+            error++;
+            if (error >= 5) {
+                state = 3;
+                return -2;
+            }
             return -1;
+        }
         state = 4;
         sem_post(&sem);
         return 0;

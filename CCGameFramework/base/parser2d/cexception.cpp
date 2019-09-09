@@ -22,7 +22,7 @@ namespace clib {
     };
 
     const string_t& ex_str(ex_t t) {
-        assert(t >= ex_none && t <= ex_mem);
+        assert(t >= ex_none && t <= ex_vfs);
         return std::get<1>(ex_string_list[t]);
     }
 

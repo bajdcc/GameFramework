@@ -3657,7 +3657,10 @@ namespace clib {
             ctx->pc += INC_PTR;
             return true;
         case 50:
-            ctx->ax._i = ctx->id;
+            if (ctx->ax._i == 1)
+                ctx->ax._i = ctx->parent;
+            else
+                ctx->ax._i = ctx->id;
             break;
         case 52: {
             if (ctx->exited_child.empty()) {

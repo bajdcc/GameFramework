@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="renderer" content="webkit">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <link rel="stylesheet" href="/layui-v2.5.4/css/layui.css" media="all">
+    <title>GameFramework Server</title>
+</head>
+<body class="layui-layout-body">
+<div class="layui-layout layui-layout-admin">
+    <div class="layui-header">
+        <div class="layui-logo">GameFramework 后台管理</div>
+        <!-- 头部区域 -->
+        <ul class="layui-nav layui-layout-left">
+            <li class="layui-nav-item"><a href="/">查看信息</a></li>
+        </ul>
+        <ul class="layui-nav layui-layout-right">
+            <li class="layui-nav-item"><a href="https://github.com/bajdcc/GameFramework">bajdcc</a></li>
+        </ul>
+    </div>
+    <div class="layui-side layui-bg-black">
+        <div class="layui-side-scroll">
+            <!-- 左侧导航区域 -->
+            <ul class="layui-nav layui-nav-tree">
+                <li class="layui-nav-item layui-nav-itemed">
+                    <a href="#">系统</a>
+                    <dl class="layui-nav-child">
+                        <dd><a href="#">信息</a></dd>
+                    </dl>
+                </li>
+                <li class="layui-nav-item layui-nav-itemed">
+                    <a href="#">链接</a>
+                    <dl class="layui-nav-child">
+                        <dd><a target="content" href="/heap.html">堆排序演示</a></dd>
+                        <dd><a target="content" href="/MyGame.html">老版游戏</a></dd>
+                        <dd><a target="content" href="/game.html">新版游戏</a></dd>
+                        <dd><a target="content" href="/recommend.html">推荐</a></dd>
+                        <dd><a target="content" href="/Solarsys.html">三体系统</a></dd>
+                    </dl>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="layui-body">
+        <!-- 内容主体区域 -->
+        <div class="layui-tab-item layui-show">
+            <div class="layui-main">
+                <div id="LAY_preview">
+                    <iframe name="content" width="100%" height="600px" frameborder="0" scrolling="no"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="layui-footer" style="text-align: center;">
+        <!-- 底部固定区域 -->
+        2019 © GameFramework
+    </div>
+</div>
+<script src="/layui-v2.5.4/layui.js" charset="utf-8"></script>
+<script>
+</script>
+</script>
+</body>
+</html>

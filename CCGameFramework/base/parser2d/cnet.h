@@ -129,6 +129,7 @@ namespace clib {
         sem_t sem;
         pthread_mutex_t enter;
         int ref{ 0 };
+        int error{ 0 };
     };
 }
 

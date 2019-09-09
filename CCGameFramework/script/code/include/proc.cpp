@@ -16,6 +16,11 @@ int fork() {
     interrupt 55;
 }
 int get_pid() {
+    0;
+    interrupt 50;
+}
+int get_parent() {
+    1;
     interrupt 50;
 }
 int switch_task() {

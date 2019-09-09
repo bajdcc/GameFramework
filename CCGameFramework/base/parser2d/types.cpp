@@ -265,49 +265,54 @@ namespace clib {
         return std::get<1>(coll_string_list[t]);
     }
 
-    std::tuple<ins_t, string_t> ins_string_list[] = {
-        std::make_tuple(NOP, "NOP"),
-        std::make_tuple(LEA, "LEA"),
-        std::make_tuple(IMM, "IMM"),
-        std::make_tuple(IMX, "IMX"),
-        std::make_tuple(JMP, "JMP"),
-        std::make_tuple(JZ, "JZ"),
-        std::make_tuple(JNZ, "JNZ"),
-        std::make_tuple(ENT, "ENT"),
-        std::make_tuple(LOAD, "LOAD"),
-        std::make_tuple(SAVE, "SAVE"),
-        std::make_tuple(INTR, "INTR"),
-        std::make_tuple(CAST, "CAST"),
-        std::make_tuple(ADJ, "ADJ"),
-        std::make_tuple(CALL, "CALL"),
-        std::make_tuple(LEV, "LEV"),
-        std::make_tuple(PUSH, "PUSH"),
-        std::make_tuple(POP, "POP"),
-        std::make_tuple(OR, "OR"),
-        std::make_tuple(XOR, "XOR"),
-        std::make_tuple(AND, "AND"),
-        std::make_tuple(EQ, "EQ"),
-        std::make_tuple(CASE, "CASE"),
-        std::make_tuple(NE, "NE"),
-        std::make_tuple(LT, "LT"),
-        std::make_tuple(GT, "GT"),
-        std::make_tuple(LE, "LE"),
-        std::make_tuple(GE, "GE"),
-        std::make_tuple(SHL, "SHL"),
-        std::make_tuple(SHR, "SHR"),
-        std::make_tuple(ADD, "ADD"),
-        std::make_tuple(SUB, "SUB"),
-        std::make_tuple(MUL, "MUL"),
-        std::make_tuple(DIV, "DIV"),
-        std::make_tuple(MOD, "MOD"),
-        std::make_tuple(NEG, "NEG"),
-        std::make_tuple(NOT, "NOT"),
-        std::make_tuple(LNT, "LNT"),
-        std::make_tuple(EXIT, "EXIT"),
+    std::tuple<ins_t, string_t, int> ins_string_list[] = {
+        std::make_tuple(NOP, "NOP", 0),
+        std::make_tuple(LEA, "LEA", 1),
+        std::make_tuple(IMM, "IMM", 1),
+        std::make_tuple(IMX, "IMX", 2),
+        std::make_tuple(JMP, "JMP", 1),
+        std::make_tuple(JZ, "JZ", 1),
+        std::make_tuple(JNZ, "JNZ", 1),
+        std::make_tuple(ENT, "ENT", 1),
+        std::make_tuple(LOAD, "LOAD", 1),
+        std::make_tuple(SAVE, "SAVE", 1),
+        std::make_tuple(INTR, "INTR", 1),
+        std::make_tuple(CAST, "CAST", 1),
+        std::make_tuple(ADJ, "ADJ", 1),
+        std::make_tuple(CALL, "CALL", 0),
+        std::make_tuple(LEV, "LEV", 0),
+        std::make_tuple(PUSH, "PUSH", 1),
+        std::make_tuple(POP, "POP", 1),
+        std::make_tuple(OR, "OR", 1),
+        std::make_tuple(XOR, "XOR", 1),
+        std::make_tuple(AND, "AND", 1),
+        std::make_tuple(EQ, "EQ", 1),
+        std::make_tuple(CASE, "CASE", 0),
+        std::make_tuple(NE, "NE", 1),
+        std::make_tuple(LT, "LT", 1),
+        std::make_tuple(GT, "GT", 1),
+        std::make_tuple(LE, "LE", 1),
+        std::make_tuple(GE, "GE", 1),
+        std::make_tuple(SHL, "SHL", 1),
+        std::make_tuple(SHR, "SHR", 1),
+        std::make_tuple(ADD, "ADD", 1),
+        std::make_tuple(SUB, "SUB", 1),
+        std::make_tuple(MUL, "MUL", 1),
+        std::make_tuple(DIV, "DIV", 1),
+        std::make_tuple(MOD, "MOD", 1),
+        std::make_tuple(NEG, "NEG", 1),
+        std::make_tuple(NOT, "NOT", 1),
+        std::make_tuple(LNT, "LNT", 1),
+        std::make_tuple(EXIT, "EXIT", 0),
     };
 
     const string_t& ins_str(ins_t t) {
         assert(t >= NOP && t <= EXIT);
         return std::get<1>(ins_string_list[t]);
+    }
+
+    int ins_ops(ins_t t) {
+        assert(t >= NOP && t <= EXIT);
+        return std::get<2>(ins_string_list[t]);
     }
 }
