@@ -2962,28 +2962,31 @@ namespace clib {
 #endif
                 _cond_exp[0]->gen_rvalue(*this);
             }
-            emit(JMP, (int)text.size() + 4);
+            emit(JMP, (int)text.size() + 6);
             auto L1 = (int)text.size(); // break
             emit(JMP, -1);
-            auto L2 = (int)text.size(); // continue
+            auto LC = (int)text.size(); // continue to iter
+            emit(JMP, -1);
+            auto L2 = (int)text.size(); // iter to cond
             if (_cond_exp[1]) { // cond exp
 #if LOG_TYPE
                 log_out << "[DEBUG] For: cond= " << sym_to_string(_cond_exp[1]) << std::endl;
 #endif
                 _cond_exp[1]->gen_rvalue(*this);
                 emit(JZ, L1); // jump break
-            }
-            cycle_t c{ L1, L2 };
+        }
+            cycle_t c{ L1, LC };
             cycle.push_back(c);
             gen_rec(_stmt, level); // stmt
+            text[L2 - 1] = (int)text.size(); // jump iter
             if (_cond_exp[2]) { // iter exp
 #if LOG_TYPE
                 log_out << "[DEBUG] For: iter= " << sym_to_string(_cond_exp[2]) << std::endl;
 #endif
                 _cond_exp[2]->gen_rvalue(*this);
             }
-            emit(JMP, L2); // jump continue
-            text[L2 - 1] = (int)text.size(); // jump exit
+            emit(JMP, L2); // jump cond
+            text[LC - 1] = (int)text.size(); // jump exit
             tmp.back().clear();
             cycle.pop_back();
         }
