@@ -269,6 +269,10 @@ namespace clib {
             }
             return refer.lock()->size(t, level);
         }
+        if (t == x_matrix) {
+            // TODO: Fix bug, ID Assignment L-Value
+            return matrix.size();
+        }
         if (ptr > 0)
             return sizeof(void*);
         return refer.lock()->size(t, level);
@@ -1073,17 +1077,20 @@ namespace clib {
             if (size != t_ptr)
                 gen.error(line, column, "invalid address by []: " + exp1->base->to_string());
             base->ptr--;
+            auto L = 1;
             if (!base->matrix.empty()) {
-                base->matrix.pop_back();
+                base->matrix.erase(base->matrix.begin());
+                for (auto& m : base->matrix)
+                    L *= m;
             }
             gen.emit(PUSH, c); // 压入数组地址
             exp2->gen_rvalue(gen); // index
             size = exp2->base->get_cast();
             c = cast_size(size);
-            auto n = exp1->size(x_inc);
+            auto n = exp1->size(x_inc, 1);
             if (n > 1) {
                 gen.emit(PUSH, c);
-                gen.emit(IMM, n);
+                gen.emit(IMM, n * L);
                 gen.emit(MUL, size);
                 gen.emit(ADD, size);
             }
