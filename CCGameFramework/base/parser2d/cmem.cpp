@@ -176,7 +176,7 @@ namespace clib {
         }
         available_size += PAGE_SIZE;
         memory.emplace_back();
-        memory.back().resize(PAGE_SIZE * 2);
+        memory.back().resize(PAGE_SIZE);
         auto page_addr = PAGE_ALIGN_UP((uint32)memory.back().data());
         memory_page.push_back(page_addr);
         auto id = memory.size() - 1;

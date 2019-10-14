@@ -44,7 +44,7 @@ namespace clib {
 
     uint32_t cvm::pmm_alloc() {
         ctx->pages.emplace_back();
-        ctx->pages.back().resize(PAGE_SIZE * 2);
+        ctx->pages.back().resize(PAGE_SIZE);
         std::fill(ctx->pages.back().begin(), ctx->pages.back().end(), 0);
         auto ptr = PAGE_ALIGN_UP((uint32)ctx->pages.back().data());
         ctx->allocation.push_back(ptr);

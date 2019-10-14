@@ -42,7 +42,11 @@ namespace clib {
 
 /* 地址对齐 */
 #define PAGE_ALIGN_DOWN(x) ((x) & PAGE_MASK)
+#if 0
 #define PAGE_ALIGN_UP(x) (((x) + PAGE_SIZE - 1) & PAGE_MASK)
+#else
+#define PAGE_ALIGN_UP(x) (x)
+#endif
 
 /* 分析地址 */
 #define PAGE_INDEX(x)   ((x) & 0xfffff000)       // 获得页表号
