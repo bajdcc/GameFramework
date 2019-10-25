@@ -4,13 +4,14 @@
 
 void PhysicsEngine::RenderLightIntern(World& world, const PerspectiveCamera& camera, BYTE* buffer, cint width, cint height)
 {
+    auto _render_asp = 1.0f * width / height;
     for (auto y = 0; y < height; y++)
     {
         const auto sy = 1.0f - (1.0f * y / height);
 
         for (auto x = 0; x < width; x++)
         {
-            const auto sx = 1.0f * x / width;
+            const auto sx = 0.5f + (-_render_asp / 2.0f) + _render_asp * x / width;
 
             // sx和sy将屏幕投影到[0,1]区间
 

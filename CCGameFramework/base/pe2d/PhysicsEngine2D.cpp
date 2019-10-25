@@ -145,21 +145,30 @@ void PhysicsEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
 
 void PhysicsEngine::RenderSingleBitmap(CComPtr<ID2D1RenderTarget> rt, CRect bounds, void(*callback)(BYTE*, int, int))
 {
-    if (bounds.Width() < 256 || bounds.Height() < 256)
+    if (bounds.Width() < 10 || bounds.Height() < 10)
         return;
     if (painted)
     {
+        auto _w = bounds.Width(), _h = bounds.Height();
+        if (bounds.Width() * _render_asp_h < bounds.Height() * _render_asp_w) {
+            _h = bounds.Width() * _render_asp_h / _render_asp_w;
+        }
+        else {
+            _w = bounds.Height() * _render_asp_w / _render_asp_h;
+        }
         // 画渲染好的位图
         rt->DrawBitmap(
             bitmap,
-            D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.left + 256, (FLOAT)bounds.top + 256),
+            D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.left + _w, (FLOAT)bounds.top + _h),
             1.0f,
             D2D1_BITMAP_INTERPOLATION_MODE_LINEAR
         );
         return;
     }
+    auto _w = bounds.Width(), _h = bounds.Height();
+    _render_asp_w = bounds.Width();
+    _render_asp_h = bounds.Height();
     auto _rt = d2drt.lock();
-    auto _w = 256, _h = 256;
     bag.g_width = _w;
     bag.g_height = _h;
     auto wic = _rt->CreateBitmap(_w, _h);
@@ -181,7 +190,7 @@ void PhysicsEngine::RenderSingleBitmap(CComPtr<ID2D1RenderTarget> rt, CRect boun
     bitmap->CopyFromMemory(&d2dRect, buffer, rect.Width * 4);
     rt->DrawBitmap(
         bitmap,
-        D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.left + 256, (FLOAT)bounds.top + 256),
+        D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.left + _w, (FLOAT)bounds.top + _h),
         1.0f,
         D2D1_BITMAP_INTERPOLATION_MODE_LINEAR // 线性即可
     );
@@ -197,27 +206,36 @@ void PhysicsEngine::RenderSimpleColor(CComPtr<ID2D1RenderTarget> rt, CRect bound
 
 void PhysicsEngine::RenderSimpleSphere(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
 {
-    if (bounds.Width() < 256 || bounds.Height() < 256)
+    if (bounds.Width() < 10 || bounds.Height() < 10)
         return;
     if (painted)
     {
+        auto _w = bounds.Width(), _h = bounds.Height();
+        if (bounds.Width() * _render_asp_h < bounds.Height() * _render_asp_w) {
+            _h = bounds.Width() * _render_asp_h / _render_asp_w;
+        }
+        else {
+            _w = bounds.Height() * _render_asp_w / _render_asp_h;
+        }
         // 画渲染好的位图
         rt->DrawBitmap(
             bitmap,
-            D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.left + 256, (FLOAT)bounds.top + 256),
+            D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.left + _w / 2, (FLOAT)bounds.top + _h),
             1.0f,
             D2D1_BITMAP_INTERPOLATION_MODE_LINEAR
         );
         rt->DrawBitmap(
             bitmap2,
-            D2D1::RectF((FLOAT)bounds.left + 256, (FLOAT)bounds.top, (FLOAT)bounds.left + 512, (FLOAT)bounds.top + 256),
+            D2D1::RectF((FLOAT)bounds.left + _w / 2, (FLOAT)bounds.top, (FLOAT)bounds.left + _w, (FLOAT)bounds.top + _h),
             1.0f,
             D2D1_BITMAP_INTERPOLATION_MODE_LINEAR
         );
         return;
     }
+    auto _w = bounds.Width(), _h = bounds.Height();
+    _render_asp_w = bounds.Width();
+    _render_asp_h = bounds.Height();
     auto _rt = d2drt.lock();
-    auto _w = 256, _h = 256;
     bag.g_width = _w;
     bag.g_height = _h;
     auto wic = _rt->CreateBitmap(_w, _h);
@@ -240,7 +258,7 @@ void PhysicsEngine::RenderSimpleSphere(CComPtr<ID2D1RenderTarget> rt, CRect boun
     bitmap->CopyFromMemory(&d2dRect, buffer, rect.Width * 4);
     rt->DrawBitmap(
         bitmap,
-        D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.left + 256, (FLOAT)bounds.top + 256),
+        D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.left + _w / 2, (FLOAT)bounds.top + _h),
         1.0f,
         D2D1_BITMAP_INTERPOLATION_MODE_LINEAR // 线性即可
     );
@@ -249,7 +267,7 @@ void PhysicsEngine::RenderSimpleSphere(CComPtr<ID2D1RenderTarget> rt, CRect boun
     bitmap2->CopyFromMemory(&d2dRect, buffer2, rect.Width * 4);
     rt->DrawBitmap(
         bitmap2,
-        D2D1::RectF((FLOAT)bounds.left + 256, (FLOAT)bounds.top, (FLOAT)bounds.left + 512, (FLOAT)bounds.top + 256),
+        D2D1::RectF((FLOAT)bounds.left + _w / 2, (FLOAT)bounds.top, (FLOAT)bounds.left + _w, (FLOAT)bounds.top + _h),
         1.0f,
         D2D1_BITMAP_INTERPOLATION_MODE_LINEAR // 线性即可
     );
@@ -298,23 +316,23 @@ void PhysicsEngine::RenderSimpleIntern(BYTE* buffer, cint width, cint height)
         {
             if (rd == 0)
             {
-                buffer[0] = BYTE(x * 255 / width); //B
+                buffer[0] = BYTE(x * 255 / width);  //B
                 buffer[1] = BYTE(y * 255 / height); //G
-                buffer[2] = 0;                  //R
+                buffer[2] = 0;                      //R
             }
             else if (rd == 1)
             {
-                buffer[0] = BYTE(x * 255 / width); //B
-                buffer[1] = 0;                  //G
+                buffer[0] = BYTE(x * 255 / width);  //B
+                buffer[1] = 0;                      //G
                 buffer[2] = BYTE(y * 255 / height); //R
             }
             else if (rd == 2)
             {
-                buffer[0] = 0;                  //B
-                buffer[1] = BYTE(x * 255 / width); //G
+                buffer[0] = 0;                      //B
+                buffer[1] = BYTE(x * 255 / width);  //G
                 buffer[2] = BYTE(y * 255 / height); //R
             }
-            buffer[3] = 255; //A
+            buffer[3] = 255;                        //A
             buffer += 4;
         }
     }

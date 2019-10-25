@@ -27,13 +27,14 @@ void PhysicsEngine::RenderSphereIntern(BYTE * buffer, BYTE * buffer2, cint width
 
     // -------------------------------------
     // 光线追踪
+    auto _render_asp = 0.5f * width / height;
     for (auto y = 0; y < height; y++)
     {
-        auto sy = 1.0f - (1.0f * y / height);
+        const auto sy = 1.0f - (1.0f * y / height);
 
         for (auto x = 0; x < width; x++)
         {
-            auto sx = 1.0f * x / width;
+            const auto sx = 0.5f + (-_render_asp / 2.0f) + _render_asp * x / width;
 
             // sx和sy将屏幕投影到[0,1]区间
 

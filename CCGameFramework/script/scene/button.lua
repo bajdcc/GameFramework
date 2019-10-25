@@ -72,7 +72,8 @@ function M:init()
 	-- TEXT
 	local text = Text:new({
 		color = '#EEEEEE',
-		text = '【按钮】',
+		text = '【应用程序】',
+		font_family = '楷体',
 		pre_resize = function(this, left, top, right, bottom)
 			return left, top, right, bottom / 2
 		end
@@ -121,6 +122,7 @@ function M:init_menu(info)
 		for j=1,col do
 			Button:new({
 				text = ''..i..'x'..j,
+				font_family = '楷体',
 				track_display = 0,
 				click = function()
 				end
@@ -128,19 +130,19 @@ function M:init_menu(info)
 		end
 	end
 	-- ALLOCATE BUTTON GROUP
-	menu.children[1]:reset('2048')
+	menu.children[1]:reset('2048游戏')
 	menu.children[1].click = function()
 		FlipScene('Game_2048')
 	end
 	menu.children[1].layers.fg:update()
 
-	menu.children[2]:reset('hitokoto')
+	menu.children[2]:reset('一言')
 	menu.children[2].click = function()
 		FlipScene('Hitokoto')
 	end
 	menu.children[2].layers.fg:update()
 
-	menu.children[3]:reset('path')
+	menu.children[3]:reset('路径演示')
 	menu.children[3].click = function()
 		FlipScene('Path')
 	end
@@ -152,31 +154,31 @@ function M:init_menu(info)
 	end
 	menu.children[4].layers.fg:update()
 
-	menu.children[5]:reset('music')
+	menu.children[5]:reset('在线听歌')
 	menu.children[5].click = function()
 		FlipScene('Music')
 	end
 	menu.children[5].layers.fg:update()
 
-	menu.children[6]:reset('2dpe')
+	menu.children[6]:reset('光线追踪')
 	menu.children[6].click = function()
 		FlipScene('PE2D')
 	end
 	menu.children[6].layers.fg:update()
 
-	menu.children[7]:reset('cg')
+	menu.children[7]:reset('图形学')
 	menu.children[7].click = function()
 		FlipScene('CG')
 	end
 	menu.children[7].layers.fg:update()
 
-	menu.children[8]:reset('2d')
+	menu.children[8]:reset('物理引擎')
 	menu.children[8].click = function()
 		FlipScene('clib2d')
 	end
 	menu.children[8].layers.fg:update()
 
-	menu.children[9]:reset('parser')
+	menu.children[9]:reset('脚本操作系统')
 	menu.children[9].click = function()
 		FlipScene('Parser2d')
 	end

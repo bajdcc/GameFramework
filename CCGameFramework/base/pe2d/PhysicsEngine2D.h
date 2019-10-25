@@ -84,6 +84,8 @@ private:
     CComPtr<ID2D1Bitmap> bitmap;
     CComPtr<ID2D1Bitmap> bitmap2;
     scene_t scene;
+    int _render_asp_w{ 256 };
+    int _render_asp_h{ 256 };
 };
 
 #endif
