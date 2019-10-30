@@ -18,7 +18,7 @@ public:
 class PerspectiveCamera
 {
 public:
-    PerspectiveCamera(vector3 eye, vector3 front, vector3 up, float fov);
+    PerspectiveCamera(vector3 eye, vector3 front, vector3 up, float fov, float asp);
 
     Ray GenerateRay(float x, float y) const; // 产生追踪光线
 
@@ -28,6 +28,7 @@ public:
     vector3 right;   // 视角中向右方向的单位向量
     float fov;       // 视角
     float fovScale;  // 视角缩放
+    float asp;       // 长宽比
 };
 
 class Geometries;

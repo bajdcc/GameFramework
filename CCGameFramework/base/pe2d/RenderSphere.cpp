@@ -10,7 +10,8 @@ void PhysicsEngine::RenderSphereIntern(BYTE * buffer, BYTE * buffer2, cint width
         vector3(0, 10, 10) + bag3d.camera_pos,  // 摄影机眼睛的位置
         bag3d.rotate_front,                     // 视角中向前方向的单位向量
         bag3d.rotate_up,                        // 视角中向上方向的单位向量
-        bag3d.fov);                             // FOV
+        bag3d.fov,                              // FOV
+        0.5f * width / height);                 // 屏幕长宽比
 
     auto maxDepth = 20;       // 最大深度
 
@@ -27,14 +28,13 @@ void PhysicsEngine::RenderSphereIntern(BYTE * buffer, BYTE * buffer2, cint width
 
     // -------------------------------------
     // 光线追踪
-    auto _render_asp = 0.5f * width / height;
     for (auto y = 0; y < height; y++)
     {
         const auto sy = 1.0f - (1.0f * y / height);
 
         for (auto x = 0; x < width; x++)
         {
-            const auto sx = 0.5f + (-_render_asp / 2.0f) + _render_asp * x / width;
+            const auto sx = (1.0f * x / width);
 
             // sx和sy将屏幕投影到[0,1]区间
 

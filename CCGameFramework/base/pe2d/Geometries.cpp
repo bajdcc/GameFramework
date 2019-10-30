@@ -11,8 +11,8 @@ vector3 Ray::Eval(float t) const
     return origin + (direction * t);
 }
 
-PerspectiveCamera::PerspectiveCamera(vector3 eye, vector3 front, vector3 u, float fov)
-    : eye(eye), front(front), up(u), fov(fov)
+PerspectiveCamera::PerspectiveCamera(vector3 eye, vector3 front, vector3 u, float fov, float asp)
+    : eye(eye), front(front), up(u), fov(fov), asp(asp)
 {
     right = Normalize(CrossProduct(front, u));
     up = Normalize(CrossProduct(right, front));
@@ -22,7 +22,7 @@ PerspectiveCamera::PerspectiveCamera(vector3 eye, vector3 front, vector3 u, floa
 Ray PerspectiveCamera::GenerateRay(float x, float y) const
 {
     // 取样坐标(sx,sy)，投影到[-1,1]
-    const auto r = right * ((x - 0.5f) * fovScale);
+    const auto r = right * ((x - 0.5f) * asp * fovScale);
     const auto u = up * ((y - 0.5f) * fovScale);
 
     // 单位化距离向量

@@ -4,14 +4,13 @@
 
 void PhysicsEngine::RenderLightIntern(World& world, const PerspectiveCamera& camera, BYTE* buffer, cint width, cint height)
 {
-    auto _render_asp = 1.0f * width / height;
     for (auto y = 0; y < height; y++)
     {
         const auto sy = 1.0f - (1.0f * y / height);
 
         for (auto x = 0; x < width; x++)
         {
-            const auto sx = 0.5f + (-_render_asp / 2.0f) + _render_asp * x / width;
+            const auto sx = (1.0f * x / width);
 
             // sx和sy将屏幕投影到[0,1]区间
 
@@ -63,7 +62,8 @@ void PhysicsEngine::RenderDirectionalLight(BYTE* buffer, cint width, cint height
         vector3(0.0f, 10.0f, 10.0f) + bag3d.camera_pos,
         bag3d.rotate_front,
         bag3d.rotate_up,
-        bag3d.fov);
+        bag3d.fov,
+        1.0f * width / height);
 
     // 最大深度
     const auto maxDepth = 20;
@@ -119,7 +119,8 @@ void PhysicsEngine::RenderPointLight(BYTE* buffer, cint width, cint height)
         vector3(0.0f, 10.0f, 10.0f) + bag3d.camera_pos,
         bag3d.rotate_front,
         bag3d.rotate_up,
-        bag3d.fov);
+        bag3d.fov,
+        1.0f * width / height);
 
     // 最大深度
     const auto maxDepth = 20;
@@ -175,7 +176,8 @@ void PhysicsEngine::RenderSpotLight(BYTE* buffer, cint width, cint height)
         vector3(0.0f, 10.0f, 10.0f) + bag3d.camera_pos,
         bag3d.rotate_front,
         bag3d.rotate_up,
-        bag3d.fov);
+        bag3d.fov,
+        1.0f * width / height);
 
     const auto maxDepth = 20; // 最大深度
 
@@ -234,7 +236,8 @@ void PhysicsEngine::RenderTriLight(BYTE* buffer, cint width, cint height)
         vector3(0.0f, 40.0f, 15.0f) + bag3d.camera_pos,
         bag3d.rotate_front,
         bag3d.rotate_up,
-        bag3d.fov);
+        bag3d.fov,
+        1.0f * width / height);
 
     const auto maxDepth = 20; // 最大深度
 

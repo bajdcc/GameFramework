@@ -195,6 +195,14 @@ int PhysicsEngine::SetType(cint value)
             bag3d.rotate_front = Normalize(Rotate(bag3d.rotate_up, bag3d.rotate_front, 0.1f));
             bag3d.rotate_left = Normalize(CrossProduct(bag3d.rotate_front, bag3d.rotate_up));
             break;
+        case 'u':
+            bag3d.rotate_up = Normalize(Rotate(bag3d.rotate_front, bag3d.rotate_up, -0.1f));
+            bag3d.rotate_left = Normalize(CrossProduct(bag3d.rotate_front, bag3d.rotate_up));
+            break;
+        case 'o':
+            bag3d.rotate_up = Normalize(Rotate(bag3d.rotate_front, bag3d.rotate_up, 0.1f));
+            bag3d.rotate_left = Normalize(CrossProduct(bag3d.rotate_front, bag3d.rotate_up));
+            break;
         case 'z':
             bag3d.fov -= 1.0f;
             break;
@@ -237,8 +245,21 @@ int PhysicsEngine::SetType(cint value)
         if (locked)
             return -1;
         type = value;
-        if (value != 0)
+        if (value != 0) {
             painted = false;
+            if (type == 14) {
+                bag3d.rotate_front = vector3(0.0f, -1.25f, -1.0f);
+                bag3d.rotate_up = vector3(0, 1, 0);
+                bag3d.rotate_left = CrossProduct(bag3d.rotate_front, bag3d.rotate_up);
+                bag3d.fov = 60.0f;
+            }
+            else {
+                bag3d.rotate_front = vector3(0, 0, -1);
+                bag3d.rotate_up = vector3(0, 1, 0);
+                bag3d.rotate_left = CrossProduct(bag3d.rotate_front, bag3d.rotate_up);
+                bag3d.fov = 90.0f;
+            }
+        }
     }
     return 0;
 }
