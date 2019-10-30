@@ -7,10 +7,10 @@ void PhysicsEngine::RenderSphereIntern(BYTE * buffer, BYTE * buffer2, cint width
     // -------------------------------------
     // 摄影机
     PerspectiveCamera camera(
-        vector3(0, 10, 10),   // 摄影机眼睛的位置
-        vector3(0, 0, -1),    // 视角中向前方向的单位向量
-        vector3(0, 1, 0),     // 视角中向上方向的单位向量
-        90.0f);               // FOV
+        vector3(0, 10, 10) + bag3d.camera_pos,  // 摄影机眼睛的位置
+        bag3d.rotate_front,                     // 视角中向前方向的单位向量
+        bag3d.rotate_up,                        // 视角中向上方向的单位向量
+        bag3d.fov);                             // FOV
 
     auto maxDepth = 20;       // 最大深度
 

@@ -3,6 +3,7 @@
 #include "render/Direct2DRenderTarget.h"
 
 DrawSceneBag bag;
+Draw3DBag PhysicsEngine::bag3d;
 
 void PhysicsEngine::RenderByType(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
 {
@@ -84,6 +85,12 @@ void PhysicsEngine::Render(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
 
 void PhysicsEngine::Initialize(std::shared_ptr<Direct2DRenderTarget> rt)
 {
+    bag3d.camera_pos *= 0;
+    bag3d.sphere_pos *= 0;
+    bag3d.rotate_front = vector3(0, 0, -1);
+    bag3d.rotate_up = vector3(0, 1, 0);
+    bag3d.rotate_left = CrossProduct(bag3d.rotate_front, bag3d.rotate_up);
+    bag3d.fov = 90.0f;
     bgColor = Gdiplus::Color::LightGoldenrodYellow;
 }
 
@@ -109,7 +116,7 @@ void PhysicsEngine::Reset(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget,
 
 int PhysicsEngine::SetType(cint value)
 {
-    if (value == -1)
+    if (value <= -1)
         return painted ? 1 : 0;
     if (value >= 21 && value <= 50)
     {
@@ -130,11 +137,109 @@ int PhysicsEngine::SetType(cint value)
         }
         return 0;
     }
-    if (locked)
-        return -1;
-    type = value;
-    if (value != 0)
-        painted = false;
+    if (value & 0x1000)
+    {
+        if ((type >= 11 && type <= 14) || (type >= 2 && type <= 4))
+            painted = false;
+        auto k = value & 0xfff;
+        switch (k) {
+        case 'w':
+            bag3d.camera_pos += 0.1f * bag3d.rotate_up;
+            break;
+        case 'a':
+            bag3d.camera_pos -= 0.1f * bag3d.rotate_left;
+            break;
+        case 's':
+            bag3d.camera_pos -= 0.1f * bag3d.rotate_up;
+            break;
+        case 'd':
+            bag3d.camera_pos += 0.1f * bag3d.rotate_left;
+            break;
+        case 'q':
+            bag3d.camera_pos += 0.1f * bag3d.rotate_front;
+            break;
+        case 'e':
+            bag3d.camera_pos -= 0.1f * bag3d.rotate_front;
+            break;
+        case 't':
+            bag3d.sphere_pos.y += 0.1f;
+            break;
+        case 'f':
+            bag3d.sphere_pos.x -= 0.1f;
+            break;
+        case 'g':
+            bag3d.sphere_pos.y -= 0.1f;
+            break;
+        case 'h':
+            bag3d.sphere_pos.x += 0.1f;
+            break;
+        case 'r':
+            bag3d.sphere_pos.z -= 0.1f;
+            break;
+        case 'y':
+            bag3d.sphere_pos.z += 0.1f;
+            break;
+        case 'i':
+            bag3d.rotate_front = Normalize(Rotate(bag3d.rotate_left, bag3d.rotate_front, -0.1f));
+            bag3d.rotate_up = Normalize(CrossProduct(bag3d.rotate_left, bag3d.rotate_front));
+            break;
+        case 'j':
+            bag3d.rotate_front = Normalize(Rotate(bag3d.rotate_up, bag3d.rotate_front, -0.1f));
+            bag3d.rotate_left = Normalize(CrossProduct(bag3d.rotate_front, bag3d.rotate_up));
+            break;
+        case 'k':
+            bag3d.rotate_front = Normalize(Rotate(bag3d.rotate_left, bag3d.rotate_front, 0.1f));
+            bag3d.rotate_up = Normalize(CrossProduct(bag3d.rotate_left, bag3d.rotate_front));
+            break;
+        case 'l':
+            bag3d.rotate_front = Normalize(Rotate(bag3d.rotate_up, bag3d.rotate_front, 0.1f));
+            bag3d.rotate_left = Normalize(CrossProduct(bag3d.rotate_front, bag3d.rotate_up));
+            break;
+        case 'z':
+            bag3d.fov -= 1.0f;
+            break;
+        case 'x':
+            bag3d.fov += 1.0f;
+            break;
+        default:
+            break;
+        }
+        return 1;
+    }
+    else if (value & 0x2000)
+    {
+        auto key = value & 0xfff;
+    }
+    else if (value & 0x4000)
+    {
+        mouseX = value & 0xfff;
+    }
+    else if (value & 0x8000)
+    {
+        mouseY = value & 0xfff;
+    }
+    else if (value & 0x10000)
+    {
+        auto key = value & 0xfff;
+        switch (key)
+        {
+        case 1:
+            break;
+        case 2:
+            break;
+        case 3:
+            break;
+        default:
+            break;
+        }
+    }
+    else {
+        if (locked)
+            return -1;
+        type = value;
+        if (value != 0)
+            painted = false;
+    }
     return 0;
 }
 

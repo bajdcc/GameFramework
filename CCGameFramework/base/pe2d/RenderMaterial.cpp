@@ -7,10 +7,10 @@ void PhysicsEngine::RenderMaterialIntern(BYTE * buffer, cint width, cint height)
     // -------------------------------------
     // 摄影机
     PerspectiveCamera camera(
-        vector3(0, 5, 15),    // 摄影机眼睛的位置
-        vector3(0, 0, -1),    // 视角中向前方向的单位向量
-        vector3(0, 1, 0),     // 视角中向上方向的单位向量
-        90.0f);               // FOV
+        vector3(0, 5, 15) + bag3d.camera_pos,   // 摄影机眼睛的位置
+        bag3d.rotate_front,                     // 视角中向前方向的单位向量
+        bag3d.rotate_up,                        // 视角中向上方向的单位向量
+        bag3d.fov);                             // FOV
 
     const auto maxDepth = 20;       // 最大深度
 
@@ -88,10 +88,10 @@ void PhysicsEngine::RenderReflectIntern(BYTE* buffer, cint width, cint height)
     // -------------------------------------
     // 摄影机
     PerspectiveCamera camera(
-        vector3(0, 5, 15),    // 摄影机眼睛的位置
-        vector3(0, 0, -1),    // 视角中向前方向的单位向量
-        vector3(0, 1, 0),     // 视角中向上方向的单位向量
-        90.0f);               // FOV
+        vector3(0, 5, 15) + bag3d.camera_pos,   // 摄影机眼睛的位置
+        bag3d.rotate_front,                     // 视角中向前方向的单位向量
+        bag3d.rotate_up,                        // 视角中向上方向的单位向量
+        bag3d.fov);                             // FOV
 
     const auto maxDepth = 20;       // 最大深度
     const auto maxReflect = 3;      // 最大反射次数

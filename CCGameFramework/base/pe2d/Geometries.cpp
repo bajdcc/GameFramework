@@ -14,8 +14,8 @@ vector3 Ray::Eval(float t) const
 PerspectiveCamera::PerspectiveCamera(vector3 eye, vector3 front, vector3 u, float fov)
     : eye(eye), front(front), up(u), fov(fov)
 {
-    right = CrossProduct(front, u);
-    up = CrossProduct(right, front);
+    right = Normalize(CrossProduct(front, u));
+    up = Normalize(CrossProduct(right, front));
     fovScale = tanf(fov * float(M_PI) / 360.0f) * 2;
 }
 

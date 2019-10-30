@@ -23,7 +23,7 @@ void PhysicsEngine::RenderLightIntern(World& world, const PerspectiveCamera& cam
             if (result.body)
             {
                 color color;
-                for (auto & k : world.lights) {
+                for (auto& k : world.lights) {
                     auto lightSample = k->Sample(world, result.position);
 
                     if (!lightSample.empty()) {
@@ -60,10 +60,10 @@ void PhysicsEngine::RenderDirectionalLight(BYTE* buffer, cint width, cint height
     // -------------------------------------
     // 摄影机
     const PerspectiveCamera camera(
-        vector3(0.0f, 10.0f, 10.0f),
-        vector3(0.0f, 0.0f, -1.0f),
-        vector3(0.0f, 1.0f, 0.0f),
-        90.0f);
+        vector3(0.0f, 10.0f, 10.0f) + bag3d.camera_pos,
+        bag3d.rotate_front,
+        bag3d.rotate_up,
+        bag3d.fov);
 
     // 最大深度
     const auto maxDepth = 20;
@@ -93,7 +93,7 @@ void PhysicsEngine::RenderDirectionalLight(BYTE* buffer, cint width, cint height
     // -------------------------------------
     // 球体
     const auto sphere1 = std::make_shared<Sphere>(
-        vector3(0.0f, 10.0f, -10.0f),
+        vector3(0.0f, 10.0f, -10.0f) + bag3d.sphere_pos,
         10.0f
         );
     world.AddGeometries(sphere1);
@@ -116,10 +116,10 @@ void PhysicsEngine::RenderPointLight(BYTE* buffer, cint width, cint height)
     // -------------------------------------
     // 摄影机
     const PerspectiveCamera camera(
-        vector3(0.0f, 10.0f, 10.0f),
-        vector3(0.0f, 0.0f, -1.0f),
-        vector3(0.0f, 1.0f, 0.0f),
-        90.0f);
+        vector3(0.0f, 10.0f, 10.0f) + bag3d.camera_pos,
+        bag3d.rotate_front,
+        bag3d.rotate_up,
+        bag3d.fov);
 
     // 最大深度
     const auto maxDepth = 20;
@@ -149,7 +149,7 @@ void PhysicsEngine::RenderPointLight(BYTE* buffer, cint width, cint height)
     // -------------------------------------
     // 球体
     const auto sphere1 = std::make_shared<Sphere>(
-        vector3(0.0f, 10.0f, -10.0f),
+        vector3(0.0f, 10.0f, -10.0f) + bag3d.sphere_pos,
         10.0f
         );
     world.AddGeometries(sphere1);
@@ -172,10 +172,10 @@ void PhysicsEngine::RenderSpotLight(BYTE* buffer, cint width, cint height)
     // -------------------------------------
     // 摄影机
     const PerspectiveCamera camera(
-        vector3(0.0f, 10.0f, 10.0f),
-        vector3(0.0f, 0.0f, -1.0f),
-        vector3(0.0f, 1.0f, 0.0f),
-        90.0f);
+        vector3(0.0f, 10.0f, 10.0f) + bag3d.camera_pos,
+        bag3d.rotate_front,
+        bag3d.rotate_up,
+        bag3d.fov);
 
     const auto maxDepth = 20; // 最大深度
 
@@ -204,7 +204,7 @@ void PhysicsEngine::RenderSpotLight(BYTE* buffer, cint width, cint height)
     // -------------------------------------
     // 球体
     const auto sphere1 = std::make_shared<Sphere>(
-        vector3(0.0f, 10.0f, -10.0f),
+        vector3(0.0f, 10.0f, -10.0f) + bag3d.sphere_pos,
         10.0f
         );
     world.AddGeometries(sphere1);
@@ -231,10 +231,10 @@ void PhysicsEngine::RenderTriLight(BYTE* buffer, cint width, cint height)
     // -------------------------------------
     // 摄影机
     const PerspectiveCamera camera(
-        vector3(0.0f, 40.0f, 15.0f),
-        vector3(0.0f, -1.25f, -1.0f),
-        vector3(0.0f, 1.0f, 0.0f),
-        60.0f);
+        vector3(0.0f, 40.0f, 15.0f) + bag3d.camera_pos,
+        bag3d.rotate_front,
+        bag3d.rotate_up,
+        bag3d.fov);
 
     const auto maxDepth = 20; // 最大深度
 

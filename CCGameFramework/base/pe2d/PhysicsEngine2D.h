@@ -16,6 +16,16 @@ public:
 
 extern DrawSceneBag bag;
 
+struct Draw3DBag
+{
+    vector3 camera_pos;
+    vector3 sphere_pos;
+    vector3 rotate_front;
+    vector3 rotate_up;
+    vector3 rotate_left;
+    float fov;
+};
+
 class PhysicsEngine
 {
 public:
@@ -70,7 +80,7 @@ private:
     static void RenderTriLight(BYTE* buffer, cint width, cint height);
     static void RenderLightIntern(World&, const PerspectiveCamera&, BYTE* buffer, cint width, cint height);
 
-    void RenderSceneIntern(CComPtr<ID2D1RenderTarget> rt, CRect bounds, BYTE *buffer = nullptr, int size = 4);
+    void RenderSceneIntern(CComPtr<ID2D1RenderTarget> rt, CRect bounds, BYTE* buffer = nullptr, int size = 4);
 
 private:
     CComPtr<ID2D1SolidColorBrush> bg;
@@ -86,6 +96,9 @@ private:
     scene_t scene;
     int _render_asp_w{ 256 };
     int _render_asp_h{ 256 };
+    int mouseX{ 0 };
+    int mouseY{ 0 };
+    static Draw3DBag bag3d;
 };
 
 #endif

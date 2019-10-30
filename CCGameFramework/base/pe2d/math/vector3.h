@@ -45,5 +45,6 @@ FLOAT Magnitude(const vector3& v);
 vector3 Normalize(const vector3& v);
 FLOAT DotProduct(const vector3& v1, const vector3& v2);
 vector3 CrossProduct(const vector3& v1, const vector3& v2);
+vector3 Rotate(const vector3& v1, const vector3& v2, const float& delta);
 
 #endif // VECTOR3_H
