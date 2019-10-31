@@ -2,7 +2,7 @@
 #include "PhysicsEngine2D.h"
 #include "Geometries.h"
 
-void PhysicsEngine::RenderSphereIntern(BYTE * buffer, BYTE * buffer2, cint width, cint height)
+void PhysicsEngine::RenderSphereIntern(BYTE* buffer, BYTE* buffer2, cint width, cint height)
 {
     // -------------------------------------
     // 摄影机
@@ -22,9 +22,9 @@ void PhysicsEngine::RenderSphereIntern(BYTE * buffer, BYTE * buffer2, cint width
     // -------------------------------------
     // 球体
     world.AddGeometries(std::make_shared<Sphere>(
-        vector3(0.0f, 10.0f, -10.0f), // 球心坐标
-        10.0f                         // 半径
-    ));
+        vector3(0.0f, 10.0f, -10.0f) + bag3d.sphere_pos, // 球心坐标
+        10.0f                                            // 半径
+        ));
 
     // -------------------------------------
     // 光线追踪

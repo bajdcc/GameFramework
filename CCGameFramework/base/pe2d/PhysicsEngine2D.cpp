@@ -90,7 +90,7 @@ void PhysicsEngine::Initialize(std::shared_ptr<Direct2DRenderTarget> rt)
     bag3d.rotate_front = vector3(0, 0, -1);
     bag3d.rotate_up = vector3(0, 1, 0);
     bag3d.rotate_left = CrossProduct(bag3d.rotate_front, bag3d.rotate_up);
-    bag3d.fov = 90.0f;
+    bag3d.fov = 45.0f;
     bgColor = Gdiplus::Color::LightGoldenrodYellow;
 }
 
@@ -247,17 +247,18 @@ int PhysicsEngine::SetType(cint value)
         type = value;
         if (value != 0) {
             painted = false;
+            bag3d.fov = 45.0f;
             if (type == 14) {
                 bag3d.rotate_front = vector3(0.0f, -1.25f, -1.0f);
                 bag3d.rotate_up = vector3(0, 1, 0);
                 bag3d.rotate_left = CrossProduct(bag3d.rotate_front, bag3d.rotate_up);
-                bag3d.fov = 60.0f;
             }
             else {
                 bag3d.rotate_front = vector3(0, 0, -1);
                 bag3d.rotate_up = vector3(0, 1, 0);
                 bag3d.rotate_left = CrossProduct(bag3d.rotate_front, bag3d.rotate_up);
-                bag3d.fov = 90.0f;
+                if (type != 2)
+                    bag3d.camera_pos.z = 10;
             }
         }
     }
