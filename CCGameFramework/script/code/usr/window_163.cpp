@@ -10,7 +10,7 @@
 #include "/include/gui"
 int child = -1;
 long text, text2, text3, text4, text5;
-char* list = "2966520976";
+char* list64 = "NjA3NzEwMjk=";
 void play(char* id);
 char* down_playlist(char* id);
 int read_file(int id, int handle, char* playlist) {
@@ -154,6 +154,13 @@ int read_file(int id, int handle, char* playlist) {
     close(id);
 }
 int main(int argc, char** argv) {
+    char* list; int listL;
+    char* sh = format("echo %s | base64_decode > /tmp/163_list", list64);
+    shell(sh);
+    free(sh);
+    if (readfile("/tmp/163_list", &list, &listL) != 0) {
+        return -1;
+    }
     char* playlist = down_playlist(list);
     if (playlist == (char*)0) {
         set_fg(240, 0, 0);
@@ -207,8 +214,8 @@ void play(char* id) {
     newline(); put_string("Id: "); put_string(id); put_string("\n");
     char* path = format("/http/post!music.163.com/api/song/detail!id=%s&ids=[%s]", id, id);
     put_string("Open: "); put_string(path); put_string("\n");
-    char* json; int len;
-    if (readfile(path, &json, &len) == 0) {
+    char* json = readfile_fast(path);
+    if (json != (char*)0) {
         json_object* obj = json_parse_obj(json);
         if (obj) {
             put_string("Code: "); put_int(json_obj_get_string(obj, "code")->data.i); put_string("\n");

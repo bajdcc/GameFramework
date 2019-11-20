@@ -3943,6 +3943,54 @@ namespace clib {
             }
         }
                  break;
+        case 76: {
+            {
+                auto h = ctx->ax._i;
+                if (ctx->handles.find(h) != ctx->handles.end()) {
+                    auto dec = handles[h]->data.file;
+                    auto t = dec->get_handle(h);
+                    if (t == v_none)
+                        dec->add_handle(h, v_read);
+                    else if (t != v_read) {
+                        ctx->ax._i = -1;
+                        break;
+                    }
+                    ctx->ax._i = dec->get_length();
+                }
+                else {
+                    ctx->ax._i = -1;
+                }
+            }
+        }
+               break;
+        case 77: {
+            {
+                auto h = ctx->ax._i;
+                if (ctx->handles.find(h) != ctx->handles.end()) {
+                    auto dec = handles[h]->data.file;
+                    auto t = dec->get_handle(h);
+                    if (t == v_none)
+                        dec->add_handle(h, v_read);
+                    else if (t != v_read) {
+                        ctx->ax._i = 0;
+                        break;
+                    }
+                    std::vector<byte> data;
+                    if (dec->get_data(data)) {
+                        auto vmdata = vmm_malloc(data.size());
+                        ctx->ax._ui = vmdata;
+                        vmm_setmem(vmdata, data.size(), data);
+                    }
+                    else {
+                        ctx->ax._i = 0;
+                    }
+                }
+                else {
+                    ctx->ax._i = 0;
+                }
+            }
+        }
+               break;
         case 80:
         {
             auto h = ctx->ax._i;

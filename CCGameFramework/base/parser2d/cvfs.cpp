@@ -52,6 +52,11 @@ namespace clib {
         return false;
     }
 
+    int vfs_node_dec::get_length() const
+    {
+        return -1;
+    }
+
     vfs_node_dec::vfs_node_dec(const vfs_mod_query* mod) : mod(mod) {}
 
     vfs_node_solid::vfs_node_solid(const vfs_mod_query* mod, const vfs_node::ref& ref) :
@@ -156,6 +161,16 @@ namespace clib {
             return false;
         data = n->data;
         return true;
+    }
+
+    int vfs_node_solid::get_length() const
+    {
+        auto n = node.lock();
+        if (!n)
+            return -1;
+        if (!mod->can_mod(n, 0))
+            return -1;
+        return (int)n->data.size();
     }
 
     // -----------------------------------------
@@ -273,6 +288,10 @@ namespace clib {
 
     int vfs_node_cached::index() const {
         return idx < cache.length() ? cache[idx] : READ_EOF;
+    }
+
+    int vfs_node_cached::get_length() const {
+        return (int)cache.length();
     }
 
     vfs_node_stream::vfs_node_stream(const vfs_mod_query* mod, vfs_stream_t s, vfs_stream_call* call) :

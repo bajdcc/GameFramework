@@ -278,6 +278,12 @@ namespace clib {
         return true;
     }
 
+    int vfs_node_stream_net::get_length() const
+    {
+        if (*received != 2) return -1;
+        return (int)content.size();
+    }
+
     vfs_node_dec* vfs_node_stream_net::create(const vfs_mod_query* mod, vfs_stream_t s, vfs_stream_call* call, const string_t& path)
     {
         return new vfs_node_stream_net(mod, s, call, path);

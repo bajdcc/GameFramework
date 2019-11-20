@@ -69,13 +69,18 @@ int load(int handle) {
     handle;
     interrupt 75;
 }
+int flen(int handle) {
+    handle;
+    interrupt 76;
+}
+char* fread(int handle) {
+    handle;
+    interrupt 77;
+}
 int fsize(char* path) { // ERR:<0  OK:>=0
     int handle = open(path);
     if (handle >= 0) {
-        int n = 0; int c;
-        while (c = read(handle), c < 0x1000) {
-            n++;
-        }
+        int n = flen(handle);
         close(handle);
         return n;
     }
@@ -86,9 +91,9 @@ int fsize(char* path) { // ERR:<0  OK:>=0
 int fempty(char* path) { // ERR:<0  YES:1  NO:0
     int handle = open(path);
     if (handle >= 0) {
-        int val = read(handle) < 0x1000 ? 0 : 1;
+        int n = flen(handle);
         close(handle);
-        return val;
+        return n == 0;
     }
     else {
         return handle;

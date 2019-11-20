@@ -112,6 +112,7 @@ namespace clib {
         virtual ~vfs_node_dec() = default;
         virtual bool set_data(const std::vector<byte>& data);
         virtual bool get_data(std::vector<byte>& data) const;
+        virtual int get_length() const;
     protected:
         explicit vfs_node_dec(const vfs_mod_query*);
         uint idx{ 0 };
@@ -131,6 +132,7 @@ namespace clib {
         void remove_handle(int handle) override;
         bool set_data(const std::vector<byte>& data) override;
         bool get_data(std::vector<byte>& data) const override;
+        int get_length() const override;
     protected:
         explicit vfs_node_solid(const vfs_mod_query*, const vfs_node::ref& ref);
         vfs_node::weak_ref node;
@@ -169,6 +171,7 @@ namespace clib {
     public:
         bool available() const override;
         int index() const override;
+        int get_length() const override;
     private:
         explicit vfs_node_cached(const vfs_mod_query*, const string_t& str);
         string_t cache;

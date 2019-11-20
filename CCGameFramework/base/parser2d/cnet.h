@@ -46,6 +46,7 @@ namespace clib {
         explicit vfs_node_stream_net(const vfs_mod_query*, vfs_stream_t, vfs_stream_call*, const string_t& path);
         ~vfs_node_stream_net();
         bool get_data(std::vector<byte>& data) const override;
+        int get_length() const override;
 
         static vfs_node_dec* create(const vfs_mod_query* mod, vfs_stream_t s, vfs_stream_call* call, const string_t& path);
 
