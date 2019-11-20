@@ -8,9 +8,25 @@
 #include "/include/sys"
 #include "/include/format"
 #include "/include/gui"
+#include "/include/xtoa_atoi"
 int child = -1;
 long text, text2, text3, text4, text5;
-char* list64 = "NjA3NzEwMjk=";
+char* list64_name[0] = {
+    "我的歌单",
+    "葫芦丝2006",
+    "李荣浩",
+    "萨克斯",
+    "东方",
+    "Noicybino",
+};
+char* list64[0] = {
+    "NjA3NzEwMjk=",
+    "MzA4Mzc2MzMzNQ==",
+    "Mjg5NjA1Njk2MA==",
+    "MTE2Mzc5MzQ5",
+    "MTE2MzQzNjY0",
+    "NzA4MDgzNTc0",
+};
 void play(char* id);
 char* down_playlist(char* id);
 int read_file(int id, int handle, char* playlist) {
@@ -63,6 +79,11 @@ int read_file(int id, int handle, char* playlist) {
     char* ptr = begin;
     char* ids = malloc(32);
     *ids = '\0';
+    {
+        s.code = 0x888;
+        s.comctl = -1;
+        window_default_msg(id, &s);
+    }
     while (c = window_get_msg(handle, &s), c < 0x1000) {
         if (s.code == 0x201 || s.code == 0x888) {
             if (s.comctl == t1id || s.code == 0x888) {
@@ -155,13 +176,28 @@ int read_file(int id, int handle, char* playlist) {
 }
 int main(int argc, char** argv) {
     char* list; int listL;
-    char* sh = format("echo %s | base64_decode > /tmp/163_list", list64);
+    int j, k = 0;
+    for (j = 0; j < sizeof(list64) / sizeof(char*); j++) {
+        char* str = format("%d) %s\n", j + 1, list64_name[j]);
+        put_string(str);
+        free(str);
+    }
+    put_string("请输入要播放的歌单编号：");
+    sleep(1000);
+    char buf[255];
+    input(&buf, 255);
+    k = atoi32(&buf);
+    k--;
+    if (k < 0 || k >= sizeof(list64) / sizeof(char*))
+        k = 0;
+    char* sh = format("echo %s | base64_decode > /tmp/163_list", list64[k]);
     shell(sh);
     free(sh);
     if (readfile("/tmp/163_list", &list, &listL) != 0) {
         return -1;
     }
     char* playlist = down_playlist(list);
+    free(list);
     if (playlist == (char*)0) {
         set_fg(240, 0, 0);
         put_string("[ERROR] Download playlist failed.");
