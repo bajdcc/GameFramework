@@ -418,7 +418,11 @@ function M:init_menu(info)
 	}):attach(menu)
 
 	if MusicSceneName ~= nil then
-		Web.post('http://music.163.com/api/search/suggest/web', 8, 's=' .. MusicSceneName)
+		if MusicSceneId == 0 then
+			Web.post('http://music.163.com/api/song/detail', 9, 'id=' .. MusicSceneName .. '&ids=[' .. MusicSceneName .. ']')
+		else
+			Web.post('http://music.163.com/api/search/suggest/web', 8, 's=' .. MusicSceneName)
+		end
 		MusicSceneName = nil
 	end
 
