@@ -7,6 +7,7 @@
 #include <base/pe2d/PhysicsEngine2D.h>
 #include <base/clib2d/Clib2D.h>
 #include <base/parser2d/parser2d.h>
+#include <base/mice2d/Mice2d.h>
 #include "utils.h"
 
 #pragma region Base
@@ -26,6 +27,7 @@ enum ElementId
     X86Window = 1104,
     Clib2D = 1105,
     Parser2D = 1106,
+    Mice2D = 1107,
     Edit = 1200
 };
 
@@ -1008,5 +1010,51 @@ private:
 };
 
 #pragma endregion Parser2D
+
+#pragma region Mice2D
+
+class Mice2DElement : public GraphicsElement<Mice2DElement>
+{
+public:
+    Mice2DElement();
+    ~Mice2DElement();
+
+    static CString GetElementTypeName();
+
+    cint GetTypeId()override;
+
+    FLOAT GetOpacity()const;
+    void SetOpacity(FLOAT value);
+
+    cint GetType()const;
+    void SetType(cint value);
+
+    int Refresh(int arg);
+
+protected:
+    CStringA text;
+    FLOAT opacity{ 1.0f };
+    cint type{ 0 };
+};
+
+class Mice2DElementRenderer : public GraphicsRenderer<Mice2DElement, Mice2DElementRenderer, Direct2DRenderTarget>
+{
+public:
+    void Render(CRect bounds)override;
+    ~Mice2DElementRenderer();
+    int Refresh(int arg);
+
+    void OnElementStateChanged()override;
+
+protected:
+    void InitializeInternal()override;
+    void FinalizeInternal()override;
+    void RenderTargetChangedInternal(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget, std::shared_ptr<Direct2DRenderTarget> newRenderTarget)override;
+
+private:
+    Mice2DEngine engine;
+};
+
+#pragma endregion Mice2D
 
 #endif

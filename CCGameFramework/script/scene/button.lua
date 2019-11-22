@@ -184,6 +184,12 @@ function M:init_menu(info)
 	end
 	menu.children[9].layers.fg:update()
 
+	menu.children[10]:reset('ÕÒÊ³ÓÎÏ·')
+	menu.children[10].click = function()
+		FlipScene('Mice2d')
+	end
+	menu.children[10].layers.fg:update()
+
 	UIExt.paint()
 end
 

@@ -562,6 +562,9 @@
     <ClInclude Include="base\parser2d\crev.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="base\mice2d\Mice2D.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -960,6 +963,12 @@
     <ClCompile Include="base\parser2d\crev.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="base\mice2d\Mice2D.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\mice2d\Mice2DRender.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="script\lib\core\scene.lua">
@@ -1082,5 +1091,13 @@
     <Text Include="script\lib\ui\parser2d.lua">
       <Filter>脚本</Filter>
     </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="script\scene\game\mice.lua">
+      <Filter>脚本</Filter>
+    </None>
+    <None Include="script\lib\ui\mice2d.lua">
+      <Filter>脚本</Filter>
+    </None>
   </ItemGroup>
 </Project>

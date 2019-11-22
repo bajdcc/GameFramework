@@ -1,6 +1,6 @@
 local GdiBase = require('script.lib.ui.gdibase')
 
-local modname = 'Gdi2d'
+local modname = 'GdiParser2d'
 local M = GdiBase:new()
 _G[modname] = M
 package.loaded[modname] = M

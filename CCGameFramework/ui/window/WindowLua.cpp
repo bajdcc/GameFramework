@@ -91,6 +91,9 @@ int ui_add_obj(lua_State* L)
     case Parser2D:
         obj = Parser2DElement::Create();
         break;
+    case Mice2D:
+        obj = Mice2DElement::Create();
+        break;
     case Edit:
         obj = EditElement::Create();
         break;
@@ -288,6 +291,26 @@ int ui_update_obj(lua_State* L)
         }
     }
     break;
+    case Parser2D:
+    {
+        auto obj = std::dynamic_pointer_cast<Parser2DElement>(o);
+        {
+            lua_getfield(L, -1, "opacity");
+            auto opacity = (FLOAT)luaL_checknumber(L, -1); lua_pop(L, 1);
+            obj->SetOpacity(opacity);
+        }
+    }
+    break;
+    case Mice2D:
+    {
+        auto obj = std::dynamic_pointer_cast<Mice2DElement>(o);
+        {
+            lua_getfield(L, -1, "opacity");
+            auto opacity = (FLOAT)luaL_checknumber(L, -1); lua_pop(L, 1);
+            obj->SetOpacity(opacity);
+        }
+    }
+    break;
     case Edit:
     {
         auto obj = std::dynamic_pointer_cast<EditElement>(o);
@@ -383,6 +406,14 @@ int ui_refresh_obj(lua_State * L)
     case Parser2D:
     {
         auto obj = std::dynamic_pointer_cast<Parser2DElement>(o);
+        {
+            lua_pushinteger(L, obj->Refresh(arg));
+        }
+        return 1;
+    }
+    case Mice2D:
+    {
+        auto obj = std::dynamic_pointer_cast<Mice2DElement>(o);
         {
             lua_pushinteger(L, obj->Refresh(arg));
         }

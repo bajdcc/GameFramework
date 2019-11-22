@@ -43,15 +43,16 @@ Window = {
 		Button = "script.scene.button",
 		-- GAME
 		Game_2048 = "script.scene.game.2048",
-		PE2D = "script.scene.visual.2dpe",
-		CG = "script.scene.visual.cg",
-		clib2d = "script.scene.visual.clib2d",
+		Mice2d = "script.scene.game.mice",
 		-- WEB
 		Hitokoto = "script.scene.web.hitokoto",
 		Music = "script.scene.web.music",
 		-- VISUAL
 		Path = "script.scene.visual.path",
 		WireWorld = "script.scene.visual.wireworld",
+		PE2D = "script.scene.visual.2dpe",
+		CG = "script.scene.visual.cg",
+		clib2d = "script.scene.visual.clib2d",
 		-- X86
 		X86 = "script.scene.simu.x86",
 		Parser2d = "script.scene.visual.parser2d",

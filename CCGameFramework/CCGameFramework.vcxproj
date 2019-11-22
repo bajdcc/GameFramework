@@ -269,6 +269,7 @@ xcopy /r /y /e "$(ProjectDir)dll" "$(TargetDir)"</Command>
     <ClInclude Include="base\libqrencode\rscode.h" />
     <ClInclude Include="base\libqrencode\split.h" />
     <ClInclude Include="base\libzplay\libzplay.h" />
+    <ClInclude Include="base\mice2d\Mice2D.h" />
     <ClInclude Include="base\parser2d\cast.h" />
     <ClInclude Include="base\parser2d\cexception.h" />
     <ClInclude Include="base\parser2d\cgen.h" />
@@ -437,6 +438,8 @@ xcopy /r /y /e "$(ProjectDir)dll" "$(TargetDir)"</Command>
     <ClCompile Include="base\libqrencode\split.c">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="base\mice2d\Mice2D.cpp" />
+    <ClCompile Include="base\mice2d\Mice2DRender.cpp" />
     <ClCompile Include="base\parser2d\cast.cpp" />
     <ClCompile Include="base\parser2d\cexception.cpp" />
     <ClCompile Include="base\parser2d\cgen.cpp" />
@@ -729,6 +732,10 @@ xcopy /r /y /e "$(ProjectDir)dll" "$(TargetDir)"</Command>
     <Text Include="script\lib\ui\parser2d.lua">
       <FileType>Document</FileType>
     </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="script\lib\ui\mice2d.lua" />
+    <None Include="script\scene\game\mice.lua" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

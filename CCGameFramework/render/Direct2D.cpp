@@ -27,6 +27,7 @@ static void InitRenderer()
     EditElementRenderer::Register();
     Clib2DElementRenderer::Register();
     Parser2DElementRenderer::Register();
+    Mice2DElementRenderer::Register();
 }
 
 Direct2D::Direct2D()
