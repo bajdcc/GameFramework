@@ -424,6 +424,7 @@ function M:init_menu(info)
 			Web.post('http://music.163.com/api/search/suggest/web', 8, 's=' .. MusicSceneName)
 		end
 		MusicSceneName = nil
+		MusicSceneId = nil
 	end
 
 	Empty:new():attach(menu)

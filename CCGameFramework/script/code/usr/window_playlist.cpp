@@ -60,14 +60,14 @@ int read_file(char* playlist) {
                 int len = ((int)(ptr3 - ptr2)) - 15;
                 strncpy(ids, ptr2 + 15, len);
                 ids[len] = '\0';
-                put_string("Id: "); put_string(ids); put_string("\n");
                 ptr = ptr3;
             }
         }
-        if (*ids == '\0') {
-            ptr = begin;
+        if (*ids < '0' || *ids > '9') {
+            break;
         }
         else {
+            put_string("Id: "); put_string(ids); put_string("\n");
             play(ids);
         }
     }
