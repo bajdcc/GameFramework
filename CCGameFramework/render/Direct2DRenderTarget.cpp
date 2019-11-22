@@ -146,6 +146,16 @@ CComPtr<ID2D1SolidColorBrush> Direct2DRenderTarget::CreateDirect2DBrush(CColor c
     return solidBrushes.Create(color);
 }
 
+CComPtr<ID2D1SolidColorBrush> Direct2DRenderTarget::CreateDirect2DBrushSimple(D2D1::ColorF color)
+{
+    CComPtr<ID2D1SolidColorBrush> brush;
+    auto hr = d2dRenderTarget->CreateSolidColorBrush(color, &brush.p);
+    if (FAILED(hr))
+        ATLVERIFY(!"CreateBitmapFromSource failed");
+
+    return brush;
+}
+
 void Direct2DRenderTarget::DestroyDirect2DBrush(CColor color)
 {
     solidBrushes.Destroy(color);
@@ -236,6 +246,15 @@ CComPtr<ID2D1Bitmap> Direct2DRenderTarget::GetBitmapFromWIC(CComPtr<IWICBitmap> 
     if (FAILED(hr))
         ATLVERIFY(!"CreateBitmapFromWicBitmap failed");
     return d2dBitmap;
+}
+
+CComPtr<ID2D1PathGeometry> Direct2DRenderTarget::CreatePathGeometry()
+{
+    CComPtr<ID2D1PathGeometry> geo;
+    HRESULT hr = Direct2D::Singleton().GetDirect2DFactory()->CreatePathGeometry(&geo);
+    if (FAILED(hr))
+        ATLVERIFY(!"CreatePathGeometry failed");
+    return geo;
 }
 
 void Direct2DRenderTarget::DestroyDirect2DTextFormat(const Font& font)

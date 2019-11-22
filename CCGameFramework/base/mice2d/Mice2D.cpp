@@ -2,9 +2,10 @@
 #include "Mice2D.h"
 #include "render/Direct2DRenderTarget.h"
 #include <ui\window\Window.h>
+#include <random>
 
-#define FRAME (1.0 / 30)
-
+#define FRAME (1.0f / 30.0f)
+#define MICE_N 10
 
 // 光栅化算法
 
@@ -164,6 +165,44 @@ void Mice2DEngine::draw_font(const string_t& text)
     rt2->EndDraw();
 }
 
+void Mice2DEngine::init(std::shared_ptr<Direct2DRenderTarget> rt)
+{
+    bag.brush = rt->CreateDirect2DBrush(D2D1::ColorF::Black);
+    std::default_random_engine e((uint32_t)time(nullptr));
+    std::uniform_real_distribution<decimal> dr{ -100.0f, 100.0f };
+    std::uniform_real_distribution<decimal> da{ 0, 360.0 };
+    std::uniform_int_distribution<int> di{ 0, 255 };
+    for (auto i = 0; i < MICE_N; i++) {
+        mice2d::MiceAtom atom;
+        atom.pt = vector2(dr(e) * 2.0f, dr(e));
+        atom.angle = da(e);
+        atom.bodyF = CColor(di(e), di(e), di(e));
+        atom.body = rt->CreateDirect2DBrush(atom.bodyF);
+        mices.push_back(atom);
+    }
+    bag.tail = rt->CreatePathGeometry();
+    CComPtr<ID2D1GeometrySink> pSink;
+    bag.tail->Open(&pSink.p);
+    pSink->SetFillMode(D2D1_FILL_MODE_WINDING);
+    pSink->BeginFigure({ 0, 20 }, D2D1_FIGURE_BEGIN_HOLLOW);
+    pSink->AddBezier({ { -5, 22 },{ -5, 22 },{ 0, 25 } });
+    pSink->AddBezier({ { 5, 27 },{ 5, 32 },{ 0, 30 } });
+    pSink->AddBezier({ { -5, 32 },{ -5, 42 },{ 0, 35 } });
+    pSink->EndFigure(D2D1_FIGURE_END_OPEN);
+    pSink->Close();
+}
+
+void Mice2DEngine::destroy(std::shared_ptr<Direct2DRenderTarget> rt)
+{
+    for (auto& mice : mices) {
+        rt->DestroyDirect2DBrush(mice.bodyF);
+        mice.body = nullptr;
+    }
+    mices.clear();
+    bag.brush.Release();
+    bag.tail.Release();
+}
+
 void Mice2DEngine::RenderByType(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
 {
     RenderDefault(rt, bounds);
@@ -186,21 +225,12 @@ void Mice2DEngine::Initialize(std::shared_ptr<Direct2DRenderTarget> rt)
     loggingFont.bold = false;
     loggingFont.italic = false;
     loggingFont.underline = false;
-    bgColorLog = CColor(0, 0, 0, 220);
-    brushes.cmdFont.size = 16;
-    brushes.cmdFont.fontFamily = "Courier New";
-    brushes.cmdFont.bold = false;
-    brushes.cmdFont.italic = false;
-    brushes.cmdFont.underline = false;
-    brushes.gbkFont.size = 16;
-    brushes.gbkFont.fontFamily = "楷体";
-    brushes.gbkFont.bold = false;
-    brushes.gbkFont.italic = false;
-    brushes.gbkFont.underline = false;
-    logoColor = CColor(255, 255, 255);
+    bgColor = CColor(253, 237, 159);
+    bgColorLog = CColor(240, 240, 240, 220);
+    logoColor = CColor(0, 0, 0, 240);
     last_clock = std::chrono::system_clock::now();
-    dt = 30;
-    dt_inv = 1.0 / dt;
+    dt = 30.0f;
+    dt_inv = 1.0f / dt;
     rect.X = 0;
     rect.Y = 0;
     font.size = 20;
@@ -227,13 +257,12 @@ void Mice2DEngine::Reset(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget, 
     if (oldRenderTarget)
     {
         oldRenderTarget->DestroyDirect2DBrush(bgColor); bg = nullptr;
-        oldRenderTarget->DestroyDirect2DBrush(bgColorLog); bg = nullptr;
+        oldRenderTarget->DestroyDirect2DBrush(bgColorLog); bg_log = nullptr;
         oldRenderTarget->DestroyDirect2DTextFormat(logoFont); logoTF = nullptr;
         oldRenderTarget->DestroyDirect2DTextFormat(loggingFont); loggingTF = nullptr;
         oldRenderTarget->DestroyDirect2DBrush(logoColor); logoBrush = nullptr;
-        oldRenderTarget->DestroyDirect2DTextFormat(brushes.cmdFont); brushes.cmdTF = nullptr;
-        oldRenderTarget->DestroyDirect2DTextFormat(brushes.gbkFont); brushes.gbkTF = nullptr;
         oldRenderTarget->DestroyDirect2DTextFormat(backup_font); font_format = nullptr;
+        destroy(oldRenderTarget);
     }
     if (newRenderTarget)
     {
@@ -242,11 +271,10 @@ void Mice2DEngine::Reset(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget, 
         logoTF = newRenderTarget->CreateDirect2DTextFormat(logoFont);
         loggingTF = newRenderTarget->CreateDirect2DTextFormat(loggingFont);
         logoBrush = newRenderTarget->CreateDirect2DBrush(logoColor);
-        brushes.cmdTF = newRenderTarget->CreateDirect2DTextFormat(brushes.cmdFont);
-        brushes.gbkTF = newRenderTarget->CreateDirect2DTextFormat(brushes.gbkFont);
         font_format = newRenderTarget->CreateDirect2DTextFormat(font);
         d2drt = newRenderTarget;
         cur_bursh = newRenderTarget->CreateDirect2DBrush(CColor());
+        init(newRenderTarget);
     }
 }
 
@@ -283,7 +311,7 @@ int Mice2DEngine::SetType(cint value)
     return 0;
 }
 
-static char* ipsf(double ips) {
+static char* ipsf(decimal ips) {
     static char _ipsf[32];
     if (ips < 1e3) {
         snprintf(_ipsf, sizeof(_ipsf), "%.1f", ips);
@@ -301,15 +329,15 @@ void Mice2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
 {
     auto now = std::chrono::system_clock::now();
     // 计算每帧时间间隔
-    dt = std::chrono::duration_cast<std::chrono::duration<double>>(now - last_clock).count();
+    dt = std::chrono::duration_cast<std::chrono::duration<decimal>>(now - last_clock).count();
     cycles++;
 
-    auto inv = 1.0 / dt;
+    auto inv = 1.0f / dt;
     if (dt > FRAME) {
         ips = cycles * dt;
         cycles = 0;
         dt = min(dt, FRAME);
-        dt_inv = 1.0 / dt;
+        dt_inv = 1.0f / dt;
         last_clock = now;
     }
 
@@ -317,7 +345,8 @@ void Mice2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
         D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
         bg
     );
-    // draw(rt, bounds, brushes, paused, dt_inv * FRAME)
+    
+    draw(rt, bounds, dt_inv * FRAME);
 
     CString logo(_T("找食游戏 @bajdcc"));
 
@@ -378,5 +407,13 @@ void Mice2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
         R.top += lines * span;
         disp = CString(_T("显示5"));
         rt->DrawText(disp, disp.GetLength(), loggingTF->textFormat, R, logoBrush);
+    }
+}
+
+void Mice2DEngine::draw(CComPtr<ID2D1RenderTarget>& rt, const CRect& bounds, decimal fps) {
+    if (!paused) {
+        for (auto& mice : mices) {
+            mice.draw(rt, bounds, bag);
+        }
     }
 }

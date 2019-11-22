@@ -1,7 +1,8 @@
 #ifndef MICE2D_MICE2D_H
 #define MICE2D_MICE2D_H
-#include "render/Direct2DAllocator.h"
+#include <render/Direct2DRenderTarget.h>
 #include <memory>
+#include "MiceAtom.h"
 
 using string_t = std::string;
 
@@ -16,11 +17,6 @@ public:
     void Reset(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget, std::shared_ptr<Direct2DRenderTarget> newRenderTarget);
 
     int SetType(cint value);
-
-    struct BrushBag {
-        Font cmdFont; std::shared_ptr<D2DTextFormatPackage> cmdTF;
-        Font gbkFont; std::shared_ptr<D2DTextFormatPackage> gbkTF;
-    } brushes;
 
     bool ready() const;
     void move_to(int x, int y);
@@ -38,8 +34,12 @@ public:
     void set_font_family(const string_t &name);
     void draw_font(const string_t& text);
 
+    void init(std::shared_ptr<Direct2DRenderTarget> rt);
+    void destroy(std::shared_ptr<Direct2DRenderTarget> rt);
+
 private:
     void RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
+    void draw(CComPtr<ID2D1RenderTarget>& rt, const CRect& bounds, decimal fps);
 
     bool check_cord(int x, int y) const;
     void bresenham(int x0, int y0, int x1, int y1);
@@ -71,10 +71,10 @@ private:
 
 private:
     std::chrono::system_clock::time_point last_clock;
-    double dt{ 0 };
-    double dt_inv{ 0 };
+    decimal dt{ 0 };
+    decimal dt_inv{ 0 };
     int cycles{ 0 };
-    double ips{ 0 };
+    decimal ips{ 0 };
     bool paused{ false };
 
     struct global_state_t {
@@ -86,6 +86,9 @@ private:
         std::list<CString> logging;
         bool is_logging{ false };
     } global_state;
+
+    mice2d::DrawBag bag;
+    std::vector<mice2d::MiceAtom> mices;
 
 private:
     std::shared_ptr<D2DTextFormatPackage> font_format;

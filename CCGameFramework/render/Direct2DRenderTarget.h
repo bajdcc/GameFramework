@@ -22,6 +22,7 @@ public:
     HRESULT Present();
 
     CComPtr<ID2D1SolidColorBrush> CreateDirect2DBrush(CColor color);
+    CComPtr<ID2D1SolidColorBrush> CreateDirect2DBrushSimple(D2D1::ColorF color);
     void DestroyDirect2DBrush(CColor color);
     CComPtr<ID2D1LinearGradientBrush> CreateDirect2DLinearBrush(CColor c1, CColor c2);
     void DestroyDirect2DLinearBrush(CColor c1, CColor c2);
@@ -36,6 +37,8 @@ public:
     CComPtr<IWICBitmap> CreateImageFromIcon(HICON handle, int index = 0);
 
     CComPtr<ID2D1Bitmap> GetBitmapFromWIC(CComPtr<IWICBitmap> bitmap);
+
+    CComPtr<ID2D1PathGeometry> CreatePathGeometry();
 
 protected:
     CComPtr<IDWriteRenderingParams> CreateRenderingParams(DWRITE_RENDERING_MODE renderingMode, CComPtr<IDWriteRenderingParams> defaultParams, CComPtr<IDWriteFactory> dwriteFactory);
