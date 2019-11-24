@@ -18,32 +18,14 @@ public:
 
     int SetType(cint value);
 
-    bool ready() const;
-    void move_to(int x, int y);
-    void line_to(int x, int y);
-    void draw_point(int x, int y);
-    int get_width() const;
-    int get_height() const;
-    void set_color(uint c);
-    void clear(uint c);
-    void fill_rect(int x, int y);
-    int set_fresh(int fresh);
-    void reset();
-    void create_font();
-    void set_font_size(int size);
-    void set_font_family(const string_t &name);
-    void draw_font(const string_t& text);
-
     void init(std::shared_ptr<Direct2DRenderTarget> rt);
     void destroy(std::shared_ptr<Direct2DRenderTarget> rt);
 
 private:
     void RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
     void draw(CComPtr<ID2D1RenderTarget>& rt, const CRect& bounds, decimal fps);
-
-    bool check_cord(int x, int y) const;
-    void bresenham(int x0, int y0, int x1, int y1);
-    bool setpixel(int x, int y);
+    void tick(const CRect& bounds);
+    void reset();
 
 private:
     CComPtr<ID2D1SolidColorBrush> bg;
@@ -56,18 +38,7 @@ private:
     std::shared_ptr<D2DTextFormatPackage> logoTF;
     std::shared_ptr<D2DTextFormatPackage> loggingTF;
     CComPtr<ID2D1SolidColorBrush> logoBrush;
-
-private:
-    CComPtr<ID2D1Bitmap> bitmap;
-    CComPtr<ID2D1Bitmap> bitmap_effect;
-    CComPtr<ID2D1BitmapRenderTarget> rt2;
-    std::weak_ptr<Direct2DRenderTarget> d2drt;
-    WICRect rect;
-    D2D1_RECT_U d2drect;
-
-    CPoint cur_pt;
-    CComPtr<ID2D1SolidColorBrush> cur_bursh;
-    int auto_fresh{ 1 };
+    std::weak_ptr<Direct2DRenderTarget> rt2;
 
 private:
     std::chrono::system_clock::time_point last_clock;
@@ -89,6 +60,7 @@ private:
 
     mice2d::DrawBag bag;
     std::vector<mice2d::MiceAtom> mices;
+    int global_id{ 1 };
 
 private:
     std::shared_ptr<D2DTextFormatPackage> font_format;

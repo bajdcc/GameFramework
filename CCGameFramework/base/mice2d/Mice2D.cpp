@@ -7,173 +7,18 @@
 #define FRAME (1.0f / 30.0f)
 #define MICE_N 10
 
-// 光栅化算法
-
-bool Mice2DEngine::check_cord(int x, int y) const
-{
-    return bitmap && x >= 0 && y >= 0 && x < rect.Width && y < rect.Height;
-}
-
-bool Mice2DEngine::ready() const
-{
-    return bitmap != nullptr;
-}
-
-void Mice2DEngine::move_to(int x, int y)
-{
-    if (check_cord(x, y)) {
-        cur_pt.x = x;
-        cur_pt.y = y;
-    }
-}
-
-// CHECKED X, Y
-bool Mice2DEngine::setpixel(int x, int y) {
-    if (!bitmap) return false;
-    rt2->BeginDraw();
-    rt2->DrawRectangle(D2D1::RectF((FLOAT)x, (FLOAT)y, (FLOAT)x, (FLOAT)y), cur_bursh);
-    rt2->EndDraw();
-    return true;
-}
-
-// 画直线
-// Refer: https://zhuanlan.zhihu.com/p/30553006
-// Modified from https://rosettacode.org/wiki/Bitmap/Bresenham%27s_line_algorithm#C
-void Mice2DEngine::bresenham(int x0, int y0, int x1, int y1) {
-    int dx = abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
-    int dy = abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
-    int err = (dx > dy ? dx : -dy) / 2;
-
-    while (setpixel(x0, y0), x0 != x1 || y0 != y1) {
-        int e2 = err;
-        if (e2 > -dx) { err -= dy; x0 += sx; }
-        if (e2 < dy) { err += dx; y0 += sy; }
-    }
-}
-
-void Mice2DEngine::line_to(int x, int y)
-{
-    if (check_cord(x, y)) {
-        rt2->BeginDraw();
-        rt2->DrawLine(D2D1::Point2F((FLOAT)cur_pt.x, (FLOAT)cur_pt.y),
-            D2D1::Point2F((FLOAT)x, (FLOAT)y), cur_bursh);
-        rt2->EndDraw();
-        cur_pt.x = x;
-        cur_pt.y = y;
-    }
-}
-
-void Mice2DEngine::draw_point(int x, int y)
-{
-    if (check_cord(x, y)) {
-        setpixel(x, y);
-    }
-}
-
-int Mice2DEngine::get_width() const
-{
-    return rect.Width;
-}
-
-int Mice2DEngine::get_height() const
-{
-    return rect.Height;
-}
-
-void Mice2DEngine::set_color(uint c)
-{
-    if (!bitmap) return;
-    cur_bursh = nullptr;
-    auto hr = rt2->CreateSolidColorBrush(D2D1::ColorF(c & 0xffffff, ((FLOAT)(c >> 24)) / 255.0f), &cur_bursh);
-    if (FAILED(hr))
-        ATLVERIFY(!"CreateSolidColorBrush failed");
-}
-
-void Mice2DEngine::clear(uint c)
-{
-    if (!bitmap) return;
-    rt2->BeginDraw();
-    rt2->Clear(D2D1::ColorF(c & 0xffffff, ((FLOAT)(c >> 24)) / 255.0f));
-    rt2->EndDraw();
-}
-
-void Mice2DEngine::fill_rect(int x, int y)
-{
-    if (check_cord(x, y)) {
-        rt2->BeginDraw();
-        rt2->FillRectangle(D2D1::RectF((FLOAT)cur_pt.x, (FLOAT)cur_pt.y, (FLOAT)x + 1, (FLOAT)y + 1), cur_bursh);
-        rt2->EndDraw();
-        cur_pt.x = x;
-        cur_pt.y = y;
-    }
-}
-
-int Mice2DEngine::set_fresh(int fresh)
-{
-    if (fresh == -1) return auto_fresh;
-    auto_fresh = fresh;
-    return fresh;
-}
-
-void Mice2DEngine::reset()
-{
-    auto_fresh = 1;
-    rt2.Release();
-    bitmap.Release();
-    rect.Width = 0;
-    rect.Height = 0;
-    cur_bursh.Release();
-}
-
-void Mice2DEngine::create_font()
-{
-    if (d2drt.lock() && font.size > 0 && !font.fontFamily.IsEmpty()) {
-        auto d = d2drt.lock();
-        d->DestroyDirect2DTextFormat(backup_font);
-        font_format = d->CreateDirect2DTextFormat(font);
-        backup_font.fontFamily = font.fontFamily;
-        backup_font.size = font.size;
-        backup_font.bold = font.bold;
-        backup_font.italic = font.italic;
-        backup_font.underline = font.underline;
-        backup_font.strikeline = font.strikeline;
-        backup_font.antialias = font.antialias;
-        backup_font.verticalAntialias = font.verticalAntialias;
-    }
-}
-
-void Mice2DEngine::set_font_size(int size)
-{
-    if (size > 0 && size < 100)
-        font.size = size;
-}
-
-void Mice2DEngine::set_font_family(const string_t& name)
-{
-    if (!name.empty())
-        font.fontFamily = name.c_str();
-}
-
-void Mice2DEngine::draw_font(const string_t& text)
-{
-    if (!bitmap) return;
-    CString t(CStringA(text.c_str()));
-    rt2->BeginDraw();
-    rt2->DrawText(t.GetBuffer(0), t.GetLength(), font_format->textFormat,
-        D2D1::RectF((float)cur_pt.x, (float)cur_pt.y,
-        (float)rect.Width, (float)rect.Height), cur_bursh);
-    rt2->EndDraw();
-}
-
 void Mice2DEngine::init(std::shared_ptr<Direct2DRenderTarget> rt)
 {
+    rt2 = rt;
     bag.brush = rt->CreateDirect2DBrush(D2D1::ColorF::Black);
-    std::default_random_engine e((uint32_t)time(nullptr));
+    bag.random = std::default_random_engine((uint32_t)time(nullptr));
+    auto& e = bag.random;
     std::uniform_real_distribution<decimal> dr{ -100.0f, 100.0f };
-    std::uniform_real_distribution<decimal> da{ 0, 360.0 };
+    std::uniform_real_distribution<decimal> da{ 0, 2.0f * (decimal)M_PI };
     std::uniform_int_distribution<int> di{ 0, 255 };
     for (auto i = 0; i < MICE_N; i++) {
         mice2d::MiceAtom atom;
+        atom.id = global_id++;
         atom.pt = vector2(dr(e) * 2.0f, dr(e));
         atom.angle = da(e);
         atom.bodyF = CColor(di(e), di(e), di(e));
@@ -226,13 +71,11 @@ void Mice2DEngine::Initialize(std::shared_ptr<Direct2DRenderTarget> rt)
     loggingFont.italic = false;
     loggingFont.underline = false;
     bgColor = CColor(253, 237, 159);
-    bgColorLog = CColor(240, 240, 240, 220);
+    bgColorLog = CColor(128, 128, 128, 200);
     logoColor = CColor(0, 0, 0, 240);
     last_clock = std::chrono::system_clock::now();
     dt = 30.0f;
     dt_inv = 1.0f / dt;
-    rect.X = 0;
-    rect.Y = 0;
     font.size = 20;
     font.fontFamily = "宋体";
     font.bold = false;
@@ -272,8 +115,6 @@ void Mice2DEngine::Reset(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget, 
         loggingTF = newRenderTarget->CreateDirect2DTextFormat(loggingFont);
         logoBrush = newRenderTarget->CreateDirect2DBrush(logoColor);
         font_format = newRenderTarget->CreateDirect2DTextFormat(font);
-        d2drt = newRenderTarget;
-        cur_bursh = newRenderTarget->CreateDirect2DBrush(CColor());
         init(newRenderTarget);
     }
 }
@@ -339,6 +180,7 @@ void Mice2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
         dt = min(dt, FRAME);
         dt_inv = 1.0f / dt;
         last_clock = now;
+        tick(bounds);
     }
 
     rt->FillRectangle(
@@ -374,7 +216,18 @@ void Mice2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
         }
         R.top += span;
         R.bottom = (float)bounds.bottom;
-        auto disp = CString(_T("显示1"));
+        std::wstringstream wss;
+        {
+            TCHAR buf[255];
+            wss << L"-- Mice Information --" << std::endl;
+            for (auto& mice : mices) {
+                _snwprintf(buf, sizeof(buf) / sizeof(buf[0]), L"Mice #%2d: x= %4.2f, y= %4.2f, atan= %1.2f, angle= %1.2f, angleF= %1.2f, speed= %1.2f, ret= %1d",
+                    mice.id, mice.pt.x, mice.pt.y, mice.angleToCenter * M_1_PI * 180.0f,
+                    mice.angle * M_1_PI * 180.0f, mice.angleF, mice.speedF, mice.needReturn);
+                wss << buf << std::endl;
+            }
+        }
+        auto disp = CString(wss.str().c_str());
         rt->DrawText(disp, disp.GetLength(), loggingTF->textFormat, R, logoBrush);
         R.top += span;
         auto lines = 1;
@@ -384,7 +237,15 @@ void Mice2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
             }
         }
         R.top += lines * span;
-        disp = CString(_T("显示2"));
+        {
+            wss.str(L"");
+            TCHAR buf[255];
+            wss << L"-- Environment --" << std::endl;
+            auto size = bounds.Size();
+            _snwprintf(buf, sizeof(buf) / sizeof(buf[0]), L"Screen= (%4d, %4d)", (int)size.cx, (int)size.cy);
+            wss << buf << std::endl;
+        }
+        disp = CString(wss.str().c_str());
         rt->DrawText(disp, disp.GetLength(), loggingTF->textFormat, R, logoBrush);
         R = D2D1::RectF((float)bounds.right - 400, (float)bounds.top + 10, (float)bounds.right - 10, (float)bounds.bottom);
         disp = CString(_T("显示3"));
@@ -416,4 +277,21 @@ void Mice2DEngine::draw(CComPtr<ID2D1RenderTarget>& rt, const CRect& bounds, dec
             mice.draw(rt, bounds, bag);
         }
     }
+}
+
+void Mice2DEngine::tick(const CRect& bounds)
+{
+    if (!paused) {
+        for (auto& mice : mices) {
+            mice.tick(dt, bounds, bag);
+        }
+    }
+}
+
+void Mice2DEngine::reset()
+{
+    auto rt = rt2.lock();
+    if (!rt) return;
+    destroy(rt);
+    init(rt);
 }
