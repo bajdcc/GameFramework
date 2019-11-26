@@ -126,6 +126,9 @@ namespace mice2d {
         bag.brush->SetColor(collide ? D2D1::ColorF(D2D1::ColorF::Red) : D2D1::ColorF(0.5f, 0.5f, 0));
         rt->FillEllipse({ {-9, -4}, 8, 8 }, bag.brush);
         rt->FillEllipse({ {9, -4}, 8, 8 }, bag.brush);
+        bag.brush->SetColor(D2D1::ColorF(D2D1::ColorF::Black));
+        rt->DrawEllipse({ {-9, -4}, 8, 8 }, bag.brush);
+        rt->DrawEllipse({ {9, -4}, 8, 8 }, bag.brush);
         // 尾巴
         bag.brush->SetColor(D2D1::ColorF(D2D1::ColorF::Black));
         rt->DrawGeometry(bag.tail, bag.brush);

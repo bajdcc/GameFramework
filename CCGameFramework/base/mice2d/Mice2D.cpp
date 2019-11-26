@@ -171,16 +171,16 @@ void Mice2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
     auto now = std::chrono::system_clock::now();
     // 计算每帧时间间隔
     dt = std::chrono::duration_cast<std::chrono::duration<decimal>>(now - last_clock).count();
-    cycles++;
 
     auto inv = 1.0f / dt;
     if (dt > FRAME) {
-        ips = cycles * dt;
+        ips = cycles * dt_inv;
         cycles = 0;
-        dt = min(dt, FRAME);
+        // dt = min(dt, FRAME);
         dt_inv = 1.0f / dt;
         last_clock = now;
-        tick(bounds);
+        if (!paused)
+            tick(bounds);
     }
 
     rt->FillRectangle(
@@ -272,10 +272,8 @@ void Mice2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
 }
 
 void Mice2DEngine::draw(CComPtr<ID2D1RenderTarget>& rt, const CRect& bounds, decimal fps) {
-    if (!paused) {
-        for (auto& mice : mices) {
-            mice.draw(rt, bounds, bag);
-        }
+    for (auto& mice : mices) {
+        mice.draw(rt, bounds, bag);
     }
 }
 
@@ -283,6 +281,7 @@ void Mice2DEngine::tick(const CRect& bounds)
 {
     if (!paused) {
         for (auto& mice : mices) {
+            cycles++;
             mice.tick(dt, bounds, bag);
         }
     }
