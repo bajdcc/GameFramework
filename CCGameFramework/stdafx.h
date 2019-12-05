@@ -121,6 +121,6 @@
 #ifdef _DEBUG
 #pragma comment(lib, "lib\\libmicrohttpd_d")
 #else
-#pragma comment(lib, "lib\\libmicrohttpd")
+#pragma comment(lib, "lib\\libmicrohttpd_d")
 #endif
 #pragma comment(lib, "lib\\zlib")

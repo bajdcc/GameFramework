@@ -2489,7 +2489,6 @@ namespace clib {
                 delete h->data.file;
             }
             else if (h->type == h_window) {
-                ATLVERIFY(std::find(wnds.begin(), wnds.end(), h->data.cwnd) != wnds.end());
                 wnds.erase(std::remove(wnds.begin(), wnds.end(), h->data.cwnd), wnds.end());
                 auto dec = h->data.cwnd;
                 delete dec;
