@@ -52,6 +52,16 @@ namespace clib {
         return false;
     }
 
+    bool vfs_node_dec::set_link(const string_t& data)
+    {
+        return false;
+    }
+
+    bool vfs_node_dec::get_link(string_t& data) const
+    {
+        return false;
+    }
+
     int vfs_node_dec::get_length() const
     {
         return -1;
@@ -160,6 +170,35 @@ namespace clib {
         if (!mod->can_mod(n, 0))
             return false;
         data = n->data;
+        return true;
+    }
+
+    bool vfs_node_solid::set_link(const string_t& data)
+    {
+        auto n = node.lock();
+        if (!n)
+            return false;
+        if (!mod->can_mod(n, 0))
+            return false;
+        if (n->type != fs_file)
+            return false;
+        n->type = fs_link;
+        n->data.resize(data.size());
+        std::copy(data.begin(), data.end(), n->data.begin());
+        return true;
+    }
+
+    bool vfs_node_solid::get_link(string_t& data) const
+    {
+        auto n = node.lock();
+        if (!n)
+            return false;
+        if (!mod->can_mod(n, 0))
+            return false;
+        if (n->type != fs_link)
+            return false;
+        data.resize(n->data.size());
+        std::copy(n->data.begin(), n->data.end(), data.begin());
         return true;
     }
 
@@ -275,6 +314,72 @@ namespace clib {
 
     int vfs_node_semaphore::truncate() {
         return -1;
+    }
+
+    // -----------------------------------------
+
+    vfs_node_fifo::vfs_node_fifo(const vfs_mod_query* mod, const vfs_node::ref& ref) :
+        vfs_node_solid(mod, ref) {
+        auto n = node.lock();
+        if (!n->pipe)
+            n->pipe = std::make_unique<std::queue<byte>>();
+    }
+
+    int vfs_node_fifo::count(vfs_op_t t) const
+    {
+        auto n = node.lock();
+        int cnt = 0;
+        for (auto& h : n->handles) {
+            if (h.second == t)
+                cnt++;
+        }
+        return cnt;
+    }
+
+    vfs_node_fifo::~vfs_node_fifo() {
+    }
+
+    bool vfs_node_fifo::available() const {
+        auto n = node.lock();
+        if (!n)
+            return false;
+        return true;
+    }
+
+    int vfs_node_fifo::index() const {
+        auto n = node.lock();
+        if (!n)
+            return READ_ERROR;
+        if (n->pipe->empty()) {
+            if (count(v_write) == 0)
+                return READ_EOF;
+            return DELAY_CHAR;
+        }
+        auto c = n->pipe->front();
+        n->pipe->pop();
+        return c;
+    }
+
+    int vfs_node_fifo::write(byte c) {
+        auto n = node.lock();
+        if (!n)
+            return -1;
+        if (!mod->can_mod(n, 1))
+            return -2;
+        n->pipe->push(c);
+        return 0;
+    }
+
+    int vfs_node_fifo::truncate() {
+        auto n = node.lock();
+        if (!n)
+            return -1;
+        if (!mod->can_mod(n, 1))
+            return -2;
+        while (!n->pipe->empty()) {
+            n->pipe->pop();
+        }
+        return 0;
     }
 
     // -----------------------------------------
@@ -448,6 +553,7 @@ namespace clib {
             "44FC7D", // dir
             "76FC44", // func
             "BCDD29", // magic
+            "9AD9FB", // link
         };
         static char fmt[256];
         snprintf(fmt, sizeof(fmt), "\033FFFA0A0A0\033%c%9s \033FFFB3B920\033%4s \033S4\033%9d \033FFF51C2A8\033%s \033FFF%s\033%s\033S4\033",
@@ -567,6 +673,10 @@ namespace clib {
                     node->magic = fss_mutex;
                     *dec = new vfs_node_semaphore(this, node, 1);
                 }
+                else if (path.substr(0, 6) == "/fifo/") {
+                    node->magic = fss_fifo;
+                    *dec = new vfs_node_fifo(this, node);
+                }
                 else {
                     *dec = new vfs_node_solid(this, node);
                 }
@@ -602,6 +712,13 @@ namespace clib {
             if (*dec == nullptr) {
                 return -1;
             }
+            return 0;
+        }
+        else if (node->type == fs_link) {
+            if (node->locked)
+                return -3;
+            node->time.access = now();
+            *dec = new vfs_node_solid(this, node);
             return 0;
         }
         return -2;

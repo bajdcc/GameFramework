@@ -88,14 +88,14 @@ int fsize(char* path) { // ERR:<0  OK:>=0
         return handle;
     }
 }
-int fempty(char* path) { // ERR:<0  YES:1  NO:0
-    int handle = open(path);
-    if (handle >= 0) {
-        int n = flen(handle);
-        close(handle);
-        return n == 0;
-    }
-    else {
-        return handle;
-    }
+struct __mklink_struct__ {
+    int from;
+    char* to;
+};
+int mklink(int from, char* to) {
+    __mklink_struct__ s;
+    s.from = from;
+    s.to = to;
+    &s;
+    interrupt 78;
 }

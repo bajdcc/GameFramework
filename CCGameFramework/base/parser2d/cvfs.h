@@ -32,6 +32,7 @@ namespace clib {
         fs_dir,
         fs_func,
         fs_magic,
+        fs_link,
     };
 
     enum vfs_stream_t {
@@ -47,6 +48,7 @@ namespace clib {
         fss_window,
         fss_uuid,
         fss_server,
+        fss_fifo,
     };
 
     enum vfs_op_t {
@@ -112,6 +114,8 @@ namespace clib {
         virtual ~vfs_node_dec() = default;
         virtual bool set_data(const std::vector<byte>& data);
         virtual bool get_data(std::vector<byte>& data) const;
+        virtual bool set_link(const string_t& data);
+        virtual bool get_link(string_t& data) const;
         virtual int get_length() const;
     protected:
         explicit vfs_node_dec(const vfs_mod_query*);
@@ -132,6 +136,8 @@ namespace clib {
         void remove_handle(int handle) override;
         bool set_data(const std::vector<byte>& data) override;
         bool get_data(std::vector<byte>& data) const override;
+        bool set_link(const string_t& data) override;
+        bool get_link(string_t& data) const override;
         int get_length() const override;
     protected:
         explicit vfs_node_solid(const vfs_mod_query*, const vfs_node::ref& ref);
@@ -164,6 +170,19 @@ namespace clib {
         explicit vfs_node_semaphore(const vfs_mod_query*, const vfs_node::ref& ref, int count = 1);
         bool entered{ false };
         int count{ 1 };
+    };
+
+    class vfs_node_fifo : public vfs_node_solid {
+        friend class cvfs;
+    public:
+        ~vfs_node_fifo() override;
+        bool available() const override;
+        int index() const override;
+        int write(byte c) override;
+        int truncate() override;
+    protected:
+        explicit vfs_node_fifo(const vfs_mod_query*, const vfs_node::ref& ref);
+        int count(vfs_op_t) const;
     };
 
     class vfs_node_cached : public vfs_node_dec {

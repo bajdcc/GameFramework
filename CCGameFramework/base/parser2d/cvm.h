@@ -167,6 +167,8 @@ namespace clib {
         void init_fs();
         void init_global();
 
+        int vfs_open(const string_t& path, vfs_node_dec** dec);
+
         enum handle_type {
             h_none,
             h_file,

@@ -32,6 +32,7 @@
 #define LOG_MAX 10
 
 #define KILL_SIGNAL 99
+#define VFS_LINK_MAX_NUM 5
 
 int g_argc;
 char** g_argv;
@@ -89,6 +90,7 @@ namespace clib {
         fs.mkdir("/pipe");
         fs.mkdir("/semaphore");
         fs.mkdir("/mutex");
+        fs.mkdir("/fifo");
     }
 
     void cvm::init_global()
@@ -114,6 +116,35 @@ namespace clib {
         global_state.window_focus = -1;
         global_state.window_hover = -1;
         global_state.logging.clear();
+    }
+
+    int cvm::vfs_open(const string_t& path, vfs_node_dec** dec)
+    {
+        if (path[0] != '/') {
+            auto s = 0;
+            decltype(ctx->paths) ps;
+            auto pwd = fs.get_pwd();
+            ps.push_back(pwd == "/" ? "" : pwd);
+            std::copy(ctx->paths.begin(), ctx->paths.end(), std::back_inserter(ps));
+            for (auto& p : ps) {
+                auto pp = p + '/' + path;
+                s = fs.get(pp, dec, this);
+                if (s == 0)
+                    break;
+            }
+            if (s != 0) {
+                ctx->ax._i = s;
+                return s;
+            }
+        }
+        else {
+            auto s = fs.get(path, dec, this);
+            if (s != 0) {
+                ctx->ax._i = s;
+                return s;
+            }
+        }
+        return 0;
     }
 
     void cvm::logging(CString s)
@@ -3749,27 +3780,24 @@ namespace clib {
         case 65: {
             auto path = trim(vmm_getstr(ctx->ax._ui));
             vfs_node_dec* dec = nullptr;
-            if (path[0] != '/') {
-                auto s = 0;
-                decltype(ctx->paths) ps;
-                auto pwd = fs.get_pwd();
-                ps.push_back(pwd == "/" ? "" : pwd);
-                std::copy(ctx->paths.begin(), ctx->paths.end(), std::back_inserter(ps));
-                for (auto& p : ps) {
-                    auto pp = p + '/' + path;
-                    s = fs.get(pp, &dec, this);
-                    if (s == 0)
+            auto ret = vfs_open(path, &dec);
+            {
+                auto suc = false;
+                for (auto i = 0; i < VFS_LINK_MAX_NUM; i++) {
+                    if (ret < 0)
                         break;
+                    if (ret == 0) {
+                        if (dec->get_link(path)) {
+                            ret = vfs_open(path, &dec);
+                        }
+                        else {
+                            suc = true;
+                            break;
+                        }
+                    }
                 }
-                if (s != 0) {
-                    ctx->ax._i = s;
-                    break;
-                }
-            }
-            else {
-                auto s = fs.get(path, &dec, this);
-                if (s != 0) {
-                    ctx->ax._i = s;
+                if (!suc) {
+                    ctx->ax._i = ret;
                     break;
                 }
             }
@@ -3987,6 +4015,32 @@ namespace clib {
                 else {
                     ctx->ax._i = 0;
                 }
+            }
+        }
+               break;
+        case 78: {
+            struct __mklink_struct__ {
+                int from;
+                uint32 to;
+            };
+            auto s = vmm_get<__mklink_struct__>(ctx->ax._ui);
+            auto link = vmm_getstr(s.to);
+            if (ctx->handles.find(s.from) != ctx->handles.end()) {
+                auto from = handles[s.from].get();
+                if (from->type == h_file) {
+                    if (from->data.file->get_length() == 0 && from->data.file->set_link(link)) {
+                        ctx->ax._i = 0;
+                    }
+                    else {
+                        ctx->ax._i = -3;
+                    }
+                }
+                else {
+                    ctx->ax._i = -2;
+                }
+            }
+            else {
+                ctx->ax._i = -1;
             }
         }
                break;
