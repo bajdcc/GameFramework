@@ -367,10 +367,6 @@ namespace clib {
             return -1;
         if (!mod->can_mod(n, 1))
             return -2;
-        if (n->pipe->empty()) {
-            if (count(v_read) == 0)
-                return READ_EOF;
-        }
         n->pipe->push(c);
         return 0;
     }
@@ -391,20 +387,16 @@ namespace clib {
     {
         auto n = node.lock();
         assert(n->handles.find(handle) == n->handles.end());
-        if (type == v_write && n->handles_write.empty()) {
+        if (type == v_write) {
             this_handle = handle;
             n->handles_write.push_back(handle);
             n->handles.insert(std::make_pair(handle, type));
-            return type;
         }
-        else if (type == v_read && n->handles_read.empty()) {
+        else if (type == v_read) {
             n->handles_read.push_back(handle);
             n->handles.insert(std::make_pair(handle, type));
-            return type;
         }
-        else {
-            return v_none;
-        }
+        return type;
     }
 
     vfs_op_t vfs_node_fifo::get_handle(int handle)
@@ -415,7 +407,11 @@ namespace clib {
             return v_none;
         if (n->handles_write.empty() || n->handles_read.empty())
             return v_wait;
-        return f->second;
+        if (n->handles_write.front() == handle)
+            return f->second;
+        if (n->handles_read.front() == handle)
+            return f->second;
+        return v_wait;
     }
 
     void vfs_node_fifo::remove_handle(int handle)
@@ -424,10 +420,12 @@ namespace clib {
         auto f = n->handles.find(handle);
         if (f == n->handles.end())
             return;
-        if (f->second == v_write)
+        if (f->second == v_write) {
             n->handles_write.remove(handle);
-        else if (f->second == v_read)
+        }
+        else if (f->second == v_read) {
             n->handles_read.remove(handle);
+        }
         n->handles.erase(handle);
     }
 
