@@ -31,6 +31,7 @@ int main(int argc, char **argv) {
         case 21: shell("test_server");
         case 22: shell("test_base64");
         case 23: shell("test_format");
+        case 24: shell("test_fifo");
     }
     return 0;
 }

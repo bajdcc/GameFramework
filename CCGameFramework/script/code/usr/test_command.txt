@@ -67,3 +67,6 @@ sleep 1 show
 echo 【格式化】
 sleep 1 show
 /usr/test_format
+echo 【队列】
+sleep 1 show
+/usr/test_fifo

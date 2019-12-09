@@ -3820,8 +3820,12 @@ namespace clib {
                 auto dec = handles[h]->data.file;
                 auto t = dec->get_handle(h);
                 if (t == v_none)
-                    dec->add_handle(h, v_read);
-                else if (t != v_read) {
+                    t = dec->add_handle(h, v_read);
+                if (t == v_wait) {
+                    ctx->pc -= INC_PTR;
+                    return true;
+                }
+                if (t != v_read) {
                     ctx->ax._i = READ_ERROR;
                     break;
                 }
@@ -3867,8 +3871,12 @@ namespace clib {
                 auto dec = handles[h]->data.file;
                 auto t = dec->get_handle(h);
                 if (t == v_none)
-                    dec->add_handle(h, v_write);
-                else if (t != v_write) {
+                    t = dec->add_handle(h, v_write);
+                if (t == v_wait) {
+                    ctx->pc -= INC_PTR;
+                    return true;
+                }
+                if (t != v_write) {
                     ctx->ax._i = READ_ERROR;
                     break;
                 }
@@ -3885,8 +3893,12 @@ namespace clib {
                 auto dec = handles[h]->data.file;
                 auto t = dec->get_handle(h);
                 if (t == v_none)
-                    dec->add_handle(h, v_write);
-                else if (t != v_write) {
+                    t = dec->add_handle(h, v_write);
+                if (t == v_wait) {
+                    ctx->pc -= INC_PTR;
+                    return true;
+                }
+                if (t != v_write) {
                     ctx->ax._i = READ_ERROR;
                     break;
                 }

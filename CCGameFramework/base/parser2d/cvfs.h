@@ -55,6 +55,7 @@ namespace clib {
         v_none,
         v_read,
         v_write,
+        v_wait,
     };
 
     class vfs_node_dec;
@@ -108,7 +109,7 @@ namespace clib {
         virtual void advance();
         virtual int write(byte c);
         virtual int truncate();
-        virtual void add_handle(int handle, vfs_op_t type);
+        virtual vfs_op_t add_handle(int handle, vfs_op_t type);
         virtual vfs_op_t get_handle(int handle);
         virtual void remove_handle(int handle);
         virtual ~vfs_node_dec() = default;
@@ -131,7 +132,7 @@ namespace clib {
         int index() const override;
         int write(byte c) override;
         int truncate() override;
-        void add_handle(int handle, vfs_op_t type) override;
+        vfs_op_t add_handle(int handle, vfs_op_t type) override;
         vfs_op_t get_handle(int handle) override;
         void remove_handle(int handle) override;
         bool set_data(const std::vector<byte>& data) override;
@@ -180,6 +181,9 @@ namespace clib {
         int index() const override;
         int write(byte c) override;
         int truncate() override;
+        vfs_op_t add_handle(int handle, vfs_op_t type) override;
+        vfs_op_t get_handle(int handle) override;
+        void remove_handle(int handle) override;
     protected:
         explicit vfs_node_fifo(const vfs_mod_query*, const vfs_node::ref& ref);
         int count(vfs_op_t) const;
