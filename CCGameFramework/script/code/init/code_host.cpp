@@ -102,6 +102,7 @@ int read_file(int handle) {
 }
 int main(int argc, char** argv) {
     int handle = open("/server/6666");
+    put_string("server started\n");
     switch (handle) {
     default:
         // put_string("[INFO] Success.");
@@ -123,5 +124,6 @@ int main(int argc, char** argv) {
         restore_fg();
         break;
     }
+    put_string("server stopped\n");
     return 0;
 }

@@ -19,8 +19,10 @@ int process(char* text) {
             i++;
             if (text[i] == '>') { // append
                 i++;
-                strcpy(tmp + j, "| append ");
-                j += 9;
+                strcpy(tmp + j, "| append");
+                j += 8;
+                if (text[i + 1] != ' ')
+                    tmp[j++] = text[i++];
             }
             else { // truncate
                 strcpy(tmp + j, "| write");

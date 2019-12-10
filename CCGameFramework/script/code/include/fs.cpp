@@ -49,7 +49,7 @@ int truncate(int handle) {
     handle;
     interrupt 70;
 }
-int exists(char*s) {
+int exists(char* s) {
     int fd = open(s);
     if (fd < 0)return 0;
     close(fd);

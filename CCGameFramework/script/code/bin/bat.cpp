@@ -4,6 +4,7 @@
 #include "/include/string"
 #include "/include/xtoa_atoi"
 #include "/include/format"
+#include "/include/proc"
 int async = 0;
 struct string {
     char *text;
@@ -57,7 +58,7 @@ void run(node *list) {
         else {
             int i = fork();
             if (i == -1) {
-                char* _cmd = format("%s > /dev/null", (prev->text).text);
+                char* _cmd = format("%s > /bat/%d", (prev->text).text, get_pid());
                 shell(_cmd);
                 free(_cmd);
                 return;

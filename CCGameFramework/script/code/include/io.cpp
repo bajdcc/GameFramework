@@ -71,6 +71,9 @@ int input_valid() {
 int input_single() {
     interrupt 15;
 }
+int redirect_to_parent() {
+    interrupt 16;
+}
 int input(char *text, int len) {
     int i, c;
     int state = input_lock();

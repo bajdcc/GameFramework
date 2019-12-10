@@ -197,6 +197,7 @@ namespace clib {
         bool available() const override;
         int index() const override;
         int get_length() const override;
+        bool get_data(std::vector<byte>& data) const override;
     private:
         explicit vfs_node_cached(const vfs_mod_query*, const string_t& str);
         string_t cache;

@@ -474,6 +474,13 @@ namespace clib {
         return (int)cache.length();
     }
 
+    bool vfs_node_cached::get_data(std::vector<byte>& data) const
+    {
+        data.resize(cache.size());
+        std::copy(cache.begin(), cache.end(), data.begin());
+        return true;
+    }
+
     vfs_node_stream::vfs_node_stream(const vfs_mod_query* mod, vfs_stream_t s, vfs_stream_call* call) :
         vfs_node_dec(mod), stream(s), call(call) {}
 

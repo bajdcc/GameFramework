@@ -83,6 +83,7 @@ namespace clib {
         fs.load("/usr/test_command.txt");
         fs.load("/usr/test_lua.txt");
         fs.load("/init/init.txt");
+        fs.load("/init/ipc.txt");
         fs.load_bin("/usr/github.png");
         fs.load_bin("/usr/loading.gif");
         fs.load_dir("/www");
@@ -3620,6 +3621,11 @@ namespace clib {
         case 15:
             global_state.input_single = true;
                  break;
+        case 16: {
+            if (ctx->parent != -1 && ctx->output_redirect == -1)
+                ctx->output_redirect = ctx->parent;
+            break;
+        }
         case 20: {
             if (global_state.input_lock == -1) {
                 set_resize_id.insert(ctx->id);
