@@ -3818,14 +3818,14 @@ namespace clib {
             auto h = ctx->ax._i;
             if (ctx->handles.find(h) != ctx->handles.end()) {
                 auto dec = handles[h]->data.file;
-                auto t = dec->get_handle(h);
+                auto t = dec->get_handle(h, v_read);
                 if (t == v_none)
-                    t = dec->add_handle(h, v_read);
-                if (t == v_wait) {
+                    dec->add_handle(h, v_read);
+                else if (t == v_wait) {
                     ctx->pc -= INC_PTR;
                     return true;
                 }
-                if (t != v_read) {
+                else if (t != v_read) {
                     ctx->ax._i = READ_ERROR;
                     break;
                 }
@@ -3869,14 +3869,14 @@ namespace clib {
             auto c = (ctx->ax._ui & 0xFFFF) - 0x1000;
             if (ctx->handles.find(h) != ctx->handles.end()) {
                 auto dec = handles[h]->data.file;
-                auto t = dec->get_handle(h);
+                auto t = dec->get_handle(h, v_write);
                 if (t == v_none)
-                    t = dec->add_handle(h, v_write);
-                if (t == v_wait) {
+                    dec->add_handle(h, v_write);
+                else if (t == v_wait) {
                     ctx->pc -= INC_PTR;
                     return true;
                 }
-                if (t != v_write) {
+                else if (t != v_write) {
                     ctx->ax._i = READ_ERROR;
                     break;
                 }
@@ -3891,14 +3891,14 @@ namespace clib {
             auto h = ctx->ax._i;
             if (ctx->handles.find(h) != ctx->handles.end()) {
                 auto dec = handles[h]->data.file;
-                auto t = dec->get_handle(h);
+                auto t = dec->get_handle(h, v_write);
                 if (t == v_none)
-                    t = dec->add_handle(h, v_write);
-                if (t == v_wait) {
+                    dec->add_handle(h, v_write);
+                else if (t == v_wait) {
                     ctx->pc -= INC_PTR;
                     return true;
                 }
-                if (t != v_write) {
+                else if (t != v_write) {
                     ctx->ax._i = READ_ERROR;
                     break;
                 }
@@ -3961,9 +3961,13 @@ namespace clib {
                 auto h = ctx->ax._i;
                 if (ctx->handles.find(h) != ctx->handles.end()) {
                     auto dec = handles[h]->data.file;
-                    auto t = dec->get_handle(h);
+                    auto t = dec->get_handle(h, v_read);
                     if (t == v_none)
                         dec->add_handle(h, v_read);
+                    else if (t == v_wait) {
+                        ctx->pc -= INC_PTR;
+                        return true;
+                    }
                     else if (t != v_read) {
                         ctx->ax._i = READ_ERROR;
                         break;
@@ -3987,9 +3991,13 @@ namespace clib {
                 auto h = ctx->ax._i;
                 if (ctx->handles.find(h) != ctx->handles.end()) {
                     auto dec = handles[h]->data.file;
-                    auto t = dec->get_handle(h);
+                    auto t = dec->get_handle(h, v_read);
                     if (t == v_none)
                         dec->add_handle(h, v_read);
+                    else if (t == v_wait) {
+                        ctx->pc -= INC_PTR;
+                        return true;
+                    }
                     else if (t != v_read) {
                         ctx->ax._i = -1;
                         break;
@@ -4007,9 +4015,13 @@ namespace clib {
                 auto h = ctx->ax._i;
                 if (ctx->handles.find(h) != ctx->handles.end()) {
                     auto dec = handles[h]->data.file;
-                    auto t = dec->get_handle(h);
+                    auto t = dec->get_handle(h, v_read);
                     if (t == v_none)
                         dec->add_handle(h, v_read);
+                    else if (t == v_wait) {
+                        ctx->pc -= INC_PTR;
+                        return true;
+                    }
                     else if (t != v_read) {
                         ctx->ax._i = 0;
                         break;

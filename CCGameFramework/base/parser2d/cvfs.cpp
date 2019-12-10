@@ -27,12 +27,12 @@ namespace clib {
         return -1;
     }
 
-    vfs_op_t vfs_node_dec::add_handle(int handle, vfs_op_t type)
+    void vfs_node_dec::add_handle(int handle, vfs_op_t type)
     {
-        return type;
+
     }
 
-    vfs_op_t vfs_node_dec::get_handle(int handle)
+    vfs_op_t vfs_node_dec::get_handle(int handle, vfs_op_t type)
     {
         return v_none;
     }
@@ -116,7 +116,7 @@ namespace clib {
         return 0;
     }
 
-    vfs_op_t vfs_node_solid::add_handle(int handle, vfs_op_t type)
+    void vfs_node_solid::add_handle(int handle, vfs_op_t type)
     {
         assert(this_handle == -1);
         this_handle = handle;
@@ -127,10 +127,9 @@ namespace clib {
             n->handles_write.push_back(handle);
         else if (type == v_read)
             n->handles_read.push_back(handle);
-        return type;
     }
 
-    vfs_op_t vfs_node_solid::get_handle(int handle)
+    vfs_op_t vfs_node_solid::get_handle(int handle, vfs_op_t type)
     {
         auto n = node.lock();
         auto f = n->handles.find(handle);
@@ -324,6 +323,11 @@ namespace clib {
         auto n = node.lock();
         if (!n->pipe)
             n->pipe = std::make_unique<std::queue<byte>>();
+        if (n->data.empty()) {
+            n->data.resize(sizeof(int));
+            *(int*)n->data.data() = -1;
+        }
+        reads = (int*)n->data.data();
     }
 
     int vfs_node_fifo::count(vfs_op_t t) const
@@ -352,8 +356,9 @@ namespace clib {
         if (!n)
             return READ_ERROR;
         if (n->pipe->empty()) {
-            if (count(v_write) == 0)
+            if (this_handle == *reads) {
                 return READ_EOF;
+            }
             return DELAY_CHAR;
         }
         auto c = n->pipe->front();
@@ -383,12 +388,11 @@ namespace clib {
         return 0;
     }
 
-    vfs_op_t vfs_node_fifo::add_handle(int handle, vfs_op_t type)
+    void vfs_node_fifo::add_handle(int handle, vfs_op_t type)
     {
         auto n = node.lock();
         assert(n->handles.find(handle) == n->handles.end());
         if (type == v_write) {
-            this_handle = handle;
             n->handles_write.push_back(handle);
             n->handles.insert(std::make_pair(handle, type));
         }
@@ -396,21 +400,36 @@ namespace clib {
             n->handles_read.push_back(handle);
             n->handles.insert(std::make_pair(handle, type));
         }
-        return type;
     }
 
-    vfs_op_t vfs_node_fifo::get_handle(int handle)
+    vfs_op_t vfs_node_fifo::get_handle(int handle, vfs_op_t type)
     {
         auto n = node.lock();
         auto f = n->handles.find(handle);
-        if (f == n->handles.end())
-            return v_none;
-        if (n->handles_write.empty() || n->handles_read.empty())
-            return v_wait;
-        if (n->handles_write.front() == handle)
-            return f->second;
-        if (n->handles_read.front() == handle)
-            return f->second;
+        this_handle = handle;
+        if (f != n->handles.end()) {
+            auto t = f->second;
+            if (t == v_read) {
+                if (*reads == handle)
+                    return t;
+                if (n->handles_write.empty()) {
+                    return v_wait;
+                }
+                if (!n->handles_read.empty() && handle != n->handles_read.front()) {
+                    return v_wait;
+                }
+            }
+            else if (t == v_write) {
+                if (n->handles_read.empty()) {
+                    return v_wait;
+                }
+                if (!n->handles_write.empty() && handle != n->handles_write.front()) {
+                    return v_wait;
+                }
+            }
+            return t;
+        }
+        add_handle(handle, type);
         return v_wait;
     }
 
@@ -421,12 +440,21 @@ namespace clib {
         if (f == n->handles.end())
             return;
         if (f->second == v_write) {
+            assert(*reads == -1);
+            *reads = n->handles_read.front();
             n->handles_write.remove(handle);
         }
         else if (f->second == v_read) {
+            assert(*reads == handle);
+            *reads = -1;
             n->handles_read.remove(handle);
         }
         n->handles.erase(handle);
+    }
+
+    int vfs_node_fifo::get_length() const
+    {
+        return -1;
     }
 
     // -----------------------------------------

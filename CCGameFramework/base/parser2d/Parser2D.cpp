@@ -261,7 +261,10 @@ void Parser2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
                 if (disp[i] == L'\n') lines++;
             }
         }
-        R.top += lines * span;
+        if (lines < 20)
+            R.top += lines * span;
+        else
+            R.left -= 600;
         disp = clib::cgui::singleton().get_disp(clib::cvm::D_HTOP);
         rt->DrawText(disp, disp.GetLength(), loggingTF->textFormat, R, logoBrush);
         lines = 3;
@@ -271,6 +274,8 @@ void Parser2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
             }
         }
         R.top += lines * span;
+        if (lines > 20)
+            R.top += 3 * span;
         disp = clib::cgui::singleton().get_disp(clib::cvm::D_MEM);
         rt->DrawText(disp, disp.GetLength(), loggingTF->textFormat, R, logoBrush);
     }

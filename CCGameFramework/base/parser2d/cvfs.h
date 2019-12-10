@@ -109,8 +109,8 @@ namespace clib {
         virtual void advance();
         virtual int write(byte c);
         virtual int truncate();
-        virtual vfs_op_t add_handle(int handle, vfs_op_t type);
-        virtual vfs_op_t get_handle(int handle);
+        virtual void add_handle(int handle, vfs_op_t type);
+        virtual vfs_op_t get_handle(int handle, vfs_op_t type);
         virtual void remove_handle(int handle);
         virtual ~vfs_node_dec() = default;
         virtual bool set_data(const std::vector<byte>& data);
@@ -132,8 +132,8 @@ namespace clib {
         int index() const override;
         int write(byte c) override;
         int truncate() override;
-        vfs_op_t add_handle(int handle, vfs_op_t type) override;
-        vfs_op_t get_handle(int handle) override;
+        void add_handle(int handle, vfs_op_t type) override;
+        vfs_op_t get_handle(int handle, vfs_op_t type) override;
         void remove_handle(int handle) override;
         bool set_data(const std::vector<byte>& data) override;
         bool get_data(std::vector<byte>& data) const override;
@@ -181,12 +181,14 @@ namespace clib {
         int index() const override;
         int write(byte c) override;
         int truncate() override;
-        vfs_op_t add_handle(int handle, vfs_op_t type) override;
-        vfs_op_t get_handle(int handle) override;
+        void add_handle(int handle, vfs_op_t type) override;
+        vfs_op_t get_handle(int handle, vfs_op_t type) override;
         void remove_handle(int handle) override;
+        int get_length() const override;
     protected:
         explicit vfs_node_fifo(const vfs_mod_query*, const vfs_node::ref& ref);
         int count(vfs_op_t) const;
+        int* reads{ nullptr };
     };
 
     class vfs_node_cached : public vfs_node_dec {
