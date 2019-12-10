@@ -23,8 +23,10 @@ int process(char* text) {
                 j += 9;
             }
             else { // truncate
-                strcpy(tmp + j, "| write ");
-                j += 8;
+                strcpy(tmp + j, "| write");
+                j += 7;
+                if (text[i + 1] != ' ')
+                    tmp[j++] = text[i++];
             }
         }
         tmp[j++] = text[i++];

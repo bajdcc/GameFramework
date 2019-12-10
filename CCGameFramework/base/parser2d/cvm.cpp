@@ -3788,6 +3788,8 @@ namespace clib {
                         break;
                     if (ret == 0) {
                         if (dec->get_link(path)) {
+                            assert(dec);
+                            delete dec;
                             ret = vfs_open(path, &dec);
                         }
                         else {

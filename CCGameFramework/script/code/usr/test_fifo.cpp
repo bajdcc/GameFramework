@@ -17,7 +17,7 @@ int main(int argc, char **argv) {
             shell("cat /tmp/__test_fifo_file__ > /tmp/__test_FIFO__");
             free(fmt);
         }
-        sleep(1000);
+        wait();
     }
     else {
         // IPC CLIENT
@@ -26,6 +26,9 @@ int main(int argc, char **argv) {
                 shell("cat /tmp/__test_FIFO__");
                 exit(0);
             }
+        }
+        for (i = 0; i < 10; i++) {
+            wait();
         }
         exit(0);
     }
