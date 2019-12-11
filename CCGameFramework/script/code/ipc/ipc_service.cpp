@@ -38,9 +38,9 @@ int main(int argc, char** argv) {
                     p = " ";
                 }
                 *p = '\0';
-                char* f = format("/ipc/service_%s", t);
-                if (exists(f)) {
-                    show(format("proxy %s %s\n", t, p));
+                char* f = format("/ipc/service_%s", t );
+                if (strcmp(t, "sys") == 0 || exists(f)) {
+                    show(format("proxy %s %s\n", t, p + 1));
                     char* puuid; int plen;
                     if (readfile("/dev/uuid", &puuid, &plen) == 0) {
                         run(format("touch /fifo/ipc_req_%s", puuid));

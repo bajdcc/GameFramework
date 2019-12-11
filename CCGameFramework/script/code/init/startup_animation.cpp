@@ -31,16 +31,19 @@ int read_file(int id, int handle) {
     __window_msg_struct__ s;
     if (fork() == -1) {
         int i;
-        for (i = 0; i < 3; i++) {
+        for (i = 0;; i++) {
             window_post_msg(id, 0x889, -1, i + 1, 0);
             sleep(1000);
+            if (recv_signal() == 9) break;
         }
         sleep(500);
         window_post_msg(id, 0x888, -1, 0, 0);
         exit(0);
     }
     while (c = window_get_msg(handle, &s), c < 0x1000) {
-        if (recv_signal() == 9 || s.code == 0x888) break;
+        if (s.code == 0x888) {
+            break;
+        }
         if (s.code == 0x889) {
             char* str = malloc(100);
             char* fmt = malloc(20);
@@ -78,8 +81,6 @@ int read_file(int id, int handle) {
     }
     close(handle);
     close(id);
-    shell("touch /pipe/sys_entry_shell_start");
-    shell("echo Boot complete > /pipe/sys_entry_shell_start");
 }
 int main(int argc, char** argv) {
     __window_create_struct__ s;
