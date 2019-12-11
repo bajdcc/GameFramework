@@ -56,6 +56,7 @@ namespace clib {
         v_read,
         v_write,
         v_wait,
+        v_error,
     };
 
     class vfs_node_dec;
@@ -189,6 +190,7 @@ namespace clib {
         explicit vfs_node_fifo(const vfs_mod_query*, const vfs_node::ref& ref);
         int count(vfs_op_t) const;
         int* reads{ nullptr };
+        int* writes{ nullptr };
     };
 
     class vfs_node_cached : public vfs_node_dec {

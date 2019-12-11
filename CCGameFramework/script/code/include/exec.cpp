@@ -29,6 +29,10 @@ int exec_service(char* path) {
     path;
     interrupt 73;
 }
+int exec_service_toggle_mode(int mode) {
+    mode;
+    interrupt 79;
+}
 
 int path_add(char *path) {
     path;

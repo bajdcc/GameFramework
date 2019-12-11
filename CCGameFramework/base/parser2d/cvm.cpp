@@ -1544,7 +1544,7 @@ namespace clib {
         }
         ctx->flag |= CTX_USER_MODE;
         if (old_ctx) {
-            if (old_ctx->flag & CTX_SERVICE)
+            if ((old_ctx->flag & CTX_SERVICE) && ((old_ctx->flag & CTX_SERVICE_USER_SHELL) == 0))
                 ctx->flag |= CTX_SERVICE;
             else
                 ctx->flag |= CTX_FOREGROUND;
@@ -3833,7 +3833,7 @@ namespace clib {
                     ctx->pc -= INC_PTR;
                     return true;
                 }
-                else if (t != v_read) {
+                else if (t != v_read || t == v_error) {
                     ctx->ax._i = READ_ERROR;
                     break;
                 }
@@ -3884,7 +3884,7 @@ namespace clib {
                     ctx->pc -= INC_PTR;
                     return true;
                 }
-                else if (t != v_write) {
+                else if (t != v_write || t == v_error) {
                     ctx->ax._i = READ_ERROR;
                     break;
                 }
@@ -3906,7 +3906,7 @@ namespace clib {
                     ctx->pc -= INC_PTR;
                     return true;
                 }
-                else if (t != v_write) {
+                else if (t != v_write || t == v_error) {
                     ctx->ax._i = READ_ERROR;
                     break;
                 }
@@ -3976,7 +3976,7 @@ namespace clib {
                         ctx->pc -= INC_PTR;
                         return true;
                     }
-                    else if (t != v_read) {
+                    else if (t != v_read || t == v_error) {
                         ctx->ax._i = READ_ERROR;
                         break;
                     }
@@ -4073,6 +4073,15 @@ namespace clib {
             }
             else {
                 ctx->ax._i = -1;
+            }
+        }
+               break;
+        case 79: {
+            if (ctx->ax._i != 0) {
+                ctx->flag |= CTX_SERVICE_USER_SHELL;
+            }
+            else {
+                ctx->flag &= ~CTX_SERVICE_USER_SHELL;
             }
         }
                break;

@@ -38,7 +38,9 @@ int main(int argc, char** argv) {
                 }
                 *p = '\0';
                 show(format("shell /bin/%s\n", p + 1));
+                exec_service_toggle_mode(1);
                 run(format("/bin/%s > /ipc/res_%s", p + 1, uuid));
+                exec_service_toggle_mode(0);
                 free(data);
             }
             show(format("request done: %s\n", uuid));

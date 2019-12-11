@@ -33,7 +33,9 @@ int main(int argc, char** argv) {
             if (readfile(path, &data, &len) == 0) {
                 char* t = data;
                 show(format("shell /usr/api_%s\n", t));
+                exec_service_toggle_mode(1);
                 run(format("/usr/api_%s > /ipc/res_%s", t, uuid));
+                exec_service_toggle_mode(0);
                 free(data);
             }
             show(format("request done: %s\n", uuid));

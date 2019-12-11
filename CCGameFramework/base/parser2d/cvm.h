@@ -197,6 +197,7 @@ namespace clib {
             CTX_FOREGROUND = 1 << 3,
             CTX_SERVICE = 1 << 4,
             CTX_INPUT = 1 << 5,
+            CTX_SERVICE_USER_SHELL = 1 << 6,
         };
 
         enum ctx_state_t {

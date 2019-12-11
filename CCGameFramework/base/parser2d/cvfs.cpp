@@ -324,10 +324,12 @@ namespace clib {
         if (!n->pipe)
             n->pipe = std::make_unique<std::queue<byte>>();
         if (n->data.empty()) {
-            n->data.resize(sizeof(int));
+            n->data.resize(sizeof(int) * 2);
             *(int*)n->data.data() = -1;
+            *((int*)(n->data.data()) + 1) = -1;
         }
         reads = (int*)n->data.data();
+        writes = ((int*)(n->data.data()) + 1);
     }
 
     int vfs_node_fifo::count(vfs_op_t t) const
@@ -420,6 +422,8 @@ namespace clib {
                 }
             }
             else if (t == v_write) {
+                if (*writes == handle)
+                    return v_error;
                 if (n->handles_read.empty()) {
                     return v_wait;
                 }
@@ -440,6 +444,8 @@ namespace clib {
         if (f == n->handles.end())
             return;
         if (f->second == v_write) {
+            assert(*writes == handle);
+            *writes = -1;
             assert(*reads == -1);
             *reads = n->handles_read.front();
             n->handles_write.remove(handle);
@@ -447,6 +453,9 @@ namespace clib {
         else if (f->second == v_read) {
             assert(*reads == handle);
             *reads = -1;
+            assert(*writes == -1);
+            if (!n->pipe->empty())
+                *writes = n->handles_write.front();
             n->handles_read.remove(handle);
         }
         n->handles.erase(handle);

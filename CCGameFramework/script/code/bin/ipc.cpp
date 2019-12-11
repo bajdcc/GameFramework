@@ -19,10 +19,6 @@ int main(int argc, char** argv) {
             run(format("echo %s > /ipc/service", uuid));
             run(format("echo %s > /ipc/req_%s", args, uuid));
             run(format("cat /ipc/res_%s", uuid));
-            run(format("rm /ipc/req_%s", uuid));
-            run(format("rm /ipc/res_%s", uuid));
-            run(format("rm /fifo/ipc_req_%s", uuid));
-            run(format("rm /fifo/ipc_res_%s", uuid));
         }
         free(uuid);
         free(args);
