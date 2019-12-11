@@ -23,6 +23,7 @@ int main(int argc, char** argv) {
     shell("touch /fifo/ipc_service_sys");
     shell("mklink /ipc/service_sys /fifo/ipc_service_sys hide");
     put_string("service sys started\n");
+    path_add("/bin");
     char* data; int len;
     for (;;) {
         if (recv_signal() == 9) break;

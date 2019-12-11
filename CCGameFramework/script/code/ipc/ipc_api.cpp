@@ -20,13 +20,14 @@ void pipe() {
     }
 }
 int main(int argc, char** argv) {
-    shell("touch /fifo/ipc_service_ip");
-    shell("mklink /ipc/service_ip /fifo/ipc_service_ip hide");
-    put_string("service ip started\n");
+    shell("touch /fifo/ipc_service_api");
+    shell("mklink /ipc/service_api /fifo/ipc_service_api hide");
+    put_string("service api started\n");
+    path_add("/usr");
     char* data; int len;
     for (;;) {
         if (recv_signal() == 9) break;
-        if (readfile("/ipc/service_ip", &data, &len) != 0) {
+        if (readfile("/ipc/service_api", &data, &len) != 0) {
             sleep(100);
             continue;
         }
@@ -38,9 +39,14 @@ int main(int argc, char** argv) {
             show(format("reading: %s\n", path));
             if (readfile(path, &data, &len) == 0) {
                 char* t = data;
-                show(format("shell /usr/api_%s\n", t));
+                char* p = strchr(data, ' ');
+                if (!p) {
+                    p = " ";
+                }
+                *p = '\0';
+                show(format("shell /usr/%s_%s\n", t, p + 1));
                 exec_service_toggle_mode(1);
-                run(format("/usr/api_%s > /ipc/res_%s", t, uuid));
+                run(format("/usr/%s_%s > /ipc/res_%s", t, p + 1, uuid));
                 exec_service_toggle_mode(0);
                 free(data);
             }
@@ -52,8 +58,8 @@ int main(int argc, char** argv) {
         pipe();
         free(data);
     }
-    shell("rm /fifo/ipc_service_ip");
-    shell("rm /ipc/service_ip");
-    put_string("service ip stopped\n");
+    shell("rm /fifo/ipc_service_api");
+    shell("rm /ipc/service_api");
+    put_string("service api stopped\n");
     return 0;
 }

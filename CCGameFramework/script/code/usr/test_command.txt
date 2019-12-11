@@ -70,3 +70,6 @@ sleep 1 show
 echo 【队列】
 sleep 1 show
 /usr/test_fifo
+echo 【服务调用】
+sleep 1 show
+/usr/test_ipc
