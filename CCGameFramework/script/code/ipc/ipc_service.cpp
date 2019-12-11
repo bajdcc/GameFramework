@@ -13,6 +13,12 @@ void run(char* cmd) {
     shell(cmd);
     free(cmd);
 }
+void pipe() {
+    int c;
+    while ((c = io_pipe()) != -1) {
+        put_char((char)c);
+    }
+}
 int main(int argc, char** argv) {
     shell("touch /fifo/ipc_service");
     shell("mklink /ipc/service /fifo/ipc_service hide");
@@ -74,6 +80,7 @@ int main(int argc, char** argv) {
             free(path);
             exit(0);
         }
+        pipe();
         free(data);
     }
     shell("rm /fifo/ipc_service");

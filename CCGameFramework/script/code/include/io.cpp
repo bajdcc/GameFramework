@@ -74,6 +74,9 @@ int input_single() {
 int redirect_to_parent() {
     interrupt 16;
 }
+int io_pipe() {
+    interrupt 17;
+}
 int input(char *text, int len) {
     int i, c;
     int state = input_lock();

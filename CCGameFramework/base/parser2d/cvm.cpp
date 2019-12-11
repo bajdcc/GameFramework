@@ -2037,7 +2037,7 @@ namespace clib {
                         else if (I != -1 && O == -1)
                             _snwprintf(sz2, sizeof(sz2) / sizeof(sz2[0]), L"(I=%d,Q=%d) ", I, Q);
                         else if (I == -1 && O != -1)
-                            _snwprintf(sz2, sizeof(sz2) / sizeof(sz2[0]), L"(O=%d) ", O);
+                            _snwprintf(sz2, sizeof(sz2) / sizeof(sz2[0]), L"(O=%d,Q=%d) ", O, Q);
                         else
                             _snwprintf(sz2, sizeof(sz2) / sizeof(sz2[0]), L"(I=%d,O=%d,Q=%d) ", I, O, Q);
                         _snwprintf(sz, sizeof(sz2) / sizeof(sz2[0]), L"#%d %s%S", current, sz2, limit_string(tasks[current]->cmd, 30).c_str());
@@ -3622,8 +3622,20 @@ namespace clib {
             global_state.input_single = true;
                  break;
         case 16: {
-            if (ctx->parent != -1 && ctx->output_redirect == -1)
+            if (ctx->parent != -1 && tasks[ctx->parent] &&
+                tasks[ctx->parent]->flag & CTX_VALID) {
                 ctx->output_redirect = ctx->parent;
+            }
+            break;
+        }
+        case 17: {
+            if (ctx->input_queue.empty()) {
+                ctx->ax._i = -1;
+            }
+            else {
+                ctx->ax._i = ctx->input_queue.front();
+                ctx->input_queue.pop_front();
+            }
             break;
         }
         case 20: {
@@ -4006,7 +4018,7 @@ namespace clib {
                         ctx->pc -= INC_PTR;
                         return true;
                     }
-                    else if (t != v_read) {
+                    else if (t != v_read || t == v_error) {
                         ctx->ax._i = -1;
                         break;
                     }
@@ -4030,7 +4042,7 @@ namespace clib {
                         ctx->pc -= INC_PTR;
                         return true;
                     }
-                    else if (t != v_read) {
+                    else if (t != v_read || t == v_error) {
                         ctx->ax._i = 0;
                         break;
                     }
