@@ -271,8 +271,8 @@ void play(char* id) {
             free(obj);
             // MP3
             char* downurl = format("/tmp/%s.mp3", id);
-            int empty = fempty(downurl);
-            if (empty < 0 || empty == 1) {
+            int empty = fsize(downurl);
+            if (empty <= 0) {
                 if (empty == 1) rm(downurl);
                 put_string("Saved music to ");
                 put_string(downurl);
@@ -293,8 +293,8 @@ void play(char* id) {
             // PIC
             free(downurl);
             downurl = format("/tmp/%s.jpg", id);
-            empty = fempty(downurl);
-            if (empty < 0 || empty == 1) {
+            empty = fsize(downurl);
+            if (empty <= 0) {
                 if (empty == 1) rm(downurl);
                 put_string("Saved pic to ");
                 put_string(downurl);

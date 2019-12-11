@@ -199,8 +199,8 @@ void play(char* name, int id) {
             strcpy(downurl, "/tmp/");
             strcat(downurl, tmp);
             strcat(downurl, ".mp3");
-            int empty = fempty(downurl);
-            if (empty < 0 || empty == 1) {
+            int empty = fsize(downurl);
+            if (empty <= 0) {
                 if (empty == 1) rm(downurl);
                 put_string("Saved music to ");
                 put_string(downurl);
@@ -222,9 +222,9 @@ void play(char* name, int id) {
             strcpy(downurl, "/tmp/");
             strcat(downurl, tmp);
             strcat(downurl, ".jpg");
-            empty = fempty(downurl);
-            if (empty < 0 || empty == 1) {
-                if (empty == 1) rm(downurl);
+            empty = fsize(downurl);
+            if (empty <= 0) {
+                if (empty == 0) rm(downurl);
                 put_string("Saved pic to ");
                 put_string(downurl);
                 put_string("\n");

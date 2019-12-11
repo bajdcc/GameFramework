@@ -183,8 +183,8 @@ void play(char* name, int id) {
     strcpy(downurl, "/tmp/loading_");
     strcat(downurl, tmp);
     strcat(downurl, ".gif");
-    int empty = fempty(downurl);
-    if (empty < 0 || empty == 1) {
+    int empty = fsize(downurl);
+    if (empty <= 0) {
         strcpy(downurl, "echo /http/bin!");
         strcat(downurl, name);
         strcat(downurl, " | copy /tmp/loading_");
