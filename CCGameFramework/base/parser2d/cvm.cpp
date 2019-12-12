@@ -2116,7 +2116,26 @@ namespace clib {
             _snwprintf(sz, sizeof(sz) / sizeof(sz[0]), L"%-18s %9d", L"Heap Free:", heaps_a); ss << sz << std::endl;
             _snwprintf(sz, sizeof(sz) / sizeof(sz[0]), L"%-18s %9d", L"Kernel Page:", kernel_pages); ss << sz << std::endl;
             _snwprintf(sz, sizeof(sz) / sizeof(sz[0]), L"%-18s %9d", L"User Page:", pages); ss << sz << std::endl;
-            _snwprintf(sz, sizeof(sz), L"%-18s %9I64u", L"File system:", fs.size()); ss << sz << std::endl;
+            _snwprintf(sz, sizeof(sz) / sizeof(sz[0]), L"%-18s %9I64u", L"File system:", fs.size()); ss << sz << std::endl;
+            std::wstringstream guiss;
+            {
+                if (global_state.gui) {
+                    if (global_state.ui) {
+                        _snwprintf(sz, sizeof(sz) / sizeof(sz[0]), L"(%d,%d) F=%d R=%d",
+                            global_state.ui->get_width(),
+                            global_state.ui->get_height(),
+                            global_state.ui->set_fresh(-1),
+                            global_state.ui->ready() ? 1 : 0);
+                        guiss << sz << std::endl;
+                    }
+                    else
+                        guiss << L"INIT" << std::endl;
+                }
+                else {
+                    guiss << L"OFF" << std::endl;
+                }
+            }
+            _snwprintf(sz, sizeof(sz) / sizeof(sz[0]), L"%s %23s", L"GUI: ", guiss.str().c_str()); ss << sz << std::endl;
             return CString(ss.str().c_str());
         }
         return CString(ss.str().c_str());
@@ -2786,7 +2805,7 @@ namespace clib {
                 else
                     ctx->ax._i = global_state.ui->get_height();
             }
-            else if (ctx->ax._i >= 11 || ctx->ax._i <= 14)
+            else if (ctx->ax._i >= 11 && ctx->ax._i <= 14)
             {
                 if (draw_bounds.IsRectEmpty()) {
                     ctx->pc -= INC_PTR;
@@ -2813,7 +2832,13 @@ namespace clib {
             }
             else if (ctx->ax._i == 8)
             {
-                global_state.ui->reset();
+                if (global_state.gui) {
+                    global_state.ui->reset();
+                }
+                else if (global_state.ui->ready()) {
+                    ctx->pc -= INC_PTR;
+                    return true;
+                }
             }
         }
         break;

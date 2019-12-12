@@ -48,7 +48,6 @@ int main(int argc, char **argv) {
     path_add("/usr");
     int show_text = 1;
     while (state) {
-        gui_reset();
         if (direct_input && show_text) {
             set_fg(143, 164, 174);
             put_string("[");
@@ -133,6 +132,7 @@ int main(int argc, char **argv) {
         if (!direct_input)
             break;
         newline();
+        gui_reset();
     }
     free(text);
     free(_whoami);
