@@ -8,6 +8,8 @@ int main(int argc, char **argv) {
     int i;
     put_string("========== [#25 TEST IPC] ==========\n");
     run("ipc api ip all");
+    run("ipc api hitokoto");
+    run("ipc api lyric 111111");
     run("ipc sys cat /sys/time");
     run("ipc sys ipc sys cat /sys/time");
     put_string("========== [#25 TEST IPC] ==========\n");

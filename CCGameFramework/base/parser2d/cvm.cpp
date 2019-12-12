@@ -31,6 +31,7 @@
 #define LOG_SYSTEM 1
 #define LOG_MAX 10
 
+#define SOFT_KILL_SIGNAL 9
 #define KILL_SIGNAL 99
 #define VFS_LINK_MAX_NUM 5
 
@@ -3867,8 +3868,14 @@ namespace clib {
                 if (t == v_none)
                     dec->add_handle(h, v_read);
                 else if (t == v_wait) {
-                    ctx->pc -= INC_PTR;
-                    return true;
+                    if (ctx->sigs.empty()) {
+                        ctx->pc -= INC_PTR;
+                        return true;
+                    }
+                    else {
+                        ctx->ax._i = READ_ERROR;
+                        break;
+                    }
                 }
                 else if (t != v_read || t == v_error) {
                     ctx->ax._i = READ_ERROR;
@@ -3918,8 +3925,14 @@ namespace clib {
                 if (t == v_none)
                     dec->add_handle(h, v_write);
                 else if (t == v_wait) {
-                    ctx->pc -= INC_PTR;
-                    return true;
+                    if (ctx->sigs.empty()) {
+                        ctx->pc -= INC_PTR;
+                        return true;
+                    }
+                    else {
+                        ctx->ax._i = READ_ERROR;
+                        break;
+                    }
                 }
                 else if (t != v_write || t == v_error) {
                     ctx->ax._i = READ_ERROR;
@@ -3940,8 +3953,14 @@ namespace clib {
                 if (t == v_none)
                     dec->add_handle(h, v_write);
                 else if (t == v_wait) {
-                    ctx->pc -= INC_PTR;
-                    return true;
+                    if (ctx->sigs.empty()) {
+                        ctx->pc -= INC_PTR;
+                        return true;
+                    }
+                    else {
+                        ctx->ax._i = READ_ERROR;
+                        break;
+                    }
                 }
                 else if (t != v_write || t == v_error) {
                     ctx->ax._i = READ_ERROR;
@@ -4010,8 +4029,14 @@ namespace clib {
                     if (t == v_none)
                         dec->add_handle(h, v_read);
                     else if (t == v_wait) {
-                        ctx->pc -= INC_PTR;
-                        return true;
+                        if (ctx->sigs.empty()) {
+                            ctx->pc -= INC_PTR;
+                            return true;
+                        }
+                        else {
+                            ctx->ax._i = READ_ERROR;
+                            break;
+                        }
                     }
                     else if (t != v_read || t == v_error) {
                         ctx->ax._i = READ_ERROR;
@@ -4040,8 +4065,14 @@ namespace clib {
                     if (t == v_none)
                         dec->add_handle(h, v_read);
                     else if (t == v_wait) {
-                        ctx->pc -= INC_PTR;
-                        return true;
+                        if (ctx->sigs.empty()) {
+                            ctx->pc -= INC_PTR;
+                            return true;
+                        }
+                        else {
+                            ctx->ax._i = -1;
+                            break;
+                        }
                     }
                     else if (t != v_read || t == v_error) {
                         ctx->ax._i = -1;
@@ -4064,8 +4095,14 @@ namespace clib {
                     if (t == v_none)
                         dec->add_handle(h, v_read);
                     else if (t == v_wait) {
-                        ctx->pc -= INC_PTR;
-                        return true;
+                        if (ctx->sigs.empty()) {
+                            ctx->pc -= INC_PTR;
+                            return true;
+                        }
+                        else {
+                            ctx->ax._i = 0;
+                            break;
+                        }
                     }
                     else if (t != v_read || t == v_error) {
                         ctx->ax._i = 0;
