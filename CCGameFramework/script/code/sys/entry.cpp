@@ -37,6 +37,7 @@ int main(int argc, char** argv) {
         put_string("Waiting... ");
         put_int(i / 5); put_string("\r");
     }
+    shell("rm /pipe/sys_entry_shell_start");
     welcome();
     exec("sh"); wait();
     exec("/init/exit"); wait();

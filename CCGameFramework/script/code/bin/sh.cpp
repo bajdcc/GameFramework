@@ -46,8 +46,10 @@ int main(int argc, char **argv) {
     node *cur;
     switch_task();
     path_add("/usr");
+    int show_text = 1;
     while (state) {
-        if (direct_input) {
+        gui_reset();
+        if (direct_input && show_text) {
             set_fg(143, 164, 174);
             put_string("[");
             set_fg(63, 234, 53);
@@ -65,6 +67,8 @@ int main(int argc, char **argv) {
             restore_fg();
             sleep(100);
         }
+        if (!show_text)
+            show_text = 1;
         *text = 0;
         while (state) {
             state = input(text, 100);
@@ -90,8 +94,10 @@ int main(int argc, char **argv) {
                 }
             }
         }
-        if (strlen(text) == 0)
+        if (strlen(text) == 0) {
+            show_text = 0;
             continue;
+        }
         if (strcmp(text, "exit") == 0)
             break;
         if (strcmp(text, "history") == 0) {
@@ -127,7 +133,6 @@ int main(int argc, char **argv) {
         if (!direct_input)
             break;
         newline();
-        gui_reset();
     }
     free(text);
     free(_whoami);
