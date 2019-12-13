@@ -3925,7 +3925,7 @@ namespace clib {
                         return true;
                     }
                     else {
-                        ctx->ax._i = READ_ERROR;
+                        ctx->ax._i = READ_EOF;
                         break;
                     }
                 }
@@ -3982,7 +3982,7 @@ namespace clib {
                         return true;
                     }
                     else {
-                        ctx->ax._i = READ_ERROR;
+                        ctx->ax._i = READ_EOF;
                         break;
                     }
                 }
@@ -4010,7 +4010,7 @@ namespace clib {
                         return true;
                     }
                     else {
-                        ctx->ax._i = READ_ERROR;
+                        ctx->ax._i = READ_EOF;
                         break;
                     }
                 }
@@ -4086,7 +4086,7 @@ namespace clib {
                             return true;
                         }
                         else {
-                            ctx->ax._i = READ_ERROR;
+                            ctx->ax._i = READ_EOF;
                             break;
                         }
                     }

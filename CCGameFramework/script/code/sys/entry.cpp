@@ -24,20 +24,25 @@ int main(int argc, char** argv) {
     shell("touch /fifo/sys_entry_console");
     exec_service("/init/init");
     int i;
+    newline();
     for (i = 0;; i++) {
         int handle = open("/pipe/sys_entry_shell_start");
         if (handle >= 0) {
             close(handle);
-            sleep(100);
-            newline();
             shell("cat /pipe/sys_entry_shell_start");
-            sleep(1000);
-            break;
+            handle = open("/pipe/sys_entry_shell_complete");
+            if (handle >= 0) {
+                close(handle);
+                shell("cat /pipe/sys_entry_shell_complete");
+                shell("rm /pipe/sys_entry_shell_complete");
+                break;
+            }
         }
-        sleep(200);
+        sleep(100);
     }
-    shell("rm /pipe/sys_entry_shell_start");
+    shell("ps | skip 1 | grep /init/startup | col 3 | signal 9");
     shell("rm /fifo/sys_entry_console");
+    sleep(1000);
     welcome();
     exec("sh"); wait();
     exec("/init/exit"); wait();
