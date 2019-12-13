@@ -225,6 +225,7 @@ void Parser2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
 
     if (clib::cvm::global_state.is_logging) {
         const int span = 12;
+        const int wspan = 16;
         auto R = D2D1::RectF((float)bounds.left + 10, (float)bounds.top + 10, (float)bounds.right - 10, (float)bounds.top + 60);
         rt->FillRectangle(
             D2D1::RectF((float)bounds.left, (float)bounds.top, (float)bounds.right, (float)bounds.bottom),
@@ -261,21 +262,28 @@ void Parser2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
                 if (disp[i] == L'\n') lines++;
             }
         }
-        if (lines < 20)
-            R.top += lines * span;
+        auto RM = R;
+        RM.top += lines * span;
+        auto side = lines < 20;
+        if (side)
+            R.top = RM.top;
         else
             R.left -= 600;
         disp = clib::cgui::singleton().get_disp(clib::cvm::D_HTOP);
         rt->DrawText(disp, disp.GetLength(), loggingTF->textFormat, R, logoBrush);
-        lines = 3;
+        lines = 0;
         {
             for (auto i = 0; i < disp.GetLength(); i++) {
                 if (disp[i] == L'\n') lines++;
             }
         }
-        R.top += lines * span;
-        if (lines > 20)
+        if (side) {
+            R.top += lines * wspan + span;
+        }
+        else {
+            R = RM;
             R.top += 3 * span;
+        }
         disp = clib::cgui::singleton().get_disp(clib::cvm::D_MEM);
         rt->DrawText(disp, disp.GetLength(), loggingTF->textFormat, R, logoBrush);
     }

@@ -1990,6 +1990,7 @@ namespace clib {
         }
         else if (t == D_HTOP) {
             auto root_id = -1;
+            // deps[父进程] = [子进程集合]
             std::unordered_map<int, std::list<int>> deps;
             for (auto i = 0; i < TASK_NUM; ++i) {
                 if (tasks[i] && tasks[i]->flag & CTX_VALID) {
@@ -2010,6 +2011,7 @@ namespace clib {
             std::bitset<TASK_NUM> printed;
             int current = root_id;
             int level = 0;
+            std::vector<int> lvls;
             // 多叉树的非递归前序遍历
             while (current != -1) {
                 if (visited.test(current)) { // 访问过了，查看有无兄弟
@@ -2023,12 +2025,34 @@ namespace clib {
                     }
                     else { // 没有兄弟（或兄弟访问完），回到父节点
                         current = parent;
+                        lvls.pop_back();
                         level--;
                     }
                 }
                 else { // 没访问过，进入
                     if (!printed.test(current)) {
-                        ss << std::setfill(L' ') << std::setw(level * 2LL) << "";
+                        for (int i = 0; i < level; i++) {
+                            if (level == i + 1) {
+                                if (lvls[i] > 1) {
+                                    ss << L"├—";
+                                }
+                                else if (lvls[i] == 1) {
+                                    ss << L"└—";
+                                }
+                                else {
+                                    ss << L"  ";
+                                }
+                            }
+                            else {
+                                if (lvls[i] > 1) {
+                                    ss << L"│ ";
+                                }
+                                else {
+                                    ss << L"  ";
+                                }
+                            }
+                        }
+                        // ss << std::setfill(L' ') << std::setw(level * 2LL) << "";
                         static TCHAR sz2[64];
                         const auto& I = tasks[current]->input_redirect;
                         const auto& O = tasks[current]->output_redirect;
@@ -2046,6 +2070,7 @@ namespace clib {
                         printed.set(current);
                     }
                     if (deps.find(current) != deps.end()) { // 有孩子，进入孩子
+                        lvls.push_back((int)deps[current].size());
                         auto child = deps[current].front(); // 进入子节点
                         deps[current].pop_front(); // 除去此节点
                         if (deps[current].empty())
@@ -2056,7 +2081,10 @@ namespace clib {
                     else { // 没有孩子（或孩子访问完），回到父节点
                         visited.set(current);
                         current = tasks[current]->parent;
-                        level--;
+                        if (current != -1) {
+                            lvls.pop_back();
+                            level--;
+                        }
                     }
                 }
             }
@@ -4182,8 +4210,10 @@ namespace clib {
             auto now = std::chrono::system_clock::now();
             if (std::chrono::duration_cast<std::chrono::duration<decimal>>(
                 now - ctx->record_now).count() <= ctx->waiting_ms) {
-                ctx->pc -= INC_PTR;
-                return true;
+                if (ctx->sigs.empty()) {
+                    ctx->pc -= INC_PTR;
+                    return true;
+                }
             }
         }
                   break;
