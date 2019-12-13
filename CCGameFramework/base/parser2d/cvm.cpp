@@ -2304,7 +2304,7 @@ namespace clib {
             }
         }
         else if (path.substr(0, 8) == "/handle/") {
-            static string_t pat{ R"(/handle/(\d+)/([a-z_]+)(/.*))" };
+            static string_t pat{ R"(/handle/(\d+)/([a-z_]+)(/.*)?)" };
             static std::regex re(pat);
             std::smatch res;
             if (std::regex_match(path, res, re)) {
