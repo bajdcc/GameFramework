@@ -73,6 +73,7 @@ namespace clib {
         fs.func("/dev/null", this);
         fs.func("/dev/console", this);
         fs.func("/dev/uuid", this);
+        fs.func("/dev/debug", this);
         fs.magic("/http", this, fss_net);
         fs.magic("/music", this, fss_music);
         fs.mkdir("/log");
@@ -2343,6 +2344,13 @@ namespace clib {
                             guid.Data4[6], guid.Data4[7]);
                         return sz;
                     }
+                }
+                else if (op == "debug") {
+#if _DEBUG
+                    return "1";
+#else
+                    return "0";
+#endif
                 }
             }
         }

@@ -447,14 +447,15 @@ namespace clib {
             if (*writes != -1)
                 *writes = -1;
             assert(*reads == -1);
-            *reads = n->handles_read.front();
+            if (!n->handles_read.empty())
+                *reads = n->handles_read.front();
             n->handles_write.remove(handle);
         }
         else if (f->second == v_read) {
             if (*reads != -1)
                 *reads = -1;
             assert(*writes == -1);
-            if (!n->pipe->empty())
+            if (!n->pipe->empty() && !n->handles_write.empty())
                 *writes = n->handles_write.front();
             n->handles_read.remove(handle);
         }
