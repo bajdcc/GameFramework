@@ -20,6 +20,7 @@ void pipe() {
     }
 }
 int main(int argc, char** argv) {
+    shell("echo [*] 启动进程间通信主机！ > /fifo/sys_entry_console");
     shell("touch /fifo/ipc_service");
     shell("mklink /ipc/service /fifo/ipc_service hide");
     put_string("service started\n");

@@ -20,6 +20,7 @@ void pipe() {
     }
 }
 int main(int argc, char** argv) {
+    shell("echo [*] 启动IPC_API服务！ > /fifo/sys_entry_console");
     shell("touch /fifo/ipc_service_api");
     shell("mklink /ipc/service_api /fifo/ipc_service_api hide");
     put_string("service api started\n");

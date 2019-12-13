@@ -40,6 +40,7 @@ int read_file(int id, int handle) {
         window_post_msg(id, 0x888, -1, 0, 0);
         exit(0);
     }
+    shell("echo [*] 启动等待窗口！ > /fifo/sys_entry_console");
     while (c = window_get_msg(handle, &s), c < 0x1000) {
         if (s.code == 0x888) {
             break;
@@ -83,6 +84,7 @@ int read_file(int id, int handle) {
     close(id);
 }
 int main(int argc, char** argv) {
+    shell("echo [*] 启动开机动画服务！ > /fifo/sys_entry_console");
     __window_create_struct__ s;
     s.caption = "* 开机中 *";
     s.left = gui_get_width() / 2 - 150;

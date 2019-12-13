@@ -20,6 +20,7 @@ void pipe() {
     }
 }
 int main(int argc, char** argv) {
+    shell("echo [*] 启动IPC_SYS服务！ > /fifo/sys_entry_console");
     shell("touch /fifo/ipc_service_sys");
     shell("mklink /ipc/service_sys /fifo/ipc_service_sys hide");
     put_string("service sys started\n");

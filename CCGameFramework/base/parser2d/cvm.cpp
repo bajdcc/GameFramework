@@ -3743,7 +3743,23 @@ namespace clib {
                         }
                     }
                     else {
-                        tasks[left]->sigs.push(right);
+                        if (right == SOFT_KILL_SIGNAL) {
+                            std::vector<int> childs;
+                            childs.push_back(left);
+                            size_t i = 0, j = childs.size();
+                            while (i < j) {
+                                for (const auto& cc : tasks[childs[i]]->child) {
+                                    childs.push_back(cc);
+                                    j++;
+                                }
+                                i++;
+                            }
+                            for (const auto& cc : childs) {
+                                tasks[cc]->sigs.push(right);
+                            }
+                        }else{
+                            tasks[left]->sigs.push(right);
+                        }
                     }
                 }
             }

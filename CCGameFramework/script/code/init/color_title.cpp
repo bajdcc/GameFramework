@@ -26,6 +26,7 @@ char* get_hex(char *s, int r) {
     return s;
 }
 int main(int argc, char** argv) {
+    shell("echo [*] 启动标题变色服务！ > /fifo/sys_entry_console");
     char* s = malloc(200);
     char* c = malloc(10);
     int i;

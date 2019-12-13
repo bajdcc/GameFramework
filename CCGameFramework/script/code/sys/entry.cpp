@@ -21,6 +21,7 @@ int main(int argc, char** argv) {
     put_string("Starting OS...\n");
     path_add("/bin");
     put_string("Starting service...\n");
+    shell("touch /fifo/sys_entry_console");
     exec_service("/init/init");
     int i;
     for (i = 0;; i++) {
@@ -34,10 +35,9 @@ int main(int argc, char** argv) {
             break;
         }
         sleep(200);
-        put_string("Waiting... ");
-        put_int(i / 5); put_string("\r");
     }
     shell("rm /pipe/sys_entry_shell_start");
+    shell("rm /fifo/sys_entry_console");
     welcome();
     exec("sh"); wait();
     exec("/init/exit"); wait();

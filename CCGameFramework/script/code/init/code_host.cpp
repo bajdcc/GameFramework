@@ -4,6 +4,7 @@
 #include "/include/json"
 #include "/include/memory"
 #include "/include/format"
+#include "/include/shell"
 struct string {
     char* text;
     int capacity;
@@ -101,6 +102,7 @@ int read_file(int handle) {
     newline();
 }
 int main(int argc, char** argv) {
+    shell("echo [*] 启动网站！ > /fifo/sys_entry_console");
     int handle = open("/server/6666");
     put_string("server started\n");
     switch (handle) {
