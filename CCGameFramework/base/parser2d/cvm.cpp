@@ -65,6 +65,7 @@ namespace clib {
         fs.func("/sys/mem", this);
         fs.func("/sys/time", this);
         fs.func("/sys/uptime", this);
+        fs.func("/sys/pstree", this);
         fs.mkdir("/init");
         fs.mkdir("/proc");
         fs.mkdir("/handle");
@@ -2278,6 +2279,11 @@ namespace clib {
                     ss << days << " " << (days > 0 ? "days" : "day") << ", ";
                     ss << std::put_time(std::gmtime(&t), "%H:%M:%S") << "." << msecs;
                     return ss.str();
+                }
+                else if (op == "pstree") {
+                    auto disp = get_disp(D_HTOP);
+                    CStringA d(disp);
+                    return d.GetBuffer(0);
                 }
             }
         }
