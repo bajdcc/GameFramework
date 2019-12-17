@@ -2796,9 +2796,39 @@ namespace clib {
             break;
         case 202:
         {
-            std::default_random_engine e((uint32_t)time(nullptr));
+            static std::default_random_engine e((uint32_t)time(nullptr));
             std::uniform_int_distribution<int> dist{ 0, std::abs(ctx->ax._i) };
             ctx->ax._i = dist(e);
+        }
+        break;
+        case 203:
+        {
+            struct __math_2d_struct__ {
+                double x, y;
+            };
+            auto s = vmm_get<__math_2d_struct__>(ctx->ax._ui);
+            ctx->ax._d = atan2(s.x, s.y);
+        }
+        break;
+        case 204:
+            ctx->ax._d = fabs(ctx->ax._d);
+        break;
+        case 205:
+        {
+            struct __math_2d_struct__ {
+                double x, y;
+            };
+            auto s = vmm_get<__math_2d_struct__>(ctx->ax._ui);
+            ctx->ax._d = fmod(s.x, s.y);
+        }
+        break;
+        case 206:
+        {
+            struct __math_2d_struct__ {
+                double x, y;
+            };
+            auto s = vmm_get<__math_2d_struct__>(ctx->ax._ui);
+            ctx->ax._d = pow(s.x, s.y);
         }
         break;
         default:
