@@ -2831,6 +2831,12 @@ namespace clib {
             ctx->ax._d = pow(s.x, s.y);
         }
         break;
+        case 207:
+            ctx->ax._d = sin(ctx->ax._d);
+            break;
+        case 208:
+            ctx->ax._d = cos(ctx->ax._d);
+            break;
         default:
 #if LOG_SYSTEM
             ATLTRACE("[SYSTEM] ERR  | unknown interrupt: %d\n", ctx->ax._i);

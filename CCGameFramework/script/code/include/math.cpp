@@ -47,3 +47,13 @@ double pow(double x, double y) {
     &s;
     interrupt 206;
 }
+
+double sin(double number) {
+    number;
+    interrupt 207;
+}
+
+double cos(double number) {
+    number;
+    interrupt 208;
+}
