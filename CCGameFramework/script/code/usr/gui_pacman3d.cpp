@@ -63,9 +63,7 @@ double map(V p) {
 }
 V normal(V p) {
     double e = 1e-6;
-    V dx = make(e, 0.0, 0.0);
-    V dy = make(0.0, e, 0.0);
-    V dz = make(0.0, 0.0, e);
+    V dx = make(e, 0.0, 0.0), dy = make(0.0, e, 0.0), dz = make(0.0, 0.0, e);
     return norm(make(
         map(add(p, dx)) - map(sub(p, dx)),
         map(add(p, dy)) - map(sub(p, dy)),
@@ -98,7 +96,7 @@ int main(int argc, char **argv) {
     height = stop_y - start_y;
     gui_clear(0, 0, 0);
     V eye = make(2.0, 3.0, 1.0), at = make(0.0, 0.0, 0.0), up = make(0.0, 0.0, 1.0);
-    V vz = norm(sub(at, eye)); V vx = cross(up, vz); V vy = cross(vz, vx);
+    V vz = norm(sub(at, eye)), vx = cross(up, vz), vy = cross(vz, vx);
     double fovScale = 3.0;
     int x, y, i;
     int step = 4;

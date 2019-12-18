@@ -2444,8 +2444,13 @@ namespace clib {
             break;
         case c_initDeclaratorList:
         case c_structDeclaratorList: {
+            
+        }
+                                     break;
+        case c_initDeclarator:
+        case c_structDeclarator: {
             decltype(z_undefined) clazz;
-            if (AST_IS_COLL_N(node, c_initDeclaratorList)) {
+            if (AST_IS_COLL_N(node->parent, c_initDeclaratorList)) {
                 if (ctx.lock()) {
                     clazz = z_local_var;
                 }
@@ -2458,7 +2463,7 @@ namespace clib {
             }
             type_t::ref type;
             {
-                auto t = (tmp.rbegin() + 1)->back();
+                auto t = (tmp.rbegin() + 2)->back();
                 if (t->get_base_type() == s_type) {
                     type = std::dynamic_pointer_cast<type_t>(t);
                     if (type->_static && clazz == z_local_var)
@@ -2494,22 +2499,14 @@ namespace clib {
                         new_type->matrix = matrix;
                     }
                     type_exp_t::ref init;
-                    if (clazz != z_struct_var) {
-                        auto t = tmp.back()[tmp_i++];
-                        if (t) {
-                            init = to_exp(t);
-                        }
+                    if (clazz != z_struct_var && !tmp.back().empty()) {
+                        init = to_exp(tmp.back().front());
                     }
                     auto new_id = add_id(new_type, clazz, ast, init);
-                    ptr = 0;
+                    break;
                 }
             }
             tmp.back().clear();
-        }
-                                     break;
-        case c_initDeclarator: {
-            if (tmp.back().empty())
-                tmp.back().push_back(nullptr);
         }
                                break;
         case c_storageClassSpecifier:
@@ -2521,8 +2518,6 @@ namespace clib {
         case c_structDeclarationList:
             break;
         case c_structDeclaration:
-            break;
-        case c_structDeclarator:
             break;
         case c_enumSpecifier:
             break;
@@ -3089,7 +3084,7 @@ namespace clib {
 
     bool cgen::get_line(int L, string_t& s, int& line) const
     {
-        if (incs.empty())
+        if (incs.empty() || L <= 0)
             return false;
         for (size_t i = 0; i < incs.size(); i++) {
             auto& t = incs[i];
