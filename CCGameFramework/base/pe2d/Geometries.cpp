@@ -1,5 +1,7 @@
 ﻿#include "stdafx.h"
 #include "Geometries.h"
+#define EPSILON 1e-6f
+#define TRIANGLE_CULLING 1
 
 Ray::Ray(const vector3& origin, const vector3& direction)
     : origin(origin), direction(direction)
@@ -109,7 +111,7 @@ color color::make_color(float r, float g, float b)
     return color(r, g, b);
 }
 
-Material::Material(float reflectiveness): reflectiveness(reflectiveness)
+Material::Material(float reflectiveness) : reflectiveness(reflectiveness)
 {
 }
 
@@ -267,7 +269,7 @@ LightSample SpotLight::Sample(World& world, vector3 pos)
      *         where cos(alpha) <= cos(phi/2)
      */
 
-    // 计算spot
+     // 计算spot
     auto spot = 0.0f;
     const auto SdotL = DotProduct(S, L);
     if (SdotL >= cosTheta)
@@ -314,7 +316,7 @@ IntersectResult World::Intersect(Ray ray)
 {
     auto minDistance = FLT_MAX;
     IntersectResult minResult;
-    for (auto & body : geometries) {
+    for (auto& body : geometries) {
         const auto result = body->Intersect(ray);
         if (result.body && result.distance < minDistance) {
             minDistance = result.distance;
@@ -324,8 +326,8 @@ IntersectResult World::Intersect(Ray ray)
     return minResult;
 }
 
-Sphere::Sphere(const vector3& center, float radius): center(center),
-                                                     radius(radius)
+Sphere::Sphere(const vector3& center, float radius) : center(center),
+radius(radius)
 {
     radiusSquare = radius * radius;
 }
@@ -400,4 +402,173 @@ IntersectResult Plane::Intersect(Ray ray)
 
     const auto dist = -b / a;
     return IntersectResult(this, dist, ray.Eval(dist), normal);
+}
+
+// Ray-Triangle交叉检测算法的Tomas Moller算法实现
+// http://www.graphics.cornell.edu/pubs/1997/MT97.html
+IntersectResult RayIntersectWithTriangle(
+    const Ray& ray,
+    const vector3& v0,
+    const vector3& v1,
+    const vector3& v2,
+    Geometries* geo
+) {
+    const auto& ori = ray.origin;
+    const auto& dir = ray.direction;
+    // 假设点012为逆时针排列，视角在三角形上方往下看
+    // 找到边1:点0到点1
+    auto edge1 = v1 - v0;
+    // 找到边2:点0到点2
+    auto edge2 = v2 - v0;
+    // 计算行列式，等于与射线方向和边2所在平面垂直的平面的法向量
+    // 如果三角形012为逆时针，且射线为从上往下
+    // 那么dir叉乘边2，右手定则，结果为点1点2射线方向
+    auto pvec = CrossProduct(dir, edge2);
+    // 什么时候点乘结果为零呢？
+    // 即射线与边2所在平面法向量与边1垂直的时候
+    // 只有两种可能：射线方向与三角形平面平行
+    auto det = DotProduct(edge1, pvec);
+
+    // TRIANGLE_CULLING为1：表示只接受正面的相交
+    // TRIANGLE_CULLING为0：表示正反面相交都可以
+#if TRIANGLE_CULLING
+    if (det < EPSILON) // 不相交，此时视角为从上到下
+        return IntersectResult();
+
+    // 如果视角为从下到上，则可能相交
+    // 计算射线起点到点0的向量
+    auto tvec = ori - v0;
+    // 法向量与反向射线的点乘，判断是否同向
+    auto u = DotProduct(tvec, pvec);
+    // 如果小于零，那么点0到射线起点与法向量不同向
+    // 意味着射线起点在边2远离点1的空间内，不相交
+    // 如果大于det，tvec在法向量上的射影大于det在法向量上的射影
+    // 意味着射线起点到边2的距离比点1到边2的距离还远，不相交
+    // 这样就排除了两种可能，使得射线在三角形平面上的交点缩小至三角形012
+    // 以及01左边空间、12右边空间内
+    if (u < 0.0f || u > det)
+        return IntersectResult();
+
+    // 射线在三角形平面上的交点必须在起点与边1所在平面的右侧
+    auto qvec = CrossProduct(tvec, edge1);
+    auto v = DotProduct(dir, qvec);
+    // 如果v小于零，则排除01左边空间
+    // 如果u+v大于det，则排除12右边空间
+    if (v < 0.0f || u + v > det)
+        return IntersectResult();
+
+    // 此时交点限于三角形内部
+    // 计算射线的t
+    auto t = DotProduct(edge2, qvec);
+    auto inv_det = 1.0f / det;
+    t *= inv_det;
+    auto distance = t; // 得出t，即摄影机发出的光线到其与三角形的交点距离
+    auto position = ray.Eval(distance); // 代入直线方程，得出交点位置
+    auto normal = Normalize(CrossProduct(edge1, edge2)); // 法向量 = 边1和边2叉乘
+    return IntersectResult(geo, distance, position, normal);
+#else
+    if (det > -EPSILON && det < EPSILON) // 视角与所在面平行
+        return IntersectResult();
+    auto inv_det = 1.0f / det;
+    auto tvec = ori - v0;
+    auto u = DotProduct(tvec, pvec);
+    u *= inv_det;
+    if (u < 0.0f || u > 1.0f)
+        return IntersectResult();
+    auto qvec = CrossProduct(tvec, edge1);
+    auto v = DotProduct(dir, qvec);
+    v *= inv_det;
+    if (v < 0.0f || u + v > 1.0f)
+        return IntersectResult();
+    auto t = DotProduct(edge2, qvec);
+    auto inv_det = 1.0f / det;
+    t *= inv_det;
+    auto distance = t; // 得出t，即摄影机发出的光线到其与三角形的交点距离
+    auto position = ray.Eval(distance); // 代入直线方程，得出交点位置
+    auto normal = Normalize(CrossProduct(edge1, edge2)); // 法向量 = 边1和边2叉乘
+    if (DotProduct(dir, normal) > 0) {
+        normal = -normal;
+    }
+    return IntersectResult(geo, distance, position, normal);
+#endif
+}
+
+Cube::Cube(const vector3& center, const vector3& scale, float a, float b)
+{
+    /*
+        --== 使用右手坐标系 ==--
+        [0] : (-1,-1,-1) 远左下
+        [1] : (-1,+1,-1) 远左上
+        [2] : (+1,-1,-1) 远右下
+        [3] : (+1,+1,-1) 远右上
+        [4] : (-1,-1,+1) 近左下
+        [5] : (-1,+1,+1) 近左上
+        [6] : (+1,-1,+1) 近右下
+        [7] : (+1,+1,+1) 近右上
+    */
+    auto s = scale * 0.5f;
+    for (int i = 0; i < 8; i++) {
+        vertices[i] = vector3(
+            i & 1 ? 1.0f : -1.0f,
+            i & 2 ? 1.0f : -1.0f,
+            i & 4 ? 1.0f : -1.0f);
+        vertices[i] *= s;
+    }
+    if (a != 0.0f || b != 0.0f) {
+        auto r1 = vector3(0, 1, 0);
+        auto r2 = Rotate(vector3(0, 0, 1), r1, a);
+        for (int i = 0; i < 8; i++) {
+            vertices[i] = Rotate(vertices[i], r1, a);
+            vertices[i] = Rotate(vertices[i], r2, b);
+        }
+    }
+    for (int i = 0; i < 8; i++) {
+        vertices[i] += center;
+    }
+    radius = sqrtf(SquareMagnitude(scale));
+    static const int idx[][4] = {
+        {0,1,3,2},
+        {6,7,5,4},
+        {4,5,1,0},
+        {2,3,7,6},
+        {7,3,1,5},
+        {2,6,4,0}
+    };
+    static const int idx2[][3] = {
+        {2,1,0},
+        {0,3,2}
+    };
+    for (int i = 0; i < 6; i++) {
+        for (int j = 0; j < 2; j++) {
+            tridx.emplace_back(idx[i][idx2[j][0]], idx[i][idx2[j][1]], idx[i][idx2[j][2]]);
+        }
+    }
+}
+
+IntersectResult Cube::Intersect(Ray ray)
+{
+    auto v = ray.origin - center;
+    auto a0 = SquareMagnitude(v) - radius;
+    auto DdotV = DotProduct(ray.direction, v);
+    if (DdotV <= 0)
+    {
+        IntersectResult result;
+        // 射线和包围盒有交点
+        for (const auto& tri : tridx) {
+            auto r2 = RayIntersectWithTriangle(ray,
+                vertices[std::get<0>(tri)], vertices[std::get<1>(tri)], vertices[std::get<2>(tri)], this);
+            if (r2.body) {
+                if (result.body) {
+                    if (result.distance > r2.distance)
+                        result = r2;
+                }
+                else {
+                    result = r2;
+                }
+            }
+        }
+        return result;
+    }
+
+    return IntersectResult(); // 失败，不相交
 }

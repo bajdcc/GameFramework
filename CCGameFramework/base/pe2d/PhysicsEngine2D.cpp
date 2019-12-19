@@ -91,6 +91,7 @@ void PhysicsEngine::Initialize(std::shared_ptr<Direct2DRenderTarget> rt)
     bag3d.rotate_up = vector3(0, 1, 0);
     bag3d.rotate_left = CrossProduct(bag3d.rotate_front, bag3d.rotate_up);
     bag3d.fov = 45.0f;
+    bag3d.scale = 0.1f;
     bgColor = Gdiplus::Color::LightGoldenrodYellow;
 }
 
@@ -144,63 +145,69 @@ int PhysicsEngine::SetType(cint value)
         auto k = value & 0xfff;
         switch (k) {
         case 'w':
-            bag3d.camera_pos += 0.1f * bag3d.rotate_up;
+            bag3d.camera_pos += bag3d.scale * bag3d.rotate_up;
             break;
         case 'a':
-            bag3d.camera_pos -= 0.1f * bag3d.rotate_left;
+            bag3d.camera_pos -= bag3d.scale * bag3d.rotate_left;
             break;
         case 's':
-            bag3d.camera_pos -= 0.1f * bag3d.rotate_up;
+            bag3d.camera_pos -= bag3d.scale * bag3d.rotate_up;
             break;
         case 'd':
-            bag3d.camera_pos += 0.1f * bag3d.rotate_left;
+            bag3d.camera_pos += bag3d.scale * bag3d.rotate_left;
             break;
         case 'q':
-            bag3d.camera_pos += 0.1f * bag3d.rotate_front;
+            bag3d.camera_pos += bag3d.scale * bag3d.rotate_front;
             break;
         case 'e':
-            bag3d.camera_pos -= 0.1f * bag3d.rotate_front;
+            bag3d.camera_pos -= bag3d.scale * bag3d.rotate_front;
             break;
         case 't':
-            bag3d.sphere_pos.y += 0.1f;
+            bag3d.sphere_pos.y += bag3d.scale;
             break;
         case 'f':
-            bag3d.sphere_pos.x -= 0.1f;
+            bag3d.sphere_pos.x -= bag3d.scale;
             break;
         case 'g':
-            bag3d.sphere_pos.y -= 0.1f;
+            bag3d.sphere_pos.y -= bag3d.scale;
             break;
         case 'h':
-            bag3d.sphere_pos.x += 0.1f;
+            bag3d.sphere_pos.x += bag3d.scale;
             break;
         case 'r':
-            bag3d.sphere_pos.z -= 0.1f;
+            bag3d.sphere_pos.z -= bag3d.scale;
             break;
         case 'y':
-            bag3d.sphere_pos.z += 0.1f;
+            bag3d.sphere_pos.z += bag3d.scale;
+            break;
+        case ',':
+            bag3d.scale *= 2.0f;
+            break;
+        case '.':
+            bag3d.scale = 0.1f;
             break;
         case 'i':
-            bag3d.rotate_front = Normalize(Rotate(bag3d.rotate_left, bag3d.rotate_front, -0.1f));
+            bag3d.rotate_front = Normalize(Rotate(bag3d.rotate_left, bag3d.rotate_front, -bag3d.scale));
             bag3d.rotate_up = Normalize(CrossProduct(bag3d.rotate_left, bag3d.rotate_front));
             break;
         case 'j':
-            bag3d.rotate_front = Normalize(Rotate(bag3d.rotate_up, bag3d.rotate_front, -0.1f));
+            bag3d.rotate_front = Normalize(Rotate(bag3d.rotate_up, bag3d.rotate_front, -bag3d.scale));
             bag3d.rotate_left = Normalize(CrossProduct(bag3d.rotate_front, bag3d.rotate_up));
             break;
         case 'k':
-            bag3d.rotate_front = Normalize(Rotate(bag3d.rotate_left, bag3d.rotate_front, 0.1f));
+            bag3d.rotate_front = Normalize(Rotate(bag3d.rotate_left, bag3d.rotate_front, bag3d.scale));
             bag3d.rotate_up = Normalize(CrossProduct(bag3d.rotate_left, bag3d.rotate_front));
             break;
         case 'l':
-            bag3d.rotate_front = Normalize(Rotate(bag3d.rotate_up, bag3d.rotate_front, 0.1f));
+            bag3d.rotate_front = Normalize(Rotate(bag3d.rotate_up, bag3d.rotate_front, bag3d.scale));
             bag3d.rotate_left = Normalize(CrossProduct(bag3d.rotate_front, bag3d.rotate_up));
             break;
         case 'u':
-            bag3d.rotate_up = Normalize(Rotate(bag3d.rotate_front, bag3d.rotate_up, -0.1f));
+            bag3d.rotate_up = Normalize(Rotate(bag3d.rotate_front, bag3d.rotate_up, -bag3d.scale));
             bag3d.rotate_left = Normalize(CrossProduct(bag3d.rotate_front, bag3d.rotate_up));
             break;
         case 'o':
-            bag3d.rotate_up = Normalize(Rotate(bag3d.rotate_front, bag3d.rotate_up, 0.1f));
+            bag3d.rotate_up = Normalize(Rotate(bag3d.rotate_front, bag3d.rotate_up, bag3d.scale));
             bag3d.rotate_left = Normalize(CrossProduct(bag3d.rotate_front, bag3d.rotate_up));
             break;
         case 'z':

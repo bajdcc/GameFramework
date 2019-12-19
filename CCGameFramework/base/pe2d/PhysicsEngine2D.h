@@ -24,6 +24,7 @@ struct Draw3DBag
     vector3 rotate_up;
     vector3 rotate_left;
     float fov;
+    float scale;
 };
 
 class PhysicsEngine

@@ -195,7 +195,7 @@ public:
     void AddLight(std::shared_ptr<Light> light);
 
     IntersectResult Intersect(Ray ray); // 相交测试
-    
+
     std::vector<std::shared_ptr<Geometries>> geometries;
     std::vector<std::shared_ptr<Light>> lights;
 };
@@ -224,6 +224,20 @@ public:
     vector3 normal;     // 单位法向量
     vector3 position;   // 原点到平面最短距离之交点坐标
     float d;            // 原点到平面最短距离 normal.x = d
+};
+
+// 立方体
+class Cube : public Geometries
+{
+public:
+    Cube(const vector3& center, const vector3& scale, float a, float b);
+
+    IntersectResult Intersect(Ray ray) override; // 相交测试
+
+    vector3 center;        // 中心坐标
+    float radius;          // 包围盒半径
+    vector3 vertices[8];   // 八个顶点
+    std::vector<std::tuple<int, int, int>> tridx; // 顶点组成三角形索引
 };
 
 #endif // GEOMETRIES_H

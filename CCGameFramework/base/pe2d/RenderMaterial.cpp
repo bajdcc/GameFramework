@@ -36,12 +36,18 @@ void PhysicsEngine::RenderMaterialIntern(BYTE * buffer, cint width, cint height)
     );
     sphere1->material = std::make_shared<PhongMaterial>(color(Gdiplus::Color::Red), color(Gdiplus::Color::White), 16.0f, 0.0f);
     world.AddGeometries(sphere1);
-    auto sphere2 = std::make_shared<Sphere>(
+    /*auto sphere2 = std::make_shared<Sphere>(
         vector3(10.0f, 10.0f, -10.0f),  // 球心坐标
         10.0f                           // 半径
     );
     sphere2->material = std::make_shared<PhongMaterial>(color(Gdiplus::Color::Blue), color(Gdiplus::Color::White), 16.0f, 0.0f);
-    world.AddGeometries(sphere2);
+    world.AddGeometries(sphere2);*/
+    auto cube1 = std::make_shared<Cube>(
+        vector3(10.0f, 10.0f, -10.0f) + bag3d.sphere_pos,  // 立方体坐标
+        vector3(10.0f, 10.0f, 10.0f),  // 大小
+        0.0f, 0.0f);
+    cube1->material = std::make_shared<PhongMaterial>(color(Gdiplus::Color::Red), color(Gdiplus::Color::White), 16.0f, 0.25f);
+    world.AddGeometries(cube1);
 
     // -------------------------------------
     // 光线追踪
@@ -118,12 +124,18 @@ void PhysicsEngine::RenderReflectIntern(BYTE* buffer, cint width, cint height)
         );
     sphere1->material = std::make_shared<PhongMaterial>(color(Gdiplus::Color::Red), color(Gdiplus::Color::White), 16.0f, 0.25f);
     world.AddGeometries(sphere1);
-    auto sphere2 = std::make_shared<Sphere>(
+    /*auto sphere2 = std::make_shared<Sphere>(
         vector3(10.0f, 10.0f, -10.0f),  // 球心坐标
         10.0f                           // 半径
         );
     sphere2->material = std::make_shared<PhongMaterial>(color(Gdiplus::Color::Blue), color(Gdiplus::Color::White), 16.0f, 0.25f);
-    world.AddGeometries(sphere2);
+    world.AddGeometries(sphere2);*/
+    auto cube1 = std::make_shared<Cube>(
+        vector3(10.0f, 10.0f, -10.0f) + bag3d.sphere_pos,  // 立方体坐标
+        vector3(10.0f, 10.0f, 10.0f),  // 大小
+        0.0f, 0.0f);
+    cube1->material = std::make_shared<PhongMaterial>(color(Gdiplus::Color::Red), color(Gdiplus::Color::White), 16.0f, 0.25f);
+    world.AddGeometries(cube1);
 
     // -------------------------------------
     // 光线追踪
