@@ -115,6 +115,36 @@ void PhysicsEngine::RenderReflectIntern(BYTE* buffer, cint width, cint height)
         );
     plane->material = std::make_shared<CheckerMaterial>(0.1f, 0.5f);
     world.AddGeometries(plane);
+    plane = std::make_shared<Plane>(
+        vector3(0.0f, -1.0f, 0.0f),     // 球心坐标
+        -50.0f                          // 半径
+        );
+    plane->material = std::make_shared<SolidMaterial>(color(Gdiplus::Color::LightSkyBlue), 0.01f);
+    world.AddGeometries(plane);
+    plane = std::make_shared<Plane>(
+        vector3(1.0f, 0.0f, 0.0f),
+        -50.0f
+        );
+    plane->material = std::make_shared<SolidMaterial>(color(Gdiplus::Color::LightBlue), 0.05f);
+    world.AddGeometries(plane);
+    plane = std::make_shared<Plane>(
+        vector3(-1.0f, 0.0f, 0.0f),
+        -50.0f
+        );
+    plane->material = std::make_shared<SolidMaterial>(color(Gdiplus::Color::LightBlue), 0.05f);
+    world.AddGeometries(plane);
+    plane = std::make_shared<Plane>(
+        vector3(0.0f, 0.0f, 1.0f),
+        -50.0f
+        );
+    plane->material = std::make_shared<SolidMaterial>(color(Gdiplus::Color::LightBlue), 0.05f);
+    world.AddGeometries(plane);
+    plane = std::make_shared<Plane>(
+        vector3(0.0f, 0.0f, -1.0f),
+        -50.0f
+        );
+    plane->material = std::make_shared<SolidMaterial>(color(Gdiplus::Color::LightBlue), 0.05f);
+    world.AddGeometries(plane);
 
     // -------------------------------------
     // 球体

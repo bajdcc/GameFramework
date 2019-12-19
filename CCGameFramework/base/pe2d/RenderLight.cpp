@@ -92,15 +92,11 @@ void PhysicsEngine::RenderDirectionalLight(BYTE* buffer, cint width, cint height
 
     // -------------------------------------
     // 球体
-    /*const auto sphere1 = std::make_shared<Sphere>(
+    const auto sphere1 = std::make_shared<Sphere>(
         vector3(0.0f, 10.0f, -10.0f) + bag3d.sphere_pos,
         10.0f
         );
-    world.AddGeometries(sphere1);*/
-    auto cube1 = std::make_shared<Cube>(
-        vector3(10.0f, 10.0f, -10.0f) + bag3d.sphere_pos,  // 立方体坐标
-        vector3(10.0f, 10.0f, 10.0f),  // 大小
-        0.0f, 0.0f); world.AddGeometries(cube1);
+    world.AddGeometries(sphere1);
 
     // -------------------------------------
     // 平行光

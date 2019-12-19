@@ -167,6 +167,17 @@ color PhongMaterial::Sample(Ray ray, vector3 position, vector3 normal)
     return lightColor * (diffuseTerm + specularTerm);
 }
 
+SolidMaterial::SolidMaterial(color diffuse, float reflectiveness)
+    : Material(reflectiveness)
+    , diffuse(diffuse)
+{
+}
+
+color SolidMaterial::Sample(Ray ray, vector3 position, vector3 normal)
+{
+    return diffuse * -DotProduct(ray.direction, normal);
+}
+
 LightSample::LightSample()
 {
 }
@@ -493,6 +504,34 @@ IntersectResult RayIntersectWithTriangle(
 #endif
 }
 
+IntersectResult TriCollection::Intersect(Ray ray)
+{
+    auto v = ray.origin - center;
+    auto a0 = SquareMagnitude(v) - radius;
+    auto DdotV = DotProduct(ray.direction, v);
+    if (DdotV <= 0)
+    {
+        IntersectResult result;
+        // 射线和包围盒有交点
+        for (const auto& tri : tridx) {
+            auto r2 = RayIntersectWithTriangle(ray,
+                vertices[std::get<0>(tri)], vertices[std::get<1>(tri)], vertices[std::get<2>(tri)], this);
+            if (r2.body) {
+                if (result.body) {
+                    if (result.distance > r2.distance)
+                        result = r2;
+                }
+                else {
+                    result = r2;
+                }
+            }
+        }
+        return result;
+    }
+
+    return IntersectResult(); // 失败，不相交
+}
+
 Cube::Cube(const vector3& center, const vector3& scale, float a, float b)
 {
     /*
@@ -508,7 +547,7 @@ Cube::Cube(const vector3& center, const vector3& scale, float a, float b)
     */
     auto s = scale * 0.5f;
     for (int i = 0; i < 8; i++) {
-        vertices[i] = vector3(
+        vertices.emplace_back(
             i & 1 ? 1.0f : -1.0f,
             i & 2 ? 1.0f : -1.0f,
             i & 4 ? 1.0f : -1.0f);
@@ -543,32 +582,4 @@ Cube::Cube(const vector3& center, const vector3& scale, float a, float b)
             tridx.emplace_back(idx[i][idx2[j][0]], idx[i][idx2[j][1]], idx[i][idx2[j][2]]);
         }
     }
-}
-
-IntersectResult Cube::Intersect(Ray ray)
-{
-    auto v = ray.origin - center;
-    auto a0 = SquareMagnitude(v) - radius;
-    auto DdotV = DotProduct(ray.direction, v);
-    if (DdotV <= 0)
-    {
-        IntersectResult result;
-        // 射线和包围盒有交点
-        for (const auto& tri : tridx) {
-            auto r2 = RayIntersectWithTriangle(ray,
-                vertices[std::get<0>(tri)], vertices[std::get<1>(tri)], vertices[std::get<2>(tri)], this);
-            if (r2.body) {
-                if (result.body) {
-                    if (result.distance > r2.distance)
-                        result = r2;
-                }
-                else {
-                    result = r2;
-                }
-            }
-        }
-        return result;
-    }
-
-    return IntersectResult(); // 失败，不相交
 }

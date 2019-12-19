@@ -105,6 +105,17 @@ public:
     float shininess;
 };
 
+// 纯色材质
+class SolidMaterial : public Material
+{
+public:
+    SolidMaterial(color diffuse, float reflectiveness);
+
+    color Sample(Ray ray, vector3 position, vector3 normal) override;
+
+    color diffuse;
+};
+
 // 光源采样
 class LightSample
 {
@@ -226,18 +237,25 @@ public:
     float d;            // 原点到平面最短距离 normal.x = d
 };
 
-// 立方体
-class Cube : public Geometries
+// 三角形组成的物体
+class TriCollection : public Geometries
 {
 public:
-    Cube(const vector3& center, const vector3& scale, float a, float b);
+    TriCollection() = default;
 
     IntersectResult Intersect(Ray ray) override; // 相交测试
 
     vector3 center;        // 中心坐标
     float radius;          // 包围盒半径
-    vector3 vertices[8];   // 八个顶点
+    std::vector<vector3> vertices;   // 八个顶点
     std::vector<std::tuple<int, int, int>> tridx; // 顶点组成三角形索引
+};
+
+// 立方体
+class Cube : public TriCollection
+{
+public:
+    Cube(const vector3& center, const vector3& scale, float a, float b);
 };
 
 #endif // GEOMETRIES_H
