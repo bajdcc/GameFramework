@@ -492,7 +492,6 @@ IntersectResult RayIntersectWithTriangle(
     if (v < 0.0f || u + v > 1.0f)
         return IntersectResult();
     auto t = DotProduct(edge2, qvec);
-    auto inv_det = 1.0f / det;
     t *= inv_det;
     auto distance = t; // 得出t，即摄影机发出的光线到其与三角形的交点距离
     auto position = ray.Eval(distance); // 代入直线方程，得出交点位置
@@ -534,6 +533,8 @@ IntersectResult TriCollection::Intersect(Ray ray)
 
 Cube::Cube(const vector3& center, const vector3& scale, float a, float b)
 {
+    // a 逆时针绕y轴
+    // b 往y轴上面外侧旋转
     /*
         --== 使用右手坐标系 ==--
         [0] : (-1,-1,-1) 远左下
@@ -556,12 +557,12 @@ Cube::Cube(const vector3& center, const vector3& scale, float a, float b)
     if (a != 0.0f || b != 0.0f) {
         auto r1 = vector3(0, 1, 0);
         auto r2 = Rotate(vector3(0, 0, 1), r1, a);
-        for (int i = 0; i < 8; i++) {
-            vertices[i] = Rotate(vertices[i], r1, a);
-            vertices[i] = Rotate(vertices[i], r2, b);
+        for (size_t i = 0; i < vertices.size(); i++) {
+            vertices[i] = Rotate(r1, vertices[i], a);
+            vertices[i] = Rotate(r2, vertices[i], b);
         }
     }
-    for (int i = 0; i < 8; i++) {
+    for (size_t i = 0; i < vertices.size(); i++) {
         vertices[i] += center;
     }
     radius = sqrtf(SquareMagnitude(scale));
