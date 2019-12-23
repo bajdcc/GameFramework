@@ -20,6 +20,8 @@
 
 #define REPORT_ERROR 1
 #define REPORT_ERROR_FILE "error.log"
+#define REPORT_INFO 0
+#define REPORT_INFO_FILE "info.log"
 
 #define REPORT_MEMORY 0
 #define REPORT_MEMORY_FILE "mem.log"
@@ -156,6 +158,8 @@ namespace clib {
         if (global_state.logging.size() > LOG_MAX)
             global_state.logging.pop_front();
         global_state.logging.push_back(s);
+        std::wofstream log(REPORT_INFO_FILE, std::ios::app | std::ios::out);
+        log << s.GetBuffer(0) << std::endl;
     }
 
     // 虚页映射
