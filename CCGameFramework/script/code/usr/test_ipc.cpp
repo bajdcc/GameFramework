@@ -1,21 +1,39 @@
 #include "/include/shell"
+#include "/include/format"
 void run(char* cmd) {
     put_string("# "); put_string(cmd); put_char('\n');
     shell(cmd);
     shell("ipc sys sleep 1");
 }
-int main(int argc, char **argv) {
+void test_sleep(int n) {
     int i;
-    put_string("========== [#25 TEST IPC] ==========\n");
-    for (i = 0; i < 10; i++) {
+    for (i = 0; i < n; i++) {
         if (fork() == -1) {
-            shell("ipc sys sleep 1");
+            run(format("ipc sys sleep %d", i + 2));
             exit(0);
         }
     }
-    for (i = 0; i < 10; i++) {
+    for (i = 0; i < n; i++) {
         wait();
     }
+}
+void test_ip(int n) {
+    int i;
+    for (i = 0; i < n; i++) {
+        if (fork() == -1) {
+            run("ipc api hitokoto");
+            exit(0);
+        }
+    }
+    for (i = 0; i < n; i++) {
+        wait();
+    }
+}
+int main(int argc, char **argv) {
+    put_string("========== [#25 TEST IPC] ==========\n");
+    run("ipc sys whoami");
+    test_sleep(10);
+    test_ip(10);
     run("ipc api ip all");
     run("ipc api hitokoto");
     run("ipc api lyric 111111");

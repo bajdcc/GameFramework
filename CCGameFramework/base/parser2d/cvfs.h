@@ -180,6 +180,7 @@ namespace clib {
         ~vfs_node_fifo() override;
         bool available() const override;
         int index() const override;
+        void advance() override;
         int write(byte c) override;
         int truncate() override;
         void add_handle(int handle, vfs_op_t type) override;

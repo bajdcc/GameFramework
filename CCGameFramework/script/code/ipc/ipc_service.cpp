@@ -37,7 +37,8 @@ int main(int argc, char** argv) {
             char* uuid = data;
             char* path = format("/ipc/req_%s", uuid);
             show(format("reading: %s\n", path));
-            if (readfile(path, &data, &len) == 0) {
+            int result;
+            if ((result = readfile(path, &data, &len)) == 0) {
                 char* t = data;
                 char* p = strchr(data, ' ');
                 show(format("read ok, content: %s\n", t));
@@ -76,11 +77,16 @@ int main(int argc, char** argv) {
                 free(f);
                 free(data);
             }
+            else {
+                run(format("echo Error: read error > /ipc/res_%s", uuid));
+                show(format("read error: %d, %s\n", result, uuid));
+            }
             show(format("request done: %s\n", uuid));
             free(uuid);
             free(path);
             exit(0);
         }
+        show("fork new request\n");
         pipe();
         free(data);
     }

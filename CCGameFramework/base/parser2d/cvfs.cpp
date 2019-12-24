@@ -364,8 +364,19 @@ namespace clib {
             return DELAY_CHAR;
         }
         auto c = n->pipe->front();
-        n->pipe->pop();
         return c;
+    }
+
+    void vfs_node_fifo::advance()
+    {
+        auto n = node.lock();
+        if (!n)
+            return;
+        if (n->pipe->empty()) {
+            return;
+        }
+        vfs_node_solid::advance();
+        n->pipe->pop();
     }
 
     int vfs_node_fifo::write(byte c) {

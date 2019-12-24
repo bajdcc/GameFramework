@@ -4,6 +4,8 @@
 #include "/include/readfile"
 #include "/include/io"
 void run(char* cmd) {
+    //put_string(cmd);
+    //put_string("\n");
     shell(cmd);
     free(cmd);
 }
