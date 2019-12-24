@@ -1,3 +1,4 @@
 ipc_service
 ipc_api
+ipc_music
 ipc_sys

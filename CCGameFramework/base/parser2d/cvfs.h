@@ -168,6 +168,7 @@ namespace clib {
         int index() const override;
         int write(byte c) override;
         int truncate() override;
+        int get_length() const override;
     private:
         explicit vfs_node_semaphore(const vfs_mod_query*, const vfs_node::ref& ref, int count = 1);
         bool entered{ false };

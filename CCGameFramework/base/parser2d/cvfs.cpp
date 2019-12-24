@@ -316,6 +316,14 @@ namespace clib {
         return -1;
     }
 
+    int vfs_node_semaphore::get_length() const
+    {
+        auto n = node.lock();
+        if (!n)
+            return -1;
+        return (int)n->handles_read.size();
+    }
+
     // -----------------------------------------
 
     vfs_node_fifo::vfs_node_fifo(const vfs_mod_query* mod, const vfs_node::ref& ref) :

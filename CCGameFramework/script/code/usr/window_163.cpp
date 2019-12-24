@@ -128,6 +128,7 @@ int read_file(int id, int handle, char* playlist) {
                     window_default_msg(id, &s);
                 }
                 else if ((child = fork()) == -1) {
+                    redirect_to_parent();
                     play(ids);
                     s.code = 0x888;
                     s.comctl = -1;
@@ -182,12 +183,18 @@ int main(int argc, char** argv) {
         put_string(str);
         free(str);
     }
-    put_string("请输入要播放的歌单编号：");
-    sleep(1000);
-    char buf[255];
-    input(&buf, 255);
-    k = atoi32(&buf);
-    k--;
+    if (argc <= 1) {
+        put_string("请输入要播放的歌单编号：");
+        sleep(1000);
+        char buf[255];
+        input(&buf, 255);
+        k = atoi32(&buf);
+        k--;
+    }
+    else {
+        k = atoi32(argv[1]);
+        k--;
+    }
     if (k < 0 || k >= sizeof(list64) / sizeof(char*))
         k = 0;
     char* sh = format("echo %s | base64_decode > /tmp/163_list", list64[k]);
