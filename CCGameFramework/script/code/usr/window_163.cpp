@@ -29,6 +29,12 @@ char* list64[0] = {
 };
 void play(char* id);
 char* down_playlist(char* id);
+void pipe() {
+    int c;
+    while ((c = io_pipe()) != -1) {
+        put_char((char)c);
+    }
+}
 int read_file(int id, int handle, char* playlist) {
     char* begin = strstr(playlist, "track_playlist");
     if (begin == (char*)0) {
@@ -86,6 +92,7 @@ int read_file(int id, int handle, char* playlist) {
     }
     while (c = window_get_msg(handle, &s), c < 0x1000) {
         if (recv_signal() == 9) break;
+        pipe();
         if (s.code == 0x201 || s.code == 0x888) {
             if (s.comctl == t1id || s.code == 0x888) {
                 if (child != -1) {

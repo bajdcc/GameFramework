@@ -25,6 +25,12 @@ char* song_names[0] = {
 int song_id[0] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, };
 int child = -1;
 long text, text2, text3, text4;
+void pipe() {
+    int c;
+    while ((c = io_pipe()) != -1) {
+        put_char((char)c);
+    }
+}
 int read_file(int id, int handle) {
     int c;
     window_layout_linear_set_vertical_align(window_get_base(id));
@@ -52,6 +58,7 @@ int read_file(int id, int handle) {
     int i = 0;
     while (c = window_get_msg(handle, &s), c < 0x1000) {
         if (recv_signal() == 9) break;
+        pipe();
         if (s.code == 0x201 || s.code == 0x888) {
             if (s.comctl == t1id || s.code == 0x888) {
                 if (child != -1) {
