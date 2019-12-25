@@ -3979,6 +3979,10 @@ namespace clib {
                     ctx->ax._i = READ_ERROR;
                     break;
                 }
+                if (!ctx->sigs.empty()) {
+                    ctx->ax._i = READ_EOF;
+                    break;
+                }
                 ctx->ax._i = dec->index();
                 if (ctx->ax._i == WAIT_CHAR) {
                     ctx->pc -= INC_PTR;
@@ -4036,6 +4040,10 @@ namespace clib {
                     ctx->ax._i = READ_ERROR;
                     break;
                 }
+                if (!ctx->sigs.empty()) {
+                    ctx->ax._i = READ_EOF;
+                    break;
+                }
                 ctx->ax._i = dec->write((byte)c);
             }
             else {
@@ -4062,6 +4070,10 @@ namespace clib {
                 }
                 else if (t != v_write || t == v_error) {
                     ctx->ax._i = READ_ERROR;
+                    break;
+                }
+                if (!ctx->sigs.empty()) {
+                    ctx->ax._i = READ_EOF;
                     break;
                 }
                 ctx->ax._i = dec->truncate();
@@ -4140,6 +4152,10 @@ namespace clib {
                         ctx->ax._i = READ_ERROR;
                         break;
                     }
+                    if (!ctx->sigs.empty()) {
+                        ctx->ax._i = READ_EOF;
+                        break;
+                    }
                     ctx->ax._i = dec->index();
                     if (ctx->ax._i == WAIT_CHAR) {
                         ctx->pc -= INC_PTR;
@@ -4176,6 +4192,10 @@ namespace clib {
                         ctx->ax._i = -1;
                         break;
                     }
+                    if (!ctx->sigs.empty()) {
+                        ctx->ax._i = -1;
+                        break;
+                    }
                     ctx->ax._i = dec->get_length();
                 }
                 else {
@@ -4203,6 +4223,10 @@ namespace clib {
                         }
                     }
                     else if (t != v_read || t == v_error) {
+                        ctx->ax._i = 0;
+                        break;
+                    }
+                    if (!ctx->sigs.empty()) {
                         ctx->ax._i = 0;
                         break;
                     }

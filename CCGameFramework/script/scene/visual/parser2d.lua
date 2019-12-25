@@ -117,7 +117,7 @@ function M:init_menu(info)
 		padleft = 10,
 		padtop = 60,
 		padright = 10,
-		padbottom = 110
+		padbottom = 50
 	})
 	self:add(bg)
 	self.layers.pe2d = bg:add(PE2D:new({

@@ -123,7 +123,7 @@ int Parser2DEngine::SetType(cint value)
         clib::cvm::global_state.mouse_y = value & 0xffff;
         return 0;
     }
-    if (value & 0x100000) {
+    if (value & 0x100000 && !clib::cvm::global_state.gui) {
         clib::cgui::singleton().hit(value & 0xffff);
         return 0;
     }

@@ -85,6 +85,9 @@ int main(int argc, char** argv) {
     shell("rm /fifo/ipc_service_music");
     shell("rm /ipc/service_music");
     shell("rm /mutex/__ipc_service_music_mutex__");
+    put_string("waiting for process exit...\n");
+    send_signal(get_pid(), 9);
+    wait();
     put_string("service music stopped\n");
     return 0;
 }

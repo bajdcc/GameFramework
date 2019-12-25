@@ -51,11 +51,12 @@ int read_file(int id, int handle) {
     __window_msg_struct__ s;
     int i = 0;
     while (c = window_get_msg(handle, &s), c < 0x1000) {
+        if (recv_signal() == 9) break;
         if (s.code == 0x201 || s.code == 0x888) {
             if (s.comctl == t1id || s.code == 0x888) {
                 if (child != -1) {
                     newline();
-                    send_signal(child, 99);
+                    send_signal(child, 9);
                     child = -1;
                 }
                 if ((child = fork()) == -1) {
@@ -78,7 +79,7 @@ int read_file(int id, int handle) {
             window_default_msg(id, &s);
         }
     }
-    send_signal(child, 99);
+    send_signal(child, 9);
     switch (c) {
     case 0x2000:
         // put_string("[INFO] Read to the end.");
