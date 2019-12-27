@@ -57,3 +57,8 @@ double cos(double number) {
     number;
     interrupt 208;
 }
+
+double floor(double number) {
+    number;
+    interrupt 209;
+}

@@ -74,6 +74,11 @@ int gui_point(int x, int y) {
     interrupt 304;
 }
 
+int gui_color(int rgb) {
+    0xff << 24 | rgb;
+    interrupt 305;
+}
+
 int gui_rgb(int r, int g, int b) {
     0xff << 24 | r << 16 | g << 8 | b;
     interrupt 305;

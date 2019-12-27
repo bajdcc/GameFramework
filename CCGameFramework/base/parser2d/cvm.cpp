@@ -2841,6 +2841,9 @@ namespace clib {
         case 208:
             ctx->ax._d = cos(ctx->ax._d);
             break;
+        case 209:
+            ctx->ax._d = floor(ctx->ax._d);
+            break;
         default:
 #if LOG_SYSTEM
             ATLTRACE("[SYSTEM] ERR  | unknown interrupt: %d\n", ctx->ax._i);
