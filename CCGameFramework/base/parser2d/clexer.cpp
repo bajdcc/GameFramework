@@ -865,10 +865,24 @@ LEX_T(t) clexer::get_store_##t(int index) const \
                                 p = op_left_shift_assign;
                             }
                         }
+                        else {
+                            // 单字符操作符
+                            auto p = sinOp[c];
+                            bags._operator = (operator_t)p;
+                            move(1);
+                            return l_operator;
+                        }
                     }
                     else {
                         if (c == '.' && c2 == '.') {
                             p = op_ellipsis;
+                        }
+                        else {
+                            // 单字符操作符
+                            auto p = sinOp[c];
+                            bags._operator = (operator_t)p;
+                            move(1);
+                            return l_operator;
                         }
                     }
                     if (p == op__start) {
