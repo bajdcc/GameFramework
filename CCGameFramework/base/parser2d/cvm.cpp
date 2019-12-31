@@ -3814,7 +3814,8 @@ namespace clib {
                             for (const auto& cc : childs) {
                                 tasks[cc]->sigs.push(right);
                             }
-                        }else{
+                        }
+                        else {
                             tasks[left]->sigs.push(right);
                         }
                     }

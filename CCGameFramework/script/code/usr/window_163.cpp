@@ -98,8 +98,9 @@ int read_file(int id, int handle, char* playlist) {
                 if (child != -1) {
                     newline();
                     send_signal(child, 9);
+                    wait();
                     child = -1;
-                    sleep(200);
+                    sleep(100);
                 }
                 window_comctl_set_text(text5, "控制");
                 if (*ids != '\0') {
@@ -138,6 +139,7 @@ int read_file(int id, int handle, char* playlist) {
                 else if ((child = fork()) == -1) {
                     redirect_to_parent();
                     play(ids);
+                    if (recv_signal() == 9) exit(1);
                     s.code = 0x888;
                     s.comctl = -1;
                     window_default_msg(id, &s);

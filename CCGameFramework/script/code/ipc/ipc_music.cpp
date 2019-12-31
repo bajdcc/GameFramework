@@ -68,6 +68,20 @@ int main(int argc, char** argv) {
                         exit(0);
                     }
                 }
+                else if(strcmp(p + 1, "list2") == 0) {
+                    if (fork() == -1) {
+                        redirect_to_parent();
+                        path_add("/usr");
+                        shell("cat /ipc/__ipc_service_music_pid__ | signal 9");
+                        int mutex = open("/mutex/__ipc_service_music_mutex__");
+                        read(mutex);
+                        run(format("echo %d > /ipc/__ipc_service_music_pid__", get_pid()));
+                        run(format("window_playlist %s > /bat/%d", p2 + 1, get_pid()));
+                        run(format("rm /ipc/__ipc_service_music_pid__"));
+                        close(mutex);
+                        exit(0);
+                    }
+                }
                 else {
                     suc = 0;
                 }
