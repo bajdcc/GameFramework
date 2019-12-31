@@ -45,6 +45,7 @@ namespace clib {
         std::vector<byte> data;
         string_t lyric_str;
         int lyric_id{ -1 };
+        int max_lyric_width{ 0 };
         std::vector<std::tuple<int, string_t>> lyrics;
     };
 }

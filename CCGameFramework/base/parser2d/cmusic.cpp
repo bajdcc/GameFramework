@@ -104,8 +104,14 @@ namespace clib {
                     all_time.GetBuffer(0));
                 last = now + 1;
                 if (lyric_id >= 0) {
+                    auto width = max_lyric_width;
                     if (now >= std::get<0>(lyrics[lyric_id])) {
-                        text.AppendFormat(" | %s", std::get<1>(lyrics[lyric_id]).c_str());
+                        width -= (int)std::get<1>(lyrics[lyric_id]).length();
+                        text.AppendFormat(" | %s ", std::get<1>(lyrics[lyric_id]).c_str());
+                        for (auto i = 0; i < width; i++) {
+                            text.AppendChar(' ');
+                        }
+                        max_lyric_width = max(max_lyric_width, (int)std::get<1>(lyrics[lyric_id]).length());
                         if (lyric_id < (int)lyrics.size() - 1)
                             lyric_id++;
                     }

@@ -13,6 +13,8 @@
 #include "/include/format"
 void play(char *name, int id);
 char* song_names[0] = {
+    "摩天动物园",
+    "透明",
     "Take me hand",
     "まっしろな雪",
     "Faded",
@@ -23,7 +25,7 @@ char* song_names[0] = {
     "Journey",
     "Ferrari",
 };
-int song_id[0] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, };
+int song_id[0] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 int child = -1;
 long text, text2, text3, text4;
 void pipe() {
@@ -65,10 +67,12 @@ int read_file(int id, int handle) {
                 if (child != -1) {
                     newline();
                     send_signal(child, 9);
+                    wait();
                     child = -1;
                 }
                 if ((child = fork()) == -1) {
                     play(song_names[i], song_id[i]);
+                    if (recv_signal() == 9) exit(1);
                     s.code = 0x888;
                     s.comctl = -1;
                     window_default_msg(id, &s);
