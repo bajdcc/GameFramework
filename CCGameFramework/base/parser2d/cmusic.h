@@ -40,6 +40,7 @@ namespace clib {
         int now{ 0 };
         int last{ -1 };
         std::vector<byte> data;
+        string_t lyric_str;
     };
 }
 

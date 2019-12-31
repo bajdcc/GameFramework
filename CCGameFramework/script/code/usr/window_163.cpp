@@ -3,6 +3,7 @@
 #include "/include/string"
 #include "/include/proc"
 #include "/include/readfile"
+#include "/include/writefile"
 #include "/include/json"
 #include "/include/shell"
 #include "/include/sys"
@@ -105,6 +106,11 @@ int read_file(int id, int handle, char* playlist) {
                 window_comctl_set_text(text5, "控制");
                 if (*ids != '\0') {
                     char* downurl = format("rm /tmp/%s.mp3", ids);
+                    put_string(downurl);
+                    put_string("\n");
+                    shell(downurl);
+                    free(downurl);
+                    downurl = format("rm /tmp/%s.txt", ids);
                     put_string(downurl);
                     put_string("\n");
                     shell(downurl);
@@ -267,8 +273,8 @@ void play(char* id) {
     newline(); put_string("Id: "); put_string(id); put_string("\n");
     char* path = format("/http/post!music.163.com/api/song/detail!id=%s&ids=[%s]", id, id);
     put_string("Open: "); put_string(path); put_string("\n");
-    char* json = readfile_fast(path);
-    if (json != (char*)0) {
+    char* json; int json_len;
+    if (readfile(path, &json, &json_len) == 0) {
         json_object* obj = json_parse_obj(json);
         if (obj) {
             put_string("Code: "); put_int(json_obj_get_string(obj, "code")->data.i); put_string("\n");
@@ -307,6 +313,39 @@ void play(char* id) {
                 put_string(downurl);
                 put_string(" exists\n");
             }
+            // LYRIC
+            downurl = format("/tmp/%s.txt", id);
+            empty = fsize(downurl);
+            if (empty <= 0) {
+                if (empty == 1) rm(downurl);
+                put_string("Saved lyric to ");
+                put_string(downurl);
+                put_string("\n");
+                free(downurl);
+                downurl = format("echo /http/music.163.com/api/song/media?id=%s | copy /tmp/%s.txt", id, id);
+                put_string("# ");
+                put_string(downurl);
+                put_string("\n");
+                shell(downurl);
+                put_string("Download OK\n");
+                char* lyric_path = format("/tmp/%s.txt", id);
+                char* lyric_txt; int lryic_len;
+                if (readfile(lyric_path, &lyric_txt, &lryic_len) == 0) {
+                    json_object* lyric_obj = json_parse_obj(lyric_txt);
+                    if (lyric_obj) {
+                        put_string("Code: "); put_int(json_obj_get_string(lyric_obj, "code")->data.i); put_string("\n");
+                        char* lyric = json_obj_get_string(lyric_obj, "lyric")->data.str;
+                        writefile(lyric_path, lyric, strlen(lyric), 1);
+                    }
+                    free(lyric_txt);
+                }
+                free(lyric_path);
+            }
+            else {
+                put_string("OK, ");
+                put_string(downurl);
+                put_string(" exists\n");
+            }
             // PIC
             free(downurl);
             downurl = format("/tmp/%s.jpg", id);
@@ -336,7 +375,7 @@ void play(char* id) {
             window_comctl_image_set_ptr_from_url(text4, downurl);
             put_string("Playing\n");
             free(downurl);
-            downurl = format("cat /music/tmp/%s.mp3", id);
+            downurl = format("cat /music/tmp/%s.mp3!/tmp/%s.txt", id, id);
             put_string("# ");
             put_string(downurl);
             put_string("\n");

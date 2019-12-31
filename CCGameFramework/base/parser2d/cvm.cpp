@@ -3548,14 +3548,16 @@ namespace clib {
 
     bool cvm::interrupt() {
         auto id = vmm_get(ctx->pc);
-        if (id > 200 && id < 300)
-            return math(id);
-        if (id >= 300 && id < 400)
-            return gui(id);
-        if (id >= 400 && id < 500)
-            return web(id);
-        if (id >= 500 && id < 600)
-            return wnd(id);
+        if (id > 200) {
+            if (id > 200 && id < 300)
+                return math(id);
+            if (id >= 300 && id < 400)
+                return gui(id);
+            if (id >= 400 && id < 500)
+                return web(id);
+            if (id >= 500 && id < 600)
+                return wnd(id);
+        }
         switch (id) {
         case 0:
         case 1:

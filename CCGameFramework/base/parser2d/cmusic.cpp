@@ -6,6 +6,7 @@
 #include "stdafx.h"
 #include "cmusic.h"
 #include <ui\window\Window.h>
+#include <base\utils.h>
 
 #define MAKE_TIME(a,b,c) (((a) << 12) | ((b) << 6) | (c))
 
@@ -19,14 +20,21 @@ namespace clib {
             return;
         }
         zplay = libZPlay::CreateZPlay();
-        if (!call->stream_path(path.substr(6), data)) {
+        auto paths = std::split(path.substr(6), '!');
+        auto music_path = paths[0];
+        if (!call->stream_path(music_path, data)) {
             ATLTRACE("[SYSTEM] PLAY | file not exists: %s\n", path);
             zplay->Release();
             zplay = nullptr;
             return;
         }
+        std::vector<byte> lyric_data;
+        if (paths.size() > 1 && !call->stream_path(paths[1], lyric_data)) {
+            ATLTRACE("[SYSTEM] PLAY | lyric not exists: %s\n", path);
+        }
+        lyric_str = string_t(lyric_data.begin(), lyric_data.end());
         auto type = libZPlay::sfAutodetect;
-        if (path.length() > 4 && path.substr(path.length() - 4) == ".mp3") {
+        if (music_path.length() > 4 && music_path.substr(music_path.length() - 4) == ".mp3") {
             type = libZPlay::sfMp3;
         }
         auto result = zplay->OpenStream(0, 0, data.data(), data.size(), type);

@@ -6,6 +6,7 @@
 #include "/include/xtoa_itoa"
 #include "/include/proc"
 #include "/include/readfile"
+#include "/include/writefile"
 #include "/include/json"
 #include "/include/shell"
 #include "/include/sys"
@@ -226,6 +227,41 @@ void play(char* name, int id) {
                 put_string(downurl);
                 put_string(" exists\n");
             }
+            // LYRIC
+            strcpy(downurl, "/tmp/");
+            strcat(downurl, tmp);
+            strcat(downurl, ".txt");
+            empty = fsize(downurl);
+            if (empty <= 0) {
+                if (empty == 1) rm(downurl);
+                put_string("Saved lyric to ");
+                put_string(downurl);
+                put_string("\n");
+                free(downurl);
+                downurl = format("echo /http/music.163.com/api/song/media?id=%s | copy /tmp/%s.txt", tmp, tmp);
+                put_string("# ");
+                put_string(downurl);
+                put_string("\n");
+                shell(downurl);
+                put_string("Download OK\n");
+                char* lyric_path = format("/tmp/%s.txt", tmp);
+                char* lyric_txt; int lryic_len;
+                if (readfile(lyric_path, &lyric_txt, &lryic_len) == 0) {
+                    json_object* lyric_obj = json_parse_obj(lyric_txt);
+                    if (lyric_obj) {
+                        put_string("Code: "); put_int(json_obj_get_string(lyric_obj, "code")->data.i); put_string("\n");
+                        char* lyric = json_obj_get_string(lyric_obj, "lyric")->data.str;
+                        writefile(lyric_path, lyric, strlen(lyric), 1);
+                    }
+                    free(lyric_txt);
+                }
+                free(lyric_path);
+            }
+            else {
+                put_string("OK, ");
+                put_string(downurl);
+                put_string(" exists\n");
+            }
             // PIC
             strcpy(downurl, "/tmp/");
             strcat(downurl, tmp);
@@ -259,7 +295,9 @@ void play(char* name, int id) {
             put_string("Playing\n");
             strcpy(downurl, "cat /music/tmp/");
             strcat(downurl, tmp);
-            strcat(downurl, ".mp3");
+            strcat(downurl, ".mp3!/tmp/");
+            strcat(downurl, tmp);
+            strcat(downurl, ".txt");
             put_string("# ");
             put_string(downurl);
             put_string("\n");
