@@ -27,6 +27,9 @@ namespace clib {
         bool is_success() const;
 
     private:
+        void parse_lyric();
+
+    private:
         bool success{false};
         vfs_stream_t stream{ fss_none };
         vfs_stream_call* call{ nullptr };
@@ -41,6 +44,8 @@ namespace clib {
         int last{ -1 };
         std::vector<byte> data;
         string_t lyric_str;
+        int lyric_id{ -1 };
+        std::vector<std::tuple<int, string_t>> lyrics;
     };
 }
 

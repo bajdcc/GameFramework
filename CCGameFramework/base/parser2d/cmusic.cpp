@@ -33,6 +33,7 @@ namespace clib {
             ATLTRACE("[SYSTEM] PLAY | lyric not exists: %s\n", path);
         }
         lyric_str = string_t(lyric_data.begin(), lyric_data.end());
+        parse_lyric();
         auto type = libZPlay::sfAutodetect;
         if (music_path.length() > 4 && music_path.substr(music_path.length() - 4) == ".mp3") {
             type = libZPlay::sfMp3;
@@ -102,6 +103,13 @@ namespace clib {
                 text.Format("\r%02d:%02d:%02d / %s", pos.hms.hour, pos.hms.minute, pos.hms.second,
                     all_time.GetBuffer(0));
                 last = now + 1;
+                if (lyric_id >= 0) {
+                    if (now >= std::get<0>(lyrics[lyric_id])) {
+                        text.AppendFormat(" | %s", std::get<1>(lyrics[lyric_id]).c_str());
+                        if (lyric_id < (int)lyrics.size() - 1)
+                            lyric_id++;
+                    }
+                }
             }
             return;
         }
@@ -120,6 +128,60 @@ namespace clib {
 
     int vfs_node_stream_music::truncate() {
         return -1;
+    }
+
+    void vfs_node_stream_music::parse_lyric()
+    {
+        const auto& str = lyric_str;
+        static std::regex e(R"(\[\d*:\d*[.:]\d*\].*)");
+        static std::regex rep(R"(\[\d*:\d*[.:]\d*\](.*))");
+        static std::regex t(R"(\[(\d*):(\d*)([.:])(\d*)\].*)");
+        std::map<int, std::string> ly;
+        std::unordered_set<int> emptys;
+        auto _lyrics = std::split(str);
+        for (const auto& lyr : _lyrics)
+        {
+            std::smatch sm;
+            if (std::regex_match(lyr, sm, e))
+            {
+                auto lycn = std::regex_replace(lyr, rep, "$1");
+                for (std::string m : sm)
+                {
+                    std::smatch tm;
+                    if (std::regex_match(m, tm, t))
+                    {
+                        auto hour = atoi(tm[1].str().c_str());
+                        auto minute = atoi(tm[2].str().c_str());
+                        auto second = atoi(tm[4].str().c_str());
+                        auto delim = tm[3].str();
+                        if (delim == ".")
+                            second = MAKE_TIME(0, hour, minute);
+                        else
+                            second = MAKE_TIME(hour, minute, second);
+                        if (lycn.empty())
+                        {
+                            emptys.insert(second);
+                        }
+                        else
+                        {
+                            ly.insert(std::make_pair(second, lycn));
+                        }
+                    }
+                }
+            }
+        }
+        for (const auto& em : emptys)
+        {
+            if (ly.find(em) == ly.end())
+                ly.insert(std::make_pair(em, ""));
+        }
+        for (auto& y : ly)
+        {
+            lyrics.push_back(std::make_tuple(y.first, y.second));
+        }
+        if (!lyrics.empty()) {
+            lyric_id = 0;
+        }
     }
 }
 
