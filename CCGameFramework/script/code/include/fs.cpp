@@ -77,6 +77,10 @@ char* fread(int handle) {
     handle;
     interrupt 77;
 }
+char* freads(int handle) {
+    handle;
+    interrupt 81;
+}
 int fsize(char* path) { // ERR:<0  OK:>=0
     int handle = open(path);
     if (handle >= 0) {

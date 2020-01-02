@@ -248,6 +248,7 @@ int main(int argc, char** argv) {
     default:
         // put_string("[INFO] Success.");
         read_file(id, handle, playlist);
+        free(playlist);
         break;
     case -1:
         set_fg(240, 0, 0);
@@ -273,8 +274,8 @@ void play(char* id) {
     newline(); put_string("Id: "); put_string(id); put_string("\n");
     char* path = format("/http/post!music.163.com/api/song/detail!id=%s&ids=[%s]", id, id);
     put_string("Open: "); put_string(path); put_string("\n");
-    char* json; int json_len;
-    if (readfile(path, &json, &json_len) == 0) {
+    char* json = readfile_fast_str(path);
+    if (json != (char*)0) {
         json_object* obj = json_parse_obj(json);
         if (obj) {
             put_string("Code: "); put_int(json_obj_get_string(obj, "code")->data.i); put_string("\n");
@@ -391,9 +392,5 @@ void play(char* id) {
 char* down_playlist(char* id) {
     char* path = format("/http/music.163.com/playlist?id=%s", id);
     newline(); put_string("Open: "); put_string(path); put_string("\n");
-    char* json; int len;
-    if (readfile(path, &json, &len) == 0) {
-        return json;
-    }
-    return (char*)0;
+    return readfile_fast_str(path);
 }

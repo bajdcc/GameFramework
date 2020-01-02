@@ -82,3 +82,13 @@ char* readfile_fast(char* path) {
     }
     return (char*)0;
 }
+char* readfile_fast_str(char* path) {
+    int handle = open(path);
+    if (handle >= 0) {
+        load(handle);
+        char* data = freads(handle);
+        close(handle);
+        return data;
+    }
+    return (char*)0;
+}

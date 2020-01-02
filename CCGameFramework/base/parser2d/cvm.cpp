@@ -4211,44 +4211,42 @@ namespace clib {
         }
                break;
         case 77: {
-            {
-                auto h = ctx->ax._i;
-                if (ctx->handles.find(h) != ctx->handles.end()) {
-                    auto dec = handles[h]->data.file;
-                    auto t = dec->get_handle(h, v_read);
-                    if (t == v_none)
-                        dec->add_handle(h, v_read);
-                    else if (t == v_wait) {
-                        if (ctx->sigs.empty()) {
-                            ctx->pc -= INC_PTR;
-                            return true;
-                        }
-                        else {
-                            ctx->ax._i = 0;
-                            break;
-                        }
-                    }
-                    else if (t != v_read || t == v_error) {
-                        ctx->ax._i = 0;
-                        break;
-                    }
-                    if (!ctx->sigs.empty()) {
-                        ctx->ax._i = 0;
-                        break;
-                    }
-                    std::vector<byte> data;
-                    if (dec->get_data(data)) {
-                        auto vmdata = vmm_malloc(data.size());
-                        ctx->ax._ui = vmdata;
-                        vmm_setmem(vmdata, data.size(), data);
+            auto h = ctx->ax._i;
+            if (ctx->handles.find(h) != ctx->handles.end()) {
+                auto dec = handles[h]->data.file;
+                auto t = dec->get_handle(h, v_read);
+                if (t == v_none)
+                    dec->add_handle(h, v_read);
+                else if (t == v_wait) {
+                    if (ctx->sigs.empty()) {
+                        ctx->pc -= INC_PTR;
+                        return true;
                     }
                     else {
                         ctx->ax._i = 0;
+                        break;
                     }
+                }
+                else if (t != v_read || t == v_error) {
+                    ctx->ax._i = 0;
+                    break;
+                }
+                if (!ctx->sigs.empty()) {
+                    ctx->ax._i = 0;
+                    break;
+                }
+                std::vector<byte> data;
+                if (dec->get_data(data)) {
+                    auto vmdata = vmm_malloc(data.size());
+                    ctx->ax._ui = vmdata;
+                    vmm_setmem(vmdata, data.size(), data);
                 }
                 else {
                     ctx->ax._i = 0;
                 }
+            }
+            else {
+                ctx->ax._i = 0;
             }
         }
                break;
@@ -4293,6 +4291,47 @@ namespace clib {
             if (ctx->handles.find(h) != ctx->handles.end()) {
                 ctx->pc -= INC_PTR;
                 return true;
+            }
+        }
+        break;
+        case 81: {
+            auto h = ctx->ax._i;
+            if (ctx->handles.find(h) != ctx->handles.end()) {
+                auto dec = handles[h]->data.file;
+                auto t = dec->get_handle(h, v_read);
+                if (t == v_none)
+                    dec->add_handle(h, v_read);
+                else if (t == v_wait) {
+                    if (ctx->sigs.empty()) {
+                        ctx->pc -= INC_PTR;
+                        return true;
+                    }
+                    else {
+                        ctx->ax._i = 0;
+                        break;
+                    }
+                }
+                else if (t != v_read || t == v_error) {
+                    ctx->ax._i = 0;
+                    break;
+                }
+                if (!ctx->sigs.empty()) {
+                    ctx->ax._i = 0;
+                    break;
+                }
+                std::vector<byte> data;
+                if (dec->get_data(data)) {
+                    auto vmdata = vmm_malloc(data.size() + 1);
+                    ctx->ax._ui = vmdata;
+                    data.push_back(0);
+                    vmm_setmem(vmdata, data.size(), data);
+                }
+                else {
+                    ctx->ax._i = 0;
+                }
+            }
+            else {
+                ctx->ax._i = 0;
             }
         }
         break;
