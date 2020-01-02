@@ -142,6 +142,7 @@ namespace clib {
         int cycle_speed{ 0 };
         int cycle_stable{ 0 };
         bool cycle_set{ false };
+        std::chrono::time_point<std::chrono::system_clock> last_time{ std::chrono::system_clock::now() };
 
     private:
         const string_t pat_path{ R"((/[A-Za-z0-9_]+)+)" };

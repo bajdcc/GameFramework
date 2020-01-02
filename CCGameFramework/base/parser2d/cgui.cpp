@@ -30,6 +30,8 @@
 #define LOG_AST 0
 #define LOG_DEP 0
 
+#define IPS_STAT_TIME 1s
+
 #define ENTRY_FILE "/sys/entry"
 
 #define MAKE_ARGB(a,r,g,b) ((uint32_t)(((BYTE)(r)|((WORD)((BYTE)(g))<<8))|(((DWORD)(BYTE)(b))<<16)|(((DWORD)(BYTE)(a))<<24)))
@@ -324,10 +326,15 @@ namespace clib {
                     cycle_stable = GUI_CYCLE_STABLE;
                 }
             }
-            reset_ips();
             for (int i = 0; i < ticks + cycle_speed; ++i) {
                 tick();
             }
+        }
+        using namespace std::chrono_literals;
+        if (std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now() - last_time) >= IPS_STAT_TIME) {
+            last_time = std::chrono::system_clock::now();
+            reset_ips();
         }
         draw_text(rt, bounds, brushes);
         draw_window(bounds);
