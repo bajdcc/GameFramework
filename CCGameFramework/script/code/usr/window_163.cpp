@@ -342,8 +342,14 @@ void play(char* id) {
                     json_object* lyric_obj = json_parse_obj(lyric_txt);
                     if (lyric_obj) {
                         put_string("Code: "); put_int(json_obj_get_string(lyric_obj, "code")->data.i); put_string("\n");
-                        char* lyric = json_obj_get_string(lyric_obj, "lyric")->data.str;
-                        writefile(lyric_path, lyric, strlen(lyric), 1);
+                        json_object* ll = json_obj_get_string(lyric_obj, "lyric");
+                        if (ll != (json_object*)0) {
+                            char* lyric = ll->data.str;
+                            writefile(lyric_path, lyric, strlen(lyric), 1);
+                        }
+                        else {
+                            writefile(lyric_path, "", 0, 1);
+                        }
                     }
                     free(lyric_txt);
                 }

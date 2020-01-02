@@ -139,39 +139,43 @@ namespace clib {
     void vfs_node_stream_music::parse_lyric()
     {
         const auto& str = lyric_str;
-        static std::regex e(R"(\[\d*:\d*[.:]\d*\].*)");
-        static std::regex rep(R"(\[\d*:\d*[.:]\d*\](.*))");
-        static std::regex t(R"(\[(\d*):(\d*)([.:])(\d*)\].*)");
+        static std::regex re1(R"((\[\d*:\d*[.:]\d*\])(.*))");
+        static std::regex re2(R"(\[(\d*):(\d*)([.:])(\d*)\].*)");
         std::map<int, std::string> ly;
         std::unordered_set<int> emptys;
         auto _lyrics = std::split(str);
         for (const auto& lyr : _lyrics)
         {
+            std::vector<std::string> times;
             std::smatch sm;
-            if (std::regex_match(lyr, sm, e))
-            {
-                auto lycn = std::regex_replace(lyr, rep, "$1");
-                for (std::string m : sm)
-                {
-                    std::smatch tm;
-                    if (std::regex_match(m, tm, t))
+            auto lycn = lyr;
+            for (;;) {
+                if (std::regex_match(lycn, sm, re1)) {
+                    times.push_back(sm[1].str());
+                    lycn = sm[2].str();
+                }
+                else {
+                    break;
+                }
+            }
+            for (const auto& ti : times) {
+                std::smatch tm;
+                if (std::regex_match(ti, tm, re2)) {
+                    auto hour = atoi(tm[1].str().c_str());
+                    auto minute = atoi(tm[2].str().c_str());
+                    auto second = atoi(tm[4].str().c_str());
+                    auto delim = tm[3].str();
+                    if (delim == ".")
+                        second = MAKE_TIME(0, hour, minute);
+                    else
+                        second = MAKE_TIME(hour, minute, second);
+                    if (lycn.empty())
                     {
-                        auto hour = atoi(tm[1].str().c_str());
-                        auto minute = atoi(tm[2].str().c_str());
-                        auto second = atoi(tm[4].str().c_str());
-                        auto delim = tm[3].str();
-                        if (delim == ".")
-                            second = MAKE_TIME(0, hour, minute);
-                        else
-                            second = MAKE_TIME(hour, minute, second);
-                        if (lycn.empty())
-                        {
-                            emptys.insert(second);
-                        }
-                        else
-                        {
-                            ly.insert(std::make_pair(second, lycn));
-                        }
+                        emptys.insert(second);
+                    }
+                    else
+                    {
+                        ly.insert(std::make_pair(second, lycn));
                     }
                 }
             }
