@@ -946,7 +946,7 @@ namespace clib {
             if (base->get_cast() != t_ptr)
                 gen.error(line, column, "invalid deref: " + to_string());
             base->ptr--;
-            gen.emit(LOAD, max(exp->size(x_inc), 1));
+            gen.emit(LOAD, max(size(x_load), 1));
             break;
         default:
             gen.error(line, column, "[unop] not supported rvalue: " + to_string());
@@ -2737,7 +2737,7 @@ namespace clib {
             if (AST_IS_KEYWORD_N(asts[0], k_case)) {
                 cases.back().at(asts[0])._case = to_exp(tmp.back().front());
 #if LOG_TYPE
-                log_out << "[DEBUG] Case: " << cases.back().back()._case->to_string() << std::endl;
+                log_out << "[DEBUG] Case: " << cases.back().at(asts[0])._case->to_string() << std::endl;
 #endif
             }
             else if (AST_IS_KEYWORD_N(asts[0], k_default)) {

@@ -63,10 +63,32 @@ int case_2() {
     free((int) n2);
     put_string("\n");
 }
+struct s1 {
+    int a; int b; int c;
+};
+struct s2 {
+    int d;
+    s1 a;
+};
+void test_1(int n, s1* s) {
+    s2 ss;
+    ss.a = *s;
+    put_int(ss.a.c);
+    put_string("\n");
+}
+int case_3() {
+    put_string("-- CASE #3 --\n");
+    s1 s;
+    s.c = 5;
+    put_int(s.c);
+    put_string(" => ");
+    test_1(6, &s);
+}
 int main(int argc, char **argv) {
     put_string("========== [#6 TEST STRUCT] ==========\n");
     case_1();
     case_2();
+    case_3();
     put_string("========== [#6 TEST STRUCT] ==========\n");
     return 0;
 }

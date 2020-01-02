@@ -91,6 +91,13 @@ int read_file(int id, int handle, char* playlist) {
         s.comctl = -1;
         window_default_msg(id, &s);
     }
+    {
+        s.code = 0x113;
+        s.comctl = -1;
+        s.param1 = 1;
+        s.param2 = 500;
+        window_default_msg(id, &s);
+    }
     while (c = window_get_msg(handle, &s), c < 0x1000) {
         if (recv_signal() == 9) break;
         pipe();
@@ -170,7 +177,7 @@ int read_file(int id, int handle, char* playlist) {
                 }
             }
         }
-        else if (s.code == 0x214) {
+        else if (s.code == 0x214 || s.code == 0x113) {
 
         }
         else if (s.code < 0x800) {

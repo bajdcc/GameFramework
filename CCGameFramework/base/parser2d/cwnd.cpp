@@ -502,6 +502,8 @@ namespace clib {
 
     int cwindow::get_msg_data()
     {
+        if (!timers.empty())
+            check_timer();
         if (msg_data.empty())
             return -1;
         auto d = msg_data.front();
@@ -569,6 +571,17 @@ namespace clib {
                 location.top = __min(location.bottom - self_min_size.cy, location.top + (LONG)msg.param2 - self_drag_pt.y);
             }
             need_repaint = true;
+            break;
+        case WM_TIMER:
+        {
+            if (msg.param2 > 0)
+                timers.insert_or_assign((int)msg.param1,
+                    timer_struct{ std::chrono::milliseconds(msg.param2),
+                    std::chrono::system_clock::now(),
+                    std::chrono::system_clock::now() });
+            else if (msg.param2 == -1)
+                timers.erase(msg.param1);
+        }
             break;
         case WM_SETCURSOR:
         {
@@ -752,6 +765,26 @@ namespace clib {
         vm->handles[handle]->name = text;
         caption = text;
         bag.title_text->SetText(CString(CStringA(caption.c_str())));
+    }
+
+    void cwindow::check_timer()
+    {
+        auto now = std::chrono::system_clock::now();
+        for (auto& t : timers) {
+            auto dt = std::chrono::duration_cast<std::chrono::milliseconds>(now - t.second.next).count();
+            if (dt > 0) {
+                t.second.next = t.second.next + t.second.span;
+                if (t.second.next < now) {
+                    auto span = std::chrono::duration_cast<std::chrono::milliseconds>(now - t.second.start).count();
+                    auto no = span / t.second.span.count() + 1;
+                    t.second.next = t.second.start + t.second.span * no;
+                }
+                else {
+                    t.second.next = t.second.next + t.second.span;
+                }
+                post_data(WM_TIMER, t.first, 0);
+            }
+        }
     }
 
     void cwindow::post_data(const int& code, int param1, int param2, int comctl)

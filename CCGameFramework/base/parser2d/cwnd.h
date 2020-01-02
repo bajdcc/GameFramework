@@ -213,6 +213,8 @@ namespace clib {
 
         void set_caption(const string_t&);
 
+        void check_timer();
+
     private:
         string_t caption;
         CRect location;
@@ -240,6 +242,13 @@ namespace clib {
         int comctl_focus{ -1 };
         int comctl_hover{ -1 };
         std::chrono::time_point<std::chrono::system_clock> time_handler;
+
+        struct timer_struct {
+            std::chrono::milliseconds span{ 0 };
+            std::chrono::time_point<std::chrono::system_clock> start;
+            std::chrono::time_point<std::chrono::system_clock> next;
+        };
+        std::unordered_map<int, timer_struct> timers;
 
         struct window_handle_t {
             window_comctl_type type{ comctl_none };
