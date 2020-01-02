@@ -149,6 +149,8 @@ namespace clib {
             std::vector<std::string> times;
             std::smatch sm;
             auto lycn = lyr;
+            if (!lycn.empty() && std::isspace(lycn.back()))
+                lycn.erase(lycn.end() - 1);
             for (;;) {
                 if (std::regex_match(lycn, sm, re1)) {
                     times.push_back(sm[1].str());
