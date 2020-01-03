@@ -260,8 +260,7 @@ namespace clib {
             std::vector<std::vector<byte>> pages;
             std::unordered_map<uint32, uint32> pgdir;
             // SYSTEM CALL
-            std::chrono::system_clock::time_point record_now;
-            decimal waiting_ms{ 0 };
+            std::chrono::system_clock::time_point record_next;
             int input_redirect{ 0 };
             int output_redirect{ 0 };
             bool input_stop{ false };
@@ -275,6 +274,12 @@ namespace clib {
         std::array< std::unique_ptr<context_t>, TASK_NUM> tasks;
         cvfs fs;
         cnet net;
+
+        struct timer_struct {
+            std::chrono::milliseconds span{ 0 };
+            std::chrono::time_point<std::chrono::system_clock> next;
+        };
+        std::unordered_set<int> timers;
 
         struct handle_t {
             handle_type type{ h_none };

@@ -421,6 +421,15 @@ namespace clib {
                 }
             }
         }
+        decltype(timers) _timers(timers);
+        auto _now = std::chrono::system_clock::now();
+        for (const auto& ti : _timers) {
+            if (tasks[ti] && _now >= tasks[ti]->record_next) {
+                if (tasks[ti]->state == CTS_WAIT)
+                    tasks[ti]->state = CTS_RUNNING;
+                timers.erase(ti);
+            }
+        }
         if (global_state.interrupt) {
             global_state.interrupt = false;
             std::vector<int> foreground_pids;
@@ -1567,7 +1576,6 @@ namespace clib {
             }
         }
         ctx->debug = false;
-        ctx->waiting_ms = 0;
         ctx->input_redirect = -1;
         ctx->output_redirect = -1;
         ctx->input_queue.clear();
@@ -1590,6 +1598,8 @@ namespace clib {
                 global_state.input_code = 0;
                 cgui::singleton().reset_cmd();
             }
+            if (timers.find(ctx->id) != timers.end())
+                timers.erase(ctx->id);
             if (set_cycle_id == ctx->id) {
                 cgui::singleton().set_cycle(0);
                 set_cycle_id = -1;
@@ -1860,7 +1870,6 @@ namespace clib {
         ctx->ax._i = -1;
         ctx->bp = old_ctx->bp;
         ctx->debug = old_ctx->debug;
-        ctx->waiting_ms = 0;
         ctx->input_redirect = -1;
         ctx->output_redirect = -1;
         ctx->input_stop = old_ctx->input_stop;
@@ -4345,25 +4354,16 @@ namespace clib {
         break;
         case 100: {
             if (ctx->ax._i < 0) {
-                ctx->waiting_ms += (-ctx->ax._i) * 0.001;
+                ctx->record_next = ctx->record_next + std::chrono::milliseconds(-ctx->ax._i);
             }
             else {
-                ctx->record_now = std::chrono::system_clock::now();
-                ctx->waiting_ms = ctx->ax._i * 0.001;
+                ctx->record_next = std::chrono::system_clock::now() + std::chrono::milliseconds(ctx->ax._i);
             }
+            timers.insert(ctx->id);
+            ctx->state = CTS_WAIT;
+            ctx->pc += INC_PTR;
+            return true;
         }
-                  break;
-        case 101: {
-            auto now = std::chrono::system_clock::now();
-            if (std::chrono::duration_cast<std::chrono::duration<decimal>>(
-                now - ctx->record_now).count() <= ctx->waiting_ms) {
-                if (ctx->sigs.empty()) {
-                    ctx->pc -= INC_PTR;
-                    return true;
-                }
-            }
-        }
-                  break;
         case 102:
             // 单位为微秒
             ctx->ax._q = std::chrono::high_resolution_clock::now().time_since_epoch().count() / 1000;
