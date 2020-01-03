@@ -108,7 +108,7 @@ int read_file(int id, int handle, char* playlist) {
                     send_signal(child, 9);
                     wait();
                     child = -1;
-                    sleep(100);
+                    sleep(1000);
                 }
                 window_comctl_set_text(text5, "控制");
                 if (*ids != '\0') {

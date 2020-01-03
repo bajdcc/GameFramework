@@ -1601,6 +1601,8 @@ namespace clib {
                 }
             }
             if (ctx->output_redirect != -1 && tasks[ctx->output_redirect] && tasks[ctx->output_redirect]->flag & CTX_VALID) {
+                if (tasks[ctx->output_redirect]->state == CTS_WAIT)
+                    tasks[ctx->output_redirect]->state = CTS_RUNNING;
                 if (!ctx->input_queue.empty()) {
                     std::copy(ctx->input_queue.begin(), ctx->input_queue.end(),
                         std::back_inserter(tasks[ctx->output_redirect]->input_queue));
@@ -1618,7 +1620,7 @@ namespace clib {
 #if LOG_SYSTEM
 #if LOG_VM
         {
-            CStringA s; s.Format("[SYSTEM] PROC | Destroy: PID= #%d, Code= %d\n", ctx->id, ctx->ax._i);
+            CStringA s; s.Format("[SYSTEM] PROC | Destroy: PID= #%d, Code= %d", ctx->id, ctx->ax._i);
             cvm::global_state.log_info.push_back(s.GetBuffer(0));
             logging(CString(s));
         }
@@ -2071,7 +2073,9 @@ namespace clib {
                             _snwprintf(sz2, sizeof(sz2) / sizeof(sz2[0]), L"(O=%d,Q=%d) ", O, Q);
                         else
                             _snwprintf(sz2, sizeof(sz2) / sizeof(sz2[0]), L"(I=%d,O=%d,Q=%d) ", I, O, Q);
-                        _snwprintf(sz, sizeof(sz2) / sizeof(sz2[0]), L"#%d %s%S", current, sz2, limit_string(tasks[current]->cmd, 30).c_str());
+                        _snwprintf(sz, sizeof(sz2) / sizeof(sz2[0]), L"#%d %s%s%S", current, sz2,
+                            tasks[current]->state == CTS_RUNNING ? L"* " : L"",
+                            limit_string(tasks[current]->cmd, 30).c_str());
                         ss << sz << std::endl;
                         printed.set(current);
                     }
@@ -2664,6 +2668,8 @@ namespace clib {
                     auto s = output_fmt(id);
                     while (*s) tasks[ctx->output_redirect]->input_queue.push_back(*s++);
                 }
+                if (tasks[ctx->output_redirect]->state == CTS_WAIT)
+                    tasks[ctx->output_redirect]->state = CTS_RUNNING;
             }
             else {
                 ctx->output_redirect = -1;
@@ -3607,6 +3613,7 @@ namespace clib {
                     break;
                 }
                 else if (!ctx->input_stop) {
+                    ctx->state = CTS_WAIT;
                     ctx->pc -= INC_PTR;
                     return true;
                 }
@@ -3684,6 +3691,7 @@ namespace clib {
                     break;
                 }
                 else if (!ctx->input_stop) {
+                    ctx->state = CTS_WAIT;
                     ctx->pc -= INC_PTR;
                     return true;
                 }
