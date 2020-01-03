@@ -37,6 +37,9 @@
 #define KILL_SIGNAL 99
 #define VFS_LINK_MAX_NUM 5
 
+#define EXT_LOAD_FUNCNAME "ccos_ext_load"
+#define EXT_UNLOAD_FUNCNAME "ccos_ext_unload"
+
 int g_argc;
 char** g_argv;
 
@@ -93,6 +96,9 @@ namespace clib {
         fs.load_bin("/usr/loading.gif");
         fs.load_dir("/www");
         fs.as_root(false);
+        fs.as_user(cvfs::user_name::ext, true);
+        fs.mkdir("/ext");
+        fs.as_user(cvfs::user_name::ext, false);
         fs.mkdir("/pipe");
         fs.mkdir("/semaphore");
         fs.mkdir("/mutex");
@@ -404,6 +410,13 @@ namespace clib {
                 }
             }
         }
+        fs.as_user(cvfs::user_name::ext, true);
+        for (const auto& _ext : exts) {
+            _ext.second.unload_func(this);
+            ::FreeLibrary((HMODULE)_ext.second.handle);
+        }
+        fs.as_user(cvfs::user_name::ext, false);
+        exts.clear();
         ctx = nullptr;
     }
 
@@ -2396,9 +2409,6 @@ namespace clib {
         if (type == fss_server) {
             return vfs_node_stream_server::create(mod, type, this, path);
         }
-        if (type != fss_none) {
-            return vfs_node_stream::create(mod, type, this);
-        }
         error("invalid vfs stream");
         return nullptr;
     }
@@ -4352,6 +4362,12 @@ namespace clib {
             }
         }
         break;
+        case 90:
+        {
+            auto ext = trim(vmm_getstr(ctx->ax._ui));
+            ctx->ax._i = load_ext(ext);
+        }
+        break;
         case 100: {
             if (ctx->ax._i < 0) {
                 ctx->record_next = ctx->record_next + std::chrono::milliseconds(-ctx->ax._i);
@@ -4453,5 +4469,50 @@ namespace clib {
             }
         }
         return 1;
+    }
+
+    int cvm::load_ext(const string_t& ext)
+    {
+        if (exts.find(ext) != exts.end())
+            return 1;
+        static string_t pat{ R"(([a-zA-Z0-9_]+))" };
+        static std::regex re(pat);
+        std::smatch res;
+        if (!std::regex_match(ext, res, re)) {
+            return 3;
+        }
+        auto h = ::LoadLibraryA((ext + ".dll").c_str());
+        if (h == nullptr) {
+            return 2;
+        }
+        ext_struct s;
+        s.handle = h;
+        s.load_func = (decltype(s.load_func))((int(*)(cext*))::GetProcAddress(h, EXT_LOAD_FUNCNAME));
+        if (!s.load_func) return 4;
+        s.unload_func = (decltype(s.unload_func))((int(*)(cext*))::GetProcAddress(h, EXT_UNLOAD_FUNCNAME));
+        if (!s.unload_func) return 4;
+        fs.as_user(cvfs::user_name::ext, true);
+        s.load_func(this);
+        fs.as_user(cvfs::user_name::ext, false);
+        exts.insert({ ext, s });
+        return 0;
+    }
+
+    int cvm::ext_load(const std::string& name, vfs_func_t* f)
+    {
+        fs.mkdir("/ext/" + name);
+        fs.magic("/ext/" + name + "/func", f, fss_ext);
+        return 0;
+    }
+
+    int cvm::ext_unload(const std::string& name)
+    {
+        fs.rm("/ext/" + name);
+        return 0;
+    }
+
+    std::string cvm::ext_get_path(const std::string& name) const
+    {
+        return "/ext/" + name + "/func";
     }
 }

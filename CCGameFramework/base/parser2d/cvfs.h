@@ -9,8 +9,10 @@
 #include <vector>
 #include <map>
 #include <memory>
+#include <queue>
 #include "memory.h"
-#include <libzplay\libzplay.h>
+#include "..\libzplay\libzplay.h"
+#include <atlstr.h>
 
 #define FILE_ROOT "./script/code"
 #define WFILE_ROOT _T(FILE_ROOT)
@@ -35,7 +37,8 @@ namespace clib {
         fs_link,
     };
 
-    enum vfs_stream_t {
+    using vfs_stream_t = int;
+    enum _vfs_stream_t {
         fss_none,
         fss_random,
         fss_null,
@@ -49,6 +52,7 @@ namespace clib {
         fss_uuid,
         fss_server,
         fss_fifo,
+        fss_ext,
     };
 
     enum vfs_op_t {
@@ -262,6 +266,7 @@ namespace clib {
         bool write_vfs(const string_t& path, const std::vector<byte>& data);
 
         void as_root(bool flag);
+        void as_user(int uid, bool flag);
 
         int cd(const string_t& path);
         int mkdir(const string_t& path);
@@ -304,8 +309,12 @@ namespace clib {
     public:
         bool can_mod(const vfs_node::ref& node, int mod) const override;
 
+        enum user_name {
+            cc = 1,
+            ext = 10,
+        };
     private:
-        std::vector<vfs_user> account;
+        std::map<int, vfs_user> account;
         std::shared_ptr<vfs_node> root;
         int current_user{ 0 };
         int last_user{ 0 };

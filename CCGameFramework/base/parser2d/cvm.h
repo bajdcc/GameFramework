@@ -19,6 +19,7 @@
 #include "cnet.h"
 #include "cui.h"
 #include "cwnd.h"
+#include "cext.h"
 #include "../json/cjparser.h"
 
 namespace clib {
@@ -71,7 +72,7 @@ namespace clib {
 
 #define LOG_VM 1
 
-    class cvm : public imem, public vfs_func_t, public vfs_stream_call {
+    class cvm : public imem, public vfs_func_t, public vfs_stream_call, public cext {
     public:
         cvm();
         ~cvm();
@@ -112,6 +113,9 @@ namespace clib {
         };
         CString get_disp(disp_t) const;
 
+        int ext_load(const std::string& name, vfs_func_t* f) override;
+        int ext_unload(const std::string& name) override;
+        std::string ext_get_path(const std::string& name) const override;
 
     private:
         // 申请页框
@@ -186,6 +190,8 @@ namespace clib {
         uint32 parse_json(ast_node_json* node);
 
         void reset();
+
+        int load_ext(const string_t& ext);
 
     private:
         int pids{ 0 };
@@ -298,6 +304,12 @@ namespace clib {
         std::vector<cwindow*> wnds;
         CRect draw_bounds;
         friend class cwindow;
+        struct ext_struct {
+            HANDLE handle;
+            std::function<int(cext*)> load_func;
+            std::function<int(cext*)> unload_func;
+        };
+        std::map<string_t, ext_struct> exts;
 
     public:
         static struct global_state_t {

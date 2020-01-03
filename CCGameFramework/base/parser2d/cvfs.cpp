@@ -578,8 +578,9 @@ namespace clib {
 
     void cvfs::reset() {
         account.clear();
-        account.push_back(vfs_user{ 0, "root", "root" });
-        account.push_back(vfs_user{ 1, "cc", "cc" });
+        account.insert({ 0, vfs_user{ 0, "root", "root" } });
+        account.insert({cc, vfs_user{ cc, "cc", "cc" } });
+        account.insert({ ext, vfs_user{ ext, "ext", "ext" } });
         current_user = 0;
         last_user = 1;
         root = new_node(fs_dir);
@@ -621,7 +622,7 @@ namespace clib {
     }
 
     string_t cvfs::get_user() const {
-        return account[current_user].name;
+        return account.at(current_user).name;
     }
 
     string_t cvfs::get_pwd() const {
@@ -670,7 +671,7 @@ namespace clib {
         snprintf(fmt, sizeof(fmt), "\033FFFA0A0A0\033%c%9s \033FFFB3B920\033%4s \033S4\033%9d \033FFF51C2A8\033%s \033FFF%s\033%s\033S4\033",
             node->type == fs_dir ? 'd' : '-',
             (char*)node->mod,
-            account[node->owner].name.data(),
+            account.at(node->owner).name.data(),
             node->data.size(),
             file_time(node->time.create),
             types[(int)node->type],
@@ -819,7 +820,7 @@ namespace clib {
         }
         else if (node->type == fs_magic) {
             node->time.access = now();
-            *dec = f->stream_create(this, node->magic, p);
+            *dec = node->callback->stream_create(this, node->magic, p);
             if (*dec == nullptr) {
                 return -1;
             }
@@ -868,6 +869,20 @@ namespace clib {
                 current_user = last_user;
                 last_user = 0;
             }
+        }
+    }
+
+    void cvfs::as_user(int uid, bool flag)
+    {
+        if (uid == 0)
+            return;
+        if (flag) {
+            last_user = current_user;
+            current_user = uid;
+        }
+        else {
+            current_user = last_user;
+            last_user = uid;
         }
     }
 

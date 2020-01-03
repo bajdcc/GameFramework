@@ -33,6 +33,7 @@ int main(int argc, char **argv) {
         case 23: shell("test_format");
         case 24: shell("test_fifo");
         case 25: shell("test_ipc");
+        case 26: shell("test_ext");
     }
     return 0;
 }

@@ -73,3 +73,6 @@ sleep 1 show
 echo 【服务调用】
 sleep 1 show
 /usr/test_ipc
+echo 【扩展】
+sleep 1 show
+/usr/test_ext

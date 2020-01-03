@@ -22,3 +22,7 @@ char* stacktrace(char *s) {
     s;
     interrupt 41;
 }
+int load_ext(char* s) {
+    s;
+    interrupt 90;
+}
