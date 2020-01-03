@@ -163,7 +163,7 @@ void PhysicsEngine::RenderReflectIntern(BYTE* buffer, cint width, cint height)
     auto cube1 = std::make_shared<Cube>(
         vector3(10.0f, 10.0f, -10.0f) + bag3d.sphere_pos,  // 立方体坐标
         vector3(10.0f, 10.0f, 10.0f),  // 大小
-        M_PI_4, M_PI_4);
+        (float)M_PI_4, (float)M_PI_4);
     cube1->material = std::make_shared<PhongMaterial>(color(Gdiplus::Color::Red), color(Gdiplus::Color::White), 16.0f, 0.25f);
     world.AddGeometries(cube1);
 
