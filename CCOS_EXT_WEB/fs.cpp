@@ -508,6 +508,11 @@ namespace clib {
         return true;
     }
 
+    bool cextfs::write_text(const string_t& path, const string_t& data)
+    {
+        return write_vfs(path, std::vector<byte>(data.begin(), data.end()));
+    }
+
     string_t get_parent(const string_t& path) {
         assert(path[0] == '/');
         if (path == "/")

@@ -4296,8 +4296,11 @@ namespace clib {
             if (ctx->handles.find(s.from) != ctx->handles.end()) {
                 auto from = handles[s.from].get();
                 if (from->type == h_file) {
-                    if (from->data.file->get_length() == 0 && from->data.file->set_link(link)) {
-                        ctx->ax._i = 0;
+                    if (from->data.file->get_length() == 0) {
+                        if (from->data.file->set_link(link))
+                            ctx->ax._i = 0;
+                        else
+                            ctx->ax._i = -4;
                     }
                     else {
                         ctx->ax._i = -3;

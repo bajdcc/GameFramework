@@ -75,6 +75,7 @@ namespace clib {
         bool exist_vfs(const string_t& path) const;
         bool read_vfs(const string_t& path, std::vector<byte>& data) const;
         bool write_vfs(const string_t& path, const std::vector<byte>& data);
+        bool write_text(const string_t& path, const string_t& data);
 
         void as_root(bool flag);
         void as_user(int uid, bool flag);

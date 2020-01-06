@@ -37,12 +37,14 @@ namespace clib {
 
     enum ext_vfs_t {
         fss_normal = 100,
-        fss_version,
         fss_file,
     };
 
     ext_web::ext_web()
     {
+        fs.as_root(true);
+        fs.write_text("__name__", EXT_NORMAL_TEXT);
+        fs.write_text("__version__", EXT_NORMAL_VERSION);
         fs.as_root(false);
     }
 
@@ -61,8 +63,6 @@ namespace clib {
         switch (type) {
         case fss_normal:
             return new vfs_node_text(mod, EXT_NORMAL_TEXT);
-        case fss_version:
-            return new vfs_node_text(mod, EXT_NORMAL_VERSION);
         case fss_file: {
             vfs_node_dec* dec = nullptr;
             int r;
@@ -79,10 +79,10 @@ namespace clib {
         }
         if (path.size() > func_path.size()) {
             auto p = path.substr(func_path.size());
-            if (p == "/version")
-                return stream_create(mod, fss_version, path, ret);
-            if (p.substr(0, 6) == "/file/")
-                return stream_create(mod, fss_file, p, ret);
+            if (p.substr(0, 5) == "/file") {
+                if (p[5] == '/' || p[5] == ':')
+                    return stream_create(mod, fss_file, p, ret);
+            }
         }
         return stream_create(mod, fss_normal, path, ret);
     }

@@ -291,6 +291,7 @@ namespace clib {
         void load_dir_rec(const CString& path);
 
         static void split_path(const string_t& path, std::vector<string_t>& args, char c);
+        static string_t join_path(std::vector<string_t>& args, const char* c);
         static string_t get_filename(const string_t& path);
         string_t get_realpath(const string_t& path);
 

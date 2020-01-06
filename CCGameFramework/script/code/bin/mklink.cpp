@@ -21,12 +21,20 @@ int link(int handle, char* path, char* to, int show) {
         put_string("[ERROR] Need empty file.");
         restore_fg();
         break;
+    case -4:
+        set_fg(240, 0, 0);
+        put_string("[ERROR] Unsupported.");
+        restore_fg();
+        break;
     }
     close(handle);
-    if (show == 1) {
+    if (show == 1 && ret == 0) {
         char* cmd = format("Created link: %s <=> %s", path, to);
         put_string(cmd);
         free(cmd);
+    }
+    if (ret != 0) {
+        rm(path);
     }
 }
 int main(int argc, char** argv) {

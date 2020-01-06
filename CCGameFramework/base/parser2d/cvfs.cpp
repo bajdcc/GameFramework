@@ -805,7 +805,7 @@ namespace clib {
                         *dec = new vfs_node_cached(this, f->stream_callback(p));
                     }
                     else {
-                        *dec = f->stream_create(this, t, p);
+                        *dec = f->stream_create(this, t, join_path(m, ":"));
                     }
                 }
                 else {
@@ -822,7 +822,8 @@ namespace clib {
         else if (node->type == fs_magic) {
             node->time.access = now();
             int ret = -1;
-            *dec = node->callback->stream_create(this, node->magic, p, &ret);
+            if (p.empty()) p = "/";
+            *dec = node->callback->stream_create(this, node->magic, join_path(m, ":"), &ret);
             if (*dec == nullptr) {
                 return ret;
             }
@@ -928,6 +929,15 @@ namespace clib {
         while (std::getline(ss, temp, c)) {
             args.push_back(temp);
         }
+    }
+
+    string_t cvfs::join_path(std::vector<string_t>& args, const char* c) {
+        std::stringstream ss;
+        std::copy(args.begin(), args.end(), std::ostream_iterator<string_t>(ss, c));
+        auto s = ss.str();
+        if (!s.empty())
+            s.pop_back();
+        return s;
     }
 
     vfs_node::ref cvfs::get_node(const string_t & path) const {
