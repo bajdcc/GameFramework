@@ -969,6 +969,8 @@ namespace clib {
             break;
         case fs_func:
             break;
+        case fs_magic:
+            return -1;
         }
         return 0;
     }
@@ -1006,6 +1008,13 @@ namespace clib {
 
     int cvfs::mkdir(const string_t & path) {
         auto p = combine(pwd, path);
+        auto node = get_node(p);
+        if (node) {
+            if (node->type == fs_magic && node->magic == fss_ext) {
+                return node->callback->stream_oper()->mkdir(path);
+            }
+            return 0;
+        }
         vfs_node::ref cur;
         return _mkdir(p, cur);
     }
@@ -1045,6 +1054,9 @@ namespace clib {
                 _touch(cur);
                 return 0;
             }
+        }
+        if (node->type == fs_magic && node->magic == fss_ext) {
+            return node->callback->stream_oper()->touch(path);
         }
         if (!can_mod(node, 1))
             return -3;
@@ -1164,6 +1176,9 @@ namespace clib {
         auto node = get_node(p);
         if (!node)
             return -1;
+        if (node->type == fs_magic && node->magic == fss_ext) {
+            return node->callback->stream_oper()->rm(path);
+        }
         return node->parent.lock()->children.erase(get_filename(path)) == 0 ?
             -2 : (node->type != fs_dir ? 0 : 1);
     }
@@ -1173,6 +1188,9 @@ namespace clib {
         auto node = get_node(p);
         if (!node)
             return -1;
+        if (node->type == fs_magic && node->magic == fss_ext) {
+            return node->callback->stream_oper()->rm_safe(path);
+        }
         if (!can_rm(node))
             return -2;
         return node->parent.lock()->children.erase(get_filename(path)) == 0 ?

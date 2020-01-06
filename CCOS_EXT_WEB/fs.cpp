@@ -559,23 +559,6 @@ namespace clib {
         return cur;
     }
 
-    int cextfs::cd(const string_t& path) {
-        auto p = combine(pwd, path);
-        auto node = get_node(p);
-        if (!node)
-            return -1;
-        switch (node->type) {
-        case fs_file:
-            return -2;
-        case fs_dir:
-            pwd = p;
-            break;
-        case fs_func:
-            break;
-        }
-        return 0;
-    }
-
     int cextfs::_mkdir(const string_t& path, vfs_node::ref& cur) {
         std::vector<string_t> paths;
         split_path(path, paths, '/');

@@ -19,6 +19,7 @@ CCOSEXTWEB_API int ccos_ext_load(clib::cext* ptr)
     auto ext = (cext*)ptr;
     global_ext = ext;
     func_path = ext->ext_get_path(EXT_NAME);
+    g_ext->set_fs_path(func_path);
     ext->ext_load(EXT_NAME, g_ext.get());
     return 0;
 }
@@ -63,7 +64,7 @@ namespace clib {
         case fss_version:
             return new vfs_node_text(mod, EXT_NORMAL_VERSION);
         case fss_file: {
-            vfs_node_dec* dec;
+            vfs_node_dec* dec = nullptr;
             int r;
             if ((r = fs.get(path.substr(5), &dec)) == 0) {
                 return dec;
@@ -84,6 +85,11 @@ namespace clib {
                 return stream_create(mod, fss_file, p, ret);
         }
         return stream_create(mod, fss_normal, path, ret);
+    }
+
+    vfs_oper* ext_web::stream_oper()
+    {
+        return this;
     }
 
     int ext_web::stream_index(vfs_stream_t type)
@@ -109,6 +115,31 @@ namespace clib {
     cwindow* ext_web::stream_getwnd(int id)
     {
         return nullptr;
+    }
+
+    int ext_web::mkdir(const string_t& path)
+    {
+        return fs.mkdir(path.substr(root_path.size()));
+    }
+
+    int ext_web::touch(const string_t& path)
+    {
+        return fs.touch(path.substr(root_path.size()));
+    }
+
+    int ext_web::rm(const string_t& path)
+    {
+        return fs.rm(path.substr(root_path.size()));
+    }
+
+    int ext_web::rm_safe(const string_t& path)
+    {
+        return fs.rm_safe(path.substr(root_path.size()));
+    }
+
+    void ext_web::set_fs_path(const string_t& path)
+    {
+        root_path = path + "/file";
     }
 
     vfs_node_stream_ext::vfs_node_stream_ext(const vfs_mod_query* mod, vfs_stream_t s, vfs_stream_call* call, const string_t& path) :

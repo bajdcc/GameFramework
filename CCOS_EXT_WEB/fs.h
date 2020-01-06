@@ -64,7 +64,7 @@ namespace clib {
         int this_handle{ -1 };
     };
 
-    class cextfs : public vfs_mod_query {
+    class cextfs : public vfs_mod_query, public vfs_oper {
     public:
         cextfs();
 
@@ -79,13 +79,12 @@ namespace clib {
         void as_root(bool flag);
         void as_user(int uid, bool flag);
 
-        int cd(const string_t& path);
-        int mkdir(const string_t& path);
-        int touch(const string_t& path);
+        int mkdir(const string_t& path) override;
+        int touch(const string_t& path) override;
         int func(const string_t& path, vfs_func_t* f);
         int magic(const string_t& path, vfs_func_t* f, vfs_stream_t magic);
-        int rm(const string_t& path);
-        int rm_safe(const string_t& path);
+        int rm(const string_t& path) override;
+        int rm_safe(const string_t& path) override;
 
         static void split_path(const string_t& path, std::vector<string_t>& args, char c);
         static string_t get_filename(const string_t& path);

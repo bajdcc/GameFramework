@@ -63,6 +63,15 @@ namespace clib {
         v_error,
     };
 
+    class vfs_func_t;
+    class vfs_oper {
+    public:
+        virtual int mkdir(const string_t& path) = 0;
+        virtual int touch(const string_t& path) = 0;
+        virtual int rm(const string_t& path) = 0;
+        virtual int rm_safe(const string_t& path) = 0;
+    };
+
     class vfs_node_dec;
     class vfs_mod_query;
     class vfs_func_t {
@@ -70,6 +79,7 @@ namespace clib {
         virtual string_t stream_callback(const string_t& path) = 0;
         virtual vfs_stream_t stream_type(const string_t& path) const = 0;
         virtual vfs_node_dec* stream_create(const vfs_mod_query* mod, vfs_stream_t type, const string_t& path, int* ret = nullptr) = 0;
+        virtual vfs_oper* stream_oper() = 0;
     };
 
     // 结点
@@ -253,7 +263,7 @@ namespace clib {
         vfs_stream_call* call{ nullptr };
     };
 
-    class cvfs : public vfs_mod_query {
+    class cvfs : public vfs_mod_query, public vfs_oper {
     public:
         cvfs();
 
@@ -269,12 +279,12 @@ namespace clib {
         void as_user(int uid, bool flag);
 
         int cd(const string_t& path);
-        int mkdir(const string_t& path);
-        int touch(const string_t& path);
+        int mkdir(const string_t& path) override;
+        int touch(const string_t& path) override;
         int func(const string_t& path, vfs_func_t* f);
         int magic(const string_t& path, vfs_func_t* f, vfs_stream_t magic);
-        int rm(const string_t& path);
-        int rm_safe(const string_t& path);
+        int rm(const string_t& path) override;
+        int rm_safe(const string_t& path) override;
         void load(const string_t& path);
         void load_bin(const string_t& path);
         void load_dir(const string_t& path);

@@ -2417,6 +2417,11 @@ namespace clib {
         return nullptr;
     }
 
+    vfs_oper* cvm::stream_oper()
+    {
+        return &fs;
+    }
+
     int cvm::stream_index(vfs_stream_t type) {
         switch (type) {
         case fss_random: {
