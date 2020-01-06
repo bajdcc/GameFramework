@@ -69,7 +69,7 @@ namespace clib {
     public:
         virtual string_t stream_callback(const string_t& path) = 0;
         virtual vfs_stream_t stream_type(const string_t& path) const = 0;
-        virtual vfs_node_dec* stream_create(const vfs_mod_query* mod, vfs_stream_t type, const string_t& path) = 0;
+        virtual vfs_node_dec* stream_create(const vfs_mod_query* mod, vfs_stream_t type, const string_t& path, int* ret = nullptr) = 0;
     };
 
     // 结点

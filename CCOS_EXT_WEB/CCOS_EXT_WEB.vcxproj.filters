@@ -15,11 +15,14 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="pch.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="ext.h">
       <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="fs.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h">
+      <Filter>源文件</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -30,6 +33,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="ext.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="fs.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

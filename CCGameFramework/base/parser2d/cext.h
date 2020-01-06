@@ -15,6 +15,7 @@ namespace clib {
         virtual int ext_load(const std::string& name, vfs_func_t* f) = 0;
         virtual int ext_unload(const std::string& name) = 0;
         virtual std::string ext_get_path(const std::string& name) const = 0;
+        virtual void ext_error(const std::string& msg) = 0;
     };
 }
 

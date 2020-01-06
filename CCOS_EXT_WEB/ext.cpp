@@ -1,5 +1,6 @@
 ﻿#include "pch.h"
 #include "ext.h"
+#include "fs.h"
 
 using namespace clib;
 
@@ -7,14 +8,16 @@ using namespace clib;
 #define EXT_NORMAL_TEXT "网页扩展 - by bajdcc"
 #define EXT_NORMAL_VERSION "0.1.0"
 
-std::unique_ptr<ext_web> g_ext;
 std::string func_path;
+std::unique_ptr<ext_web> g_ext;
+cext* global_ext;
 
 CCOSEXTWEB_API int ccos_ext_load(clib::cext* ptr)
 {
     if (g_ext) return -1;
     g_ext = std::make_unique<ext_web>();
     auto ext = (cext*)ptr;
+    global_ext = ext;
     func_path = ext->ext_get_path(EXT_NAME);
     ext->ext_load(EXT_NAME, g_ext.get());
     return 0;
@@ -34,83 +37,12 @@ namespace clib {
     enum ext_vfs_t {
         fss_normal = 100,
         fss_version,
+        fss_file,
     };
 
-    void vfs_node_dec::advance() {
-        if (available())
-            idx++;
-    }
-
-    int vfs_node_dec::write(byte c) {
-        return -1;
-    }
-
-    int vfs_node_dec::truncate() {
-        return -1;
-    }
-
-    void vfs_node_dec::add_handle(int handle, vfs_op_t type)
+    ext_web::ext_web()
     {
-
-    }
-
-    vfs_op_t vfs_node_dec::get_handle(int handle, vfs_op_t type)
-    {
-        return v_none;
-    }
-
-    void vfs_node_dec::remove_handle(int handle)
-    {
-
-    }
-
-    bool vfs_node_dec::set_data(const std::vector<byte>& data)
-    {
-        return false;
-    }
-
-    bool vfs_node_dec::get_data(std::vector<byte>& data) const
-    {
-        return false;
-    }
-
-    bool vfs_node_dec::set_link(const string_t& data)
-    {
-        return false;
-    }
-
-    bool vfs_node_dec::get_link(string_t& data) const
-    {
-        return false;
-    }
-
-    int vfs_node_dec::get_length() const
-    {
-        return -1;
-    }
-
-    vfs_node_dec::vfs_node_dec(const vfs_mod_query* mod) : mod(mod) {}
-
-    vfs_node_text::vfs_node_text(const vfs_mod_query* mod, const string_t& str) :
-        vfs_node_dec(mod), cache(str) {}
-
-    bool vfs_node_text::available() const {
-        return idx < cache.length();
-    }
-
-    int vfs_node_text::index() const {
-        return idx < cache.length() ? cache[idx] : READ_EOF;
-    }
-
-    int vfs_node_text::get_length() const {
-        return (int)cache.length();
-    }
-
-    bool vfs_node_text::get_data(std::vector<byte>& data) const
-    {
-        data.resize(cache.size());
-        std::copy(cache.begin(), cache.end(), data.begin());
-        return true;
+        fs.as_root(false);
     }
 
     vfs_stream_t ext_web::stream_type(const string_t& path) const
@@ -123,22 +55,35 @@ namespace clib {
         return "[Not implemented]";
     }
 
-    vfs_node_dec* ext_web::stream_create(const vfs_mod_query* mod, vfs_stream_t type, const string_t& path)
+    vfs_node_dec* ext_web::stream_create(const vfs_mod_query* mod, vfs_stream_t type, const string_t& path, int* ret)
     {
         switch (type) {
         case fss_normal:
             return new vfs_node_text(mod, EXT_NORMAL_TEXT);
         case fss_version:
             return new vfs_node_text(mod, EXT_NORMAL_VERSION);
+        case fss_file: {
+            vfs_node_dec* dec;
+            int r;
+            if ((r = fs.get(path.substr(5), &dec)) == 0) {
+                return dec;
+            }
+            else {
+                *ret = r;
+                return nullptr;
+            }
+        }
         default:
             break;
         }
         if (path.size() > func_path.size()) {
             auto p = path.substr(func_path.size());
             if (p == "/version")
-                return stream_create(mod, fss_version, path);
+                return stream_create(mod, fss_version, path, ret);
+            if (p.substr(0, 6) == "/file/")
+                return stream_create(mod, fss_file, p, ret);
         }
-        return stream_create(mod, fss_normal, path);
+        return stream_create(mod, fss_normal, path, ret);
     }
 
     int ext_web::stream_index(vfs_stream_t type)

@@ -221,7 +221,7 @@ void Mice2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
             TCHAR buf[255];
             wss << L"-- Mice Information --" << std::endl;
             for (auto& mice : mices) {
-                _snwprintf(buf, sizeof(buf) / sizeof(buf[0]), L"Mice #%2d: x= %4.2f, y= %4.2f, atan= %1.2f, angle= %1.2f, angleF= %1.2f, speed= %1.2f, ret= %1d",
+                _snwprintf_s(buf, sizeof(buf) / sizeof(buf[0]), L"Mice #%2d: x= %4.2f, y= %4.2f, atan= %1.2f, angle= %1.2f, angleF= %1.2f, speed= %1.2f, ret= %1d",
                     mice.id, mice.pt.x, mice.pt.y, mice.angleToCenter * M_1_PI * 180.0f,
                     mice.angle * M_1_PI * 180.0f, mice.angleF, mice.speedF, mice.needReturn);
                 wss << buf << std::endl;
@@ -242,7 +242,7 @@ void Mice2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
             TCHAR buf[255];
             wss << L"-- Environment --" << std::endl;
             auto size = bounds.Size();
-            _snwprintf(buf, sizeof(buf) / sizeof(buf[0]), L"Screen= (%4d, %4d)", (int)size.cx, (int)size.cy);
+            _snwprintf_s(buf, sizeof(buf) / sizeof(buf[0]), L"Screen= (%4d, %4d)", (int)size.cx, (int)size.cy);
             wss << buf << std::endl;
         }
         disp = CString(wss.str().c_str());

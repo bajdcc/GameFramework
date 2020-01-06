@@ -91,7 +91,7 @@ namespace clib {
 
         vfs_stream_t stream_type(const string_t& path) const override;
         string_t stream_callback(const string_t& path) override;
-        vfs_node_dec* stream_create(const vfs_mod_query* mod, vfs_stream_t type, const string_t& path) override;
+        vfs_node_dec* stream_create(const vfs_mod_query* mod, vfs_stream_t type, const string_t& path, int* ret = nullptr) override;
         int stream_index(vfs_stream_t type) override;
         string_t stream_net(vfs_stream_t type, const string_t& path, bool& post, string_t& postfield, bool& bin) override;
         int stream_write(vfs_stream_t type, byte c) override;
@@ -116,6 +116,7 @@ namespace clib {
         int ext_load(const std::string& name, vfs_func_t* f) override;
         int ext_unload(const std::string& name) override;
         std::string ext_get_path(const std::string& name) const override;
+        void ext_error(const std::string& msg) override;
 
     private:
         // 申请页框

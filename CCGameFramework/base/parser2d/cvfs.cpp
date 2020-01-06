@@ -571,9 +571,7 @@ namespace clib {
     }
 
     static void mod_copy(vfs_mod * mod, const char* s) {
-        for (int i = 0; i < 9; ++i) {
-            ((char*)mod)[i] = *s++;
-        }
+        memcpy((char*)mod, s, 9);
     }
 
     void cvfs::reset() {
@@ -587,7 +585,9 @@ namespace clib {
         mod_copy(root->mod, "rw-r--rw-"); // make '/' writable
         pwd = "/";
         auto n = now();
-        year = localtime(&n)->tm_year;
+        tm t;
+        localtime_s(&t, &n);
+        year = t.tm_year;
         current_user = 1;
         last_user = 0;
     }
@@ -630,7 +630,8 @@ namespace clib {
     }
 
     char* cvfs::file_time(const time_t & t) const {
-        auto timeptr = localtime(&t);
+        tm timeptr;
+        localtime_s(&timeptr, &t);
         /*static const char wday_name[][4] = {
                 "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
         };*/
@@ -639,18 +640,18 @@ namespace clib {
             "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
         };
         static char result[32];
-        if (year == timeptr->tm_year) {
+        if (year == timeptr.tm_year) {
             snprintf(result, sizeof(result), "%.3s%3d %.2d:%.2d",
-                mon_name[timeptr->tm_mon],
-                timeptr->tm_mday, timeptr->tm_hour,
-                timeptr->tm_min);
+                mon_name[timeptr.tm_mon],
+                timeptr.tm_mday, timeptr.tm_hour,
+                timeptr.tm_min);
         }
         else {
             snprintf(result, sizeof(result), "%.3s%3d %5d",
                 //wday_name[timeptr->tm_wday],
-                mon_name[timeptr->tm_mon],
-                timeptr->tm_mday,
-                1900 + timeptr->tm_year);
+                mon_name[timeptr.tm_mon],
+                timeptr.tm_mday,
+                1900 + timeptr.tm_year);
         }
         return result;
     }
@@ -820,9 +821,10 @@ namespace clib {
         }
         else if (node->type == fs_magic) {
             node->time.access = now();
-            *dec = node->callback->stream_create(this, node->magic, p);
+            int ret = -1;
+            *dec = node->callback->stream_create(this, node->magic, p, &ret);
             if (*dec == nullptr) {
-                return -1;
+                return ret;
             }
             return 0;
         }

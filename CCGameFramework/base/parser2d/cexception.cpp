@@ -19,10 +19,11 @@ namespace clib {
             std::make_tuple(ex_gui, "GUI ERROR"),
             std::make_tuple(ex_mem, "MEMORY ERROR"),
             std::make_tuple(ex_vfs, "VFS ERROR"),
+            std::make_tuple(ex_ext, "EXT ERROR"),
     };
 
     const string_t& ex_str(ex_t t) {
-        assert(t >= ex_none && t <= ex_vfs);
+        assert(t >= ex_none && t <= ex_ext);
         return std::get<1>(ex_string_list[t]);
     }
 
