@@ -92,6 +92,8 @@ private:
         std::vector<decimal> grid_m;
         vec gravity;
         int mode;
+        int grid;
+        decimal vortex;
         int frame;
     } s;
 

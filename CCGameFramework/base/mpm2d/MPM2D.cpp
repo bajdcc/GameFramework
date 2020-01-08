@@ -42,6 +42,8 @@ void MPM2DEngine::init(std::shared_ptr<Direct2DRenderTarget> rt)
     s.frame = 0;
     s.gravity = {0.0f, -9.8f};
     s.mode = 1;
+    s.grid = 1;
+    s.vortex = 1.0f;
     auto& e = bag.random;
     std::uniform_real_distribution<decimal> dr{ 0.1f, 0.7f };
     for (auto i = 0; i < s.n_particles; i++) {
@@ -178,6 +180,36 @@ void MPM2DEngine::input(int value)
     case 'd':
         s.gravity = { -9.8f, 0.0f };
         break;
+    case 'g':
+        s.grid = 1 - s.grid;
+        break;
+    case ']':
+        s.vortex *= 2.0f;
+        break;
+    case '[':
+        s.vortex *= 0.5f;
+        break;
+    case '-':
+        s.vortex *= -1.0f;
+        break;
+    case 'r': {
+        std::fill(s.x.begin(), s.x.end(), vec{ 0,0 });
+        std::fill(s.v.begin(), s.v.end(), vec{ 0,0 });
+        std::fill(s.C.begin(), s.C.end(), mat{ 0,0,0,0 });
+        std::fill(s.J.begin(), s.J.end(), 0.0f);
+        std::fill(s.grid_v.begin(), s.grid_v.end(), vec{ 0,0 });
+        std::fill(s.grid_m.begin(), s.grid_m.end(), 0.0f);
+        s.frame = 0;
+        bag.random = std::default_random_engine((uint32_t)time(nullptr));
+        auto& e = bag.random;
+        std::uniform_real_distribution<decimal> dr{ 0.1f, 0.9f };
+        for (auto i = 0; i < s.n_particles; i++) {
+            s.x[i] = { dr(e), dr(e) };          // 初始位置
+            s.v[i] = { 0.0f, 0.0f };            // 初始速度
+            s.J[i] = 1.0f;                      // 初始塑性形变
+        }
+    }
+            break;
     }
 }
 
@@ -260,6 +292,12 @@ void MPM2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
             else if (s.mode == 3) {
                 wss << L"Mode: Vortex" << std::endl;
             }
+            else if (s.mode == 4) {
+                wss << L"Mode: Vortex(gravity)" << std::endl;
+            }
+            else if (s.mode == 5) {
+                wss << L"Mode: Vortex(black hole)" << std::endl;
+            }
             else {
                 wss << L"Mode: Unknown" << std::endl;
             }
@@ -321,23 +359,25 @@ void MPM2DEngine::draw(CComPtr<ID2D1RenderTarget>& rt, const CRect& bounds, deci
     rt->SetTransform(
         D2D1::Matrix3x2F::Translation({ (decimal)center.x, (decimal)center.y })
     );
-    auto clr = bag.brush->GetColor();
-    for (auto i = 0; i < s.n_grid; i++) {
-        for (auto j = 0; j < s.n_grid; j++) {
-            auto idx = i * s.n_grid + j;
-            if (s.grid_m[idx] > 0.0f) {
-                auto r = 0.5f + s.grid_v[idx].x * 0.5f;
-                r = min(1.0f, max(r, 0.0f));
-                auto g = 0.5f + s.grid_v[idx].y * 0.5f;
-                g = min(1.0f, max(g, 0.0f));
-                auto b = (log10(1.0f + s.grid_m[idx]) - 1.0f);
-                b = 1.0f - min(1.0f, b);
-                bag.brush->SetColor(D2D1::ColorF(r, g, b, 0.6f));
-                rt->FillRectangle({ floor((decimal)i * grid_w), floor((decimal)(s.n_grid - j) * grid_h), ceil((decimal)(i + 1) * grid_w), ceil((decimal)(s.n_grid - j + 1) * grid_h) }, bag.brush);
+    if (s.grid) {
+        auto clr = bag.brush->GetColor();
+        for (auto i = 0; i < s.n_grid; i++) {
+            for (auto j = 0; j < s.n_grid; j++) {
+                auto idx = i * s.n_grid + j;
+                if (s.grid_m[idx] > 0.0f) {
+                    auto r = 0.5f + s.grid_v[idx].x * 0.5f;
+                    r = min(1.0f, max(r, 0.0f));
+                    auto g = 0.5f + s.grid_v[idx].y * 0.5f;
+                    g = min(1.0f, max(g, 0.0f));
+                    auto b = (log10(1.0f + s.grid_m[idx]) - 1.0f);
+                    b = 1.0f - min(1.0f, b);
+                    bag.brush->SetColor(D2D1::ColorF(r, g, b, 0.6f));
+                    rt->FillRectangle({ floor((decimal)i * grid_w), floor((decimal)(s.n_grid - j) * grid_h), ceil((decimal)(i + 1) * grid_w), ceil((decimal)(s.n_grid - j + 1) * grid_h) }, bag.brush);
+                }
             }
         }
+        bag.brush->SetColor(clr);
     }
-    bag.brush->SetColor(clr);
     for (const auto& p : s.x) {
         rt->FillRectangle({ p.x * w, (1.0f - p.y) * h , p.x * w + 1.2f, (1.0f - p.y) * h + 1.2f }, bag.brush);
     }
@@ -409,13 +449,35 @@ void MPM2DEngine::substep()
                 // 冲量转换成速度
                 s.grid_v[idx] *= inv_m;
                 // 重力
-                if (s.mode == 1) {
+                switch (s.mode) {
+                case 1:
                     s.grid_v[idx] += s.dt * s.gravity;
-                }
-                else if (s.mode == 3) {
+                    break;
+                case 3: {
                     auto xx = (decimal)(i - s.n_grid_2);
                     auto yy = (decimal)(j - s.n_grid_2);
-                    s.grid_v[idx] += s.dt * vec(-yy - 0.2f * xx, xx - 0.2f * yy) * 0.1f;
+                    s.grid_v[idx] += s.dt * vec(-yy - 0.5f * xx, xx - 0.5f * yy) * 0.05f * s.vortex;
+                }
+                      break;
+                case 4: {
+                    auto xx = (decimal)(i - s.n_grid_2);
+                    auto yy = (decimal)(j - s.n_grid_2);
+                    auto sq = sqrt(sqr(xx / s.n_grid_2) + sqr(yy / s.n_grid_2));
+                    s.grid_v[idx] += s.dt * vec(-(1.0f - sq) * yy * 0.02f - sq * xx, (1.0f - sq) * xx * 0.02f - sq * yy) * 0.08f * s.vortex;
+                }
+                      break;
+                case 5: {
+                    auto xx = (decimal)(i - s.n_grid_2);
+                    auto yy = (decimal)(j - s.n_grid_2);
+                    auto sq = sqr(xx) + sqr(yy);
+                    if (sq > 32.0f) {
+                        s.grid_v[idx] += s.dt * vec(-xx / sq, -yy / sq) * 512.0f;
+                    }
+                    else if (sq > 1.0f) {
+                        s.grid_v[idx] += s.dt * vec(-yy, xx) * 4.0f * s.vortex;
+                    }
+                }
+                      break;
                 }
                 // 范围约束
                 if (i < bound && s.grid_v[idx].x < 0.0f)
