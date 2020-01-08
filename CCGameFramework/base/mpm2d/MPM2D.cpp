@@ -15,8 +15,8 @@ void MPM2DEngine::init(std::shared_ptr<Direct2DRenderTarget> rt)
     rt2 = rt;
     bag.brush = rt->CreateDirect2DBrush(D2D1::ColorF::White);
     bag.random = std::default_random_engine((uint32_t)time(nullptr));
-    s.n_particles = 8192;
-    s.n_grid = 128;
+    s.n_particles = 8192;                   // 粒子数
+    s.n_grid = 128;                         // 网格数
     s.n_grid2 = s.n_grid * s.n_grid;
     s.dx = 1.0f / s.n_grid;
     s.inv_dx = (decimal)s.n_grid;
@@ -25,26 +25,26 @@ void MPM2DEngine::init(std::shared_ptr<Direct2DRenderTarget> rt)
     s.p_vol = pow(s.dx * 0.5f, 2.0f);
     s.p_rho = 1.0f;
     s.p_mass = s.p_vol * s.p_rho;
-    s.E = 400.0f;
-    s.x.resize(s.n_particles);
+    s.E = 400.0f;                           // 杨氏模量
+    s.x.resize(s.n_particles);              // 粒子位置
     std::fill(s.x.begin(), s.x.end(), vec{ 0,0 });
-    s.v.resize(s.n_particles);
+    s.v.resize(s.n_particles);              // 粒子速度
     std::fill(s.v.begin(), s.v.end(), vec{ 0,0 });
-    s.C.resize(s.n_particles);
+    s.C.resize(s.n_particles);              // 仿射速度场
     std::fill(s.C.begin(), s.C.end(), mat{ 0,0,0,0 });
-    s.J.resize(s.n_particles);
+    s.J.resize(s.n_particles);              // 塑性形变
     std::fill(s.J.begin(), s.J.end(), 0.0f);
-    s.grid_v.resize(s.n_grid2);
+    s.grid_v.resize(s.n_grid2);             // 网络结点速度
     std::fill(s.grid_v.begin(), s.grid_v.end(), vec{ 0,0 });
-    s.grid_m.resize(s.n_grid2);
+    s.grid_m.resize(s.n_grid2);             // 网络结点质量
     std::fill(s.grid_m.begin(), s.grid_m.end(), 0.0f);
     s.frame = 0;
     auto& e = bag.random;
-    std::uniform_real_distribution<decimal> dr{ 0.2f, 0.6f };
+    std::uniform_real_distribution<decimal> dr{ 0.1f, 0.7f };
     for (auto i = 0; i < s.n_particles; i++) {
-        s.x[i] = { dr(e), dr(e) };
-        s.v[i] = { 0.0f, -1.0f };
-        s.J[i] = 1.0f;
+        s.x[i] = { dr(e), dr(e) };          // 初始位置
+        s.v[i] = { 0.0f, -1.0f };           // 初始速度
+        s.J[i] = 1.0f;                      // 初始塑性形变
     }
 }
 
@@ -278,7 +278,7 @@ void MPM2DEngine::draw(CComPtr<ID2D1RenderTarget>& rt, const CRect& bounds, deci
         D2D1::Matrix3x2F::Translation({ (decimal)center.x, (decimal)center.y })
     );
     for (const auto& p : s.x) {
-        rt->FillRectangle({ p.x * w, (1.0f - p.y) * h , p.x * w + 1.0f, (1.0f - p.y) * h + 1.0f }, bag.brush);
+        rt->FillRectangle({ p.x * w, (1.0f - p.y) * h , p.x * w + 1.2f, (1.0f - p.y) * h + 1.2f }, bag.brush);
     }
     rt->SetTransform(D2D1::Matrix3x2F::Identity());
 }
@@ -309,17 +309,23 @@ void MPM2DEngine::substep()
     std::fill(s.grid_v.begin(), s.grid_v.end(), vec{ 0,0 });
     std::fill(s.grid_m.begin(), s.grid_m.end(), 0.0f);
     std::vector<vec> w(3);
+    // 粒子状态更新，粒子到网格（P2G）
     for (auto p = 0; p < s.n_particles; p++) {
         auto base = (s.x[p] * s.inv_dx - 0.5f).to_int();
         auto fx = s.x[p] * s.inv_dx - base;
+        // 链接：http://mpm.graphics
+        // 二次核函数（Eqn. 123, with x=fx,fx-1,fx-2]）
         w[0].x = 0.5f * sqr(1.5f - fx.x);
         w[0].y = 0.5f * sqr(1.5f - fx.y);
         w[1].x = 0.75f - sqr(fx.x - 1.0f);
         w[1].y = 0.75f - sqr(fx.y - 1.0f);
         w[2].x = 0.5f * sqr(fx.x - 0.5f);
         w[2].y = 0.5f * sqr(fx.y - 0.5f);
+        // 计算应力
         auto stress = -s.dt * s.p_vol * (s.J[p] - 1.0f) * 4.0f * s.inv_dx2 * s.E;
+        // 计算形变
         auto affine = mat{ stress, 0, 0, stress } + s.p_mass * s.C[p];
+        // 影响3x3网格
         for (auto i = 0; i < 3; i++) {
             for (auto j = 0; j < 3; j++) {
                 auto offset = vec{ (decimal)i, (decimal)j };
@@ -339,19 +345,23 @@ void MPM2DEngine::substep()
             if (s.grid_m[idx] > 0) {
                 auto bound = 3;
                 auto inv_m = 1.0f / s.grid_m[idx];
+                // 冲量转换成速度
                 s.grid_v[idx] *= inv_m;
-                s.grid_v[idx].y -= s.dt * 99.8f;
+                // 重力
+                s.grid_v[idx].y -= s.dt * 9.8f;
+                // 范围约束
                 if (i < bound && s.grid_v[idx].x < 0.0f)
-                    s.grid_v[idx].x = 0.0f;
+                    s.grid_v[idx].x = 0.01f * -s.grid_v[idx].x;
                 if (i > s.n_grid - bound && s.grid_v[idx].x > 0.0f)
-                    s.grid_v[idx].x = 0.0f;
+                    s.grid_v[idx].x = 0.01f * -s.grid_v[idx].x;
                 if (j < bound && s.grid_v[idx].y < 0.0f)
-                    s.grid_v[idx].y = 0.0f;
+                    s.grid_v[idx].y = 0.01f * -s.grid_v[idx].y;
                 if (j > s.n_grid - bound && s.grid_v[idx].y > 0.0f)
-                    s.grid_v[idx].y = 0.0f;
+                    s.grid_v[idx].y = 0.01f * -s.grid_v[idx].y;
             }
         }
     }
+    // 网格到粒子（G2P）
     for (auto p = 0; p < s.n_particles; p++) {
         auto base = (s.x[p] * s.inv_dx - 0.5f).to_int();
         auto fx = s.x[p] * s.inv_dx - base;
@@ -377,7 +387,7 @@ void MPM2DEngine::substep()
             }
         }
         s.v[p] = new_v;
-        s.x[p] += s.dt * s.v[p];
+        s.x[p] += s.dt * s.v[p]; // 流动
         s.J[p] *= 1.0f + s.dt * (new_C.x1 + new_C.y2);
         s.C[p] = new_C;
     }
