@@ -274,9 +274,28 @@ void MPM2DEngine::draw(CComPtr<ID2D1RenderTarget>& rt, const CRect& bounds, deci
     auto size = bounds.Size();
     auto w = (decimal)size.cx;
     auto h = (decimal)size.cy;
+    auto grid_w = w * s.dx;
+    auto grid_h = h * s.dx;
     rt->SetTransform(
         D2D1::Matrix3x2F::Translation({ (decimal)center.x, (decimal)center.y })
     );
+    auto clr = bag.brush->GetColor();
+    for (auto i = 0; i < s.n_grid; i++) {
+        for (auto j = 0; j < s.n_grid; j++) {
+            auto idx = i * s.n_grid + j;
+            if (s.grid_m[idx] > 0) {
+                auto r = 0.5f + s.grid_v[idx].x * 0.5f;
+                r = min(1.0f, max(r, 0.0f));
+                auto g = 0.5f + s.grid_v[idx].y * 0.5f;
+                g = min(1.0f, max(g, 0.0f));
+                auto b = s.grid_m[idx] * 0.5f;
+                b = min(1.0f, b);
+                bag.brush->SetColor(D2D1::ColorF(r, g, b, 0.6f));
+                rt->FillRectangle({ floor((decimal)i * grid_w), floor((decimal)(s.n_grid - j) * grid_h), ceil((decimal)(i + 1) * grid_w), ceil((decimal)(s.n_grid - j + 1) * grid_h) }, bag.brush);
+            }
+        }
+    }
+    bag.brush->SetColor(clr);
     for (const auto& p : s.x) {
         rt->FillRectangle({ p.x * w, (1.0f - p.y) * h , p.x * w + 1.2f, (1.0f - p.y) * h + 1.2f }, bag.brush);
     }
