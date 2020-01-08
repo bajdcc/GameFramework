@@ -32,6 +32,7 @@ private:
     void tick(const CRect& bounds);
     void reset();
     void substep();
+    void input(int value);
 
 private:
     CComPtr<ID2D1SolidColorBrush> bg;
@@ -58,6 +59,7 @@ private:
     int cycles{ 0 };
     decimal ips{ 0 };
     bool paused{ false };
+    CString err;
 
     struct global_state_t {
         decltype(std::chrono::system_clock::now()) now;
@@ -72,6 +74,7 @@ private:
     struct mpm_state_t {
         int n_particles;
         int n_grid;
+        int n_grid_2;
         int n_grid2;
         decimal dx;
         decimal inv_dx;
@@ -87,6 +90,8 @@ private:
         std::vector<decimal> J;
         std::vector<vec> grid_v;
         std::vector<decimal> grid_m;
+        vec gravity;
+        int mode;
         int frame;
     } s;
 

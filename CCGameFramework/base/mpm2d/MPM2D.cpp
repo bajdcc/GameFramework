@@ -17,6 +17,7 @@ void MPM2DEngine::init(std::shared_ptr<Direct2DRenderTarget> rt)
     bag.random = std::default_random_engine((uint32_t)time(nullptr));
     s.n_particles = 8192;                   // 粒子数
     s.n_grid = 128;                         // 网格数
+    s.n_grid_2 = s.n_grid / 2;
     s.n_grid2 = s.n_grid * s.n_grid;
     s.dx = 1.0f / s.n_grid;
     s.inv_dx = (decimal)s.n_grid;
@@ -39,11 +40,13 @@ void MPM2DEngine::init(std::shared_ptr<Direct2DRenderTarget> rt)
     s.grid_m.resize(s.n_grid2);             // 网络结点质量
     std::fill(s.grid_m.begin(), s.grid_m.end(), 0.0f);
     s.frame = 0;
+    s.gravity = {0.0f, -9.8f};
+    s.mode = 1;
     auto& e = bag.random;
     std::uniform_real_distribution<decimal> dr{ 0.1f, 0.7f };
     for (auto i = 0; i < s.n_particles; i++) {
         s.x[i] = { dr(e), dr(e) };          // 初始位置
-        s.v[i] = { 0.0f, -1.0f };           // 初始速度
+        s.v[i] = { 0.0f, 0.0f };            // 初始速度
         s.J[i] = 1.0f;                      // 初始塑性形变
     }
 }
@@ -153,8 +156,29 @@ int MPM2DEngine::SetType(cint value)
         // hit(value & 0xffff)
         return 0;
     }
-    // input(value)
+    input(value);
     return 0;
+}
+
+void MPM2DEngine::input(int value)
+{
+    if (isdigit(value)) {
+        s.mode = value - '0';
+    }
+    switch (value) {
+    case 'w':
+        s.gravity = { 0.0f, -9.8f };
+        break;
+    case 's':
+        s.gravity = { 0.0f, 9.8f };
+        break;
+    case 'a':
+        s.gravity = { 9.8f, 0.0f };
+        break;
+    case 'd':
+        s.gravity = { -9.8f, 0.0f };
+        break;
+    }
 }
 
 static char* ipsf(decimal ips) {
@@ -224,6 +248,24 @@ void MPM2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
         std::wstringstream wss;
         {
             wss << L"-- MPM Information --" << std::endl;
+            TCHAR buf[255];
+            if (s.mode == 1) {
+                wss << L"Mode: Gravity" << std::endl;
+                _snwprintf_s(buf, sizeof(buf) / sizeof(buf[0]), L"Gravity: (%.2f, %.2f)", s.gravity.x, s.gravity.y);
+                wss << buf << std::endl;
+            }
+            else if (s.mode == 2) {
+                wss << L"Mode: Mouse" << std::endl;
+            }
+            else if (s.mode == 3) {
+                wss << L"Mode: Vortex" << std::endl;
+            }
+            else {
+                wss << L"Mode: Unknown" << std::endl;
+            }
+        }
+        if (!err.IsEmpty()) {
+            wss << L"Error: " << err.GetBuffer(0) << std::endl;
         }
         auto disp = CString(wss.str().c_str());
         rt->DrawText(disp, disp.GetLength(), loggingTF->textFormat, R, logoBrush);
@@ -328,6 +370,7 @@ void MPM2DEngine::substep()
     std::fill(s.grid_v.begin(), s.grid_v.end(), vec{ 0,0 });
     std::fill(s.grid_m.begin(), s.grid_m.end(), 0.0f);
     std::vector<vec> w(3);
+    const auto bound = 3;
     // 粒子状态更新，粒子到网格（P2G）
     for (auto p = 0; p < s.n_particles; p++) {
         auto base = (s.x[p] * s.inv_dx - 0.5f).to_int();
@@ -345,8 +388,8 @@ void MPM2DEngine::substep()
         // 计算形变
         auto affine = mat{ stress, 0, 0, stress } + s.p_mass * s.C[p];
         // 影响3x3网格
-        for (auto i = 0; i < 3; i++) {
-            for (auto j = 0; j < 3; j++) {
+        for (auto i = 0; i < bound; i++) {
+            for (auto j = 0; j < bound; j++) {
                 auto offset = vec{ (decimal)i, (decimal)j };
                 auto dpos = (offset - fx) * s.dx;
                 auto weight = w[i].x * w[j].y;
@@ -362,20 +405,26 @@ void MPM2DEngine::substep()
         for (auto j = 0; j < s.n_grid; j++) {
             auto idx = i * s.n_grid + j;
             if (s.grid_m[idx] > 0) {
-                auto bound = 3;
                 auto inv_m = 1.0f / s.grid_m[idx];
                 // 冲量转换成速度
                 s.grid_v[idx] *= inv_m;
                 // 重力
-                s.grid_v[idx].y -= s.dt * 9.8f;
+                if (s.mode == 1) {
+                    s.grid_v[idx] += s.dt * s.gravity;
+                }
+                else if (s.mode == 3) {
+                    auto xx = (decimal)(i - s.n_grid_2);
+                    auto yy = (decimal)(j - s.n_grid_2);
+                    s.grid_v[idx] += s.dt * vec(-yy - 0.2f * xx, xx - 0.2f * yy) * 0.1f;
+                }
                 // 范围约束
                 if (i < bound && s.grid_v[idx].x < 0.0f)
                     s.grid_v[idx].x = 0.01f * -s.grid_v[idx].x;
-                if (i > s.n_grid - bound && s.grid_v[idx].x > 0.0f)
+                else if (i > s.n_grid - bound && s.grid_v[idx].x > 0.0f)
                     s.grid_v[idx].x = 0.01f * -s.grid_v[idx].x;
                 if (j < bound && s.grid_v[idx].y < 0.0f)
                     s.grid_v[idx].y = 0.01f * -s.grid_v[idx].y;
-                if (j > s.n_grid - bound && s.grid_v[idx].y > 0.0f)
+                else if (j > s.n_grid - bound && s.grid_v[idx].y > 0.0f)
                     s.grid_v[idx].y = 0.01f * -s.grid_v[idx].y;
             }
         }
@@ -392,8 +441,8 @@ void MPM2DEngine::substep()
         w[2].y = 0.5f * sqr(fx.y - 0.5f);
         vec new_v;
         mat new_C{ 0,0,0,0 };
-        for (auto i = 0; i < 3; i++) {
-            for (auto j = 0; j < 3; j++) {
+        for (auto i = 0; i < bound; i++) {
+            for (auto j = 0; j < bound; j++) {
                 auto offset = vec{ (decimal)i, (decimal)j };
                 auto dpos = offset - fx;
                 auto weight = w[i].x * w[j].y;
