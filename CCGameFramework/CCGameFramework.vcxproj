@@ -271,6 +271,9 @@ xcopy /r /y /e "$(ProjectDir)dll" "$(TargetDir)"</Command>
     <ClInclude Include="base\libzplay\libzplay.h" />
     <ClInclude Include="base\mice2d\MiceAtom.h" />
     <ClInclude Include="base\mice2d\Mice2D.h" />
+    <ClInclude Include="base\mpm2d\math\m2.h" />
+    <ClInclude Include="base\mpm2d\math\v2.h" />
+    <ClInclude Include="base\mpm2d\MPM2D.h" />
     <ClInclude Include="base\parser2d\cast.h" />
     <ClInclude Include="base\parser2d\cexception.h" />
     <ClInclude Include="base\parser2d\cext.h" />
@@ -443,6 +446,8 @@ xcopy /r /y /e "$(ProjectDir)dll" "$(TargetDir)"</Command>
     <ClCompile Include="base\mice2d\MiceAtom.cpp" />
     <ClCompile Include="base\mice2d\Mice2D.cpp" />
     <ClCompile Include="base\mice2d\Mice2DRender.cpp" />
+    <ClCompile Include="base\mpm2d\MPM2D.cpp" />
+    <ClCompile Include="base\mpm2d\MPM2DRender.cpp" />
     <ClCompile Include="base\parser2d\cast.cpp" />
     <ClCompile Include="base\parser2d\cexception.cpp" />
     <ClCompile Include="base\parser2d\cext.cpp" />
@@ -736,10 +741,18 @@ xcopy /r /y /e "$(ProjectDir)dll" "$(TargetDir)"</Command>
     <Text Include="script\lib\ui\parser2d.lua">
       <FileType>Document</FileType>
     </Text>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="script\lib\ui\mice2d.lua" />
-    <None Include="script\scene\game\mice.lua" />
+    <Text Include="script\lib\ui\mice2d.lua">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="script\lib\ui\mpm2d.lua">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="script\scene\game\mice.lua">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="script\scene\visual\mpm2d.lua">
+      <FileType>Document</FileType>
+    </Text>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -250,7 +250,7 @@ public:
     };
 
     CColor();
-    CColor(Gdiplus::ARGB _value);
+    CColor(Gdiplus::ARGB _value, BYTE a = 255);
     CColor(BYTE _r, BYTE _g, BYTE _b, BYTE _a = 0xFF);
 
     cint Compare(CColor color)const;

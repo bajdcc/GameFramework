@@ -6,7 +6,7 @@ CColor::CColor() : r(0), g(0), b(0), a(0xFF)
 
 }
 
-CColor::CColor(Gdiplus::ARGB _value) : value(_value)
+CColor::CColor(Gdiplus::ARGB _value, BYTE a) : value(a << 24 | _value)
 {
 
 }

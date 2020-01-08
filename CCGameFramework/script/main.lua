@@ -53,6 +53,7 @@ Window = {
 		PE2D = "script.scene.visual.2dpe",
 		CG = "script.scene.visual.cg",
 		clib2d = "script.scene.visual.clib2d",
+		MPM2d = "script.scene.visual.mpm2d",
 		-- X86
 		X86 = "script.scene.simu.x86",
 		Parser2d = "script.scene.visual.parser2d",

@@ -190,6 +190,12 @@ function M:init_menu(info)
 	end
 	menu.children[10].layers.fg:update()
 
+	menu.children[11]:reset('Á£×ÓÌØĞ§')
+	menu.children[11].click = function()
+		FlipScene('MPM2d')
+	end
+	menu.children[11].layers.fg:update()
+
 	UIExt.paint()
 end
 

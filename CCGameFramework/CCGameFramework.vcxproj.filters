@@ -571,6 +571,15 @@
     <ClInclude Include="base\parser2d\cext.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="base\mpm2d\MPM2D.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\mpm2d\math\m2.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\mpm2d\math\v2.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -981,6 +990,12 @@
     <ClCompile Include="base\parser2d\cext.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="base\mpm2d\MPM2D.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\mpm2d\MPM2DRender.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="script\lib\core\scene.lua">
@@ -1103,13 +1118,17 @@
     <Text Include="script\lib\ui\parser2d.lua">
       <Filter>脚本</Filter>
     </Text>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="script\scene\game\mice.lua">
+    <Text Include="script\lib\ui\mice2d.lua">
       <Filter>脚本</Filter>
-    </None>
-    <None Include="script\lib\ui\mice2d.lua">
+    </Text>
+    <Text Include="script\scene\game\mice.lua">
       <Filter>脚本</Filter>
-    </None>
+    </Text>
+    <Text Include="script\scene\visual\mpm2d.lua">
+      <Filter>脚本</Filter>
+    </Text>
+    <Text Include="script\lib\ui\mpm2d.lua">
+      <Filter>脚本</Filter>
+    </Text>
   </ItemGroup>
 </Project>
