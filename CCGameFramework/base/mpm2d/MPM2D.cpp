@@ -283,13 +283,13 @@ void MPM2DEngine::draw(CComPtr<ID2D1RenderTarget>& rt, const CRect& bounds, deci
     for (auto i = 0; i < s.n_grid; i++) {
         for (auto j = 0; j < s.n_grid; j++) {
             auto idx = i * s.n_grid + j;
-            if (s.grid_m[idx] > 0) {
+            if (s.grid_m[idx] > 0.0f) {
                 auto r = 0.5f + s.grid_v[idx].x * 0.5f;
                 r = min(1.0f, max(r, 0.0f));
                 auto g = 0.5f + s.grid_v[idx].y * 0.5f;
                 g = min(1.0f, max(g, 0.0f));
-                auto b = s.grid_m[idx] * 0.5f;
-                b = min(1.0f, b);
+                auto b = (log10(1.0f + s.grid_m[idx]) - 1.0f);
+                b = 1.0f - min(1.0f, b);
                 bag.brush->SetColor(D2D1::ColorF(r, g, b, 0.6f));
                 rt->FillRectangle({ floor((decimal)i * grid_w), floor((decimal)(s.n_grid - j) * grid_h), ceil((decimal)(i + 1) * grid_w), ceil((decimal)(s.n_grid - j + 1) * grid_h) }, bag.brush);
             }
