@@ -73,6 +73,7 @@ private:
 
     struct mpm_state_t {
         int n_particles;
+        decimal n_particles_1;
         int n_grid;
         int n_grid_2;
         int n_grid2;
@@ -90,6 +91,7 @@ private:
         std::vector<decimal> J;
         std::vector<vec> grid_v;
         std::vector<decimal> grid_m;
+        vec mass_center;
         vec gravity;
         int mode;
         int grid;

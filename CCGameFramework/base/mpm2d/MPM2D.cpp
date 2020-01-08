@@ -16,7 +16,8 @@ void MPM2DEngine::init(std::shared_ptr<Direct2DRenderTarget> rt)
     bag.brush = rt->CreateDirect2DBrush(D2D1::ColorF::White);
     bag.random = std::default_random_engine((uint32_t)time(nullptr));
     s.n_particles = 8192;                   // 粒子数
-    s.n_grid = 128;                         // 网格数
+    s.n_particles_1 = 1.0f / s.n_particles;
+    s.n_grid = 256;                         // 网格数
     s.n_grid_2 = s.n_grid / 2;
     s.n_grid2 = s.n_grid * s.n_grid;
     s.dx = 1.0f / s.n_grid;
@@ -26,7 +27,7 @@ void MPM2DEngine::init(std::shared_ptr<Direct2DRenderTarget> rt)
     s.p_vol = pow(s.dx * 0.5f, 2.0f);
     s.p_rho = 1.0f;
     s.p_mass = s.p_vol * s.p_rho;
-    s.E = 400.0f;                           // 杨氏模量
+    s.E = 100.0f;                           // 杨氏模量
     s.x.resize(s.n_particles);              // 粒子位置
     std::fill(s.x.begin(), s.x.end(), vec{ 0,0 });
     s.v.resize(s.n_particles);              // 粒子速度
@@ -44,6 +45,7 @@ void MPM2DEngine::init(std::shared_ptr<Direct2DRenderTarget> rt)
     s.mode = 1;
     s.grid = 1;
     s.vortex = 1.0f;
+    s.mass_center = { 0,0 };
     auto& e = bag.random;
     std::uniform_real_distribution<decimal> dr{ 0.1f, 0.7f };
     for (auto i = 0; i < s.n_particles; i++) {
@@ -169,16 +171,16 @@ void MPM2DEngine::input(int value)
     }
     switch (value) {
     case 'w':
-        s.gravity = { 0.0f, -9.8f };
-        break;
-    case 's':
         s.gravity = { 0.0f, 9.8f };
         break;
+    case 's':
+        s.gravity = { 0.0f, -9.8f };
+        break;
     case 'a':
-        s.gravity = { 9.8f, 0.0f };
+        s.gravity = { -9.8f, 0.0f };
         break;
     case 'd':
-        s.gravity = { -9.8f, 0.0f };
+        s.gravity = { 9.8f, 0.0f };
         break;
     case 'g':
         s.grid = 1 - s.grid;
@@ -298,6 +300,11 @@ void MPM2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
             else if (s.mode == 5) {
                 wss << L"Mode: Vortex(black hole)" << std::endl;
             }
+            else if (s.mode == 6) {
+                wss << L"Mode: Vortex(black hole and mass)" << std::endl;
+                _snwprintf_s(buf, sizeof(buf) / sizeof(buf[0]), L"Mass center: (%.2f, %.2f)", s.mass_center.x, s.mass_center.y);
+                wss << buf << std::endl;
+            }
             else {
                 wss << L"Mode: Unknown" << std::endl;
             }
@@ -372,7 +379,10 @@ void MPM2DEngine::draw(CComPtr<ID2D1RenderTarget>& rt, const CRect& bounds, deci
                     auto b = (log10(1.0f + s.grid_m[idx]) - 1.0f);
                     b = 1.0f - min(1.0f, b);
                     bag.brush->SetColor(D2D1::ColorF(r, g, b, 0.6f));
-                    rt->FillRectangle({ floor((decimal)i * grid_w), floor((decimal)(s.n_grid - j) * grid_h), ceil((decimal)(i + 1) * grid_w), ceil((decimal)(s.n_grid - j + 1) * grid_h) }, bag.brush);
+                    rt->FillRectangle({ floor((decimal)i * grid_w),
+                        floor((decimal)(s.n_grid - j) * grid_h),
+                        ceil((decimal)(i + 1) * grid_w) - 1.0f,
+                        ceil((decimal)(s.n_grid - j + 1) * grid_h) - 1.0f }, bag.brush);
                 }
             }
         }
@@ -392,6 +402,11 @@ void MPM2DEngine::tick(const CRect& bounds)
                 cycles++;
                 substep();
             }
+            s.mass_center = { 0,0 };
+            for (const auto& p : s.x) {
+                s.mass_center += p;
+            }
+            s.mass_center *= s.n_particles_1;
             s.frame++;
         }
     }
@@ -469,6 +484,18 @@ void MPM2DEngine::substep()
                 case 5: {
                     auto xx = (decimal)(i - s.n_grid_2);
                     auto yy = (decimal)(j - s.n_grid_2);
+                    auto sq = sqr(xx) + sqr(yy);
+                    if (sq > 32.0f) {
+                        s.grid_v[idx] += s.dt * vec(-xx / sq, -yy / sq) * 512.0f;
+                    }
+                    else if (sq > 1.0f) {
+                        s.grid_v[idx] += s.dt * vec(-yy, xx) * 4.0f * s.vortex;
+                    }
+                }
+                      break;
+                case 6: {
+                    auto xx = (decimal)((decimal)i - s.mass_center.x * s.n_grid);
+                    auto yy = (decimal)((decimal)j - s.mass_center.y * s.n_grid);
                     auto sq = sqr(xx) + sqr(yy);
                     if (sq > 32.0f) {
                         s.grid_v[idx] += s.dt * vec(-xx / sq, -yy / sq) * 512.0f;
