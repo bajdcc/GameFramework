@@ -94,11 +94,13 @@ private:
         std::vector<vec> grid_v_tmp;
         std::vector<decimal> grid_m_tmp;
         vec mass_center;
+        vec mouse_center;
         vec gravity;
         int mode;
         int grid;
         decimal vortex;
         int frame;
+        int mouse;
     } s;
 
 private:

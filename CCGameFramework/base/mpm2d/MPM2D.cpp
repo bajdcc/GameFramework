@@ -47,6 +47,7 @@ void MPM2DEngine::init(std::shared_ptr<Direct2DRenderTarget> rt)
     s.mode = 1;
     s.grid = 1;
     s.vortex = 1.0f;
+    s.mouse = 0;
     s.mass_center = { 0,0 };
     auto& e = bag.random;
     std::uniform_real_distribution<decimal> dr{ 0.1f, 0.7f };
@@ -196,6 +197,9 @@ void MPM2DEngine::input(int value)
     case '-':
         s.vortex *= -1.0f;
         break;
+    case 'm':
+        s.mouse = 1 - s.mouse;
+        break;
     case 'r': {
         std::fill(s.x.begin(), s.x.end(), vec{ 0,0 });
         std::fill(s.v.begin(), s.v.end(), vec{ 0,0 });
@@ -304,12 +308,15 @@ void MPM2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
             }
             else if (s.mode == 6) {
                 wss << L"Mode: Vortex(black hole and mass)" << std::endl;
-                _snwprintf_s(buf, sizeof(buf) / sizeof(buf[0]), L"Mass center: (%.2f, %.2f)", s.mass_center.x, s.mass_center.y);
-                wss << buf << std::endl;
+            }
+            else if (s.mode == 7) {
+                wss << L"Mode: Vortex(black hole and transfer)" << std::endl;
             }
             else {
                 wss << L"Mode: Unknown" << std::endl;
             }
+            _snwprintf_s(buf, sizeof(buf) / sizeof(buf[0]), L"Mass center: (%.2f, %.2f)", s.mass_center.x, s.mass_center.y);
+            wss << buf << std::endl;
         }
         if (!err.IsEmpty()) {
             wss << L"Error: " << err.GetBuffer(0) << std::endl;
@@ -330,6 +337,8 @@ void MPM2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
             wss << L"-- Environment --" << std::endl;
             auto size = bounds.Size();
             _snwprintf_s(buf, sizeof(buf) / sizeof(buf[0]), L"Screen= (%4d, %4d)", (int)size.cx, (int)size.cy);
+            wss << buf << std::endl;
+            _snwprintf_s(buf, sizeof(buf) / sizeof(buf[0]), L"Mouse= (%.2f, %.2f)", s.mouse_center.x, s.mouse_center.y);
             wss << buf << std::endl;
         }
         disp = CString(wss.str().c_str());
@@ -405,10 +414,21 @@ void MPM2DEngine::tick(const CRect& bounds)
                 substep();
             }
             s.mass_center = { 0,0 };
-            for (const auto& p : s.x) {
+            for (size_t i = 0; i < s.x.size(); i++) {
+                auto& p = s.x[i];
+                if (isnan(p.x) || isnan(p.y) || p.x < 0.0f || p.y < 0.0f || p.x>1.0f || p.y>1.0f) {
+                    p = { 0,0 };
+                    s.v[i] = { 0,0 };
+                    s.C[i] = { 0,0,0,0 };
+                    s.J[i] = 0.0f;
+                }
                 s.mass_center += p;
             }
             s.mass_center *= s.n_particles_1;
+            s.mouse_center = {
+                (decimal)(global_state.mouse_x - bounds.left) / (decimal)(bounds.Width()),
+                1.0f - ((decimal)(global_state.mouse_y - bounds.top) / (decimal)(bounds.Height()))
+            };
             s.frame++;
         }
     }
@@ -472,39 +492,95 @@ void MPM2DEngine::substep()
                     s.grid_v[idx] += s.dt * s.gravity;
                     break;
                 case 3: {
-                    auto xx = (decimal)(i - s.n_grid_2);
-                    auto yy = (decimal)(j - s.n_grid_2);
-                    s.grid_v[idx] += s.dt * vec(-yy - 0.5f * xx, xx - 0.5f * yy) * 0.05f * s.vortex;
+                    if (s.mouse) {
+                        auto xx = (decimal)((decimal)i - s.mouse_center.x * s.n_grid);
+                        auto yy = (decimal)((decimal)j - s.mouse_center.y * s.n_grid);
+                        s.grid_v[idx] += s.dt * vec(-yy - 0.5f * xx, xx - 0.5f * yy) * 0.05f * s.vortex;
+                    }
+                    else {
+                        auto xx = (decimal)(i - s.n_grid_2);
+                        auto yy = (decimal)(j - s.n_grid_2);
+                        s.grid_v[idx] += s.dt * vec(-yy - 0.5f * xx, xx - 0.5f * yy) * 0.05f * s.vortex;
+                    }
                 }
                       break;
                 case 4: {
-                    auto xx = (decimal)(i - s.n_grid_2);
-                    auto yy = (decimal)(j - s.n_grid_2);
-                    auto sq = sqrt(sqr(xx / s.n_grid_2) + sqr(yy / s.n_grid_2));
-                    s.grid_v[idx] += s.dt * vec(-(1.0f - sq) * yy * 0.02f - sq * xx, (1.0f - sq) * xx * 0.02f - sq * yy) * 0.08f * s.vortex;
+                    if (s.mouse) {
+                        auto xx = (decimal)((decimal)i - s.mouse_center.x * s.n_grid);
+                        auto yy = (decimal)((decimal)j - s.mouse_center.y * s.n_grid);
+                        auto sq = sqrt(sqr(xx / s.n_grid_2) + sqr(yy / s.n_grid_2));
+                        s.grid_v[idx] += s.dt * vec(-(1.0f - sq) * yy * 0.02f - sq * xx, (1.0f - sq) * xx * 0.02f - sq * yy) * 0.08f * s.vortex;
+                    }
+                    else {
+                        auto xx = (decimal)(i - s.n_grid_2);
+                        auto yy = (decimal)(j - s.n_grid_2);
+                        auto sq = sqrt(sqr(xx / s.n_grid_2) + sqr(yy / s.n_grid_2));
+                        s.grid_v[idx] += s.dt * vec(-(1.0f - sq) * yy * 0.02f - sq * xx, (1.0f - sq) * xx * 0.02f - sq * yy) * 0.08f * s.vortex;
+                    }
                 }
                       break;
                 case 5: {
-                    auto xx = (decimal)(i - s.n_grid_2);
-                    auto yy = (decimal)(j - s.n_grid_2);
-                    auto sq = sqr(xx) + sqr(yy);
-                    if (sq > 32.0f) {
-                        s.grid_v[idx] += s.dt * vec(-xx / sq, -yy / sq) * 512.0f;
+                    if (s.mouse) {
+                        auto xx = (decimal)((decimal)i - s.mouse_center.x * s.n_grid);
+                        auto yy = (decimal)((decimal)j - s.mouse_center.y * s.n_grid);
+                        auto sq = sqr(xx) + sqr(yy);
+                        if (sq > 32.0f) {
+                            s.grid_v[idx] += s.dt * vec(-xx / sq, -yy / sq) * 512.0f;
+                        }
+                        else if (sq > 1.0f) {
+                            s.grid_v[idx] += s.dt * vec(-yy, xx) * 4.0f * s.vortex;
+                        }
                     }
-                    else if (sq > 1.0f) {
-                        s.grid_v[idx] += s.dt * vec(-yy, xx) * 4.0f * s.vortex;
+                    else {
+                        auto xx = (decimal)(i - s.n_grid_2);
+                        auto yy = (decimal)(j - s.n_grid_2);
+                        auto sq = sqr(xx) + sqr(yy);
+                        if (sq > 32.0f) {
+                            s.grid_v[idx] += s.dt * vec(-xx / sq, -yy / sq) * 512.0f;
+                        }
+                        else if (sq > 1.0f) {
+                            s.grid_v[idx] += s.dt * vec(-yy, xx) * 4.0f * s.vortex;
+                        }
                     }
                 }
                       break;
                 case 6: {
-                    auto xx = (decimal)((decimal)i - s.mass_center.x * s.n_grid);
-                    auto yy = (decimal)((decimal)j - s.mass_center.y * s.n_grid);
-                    auto sq = sqr(xx) + sqr(yy);
-                    if (sq > 32.0f) {
-                        s.grid_v[idx] += s.dt * vec(-xx / sq, -yy / sq) * 512.0f;
+                    if (s.mouse) {
+                        auto xx = (decimal)((decimal)i - s.mouse_center.x * s.n_grid);
+                        auto yy = (decimal)((decimal)j - s.mouse_center.y * s.n_grid);
+                        auto sq = sqr(xx) + sqr(yy);
+                        if (sq > 32.0f) {
+                            s.grid_v[idx] += s.dt * vec(-xx / sq, -yy / sq) * 512.0f;
+                        }
+                        else if (sq > 1.0f) {
+                            s.grid_v[idx] += s.dt * vec(-yy, xx) * 4.0f * s.vortex;
+                        }
                     }
-                    else if (sq > 1.0f) {
-                        s.grid_v[idx] += s.dt * vec(-yy, xx) * 4.0f * s.vortex;
+                    else {
+                        auto xx = (decimal)((decimal)i - s.mass_center.x * s.n_grid);
+                        auto yy = (decimal)((decimal)j - s.mass_center.y * s.n_grid);
+                        auto sq = sqr(xx) + sqr(yy);
+                        if (sq > 32.0f) {
+                            s.grid_v[idx] += s.dt * vec(-xx / sq, -yy / sq) * 512.0f;
+                        }
+                        else if (sq > 1.0f) {
+                            s.grid_v[idx] += s.dt * vec(-yy, xx) * 4.0f * s.vortex;
+                        }
+                    }
+                }
+                      break;
+                case 7: {
+                    if (s.mouse) {
+                        auto xx = (decimal)((decimal)i - s.mouse_center.x * s.n_grid);
+                        auto yy = (decimal)((decimal)j - s.mouse_center.y * s.n_grid);
+                        auto sq = sqr(xx) + sqr(yy);
+                        s.grid_v[idx] += s.dt * vec(-xx / sq, -yy / sq) * max(1.0f / sqrt(1e-6f + sq), 512.0f);
+                    }
+                    else {
+                        auto xx = (decimal)(i - s.n_grid_2);
+                        auto yy = (decimal)(j - s.n_grid_2);
+                        auto sq = sqr(xx) + sqr(yy);
+                        s.grid_v[idx] += s.dt * vec(-xx / sq, -yy / sq) * max(1.0f / sqrt(1e-6f + sq), 512.0f);
                     }
                 }
                       break;
