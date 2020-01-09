@@ -4,6 +4,8 @@
 
 void PhysicsEngine::RenderLightIntern(World& world, const PerspectiveCamera& camera, BYTE* buffer, cint width, cint height)
 {
+    using namespace Gdiplus;
+#pragma omp parallel for
     for (auto y = 0; y < height; y++)
     {
         const auto sy = 1.0f - (1.0f * y / height);
@@ -35,21 +37,14 @@ void PhysicsEngine::RenderLightIntern(World& world, const PerspectiveCamera& cam
                             color = color + (lightSample.EL * NdotL);
                     }
                 }
-                buffer[0] = BYTE(color.b * 255);
-                buffer[1] = BYTE(color.g * 255);
-                buffer[2] = BYTE(color.r * 255);
-                buffer[3] = 255;
+                ((ARGB*)buffer)[(y * width + x)] =
+                    MAKEARGB(255, BYTE(color.r * 255), BYTE(color.g * 255), BYTE(color.b * 255));
             }
             else
             {
                 // 没有接触，就是背景色
-                buffer[0] = 0;
-                buffer[1] = 0;
-                buffer[2] = 0;
-                buffer[3] = 255;
+                ((ARGB*)buffer)[(y * width + x)] = 0xff000000;
             }
-
-            buffer += 4;
         }
     }
 }

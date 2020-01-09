@@ -4,6 +4,12 @@
 #include <memory>
 #include "Geometries.h"
 
+#define MAKEARGB(a, r, g, b) \
+    (((ARGB)((a) & 0xff) << ALPHA_SHIFT)| \
+    ((ARGB)((r) & 0xff) << RED_SHIFT)  | \
+    ((ARGB)((g) & 0xff) << GREEN_SHIFT)| \
+    ((ARGB)((b) & 0xff) << BLUE_SHIFT))
+
 class DrawSceneBag
 {
 public:

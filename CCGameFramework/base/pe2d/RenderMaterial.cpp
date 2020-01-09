@@ -51,6 +51,8 @@ void PhysicsEngine::RenderMaterialIntern(BYTE * buffer, cint width, cint height)
 
     // -------------------------------------
     // 光线追踪
+    using namespace Gdiplus;
+#pragma omp parallel for
     for (auto y = 0; y < height; y++)
     {
         const auto sy = 1.0f - (1.0f * y / height);
@@ -70,21 +72,14 @@ void PhysicsEngine::RenderMaterialIntern(BYTE * buffer, cint width, cint height)
             {
                 // 采样
                 const auto color = result.body->material->Sample(ray, result.position, result.normal);
-                buffer[0] = BYTE(color.b * 255);
-                buffer[1] = BYTE(color.g * 255);
-                buffer[2] = BYTE(color.r * 255);
-                buffer[3] = 255;
+                ((ARGB*)buffer)[(y * width + x)] =
+                    MAKEARGB(255, BYTE(color.r * 255), BYTE(color.g * 255), BYTE(color.b * 255));
             }
             else
             {
                 // 没有接触，就是背景色
-                buffer[0] = 0;
-                buffer[1] = 0;
-                buffer[2] = 0;
-                buffer[3] = 255;
+                ((ARGB*)buffer)[(y * width + x)] = 0xff000000;
             }
-
-            buffer += 4;
         }
     }
 }
@@ -169,6 +164,8 @@ void PhysicsEngine::RenderReflectIntern(BYTE* buffer, cint width, cint height)
 
     // -------------------------------------
     // 光线追踪
+    using namespace Gdiplus;
+#pragma omp parallel for
     for (auto y = 0; y < height; y++)
     {
         const auto sy = 1.0f - (1.0f * y / height);
@@ -184,12 +181,8 @@ void PhysicsEngine::RenderReflectIntern(BYTE* buffer, cint width, cint height)
 
             // 测试光线与球是否相交
             const auto color = RenderReflectRecursive(world, ray, maxReflect);
-            buffer[0] = BYTE(color.b * 255);
-            buffer[1] = BYTE(color.g * 255);
-            buffer[2] = BYTE(color.r * 255);
-            buffer[3] = 255;
-
-            buffer += 4;
+            ((ARGB*)buffer)[(y * width + x)] =
+                MAKEARGB(255, BYTE(color.r * 255), BYTE(color.g * 255), BYTE(color.b * 255));
         }
     }
 }

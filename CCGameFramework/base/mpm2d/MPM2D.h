@@ -91,6 +91,8 @@ private:
         std::vector<decimal> J;
         std::vector<vec> grid_v;
         std::vector<decimal> grid_m;
+        std::vector<vec> grid_v_tmp;
+        std::vector<decimal> grid_m_tmp;
         vec mass_center;
         vec gravity;
         int mode;

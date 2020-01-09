@@ -37,8 +37,10 @@ void MPM2DEngine::init(std::shared_ptr<Direct2DRenderTarget> rt)
     s.J.resize(s.n_particles);              // 塑性形变
     std::fill(s.J.begin(), s.J.end(), 0.0f);
     s.grid_v.resize(s.n_grid2);             // 网络结点速度
+    s.grid_v_tmp.resize(s.n_grid2);
     std::fill(s.grid_v.begin(), s.grid_v.end(), vec{ 0,0 });
     s.grid_m.resize(s.n_grid2);             // 网络结点质量
+    s.grid_m_tmp.resize(s.n_grid2);
     std::fill(s.grid_m.begin(), s.grid_m.end(), 0.0f);
     s.frame = 0;
     s.gravity = {0.0f, -9.8f};
@@ -456,6 +458,7 @@ void MPM2DEngine::substep()
             }
         }
     }
+#pragma omp parallel for
     for (auto i = 0; i < s.n_grid; i++) {
         for (auto j = 0; j < s.n_grid; j++) {
             auto idx = i * s.n_grid + j;
@@ -518,10 +521,12 @@ void MPM2DEngine::substep()
             }
         }
     }
+#pragma omp parallel for
     // 网格到粒子（G2P）
     for (auto p = 0; p < s.n_particles; p++) {
         auto base = (s.x[p] * s.inv_dx - 0.5f).to_int();
         auto fx = s.x[p] * s.inv_dx - base;
+        std::vector<vec> w(3);
         w[0].x = 0.5f * sqr(1.5f - fx.x);
         w[0].y = 0.5f * sqr(1.5f - fx.y);
         w[1].x = 0.75f - sqr(fx.x - 1.0f);
