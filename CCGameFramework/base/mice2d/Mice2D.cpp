@@ -13,8 +13,8 @@ void Mice2DEngine::init(std::shared_ptr<Direct2DRenderTarget> rt)
     bag.brush = rt->CreateDirect2DBrush(D2D1::ColorF::Black);
     bag.random = std::default_random_engine((uint32_t)time(nullptr));
     auto& e = bag.random;
-    std::uniform_real_distribution<decimal> dr{ -100.0f, 100.0f };
-    std::uniform_real_distribution<decimal> da{ 0, 2.0f * (decimal)M_PI };
+    std::uniform_real_distribution<mice2d::decimal> dr{ -100.0f, 100.0f };
+    std::uniform_real_distribution<mice2d::decimal> da{ 0, 2.0f * (mice2d::decimal)M_PI };
     std::uniform_int_distribution<int> di{ 0, 255 };
     for (auto i = 0; i < MICE_N; i++) {
         mice2d::MiceAtom atom;
@@ -152,7 +152,7 @@ int Mice2DEngine::SetType(cint value)
     return 0;
 }
 
-static char* ipsf(decimal ips) {
+static char* ipsf(mice2d::decimal ips) {
     static char _ipsf[32];
     if (ips < 1e3) {
         snprintf(_ipsf, sizeof(_ipsf), "%.1f", ips);
@@ -170,7 +170,7 @@ void Mice2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
 {
     auto now = std::chrono::system_clock::now();
     // 计算每帧时间间隔
-    dt = std::chrono::duration_cast<std::chrono::duration<decimal>>(now - last_clock).count();
+    dt = std::chrono::duration_cast<std::chrono::duration<mice2d::decimal>>(now - last_clock).count();
 
     auto inv = 1.0f / dt;
     if (dt > FRAME) {
@@ -271,7 +271,7 @@ void Mice2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
     }
 }
 
-void Mice2DEngine::draw(CComPtr<ID2D1RenderTarget>& rt, const CRect& bounds, decimal fps) {
+void Mice2DEngine::draw(CComPtr<ID2D1RenderTarget>& rt, const CRect& bounds, mice2d::decimal fps) {
     for (auto& mice : mices) {
         mice.draw(rt, bounds, bag);
     }

@@ -23,7 +23,7 @@ public:
 
 private:
     void RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
-    void draw(CComPtr<ID2D1RenderTarget>& rt, const CRect& bounds, decimal fps);
+    void draw(CComPtr<ID2D1RenderTarget>& rt, const CRect& bounds, mice2d::decimal fps);
     void tick(const CRect& bounds);
     void reset();
 
@@ -42,10 +42,10 @@ private:
 
 private:
     std::chrono::system_clock::time_point last_clock;
-    decimal dt{ 0 };
-    decimal dt_inv{ 0 };
+    mice2d::decimal dt{ 0 };
+    mice2d::decimal dt_inv{ 0 };
     int cycles{ 0 };
-    decimal ips{ 0 };
+    mice2d::decimal ips{ 0 };
     bool paused{ false };
 
     struct global_state_t {

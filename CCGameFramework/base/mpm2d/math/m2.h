@@ -34,7 +34,7 @@ namespace clib {
                 return { x1 + m.x1, y1 + m.y1, x2 + m.x2, y2 + m.y2 };
             }
 
-            m2 operator*(T d) const {
+            m2 operator*(const T& d) const {
                 return { x1 * d, y1 * d, x2 * d, y2 * d };
             }
 
@@ -42,7 +42,7 @@ namespace clib {
                 return { x1 * v.x + y1 * v.y, x2 * v.x + y2 * v.y };
             }
 
-            friend m2 operator*(T d, const m2& m) {
+            friend m2 operator*(const T& d, const m2& m) {
                 return m * d;
             }
 
@@ -54,7 +54,15 @@ namespace clib {
                 return *this;
             }
 
-            const m2& rotate(T theta) {
+            m2& operator*=(const T& d) {
+                x1 *= d;
+                y1 *= d;
+                x2 *= d;
+                y2 *= d;
+                return *this;
+            }
+
+            const m2& rotate(const T& theta) {
                 const auto _sin = std::sin(theta);
                 const auto _cos = std::cos(theta);
                 *this = m2{ _cos, -_sin, _sin, _cos };

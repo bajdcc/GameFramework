@@ -10,9 +10,9 @@
 #include <ui/gdi/Gdi.h>
 #include <base\pe2d\math\vector2.h>
 
-using decimal = float;
-
 namespace mice2d {
+
+    using decimal = float;
 
     struct DrawBag {
         CComPtr<ID2D1SolidColorBrush> brush;

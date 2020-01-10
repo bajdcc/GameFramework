@@ -60,6 +60,7 @@ private:
     decimal ips{ 0 };
     bool paused{ false };
     CString err;
+    CString infop;
 
     struct global_state_t {
         decltype(std::chrono::system_clock::now()) now;
@@ -101,6 +102,7 @@ private:
         decimal vortex;
         int frame;
         int mouse;
+        int debug;
     } s;
 
 private:

@@ -7,6 +7,8 @@
 #define FRAME (1.0f / 30.0f)
 #define N_SUBSTEP 50
 #define N_FRAME 10000
+#define CHECK_V 0
+#define MAX_V 1e10f
 
 #define sqr(x) ((x)*(x))
 
@@ -37,10 +39,10 @@ void MPM2DEngine::init(std::shared_ptr<Direct2DRenderTarget> rt)
     s.J.resize(s.n_particles);              // 塑性形变
     std::fill(s.J.begin(), s.J.end(), 0.0f);
     s.grid_v.resize(s.n_grid2);             // 网络结点速度
-    s.grid_v_tmp.resize(s.n_grid2);
+    //s.grid_v_tmp.resize(s.n_grid2);
     std::fill(s.grid_v.begin(), s.grid_v.end(), vec{ 0,0 });
     s.grid_m.resize(s.n_grid2);             // 网络结点质量
-    s.grid_m_tmp.resize(s.n_grid2);
+    //s.grid_m_tmp.resize(s.n_grid2);
     std::fill(s.grid_m.begin(), s.grid_m.end(), 0.0f);
     s.frame = 0;
     s.gravity = {0.0f, -9.8f};
@@ -48,6 +50,7 @@ void MPM2DEngine::init(std::shared_ptr<Direct2DRenderTarget> rt)
     s.grid = 1;
     s.vortex = 1.0f;
     s.mouse = 0;
+    s.debug = 1;
     s.mass_center = { 0,0 };
     auto& e = bag.random;
     std::uniform_real_distribution<decimal> dr{ 0.1f, 0.7f };
@@ -200,6 +203,11 @@ void MPM2DEngine::input(int value)
     case 'm':
         s.mouse = 1 - s.mouse;
         break;
+    case 'z':
+        s.debug = 1 - s.debug;
+        if (!s.debug)
+            err = L"";
+        break;
     case 'r': {
         std::fill(s.x.begin(), s.x.end(), vec{ 0,0 });
         std::fill(s.v.begin(), s.v.end(), vec{ 0,0 });
@@ -315,7 +323,12 @@ void MPM2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
             else {
                 wss << L"Mode: Unknown" << std::endl;
             }
+            if (!infop.IsEmpty()) {
+                wss << L"Info: " << infop.GetBuffer(0) << std::endl;
+            }
             _snwprintf_s(buf, sizeof(buf) / sizeof(buf[0]), L"Mass center: (%.2f, %.2f)", s.mass_center.x, s.mass_center.y);
+            wss << buf << std::endl;
+            _snwprintf_s(buf, sizeof(buf) / sizeof(buf[0]), L"Part#1: X=(%.2f, %.2f), V=(%.2f, %.2f)", s.x[0].x, s.x[1].y, s.v[0].x, s.v[0].y);
             wss << buf << std::endl;
         }
         if (!err.IsEmpty()) {
@@ -370,37 +383,37 @@ void MPM2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
 void MPM2DEngine::draw(CComPtr<ID2D1RenderTarget>& rt, const CRect& bounds, decimal fps) {
     auto center = bounds.TopLeft();
     auto size = bounds.Size();
-    auto w = (decimal)size.cx;
-    auto h = (decimal)size.cy;
+    auto w = (float)size.cx;
+    auto h = (float)size.cy;
     auto grid_w = w * s.dx;
     auto grid_h = h * s.dx;
     rt->SetTransform(
-        D2D1::Matrix3x2F::Translation({ (decimal)center.x, (decimal)center.y })
+        D2D1::Matrix3x2F::Translation({ (float)center.x, (float)center.y })
     );
     if (s.grid) {
         auto clr = bag.brush->GetColor();
         for (auto i = 0; i < s.n_grid; i++) {
             for (auto j = 0; j < s.n_grid; j++) {
                 auto idx = i * s.n_grid + j;
-                if (s.grid_m[idx] > 0.0f) {
-                    auto r = 0.5f + s.grid_v[idx].x * 0.5f;
+                if (s.grid_m[idx] > 0.0) {
+                    auto r = 0.5f + (float)s.grid_v[idx].x * 0.5f;
                     r = min(1.0f, max(r, 0.0f));
-                    auto g = 0.5f + s.grid_v[idx].y * 0.5f;
+                    auto g = 0.5f + (float)s.grid_v[idx].y * 0.5f;
                     g = min(1.0f, max(g, 0.0f));
-                    auto b = (log10(1.0f + s.grid_m[idx]) - 1.0f);
+                    auto b = (log10(1.0f + (float)s.grid_m[idx]) - 1.0f);
                     b = 1.0f - min(1.0f, b);
                     bag.brush->SetColor(D2D1::ColorF(r, g, b, 0.6f));
-                    rt->FillRectangle({ floor((decimal)i * grid_w),
-                        floor((decimal)(s.n_grid - j) * grid_h),
-                        ceil((decimal)(i + 1) * grid_w) - 1.0f,
-                        ceil((decimal)(s.n_grid - j + 1) * grid_h) - 1.0f }, bag.brush);
+                    rt->FillRectangle({ (float)floor((float)i * grid_w),
+                        (float)floor((float)(s.n_grid - j) * grid_h),
+                        (float)ceil((float)(i + 1) * grid_w) - 1.0f,
+                        (float)ceil((float)(s.n_grid - j + 1) * grid_h) - 1.0f }, bag.brush);
                 }
             }
         }
         bag.brush->SetColor(clr);
     }
     for (const auto& p : s.x) {
-        rt->FillRectangle({ p.x * w, (1.0f - p.y) * h , p.x * w + 1.2f, (1.0f - p.y) * h + 1.2f }, bag.brush);
+        rt->FillRectangle({ (float)p.x * w, (1.0f - (float)p.y) * h , (float)p.x * w + 1.2f, (1.0f - (float)p.y) * h + 1.2f }, bag.brush);
     }
     rt->SetTransform(D2D1::Matrix3x2F::Identity());
 }
@@ -414,13 +427,132 @@ void MPM2DEngine::tick(const CRect& bounds)
                 substep();
             }
             s.mass_center = { 0,0 };
+            if (err.IsEmpty() && s.debug) {
+                static const auto inf = std::numeric_limits<decimal>::infinity();
+                decltype(s.x)::value_type x_min{ inf, inf }, x_max{ -inf, -inf };
+                decltype(s.v)::value_type v_min{ inf, inf }, v_max{ -inf, -inf };
+                decltype(s.C)::value_type c_min{ inf, inf, inf, inf }, c_max{ -inf, -inf, -inf, -inf };
+                decltype(s.J)::value_type j_min{ inf }, j_max{ -inf };
+                decltype(s.grid_v)::value_type gv_min{ inf, inf }, gv_max{ -inf, -inf };
+                decltype(s.grid_m)::value_type gm_min{ inf }, gm_max{ -inf };
+                for (const auto& k : s.x) {
+                    if (isnan(k.x) || isnan(k.y)) {
+                        err.AppendFormat(L"s.x nan\n");
+                        break;
+                    }
+                    else if (isinf(k.x) || isinf(k.y)) {
+                        err.AppendFormat(L"s.x inf\n");
+                        break;
+                    }
+                    else if (k.x < 0.0f || k.x > 1.0f) {
+                        err.AppendFormat(L"s.x overflow\n");
+                        break;
+                    }
+                    else if (k.y < 0.0f || k.y > 1.0f) {
+                        err.AppendFormat(L"s.x overflow\n");
+                        break;
+                    }
+                    x_min.x = min(x_min.x, k.x);
+                    x_max.x = max(x_max.x, k.x);
+                    x_min.y = min(x_min.y, k.y);
+                    x_max.y = max(x_max.y, k.y);
+                }
+                for (const auto& k : s.v) {
+                    if (isnan(k.x) || isnan(k.y)) {
+                        err.AppendFormat(L"s.v nan\n");
+                        break;
+                    }
+                    else if (isinf(k.x) || isinf(k.y)) {
+                        err.AppendFormat(L"s.v inf\n");
+                        break;
+                    }
+                    else if (k.x < -MAX_V || k.x > MAX_V) {
+                        err.AppendFormat(L"s.v overflow\n");
+                        break;
+                    }
+                    else if (k.y < -MAX_V || k.y > MAX_V) {
+                        err.AppendFormat(L"s.v overflow\n");
+                        break;
+                    }
+                    v_min.x = min(v_min.x, k.x);
+                    v_max.x = max(v_max.x, k.x);
+                    v_min.y = min(v_min.y, k.y);
+                    v_max.y = max(v_max.y, k.y);
+                }
+                for (const auto& k : s.C) {
+                    if (isnan(k.x1) || isnan(k.y1) || isnan(k.x2) || isnan(k.y2)) {
+                        err.AppendFormat(L"s.c nan\n");
+                        break;
+                    }
+                    else if (isinf(k.x1) || isinf(k.y1) || isinf(k.x2) || isinf(k.y2)) {
+                        err.AppendFormat(L"s.c inf\n");
+                        break;
+                    }
+                    c_min.x1 = min(c_min.x1, k.x1);
+                    c_max.x1 = max(c_max.x1, k.x1);
+                    c_min.y1 = min(c_min.y1, k.y1);
+                    c_max.y1 = max(c_max.y1, k.y1);
+                    c_min.x2 = min(c_min.x2, k.x2);
+                    c_max.x2 = max(c_max.x2, k.x2);
+                    c_min.y2 = min(c_min.y2, k.y2);
+                    c_max.y2 = max(c_max.y2, k.y2);
+                }
+                for (const auto& k : s.J) {
+                    if (isnan(k)) {
+                        err.AppendFormat(L"s.j nan\n");
+                        break;
+                    }
+                    else if (isinf(k)) {
+                        err.AppendFormat(L"s.j inf\n");
+                        break;
+                    }
+                    j_min = min(j_min, k);
+                    j_max = max(j_max, k);
+                }
+                for (const auto& k : s.grid_v) {
+                    if (isnan(k.x) || isnan(k.y)) {
+                        err.AppendFormat(L"s.grid_v nan\n");
+                        break;
+                    }
+                    else if (isinf(k.x) || isinf(k.y)) {
+                        err.AppendFormat(L"s.grid_v inf\n");
+                        break;
+                    }
+                    gv_min.x = min(gv_min.x, k.x);
+                    gv_max.x = max(gv_max.x, k.x);
+                    gv_min.y = min(gv_min.y, k.y);
+                    gv_max.y = max(gv_max.y, k.y);
+                }
+                for (const auto& k : s.grid_m) {
+                    if (isnan(k)) {
+                        err.AppendFormat(L"s.grid_m nan\n");
+                        break;
+                    }
+                    else if (isinf(k)) {
+                        err.AppendFormat(L"s.grid_m inf\n");
+                        break;
+                    }
+                    gm_min = min(gm_min, k);
+                    gm_max = max(gm_max, k);
+                }
+                infop = L"";
+                infop.AppendFormat(L"x: x(min= %.2f, max= %.2f) y(min= %.2f, max= %.2f)\n", x_min.x, x_max.x, x_min.y, x_max.y);
+                infop.AppendFormat(L"v: x(min= %.2f, max= %.2f) y(min= %.2f, max= %.2f)\n", v_min.x, v_max.x, v_min.y, v_max.y);
+                infop.AppendFormat(L"c: x1(min= %.2f, max= %.2f) y1(min= %.2f, max= %.2f)\n", c_min.x1, c_max.x1, c_min.y1, c_max.y1);
+                infop.AppendFormat(L"c: x2(min= %.2f, max= %.2f) y2(min= %.2f, max= %.2f)\n", c_min.x2, c_max.x2, c_min.y2, c_max.y2);
+                infop.AppendFormat(L"j: min= %.2f, max= %.2f\n", j_min, j_max);
+                infop.AppendFormat(L"gv: x(min= %.2f, max= %.2f) y(min= %.2f, max= %.2f)\n", gv_min.x, gv_max.x, gv_min.y, gv_max.y);
+                infop.AppendFormat(L"gm: min= %.2f, max= %.2f\n", gm_min, gm_max);
+                if (!err.IsEmpty())
+                    paused = true;
+            }
             for (size_t i = 0; i < s.x.size(); i++) {
                 auto& p = s.x[i];
-                if (isnan(p.x) || isnan(p.y) || p.x < 0.0f || p.y < 0.0f || p.x>1.0f || p.y>1.0f) {
-                    p = { 0,0 };
+                if (p.x < 0.0f || p.y < 0.0f || p.x>1.0f || p.y > 1.0f) {
+                    p = { 0.1f, 0.1f };
                     s.v[i] = { 0,0 };
                     s.C[i] = { 0,0,0,0 };
-                    s.J[i] = 0.0f;
+                    s.J[i] = 1.0f;
                 }
                 s.mass_center += p;
             }
@@ -482,7 +614,7 @@ void MPM2DEngine::substep()
     for (auto i = 0; i < s.n_grid; i++) {
         for (auto j = 0; j < s.n_grid; j++) {
             auto idx = i * s.n_grid + j;
-            if (s.grid_m[idx] > 0) {
+            if (s.grid_m[idx] > 0.0f) {
                 auto inv_m = 1.0f / s.grid_m[idx];
                 // 冲量转换成速度
                 s.grid_v[idx] *= inv_m;
@@ -594,6 +726,16 @@ void MPM2DEngine::substep()
                     s.grid_v[idx].y = 0.01f * -s.grid_v[idx].y;
                 else if (j > s.n_grid - bound && s.grid_v[idx].y > 0.0f)
                     s.grid_v[idx].y = 0.01f * -s.grid_v[idx].y;
+#if CHECK_V
+                if (s.grid_v[idx].x > MAX_V)
+                    s.grid_v[idx].x = MAX_V;
+                else if (s.grid_v[idx].x < -MAX_V)
+                    s.grid_v[idx].x = -MAX_V;
+                if (s.grid_v[idx].y > MAX_V)
+                    s.grid_v[idx].y = MAX_V;
+                else if (s.grid_v[idx].y < -MAX_V)
+                    s.grid_v[idx].y = -MAX_V;
+#endif
             }
         }
     }
