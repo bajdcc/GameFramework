@@ -6,9 +6,12 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CCGameFramework", "CCGameFramework\CCGameFramework.vcxproj", "{C9E8BB5E-CF29-4D67-BB96-1E8591B05BE0}"
 	ProjectSection(ProjectDependencies) = postProject
 		{6D07F050-383F-46FA-A5F9-E166DBC6F016} = {6D07F050-383F-46FA-A5F9-E166DBC6F016}
+		{5841439C-E69A-4EAF-AE3C-2CF1D2A01B5F} = {5841439C-E69A-4EAF-AE3C-2CF1D2A01B5F}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CCOS_EXT_WEB", "CCOS_EXT_WEB\CCOS_EXT_WEB.vcxproj", "{6D07F050-383F-46FA-A5F9-E166DBC6F016}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CCOS_EXT_FS", "CCOS_EXT_FS\CCOS_EXT_FS.vcxproj", "{5841439C-E69A-4EAF-AE3C-2CF1D2A01B5F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -34,6 +37,14 @@ Global
 		{6D07F050-383F-46FA-A5F9-E166DBC6F016}.Release|x64.Build.0 = Release|x64
 		{6D07F050-383F-46FA-A5F9-E166DBC6F016}.Release|x86.ActiveCfg = Release|Win32
 		{6D07F050-383F-46FA-A5F9-E166DBC6F016}.Release|x86.Build.0 = Release|Win32
+		{5841439C-E69A-4EAF-AE3C-2CF1D2A01B5F}.Debug|x64.ActiveCfg = Debug|x64
+		{5841439C-E69A-4EAF-AE3C-2CF1D2A01B5F}.Debug|x64.Build.0 = Debug|x64
+		{5841439C-E69A-4EAF-AE3C-2CF1D2A01B5F}.Debug|x86.ActiveCfg = Debug|Win32
+		{5841439C-E69A-4EAF-AE3C-2CF1D2A01B5F}.Debug|x86.Build.0 = Debug|Win32
+		{5841439C-E69A-4EAF-AE3C-2CF1D2A01B5F}.Release|x64.ActiveCfg = Release|x64
+		{5841439C-E69A-4EAF-AE3C-2CF1D2A01B5F}.Release|x64.Build.0 = Release|x64
+		{5841439C-E69A-4EAF-AE3C-2CF1D2A01B5F}.Release|x86.ActiveCfg = Release|Win32
+		{5841439C-E69A-4EAF-AE3C-2CF1D2A01B5F}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -14,6 +14,7 @@ int child = -1;
 long text, text2, text3, text4, text5;
 char* list64_name[0] = {
     "我的歌单",
+    "摩天动物园",
     "葫芦丝2006",
     "李荣浩",
     "萨克斯",
@@ -22,6 +23,7 @@ char* list64_name[0] = {
 };
 char* list64[0] = {
     "NjA3NzEwMjk=",
+    "MzE4NTYzODE0NQ==",
     "MzA4Mzc2MzMzNQ==",
     "Mjg5NjA1Njk2MA==",
     "MTE2Mzc5MzQ5",

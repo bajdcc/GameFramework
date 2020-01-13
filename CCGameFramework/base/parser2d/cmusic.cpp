@@ -32,7 +32,8 @@ namespace clib {
         if (paths.size() > 1 && !call->stream_path(paths[1], lyric_data)) {
             ATLTRACE("[SYSTEM] PLAY | lyric not exists: %s\n", path);
         }
-        lyric_str = string_t(lyric_data.begin(), lyric_data.end());
+        lyric_data.push_back(0);
+        lyric_str = string_t((char*)lyric_data.data());
         parse_lyric();
         auto type = libZPlay::sfAutodetect;
         if (music_path.length() > 4 && music_path.substr(music_path.length() - 4) == ".mp3") {

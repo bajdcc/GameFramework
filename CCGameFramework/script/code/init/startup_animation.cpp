@@ -63,7 +63,7 @@ int read_file(int id, int handle) {
             int height = 200;
             window_comctl_set_bound(window_get_base(id), left, top, left + width, top + height);
         }
-        else if (s.code == 0x214 || s.code == 0x216 || s.code == 0x10) {
+        else if (s.code == 0x214 || s.code == 0x10) {
 
         }
         else if (s.code < 0x800) {
