@@ -22,6 +22,7 @@ int main(int argc, char** argv) {
     run("ipc ext_web file:tree");
     run("ipc ext_win file/__call__:sys:computer_name");
     run("ipc ext_win file/__call__:sys:user_name");
+    run("api_ipc win sys user_name");
     put_string("========== [#26 TEST EXT] ==========\n");
     return 0;
 }

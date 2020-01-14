@@ -38,6 +38,10 @@ void pipe() {
         put_char((char)c);
     }
 }
+void run(char* cmd) {
+    shell(cmd);
+    free(cmd);
+}
 int read_file(int id, int handle, char* playlist) {
     char* begin = strstr(playlist, "track_playlist");
     if (begin == (char*)0) {
@@ -236,6 +240,8 @@ int main(int argc, char** argv) {
         restore_fg();
         exit(0);
     }
+    path_add("/usr");
+    shell("api_vfs mkdir /tmp");
     __window_create_struct__ s;
     s.caption = "在线听歌";
     s.left = 50;
@@ -303,6 +309,7 @@ void play(char* id) {
             strcpy(picurl, pic);
             free(obj);
             // MP3
+            run(format("api_vfs load /tmp/%s.mp3", id));
             char* downurl = format("/tmp/%s.mp3", id);
             int empty = fsize(downurl);
             if (empty <= 0) {
@@ -317,6 +324,7 @@ void play(char* id) {
                 put_string("\n");
                 shell(downurl);
                 put_string("Download OK\n");
+                run(format("api_vfs save /tmp/%s.mp3", id));
             }
             else {
                 put_string("OK, ");
@@ -324,6 +332,7 @@ void play(char* id) {
                 put_string(" exists\n");
             }
             // LYRIC
+            run(format("api_vfs load /tmp/%s.txt", id));
             downurl = format("/tmp/%s.txt", id);
             empty = fsize(downurl);
             if (empty <= 0) {
@@ -348,6 +357,7 @@ void play(char* id) {
                         if (ll != (json_object*)0) {
                             char* lyric = ll->data.str;
                             writefile(lyric_path, lyric, strlen(lyric), 1);
+                            run(format("api_vfs save /tmp/%s.txt", id));
                         }
                         else {
                             writefile(lyric_path, "", 0, 1);
@@ -364,6 +374,7 @@ void play(char* id) {
             }
             // PIC
             free(downurl);
+            run(format("api_vfs load /tmp/%s.jpg", id));
             downurl = format("/tmp/%s.jpg", id);
             empty = fsize(downurl);
             if (empty <= 0) {
@@ -378,6 +389,7 @@ void play(char* id) {
                 put_string("\n");
                 shell(downurl);
                 put_string("Download OK\n");
+                run(format("api_vfs save /tmp/%s.jpg", id));
             }
             else {
                 put_string("OK, ");

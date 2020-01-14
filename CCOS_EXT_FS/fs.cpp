@@ -12,6 +12,8 @@
 
 #include "../CCGameFramework/base/parser2d/cext.h"
 
+#define VFS_ROOT "./script/vfs"
+
 extern clib::cext* global_ext;
 
 namespace clib {
@@ -430,7 +432,11 @@ namespace clib {
         }
         else if (node->type == fs_dir) {
             if (m.size() > 1) {
-                return macro(m, node, dec);
+                auto r = macro(m, node, dec);
+                if (r < 0) {
+                    return macrofile(m, node, dec);
+                }
+                return r;
             }
         }
         else if (node->type == fs_magic) {
@@ -779,6 +785,54 @@ namespace clib {
     int cextfs::macrofile(const std::vector<string_t>& m, const vfs_node::ref& node, vfs_node_dec** dec) const
     {
         static char buf[256];
+        if (m[1] == "fs" && m.size() > 2) {
+            if (m[2] == "save") {
+                if (node->type == fs_dir) {
+                    if (CreateDirectoryA(trans(m[0]).c_str(), nullptr)) {
+                        *dec = new vfs_node_text(this, "");
+                    }else{
+                        *dec = new vfs_node_text(this, "Warning: Directory already exists.");
+                    }
+                    return 0;
+                }
+                else if (node->type == fs_file) {
+                    std::ofstream ofs(trans(m[0]), std::ios::binary);
+                    if (ofs) {
+                        ofs.write((const char*)node->data.data(), node->data.size());
+                        if (m.size() > 3 && m[3] == "no_output")
+                            *dec = new vfs_node_text(this, "");
+                        else
+                            *dec = new vfs_node_file(this, node);
+                        return 0;
+                    }
+                }
+            }
+            else if (m[2] == "load") {
+                if (node->type == fs_file) {
+                    std::ifstream ifs(trans(m[0]), std::ios::binary);
+                    if (ifs) {
+                        auto p = ifs.rdbuf();
+                        auto size = p->pubseekoff(0, std::ios::end, std::ios::in);
+                        p->pubseekpos(0, std::ios::in);
+                        node->data.resize((size_t)size);
+                        p->sgetn((char*)node->data.data(), size);
+                        if (m.size() > 3 && m[3] == "no_output")
+                            *dec = new vfs_node_text(this, "");
+                        else
+                            *dec = new vfs_node_file(this, node);
+                    }
+                    else {
+                        *dec = new vfs_node_text(this, "Warning: File does not exist.");
+                    }
+                    return 0;
+                }
+            }
+        }
         return -4;
+    }
+
+    string_t cextfs::trans(const string_t& path) const
+    {
+        return VFS_ROOT + path;
     }
 }
