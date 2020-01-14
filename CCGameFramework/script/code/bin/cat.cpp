@@ -42,6 +42,11 @@ int main(int argc, char **argv) {
                 put_string("[ERROR] File is locked.");
                 restore_fg();
                 break;
+            case -4:
+                set_fg(240, 0, 0);
+                put_string("[ERROR] Invalid operation.");
+                restore_fg();
+                break;
         }
         free(path);
     }

@@ -403,6 +403,9 @@ namespace clib {
                 return -3;
             node->time.access = now();
             if (dec) {
+                if (m.size() > 1) {
+                    return macrofile(m, node, dec);
+                }
                 *dec = new vfs_node_file(this, node);
             }
             return 0;
@@ -771,5 +774,10 @@ namespace clib {
             return false;
         }
         return true;
+    }
+
+    int cextfs::macrofile(const std::vector<string_t>& m, const vfs_node::ref& node, vfs_node_dec** dec) const
+    {
+        return -4;
     }
 }

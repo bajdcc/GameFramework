@@ -100,6 +100,7 @@ namespace clib {
 
         string_t combine(const string_t& pwd, const string_t& path) const;
         int macro(const std::vector<string_t>& m, const vfs_node::ref& node, vfs_node_dec** dec) const;
+        int macrofile(const std::vector<string_t>& m, const vfs_node::ref& node, vfs_node_dec** dec) const;
         void ll(const string_t& name, const vfs_node::ref& node, std::ostream& os) const;
 
         void error(const string_t&);

@@ -20,6 +20,8 @@ int main(int argc, char** argv) {
     run("mklink /ext/web/func/file/test_link /");
     run("rm /ext/web/func/file/test_file");
     run("ipc ext_web file:tree");
+    run("ipc ext_win file/__call__:sys:computer_name");
+    run("ipc ext_win file/__call__:sys:user_name");
     put_string("========== [#26 TEST EXT] ==========\n");
     return 0;
 }

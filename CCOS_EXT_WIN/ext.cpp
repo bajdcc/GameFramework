@@ -4,8 +4,8 @@
 
 using namespace clib;
 
-#define EXT_NAME "fs"
-#define EXT_NORMAL_TEXT "文件系统扩展 - by bajdcc"
+#define EXT_NAME "win"
+#define EXT_NORMAL_TEXT "Win32扩展 - by bajdcc"
 #define EXT_NORMAL_VERSION "0.1.0"
 #define EXT_NORMAL_CALL "扩展统一调用接口"
 
@@ -13,7 +13,7 @@ std::string func_path;
 std::unique_ptr<ext_web> g_ext;
 cext* global_ext;
 
-CCOSEXTFS_API int ccos_ext_load(clib::cext* ptr)
+CCOSEXTWIN_API int ccos_ext_load(clib::cext* ptr)
 {
     if (g_ext) return -1;
     g_ext = std::make_unique<ext_web>();
@@ -25,7 +25,7 @@ CCOSEXTFS_API int ccos_ext_load(clib::cext* ptr)
     return 0;
 }
 
-CCOSEXTFS_API int ccos_ext_unload(clib::cext* ptr)
+CCOSEXTWIN_API int ccos_ext_unload(clib::cext* ptr)
 {
     if (!g_ext) return -1;
     auto ext = (cext*)ptr;

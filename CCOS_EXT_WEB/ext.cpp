@@ -7,6 +7,7 @@ using namespace clib;
 #define EXT_NAME "web"
 #define EXT_NORMAL_TEXT "网页扩展 - by bajdcc"
 #define EXT_NORMAL_VERSION "0.1.0"
+#define EXT_NORMAL_CALL "扩展统一调用接口"
 
 std::string func_path;
 std::unique_ptr<ext_web> g_ext;
@@ -45,6 +46,7 @@ namespace clib {
         fs.as_root(true);
         fs.write_text("__name__", EXT_NORMAL_TEXT);
         fs.write_text("__version__", EXT_NORMAL_VERSION);
+        fs.write_text("__call__", EXT_NORMAL_CALL);
         fs.as_root(false);
     }
 

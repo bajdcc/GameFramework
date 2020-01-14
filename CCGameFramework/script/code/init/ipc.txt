@@ -3,4 +3,5 @@ ipc_api
 ipc_music
 ipc_ext_web
 ipc_ext_fs
+ipc_ext_win
 ipc_sys

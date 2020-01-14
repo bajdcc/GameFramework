@@ -779,6 +779,46 @@ namespace clib {
     int cextfs::macrofile(const std::vector<string_t>& m, const vfs_node::ref& node, vfs_node_dec** dec) const
     {
         static char buf[256];
+        if (m[1] == "sys" && m.size() > 2) {
+            if (m[2] == "computer_name") {
+                DWORD size = 0;
+                auto str = GetComputerNameA(nullptr, &size);
+                if (size > sizeof(buf)) {
+                    auto b = new char[size];
+                    if (!GetComputerNameA(b, &size)) {
+                        return -4;
+                    }
+                    *dec = new vfs_node_text(this, b);
+                    delete[]b;
+                }
+                else {
+                    if (!GetComputerNameA(buf, &size)) {
+                        return -4;
+                    }
+                    *dec = new vfs_node_text(this, buf);
+                }
+                return 0;
+            }
+            else if (m[2] == "user_name") {
+                DWORD size = 0;
+                auto str = GetUserNameA(nullptr, &size);
+                if (size > sizeof(buf)) {
+                    auto b = new char[size];
+                    if (!GetUserNameA(b, &size)) {
+                        return -4;
+                    }
+                    *dec = new vfs_node_text(this, b);
+                    delete[]b;
+                }
+                else {
+                    if (!GetUserNameA(buf, &size)) {
+                        return -4;
+                    }
+                    *dec = new vfs_node_text(this, buf);
+                }
+                return 0;
+            }
+        }
         return -4;
     }
 }
