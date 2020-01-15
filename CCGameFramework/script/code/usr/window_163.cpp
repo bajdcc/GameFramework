@@ -117,7 +117,7 @@ int read_file(int id, int handle, char* playlist) {
                     sleep(1000);
                 }
                 window_comctl_set_text(text5, "控制");
-                if (*ids != '\0') {
+                if (*ids == '\0' || *ids == '$') {
                     char* downurl = format("rm /tmp/%s.mp3", ids);
                     put_string(downurl);
                     put_string("\n");
@@ -149,7 +149,7 @@ int read_file(int id, int handle, char* playlist) {
                         ptr = ptr3;
                     }
                 }
-                if (*ids == '\0') {
+                if (*ids == '\0' || *ids == '$') {
                     ptr = begin;
                     s.code = 0x888;
                     s.comctl = -1;

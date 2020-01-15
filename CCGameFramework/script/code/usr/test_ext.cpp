@@ -23,6 +23,9 @@ int main(int argc, char** argv) {
     run("ipc ext_win file/__call__:sys:computer_name");
     run("ipc ext_win file/__call__:sys:user_name");
     run("api_ipc win sys user_name");
+    run("echo CC GameFramework Window > /ext/win/func/file/window_id");
+    run("cat /ext/win/func/file/window_id:window:find_by_name");
+    run("rm /ext/win/func/file/window_id");
     put_string("========== [#26 TEST EXT] ==========\n");
     return 0;
 }

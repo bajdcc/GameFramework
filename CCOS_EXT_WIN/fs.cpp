@@ -819,6 +819,17 @@ namespace clib {
                 return 0;
             }
         }
+        else if (m[1] == "window" && m.size() > 2) {
+            if (m[2] == "find_by_name") {
+                DWORD size = 0;
+                decltype(node->data) v(node->data);
+                v.push_back(0);
+                auto hwnd = (DWORD)FindWindowA(nullptr, (char*)v.data());
+                snprintf(buf, sizeof(buf), "%d", hwnd);
+                *dec = new vfs_node_text(this, buf);
+                return 0;
+            }
+        }
         return -4;
     }
 }
