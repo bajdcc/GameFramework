@@ -778,7 +778,7 @@ namespace clib {
 
     int cextfs::macrofile(const std::vector<string_t>& m, const vfs_node::ref& node, vfs_node_dec** dec) const
     {
-        static char buf[256];
+        static char buf[512];
         if (m[1] == "sys" && m.size() > 2) {
             if (m[2] == "computer_name") {
                 DWORD size = 0;
@@ -825,9 +825,38 @@ namespace clib {
                 decltype(node->data) v(node->data);
                 v.push_back(0);
                 auto hwnd = (DWORD)FindWindowA(nullptr, (char*)v.data());
-                snprintf(buf, sizeof(buf), "%d", hwnd);
-                *dec = new vfs_node_text(this, buf);
+                snprintf(buf, sizeof(buf), "%8X", hwnd);
+                auto str = string_t(buf);
+                node->data.reserve(str.length());
+                std::copy(str.begin(), str.end(), node->data.begin());
+                *dec = new vfs_node_text(this, str);
                 return 0;
+            }
+            else if (m[2] == "send_message" && m.size() > 3) {
+                DWORD size = 0;
+                decltype(node->data) v(node->data);
+                v.push_back(0);
+                DWORD hwnd = 0;
+                _snscanf_s((char*)v.data(), v.size() - 1, "%X", &hwnd);
+                snprintf(buf, sizeof(buf), "%d", hwnd);
+                UINT msg = 0;
+                _snscanf_s(m[3].data(), m[3].size(), "%X", &msg);
+                DWORD p[2] = { 0,0 };
+                auto pi = 0;
+                if (m.size() > 4) {
+                    _snscanf_s(m[4].data(), m[4].size(), "%X", &p[pi]);
+                    pi++;
+                }
+                if (m.size() > 5) {
+                    _snscanf_s(m[5].data(), m[5].size(), "%X", &p[pi]);
+                }
+                if (hwnd != 0 && msg != 0) {
+                    auto ret = SendMessage((HWND)hwnd, msg, p[0], p[1]);
+                    snprintf(buf, sizeof(buf), "HWND= %08X, MSG= %08X, P1= %08X, P2= %08X, RET= %08X", hwnd, msg, p[0], p[1], ret);
+                    *dec = new vfs_node_text(this, buf);
+                    return 0;
+                }
+                return -4;
             }
         }
         return -4;
