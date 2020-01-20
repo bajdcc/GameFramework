@@ -1201,7 +1201,7 @@ namespace clib {
             case VK_ESCAPE:
                 return;
             case VK_SPACE:
-                return;
+return;
             case VK_BACK:
                 return;
             case VK_RETURN:
@@ -1246,10 +1246,11 @@ namespace clib {
             ptr_ry = ptr_my;
         }
         else if (c == 22) { // Ctrl+V
-            OpenClipboard(window->GetWindowHandle());
-            if (IsClipboardFormatAvailable(CF_TEXT))
-            {
-                HGLOBAL hg = GetClipboardData(CF_TEXT);
+        OpenClipboard(window->GetWindowHandle());
+        if (IsClipboardFormatAvailable(CF_TEXT))
+        {
+            HGLOBAL hg = GetClipboardData(CF_TEXT);
+            if (hg) {
                 LPCSTR q = (LPCSTR)GlobalLock(hg);
                 if (q != NULL)
                 {
@@ -1260,10 +1261,11 @@ namespace clib {
                 }
                 GlobalUnlock(hg);
             }
-            CloseClipboard();
+        }
+        CloseClipboard();
         }
         else {
-            put_char((char)(c & 0xff));
+        put_char((char)(c & 0xff));
         }
     }
 
@@ -1289,6 +1291,54 @@ namespace clib {
         if (vm)
             return vm->cursor();
         return 1;
+    }
+
+    void cgui::output() const
+    {
+        if (!vm)
+            return;
+        OpenClipboard(window->GetWindowHandle());
+        std::vector<char> outs;
+        for (auto i = 0; i < rows; ++i) {
+            for (auto j = 0; j < cols; ++j) {
+                const auto& b = buffer[i * cols + j];
+                if (b == 0) {
+                    break;
+                }
+                if (b > 0) {
+                    if (std::isprint(b))
+                        outs.push_back(b);
+                    else
+                        outs.push_back(' ');
+                }
+                else {
+                    outs.push_back(b);
+                }
+            }
+            outs.push_back('\r');
+            outs.push_back('\n');
+        }
+        while (outs.size() > 2) {
+            if (outs.back() == '\n' && *(outs.rbegin() + 1) == '\r') {
+                outs.pop_back();
+                outs.pop_back();
+            }
+            else {
+                break;
+            }
+        }
+        outs.push_back('\0');
+        HGLOBAL hg = GlobalAlloc(GMEM_MOVEABLE, outs.size());
+        if (hg) {
+            auto data = (char*)GlobalLock(hg);
+            if (data) {
+                CopyMemory(data, outs.data(), outs.size());
+                EmptyClipboard();
+                SetClipboardData(CF_TEXT, hg);
+            }
+            GlobalUnlock(hg);
+        }
+        CloseClipboard();
     }
 
     void cgui::exec_cmd(const string_t& s) {

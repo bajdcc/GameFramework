@@ -168,6 +168,16 @@ function M:init_menu(info)
 		end
 	}):attach(slider)
 	Button:new({
+		text = 'Êä³ö',
+		font_family = '¿¬Ìå',
+		track_display = 0,
+		font_size = 16,
+		click = function(this)
+			UIExt.refresh(CurrentScene.layers.pe2d, -104)
+			UIExt.paint()
+		end
+	}):attach(slider)
+	Button:new({
 		text = 'ÔÝÍ£',
 		font_family = '¿¬Ìå',
 		track_display = 0,

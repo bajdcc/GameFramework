@@ -70,6 +70,7 @@ namespace clib {
         int reset_cycles();
         void hit(int n);
         int cursor() const;
+        void output() const;
 
         std::unordered_set<string_t> get_dep(string_t& path) const;
 
