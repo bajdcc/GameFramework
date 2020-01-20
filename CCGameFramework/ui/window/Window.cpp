@@ -1022,8 +1022,10 @@ bool Window::HandleMessageInternal(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM l
 
 void Window::Render()
 {
-    if (window && IsVisible() && d2dRenderTarget)
+    if (window && IsVisible() && d2dRenderTarget && !rendering)
     {
+        rendering = true;
+
         d2dRenderTarget->StartRendering();
 
         RenderInternal();
@@ -1037,6 +1039,8 @@ void Window::Render()
         if (FAILED(result)) {
             ATLVERIFY(!"D2D ERR: Present");
         }
+
+        rendering = false;
     }
 }
 

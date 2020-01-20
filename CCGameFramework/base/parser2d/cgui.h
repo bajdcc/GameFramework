@@ -70,7 +70,6 @@ namespace clib {
         int reset_cycles();
         void hit(int n);
         int cursor() const;
-        int toggle_music() const;
 
         std::unordered_set<string_t> get_dep(string_t& path) const;
 
@@ -142,6 +141,7 @@ namespace clib {
         int cycle_speed{ 0 };
         int cycle_stable{ 0 };
         bool cycle_set{ false };
+        bool entered{ false };
         std::chrono::time_point<std::chrono::system_clock> last_time{ std::chrono::system_clock::now() };
 
     private:

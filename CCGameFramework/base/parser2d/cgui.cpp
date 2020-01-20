@@ -287,7 +287,7 @@ namespace clib {
     }
 
     void cgui::draw(CComPtr<ID2D1RenderTarget>& rt, const CRect& bounds, const Parser2DEngine::BrushBag& brushes, bool paused, decimal fps) {
-        if (!paused) {
+        if (!paused && !entered) {
             if (cvm::global_state.interrupt) {
                 cycle = GUI_CYCLES;
             }
@@ -326,9 +326,11 @@ namespace clib {
                     cycle_stable = GUI_CYCLE_STABLE;
                 }
             }
+            entered = true;
             for (int i = 0; i < ticks + cycle_speed; ++i) {
                 tick();
             }
+            entered = false;
         }
         using namespace std::chrono_literals;
         if (std::chrono::duration_cast<std::chrono::milliseconds>(

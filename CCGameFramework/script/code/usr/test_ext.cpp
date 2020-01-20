@@ -25,7 +25,8 @@ int main(int argc, char** argv) {
     run("api_ipc win sys user_name");
     run("echo CC GameFramework Window > /ext/win/func/file/window_id");
     run("cat /ext/win/func/file/window_id:window:find_by_name");
-    run("cat /ext/win/func/file/window_id:window:send_message:112:F030");
+    run("cat /ext/win/func/file/window_id:window:post_message:112:F030");
+    run("cat /ext/win/func/file/window_id:window:message_box:警告:你收到了一个消息：请按确定:0");
     run("rm /ext/win/func/file/window_id");
     put_string("========== [#26 TEST EXT] ==========\n");
     return 0;

@@ -851,12 +851,62 @@ namespace clib {
                     _snscanf_s(m[5].data(), m[5].size(), "%X", &p[pi]);
                 }
                 if (hwnd != 0 && msg != 0) {
-                    auto ret = SendMessage((HWND)hwnd, msg, p[0], p[1]);
+                    auto ret = SendMessageA((HWND)hwnd, msg, p[0], p[1]);
                     snprintf(buf, sizeof(buf), "HWND= %08X, MSG= %08X, P1= %08X, P2= %08X, RET= %08X", hwnd, msg, p[0], p[1], ret);
                     *dec = new vfs_node_text(this, buf);
                     return 0;
                 }
                 return -4;
+            }
+            else if (m[2] == "post_message" && m.size() > 3) {
+                DWORD size = 0;
+                decltype(node->data) v(node->data);
+                v.push_back(0);
+                DWORD hwnd = 0;
+                _snscanf_s((char*)v.data(), v.size() - 1, "%X", &hwnd);
+                snprintf(buf, sizeof(buf), "%d", hwnd);
+                UINT msg = 0;
+                _snscanf_s(m[3].data(), m[3].size(), "%X", &msg);
+                DWORD p[2] = { 0,0 };
+                auto pi = 0;
+                if (m.size() > 4) {
+                    _snscanf_s(m[4].data(), m[4].size(), "%X", &p[pi]);
+                    pi++;
+                }
+                if (m.size() > 5) {
+                    _snscanf_s(m[5].data(), m[5].size(), "%X", &p[pi]);
+                }
+                if (hwnd != 0 && msg != 0) {
+                    auto ret = PostMessageA((HWND)hwnd, msg, p[0], p[1]);
+                    snprintf(buf, sizeof(buf), "HWND= %08X, MSG= %08X, P1= %08X, P2= %08X, RET= %d", hwnd, msg, p[0], p[1], ret);
+                    *dec = new vfs_node_text(this, buf);
+                    return 0;
+                }
+                return -4;
+            }
+            else if (m[2] == "message_box") {
+                DWORD size = 0;
+                decltype(node->data) v(node->data);
+                v.push_back(0);
+                DWORD hwnd = 0;
+                _snscanf_s((char*)v.data(), v.size() - 1, "%X", &hwnd);
+                snprintf(buf, sizeof(buf), "%d", hwnd);
+                string_t cap;
+                if (m.size() > 3) {
+                    cap = m[3];
+                }
+                string_t msg;
+                if (m.size() > 4) {
+                    msg = m[4];
+                }
+                UINT bt = 0;
+                if (m.size() > 5) {
+                    _snscanf_s((char*)m[5].data(), m[5].size(), "%X", &bt);
+                }
+                auto ret = MessageBoxA((HWND)hwnd, msg.data(), cap.data(), bt);
+                snprintf(buf, sizeof(buf), "HWND= %08X, CAP= %s, MSG= %s, BT= %08X, RET= %08X", hwnd, cap.data(), msg.data(), bt, ret);
+                *dec = new vfs_node_text(this, buf);
+                return 0;
             }
         }
         return -4;

@@ -280,6 +280,7 @@ private:
     std::unordered_set<std::vector<byte>*> lua_ptrs;
     std::mutex lua_ptrs_mutex;
     bool fullScreen{ false };
+    bool rendering{ false };
     CSize fullScreenSize;
 };
 
