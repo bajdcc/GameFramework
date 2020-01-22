@@ -69,6 +69,7 @@ namespace clib {
         void reset_cmd();
         int reset_cycles();
         void hit(int n);
+        bool try_input(int c);
         int cursor() const;
         void output() const;
 

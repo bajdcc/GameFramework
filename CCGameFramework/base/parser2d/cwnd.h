@@ -49,6 +49,13 @@ namespace clib {
             c_button_bg_focus,
             c_button_fg_def,
             c_button_fg_hover,
+            c_edit_bg_def,
+            c_edit_bg_focus,
+            c_edit_fg_def,
+            c_edit_fg_hover,
+            c_edit_border_def,
+            c_edit_border_enter,
+            c_edit_border_focus,
             c__end,
         };
         enum str_t {
@@ -70,6 +77,7 @@ namespace clib {
             f__none,
             f_window_border_radius,
             f_button_radius,
+            f_edit_radius,
             f__end,
         };
         enum style_t {
@@ -90,6 +98,12 @@ namespace clib {
         static ref create_style(style_t t);
     };
 
+    class cwindow_comctl_text_interface {
+    public:
+        virtual void set_text(const string_t& text) = 0;
+        virtual bool add_char(int c) = 0;
+    };
+
     class cwindow_comctl_label;
     class cwindow_layout;
     class cwindow_comctl_ptr;
@@ -102,7 +116,7 @@ namespace clib {
         comctl_base* get_parent() const;
         void set_parent(comctl_base* parent);
         virtual cwindow_layout* get_layout();
-        virtual cwindow_comctl_label* get_label();
+        virtual cwindow_comctl_text_interface* get_text_interface();
         virtual cwindow_comctl_ptr* get_ptr();
         void set_bound(const CRect& bound);
         CRect get_bound() const;
@@ -177,6 +191,7 @@ namespace clib {
             comctl_label,
             comctl_button,
             comctl_image,
+            comctl_edit,
             comctl_end,
         };
 
@@ -304,13 +319,14 @@ namespace clib {
         } align{ vertical };
     };
 
-    class cwindow_comctl_label : public comctl_base {
+    class cwindow_comctl_label : public comctl_base, public cwindow_comctl_text_interface {
     public:
         cwindow_comctl_label();
         void set_rt(std::shared_ptr<Direct2DRenderTarget> rt, cwindow_style::ref) override;
         void paint(const CRect& bounds) override;
-        cwindow_comctl_label* get_label() override;
-        void set_text(const string_t& text);
+        cwindow_comctl_text_interface* get_text_interface() override;
+        void set_text(const string_t& text) override;
+        bool add_char(int c) override;
         int set_flag(int flag) override;
         int hit(int x, int y) const override;
         int handle_msg(int code, uint32 param1, uint32 param2) override;
@@ -352,6 +368,26 @@ namespace clib {
         void set_data(const std::vector<byte>& data) override;
     protected:
         std::shared_ptr<SolidImageElement> img;
+    };
+
+    class cwindow_comctl_edit : public comctl_base, public cwindow_comctl_text_interface {
+    public:
+        cwindow_comctl_edit();
+        void set_rt(std::shared_ptr<Direct2DRenderTarget> rt, cwindow_style::ref) override;
+        void paint(const CRect& bounds) override;
+        cwindow_comctl_text_interface* get_text_interface() override;
+        void set_text(const string_t& text) override;
+        bool add_char(int c) override;
+        int hit(int x, int y) const override;
+        int handle_msg(int code, uint32 param1, uint32 param2) override;
+        CSize min_size() const override;
+    private:
+        std::shared_ptr<EditElement> text;
+        std::shared_ptr<RoundBorderElement> background;
+        std::shared_ptr<RoundBorderElement> border;
+        std::weak_ptr<cwindow_style> _style;
+        bool is_enter{ false };
+        bool is_focus{ false };
     };
 }
 

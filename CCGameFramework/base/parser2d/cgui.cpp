@@ -1201,7 +1201,7 @@ namespace clib {
             case VK_ESCAPE:
                 return;
             case VK_SPACE:
-return;
+                return;
             case VK_BACK:
                 return;
             case VK_RETURN:
@@ -1246,26 +1246,26 @@ return;
             ptr_ry = ptr_my;
         }
         else if (c == 22) { // Ctrl+V
-        OpenClipboard(window->GetWindowHandle());
-        if (IsClipboardFormatAvailable(CF_TEXT))
-        {
-            HGLOBAL hg = GetClipboardData(CF_TEXT);
-            if (hg) {
-                LPCSTR q = (LPCSTR)GlobalLock(hg);
-                if (q != NULL)
-                {
-                    CStringA A(q);
-                    for (auto i = 0; i < A.GetLength(); i++) {
-                        put_char(A[i]);
+            OpenClipboard(window->GetWindowHandle());
+            if (IsClipboardFormatAvailable(CF_TEXT))
+            {
+                HGLOBAL hg = GetClipboardData(CF_TEXT);
+                if (hg) {
+                    LPCSTR q = (LPCSTR)GlobalLock(hg);
+                    if (q != NULL)
+                    {
+                        CStringA A(q);
+                        for (auto i = 0; i < A.GetLength(); i++) {
+                            put_char(A[i]);
+                        }
                     }
+                    GlobalUnlock(hg);
                 }
-                GlobalUnlock(hg);
             }
-        }
-        CloseClipboard();
+            CloseClipboard();
         }
         else {
-        put_char((char)(c & 0xff));
+            put_char((char)(c & 0xff));
         }
     }
 
@@ -1284,6 +1284,14 @@ return;
     {
         if (vm)
             vm->hit(n);
+    }
+
+    bool cgui::try_input(int c)
+    {
+        if (vm) {
+            return vm->try_input(c & 0xffff, !(c & 0x20000));
+        }
+        return false;
     }
 
     int cgui::cursor() const

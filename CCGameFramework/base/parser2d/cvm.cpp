@@ -4472,6 +4472,16 @@ namespace clib {
         }
     }
 
+    bool cvm::try_input(int c, bool ch)
+    {
+        auto& focus = cvm::global_state.window_focus;
+        if (focus != -1) {
+            post_data(focus, ch ? WM_CHAR : WM_KEYDOWN, c);
+            return true;
+        }
+        return false;
+    }
+
     int cvm::cursor() const
     {
         if (global_state.window_hover != -1 && handles[global_state.window_hover]) {

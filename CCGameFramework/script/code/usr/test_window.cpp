@@ -62,7 +62,7 @@ int read_file(int id, int handle) {
         window_set_text(id, "- Test window 2 -");
         window_layout_linear_set_horizontal_align(window_get_base(id));
         long text = window_create_comctl(id, comctl_label);
-        long text2 = window_create_comctl(id, comctl_label);
+        long text2 = window_create_comctl(id, comctl_edit);
         window_comctl_connect(window_get_base(id), text);
         window_comctl_connect(window_get_base(id), text2);
         window_comctl_set_text(text, "Hello world!!");

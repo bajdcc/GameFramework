@@ -131,6 +131,9 @@ int Parser2DEngine::SetType(cint value)
         clib::cgui::singleton().hit(value & 0xffff);
         return 0;
     }
+    if (value > 0 && clib::cgui::singleton().try_input(value)) {
+        return 0;
+    }
     clib::cgui::singleton().input(value);
     return 0;
 }

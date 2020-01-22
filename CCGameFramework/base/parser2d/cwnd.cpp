@@ -117,6 +117,20 @@ namespace clib {
                 return CColor(51, 51, 51);
             case c_button_fg_hover:
                 return CColor(Gdiplus::Color::Black);
+            case c_edit_bg_def:
+                return CColor(204, 204, 204);
+            case c_edit_bg_focus:
+                return CColor(173, 214, 225);
+            case c_edit_fg_def:
+                return CColor(51, 51, 51);
+            case c_edit_fg_hover:
+                return CColor(Gdiplus::Color::Black);
+            case c_edit_border_def:
+                return CColor(184, 184, 184);
+            case c_edit_border_enter:
+                return CColor(153, 153, 153);
+            case c_edit_border_focus:
+                return CColor(71, 145, 225);
             }
         }
         ATLVERIFY(!"undefined style color!");
@@ -165,6 +179,8 @@ namespace clib {
                 return 0.0f;
             case f_button_radius:
                 return 5.0f;
+            case f_edit_radius:
+                return 1.0f;
             }
         }
         ATLVERIFY(!"undefined style float!");
@@ -697,6 +713,7 @@ namespace clib {
         case comctl_label: return new cwindow_comctl_label();
         case comctl_button: return new cwindow_comctl_button();
         case comctl_image: return new cwindow_comctl_image();
+        case comctl_edit: return new cwindow_comctl_edit();
         }
         vm->error("invalid comctl id");
         return nullptr;
@@ -928,6 +945,11 @@ namespace clib {
             if (comctl_hover != -1)
                 comctl = comctl_hover;
             break;
+        case WM_KEYDOWN:
+        case WM_CHAR:
+            if (comctl_focus != -1)
+                comctl = comctl_focus;
+            break;
         }
         window_msg s{ code, comctl, (uint32)param1, (uint32)param2 };
         const auto p = (byte*)& s;
@@ -987,6 +1009,7 @@ namespace clib {
             std::make_tuple(comctl_label, "label"),
             std::make_tuple(comctl_button, "button"),
             std::make_tuple(comctl_image, "image"),
+            std::make_tuple(comctl_edit, "edit"),
             std::make_tuple(comctl_end, "end"),
         };
         assert(t >= comctl_none && t < comctl_end);
@@ -1046,8 +1069,8 @@ namespace clib {
 
     bool cwindow::set_text(int h, const string_t& text)
     {
-        if (valid_handle(h) && handles[h].comctl->get_label()) {
-            handles[h].comctl->get_label()->set_text(text);
+        if (valid_handle(h) && handles[h].comctl->get_text_interface()) {
+            handles[h].comctl->get_text_interface()->set_text(text);
             return true;
         }
         return false;
@@ -1220,7 +1243,7 @@ namespace clib {
         return nullptr;
     }
 
-    cwindow_comctl_label* comctl_base::get_label()
+    cwindow_comctl_text_interface* comctl_base::get_text_interface()
     {
         return nullptr;
     }
@@ -1414,7 +1437,7 @@ namespace clib {
         text->GetRenderer()->Render(text->GetRenderRect());
     }
 
-    cwindow_comctl_label* cwindow_comctl_label::get_label()
+    cwindow_comctl_text_interface* cwindow_comctl_label::get_text_interface()
     {
         return this;
     }
@@ -1422,6 +1445,11 @@ namespace clib {
     void cwindow_comctl_label::set_text(const string_t& text)
     {
         this->text->SetText(CString(CStringA(text.c_str())));
+    }
+
+    bool cwindow_comctl_label::add_char(int c)
+    {
+        return false;
     }
 
     int cwindow_comctl_label::set_flag(int flag)
@@ -1516,7 +1544,7 @@ namespace clib {
         background->GetRenderer()->SetRenderTarget(rt);
         background->SetColor(style->get_color(cwindow_style::c_button_bg_def));
         background->SetRadius(style->get_float(cwindow_style::f_button_radius));
-        text->SetColor(_style.lock()->get_color(cwindow_style::c_button_fg_def));
+        text->SetColor(style->get_color(cwindow_style::c_button_fg_def));
     }
 
     void cwindow_comctl_button::paint(const CRect& bounds)
@@ -1539,13 +1567,14 @@ namespace clib {
 
     int cwindow_comctl_button::handle_msg(int code, uint32 param1, uint32 param2)
     {
+        auto style = _style.lock();
         switch (code) {
         case WM_MOUSEENTER:
         {
             auto f = text->GetFont();
             f.underline = true;
             text->SetFont(f);
-            text->SetColor(_style.lock()->get_color(cwindow_style::c_button_fg_hover));
+            text->SetColor(style->get_color(cwindow_style::c_button_fg_hover));
         }
         break;
         case WM_MOUSELEAVE:
@@ -1553,7 +1582,7 @@ namespace clib {
             auto f = text->GetFont();
             f.underline = false;
             text->SetFont(f);
-            text->SetColor(_style.lock()->get_color(cwindow_style::c_button_fg_def));
+            text->SetColor(style->get_color(cwindow_style::c_button_fg_def));
         }
         break;
         case WM_LBUTTONDOWN:
@@ -1561,7 +1590,7 @@ namespace clib {
             auto f = text->GetFont();
             f.bold = true;
             text->SetFont(f);
-            background->SetColor(_style.lock()->get_color(cwindow_style::c_button_bg_focus));
+            background->SetColor(style->get_color(cwindow_style::c_button_bg_focus));
         }
         break;
         case WM_LBUTTONUP:
@@ -1569,7 +1598,7 @@ namespace clib {
             auto f = text->GetFont();
             f.bold = false;
             text->SetFont(f);
-            background->SetColor(_style.lock()->get_color(cwindow_style::c_button_bg_def));
+            background->SetColor(style->get_color(cwindow_style::c_button_bg_def));
         }
         break;
         }
@@ -1633,5 +1662,165 @@ namespace clib {
         img->GetRenderer()->SetRenderTarget(nullptr);
         img->SetData(data.data(), data.size());
         img->GetRenderer()->SetRenderTarget(rt.lock());
+    }
+
+    cwindow_comctl_edit::cwindow_comctl_edit(): comctl_base(cwindow::comctl_edit)
+    {
+        background = RoundBorderElement::Create();
+        border = RoundBorderElement::Create();
+        border->SetFill(false);
+        text = EditElement::Create();
+    }
+
+    void cwindow_comctl_edit::set_rt(std::shared_ptr<Direct2DRenderTarget> rt, cwindow_style::ref style)
+    {
+        _style = style;
+        text->GetRenderer()->SetRenderTarget(rt);
+        background->GetRenderer()->SetRenderTarget(rt);
+        background->SetColor(style->get_color(cwindow_style::c_edit_bg_def));
+        background->SetRadius(style->get_float(cwindow_style::f_edit_radius));
+        border->GetRenderer()->SetRenderTarget(rt);
+        border->SetColor(style->get_color(cwindow_style::c_edit_border_def));
+        border->SetRadius(style->get_float(cwindow_style::f_edit_radius));
+        text->SetColor(style->get_color(cwindow_style::c_edit_fg_def));
+    }
+
+    void cwindow_comctl_edit::paint(const CRect& bounds)
+    {
+        background->SetRenderRect((bound).OfRect(bounds));
+        if (bound.Height() > bounds.Height() || bound.Width() > bounds.Width())
+            return;
+        if (bound.Height() > background->GetRenderRect().Height() || bound.Width() > background->GetRenderRect().Width())
+            return;
+        background->GetRenderer()->Render(background->GetRenderRect());
+        border->GetRenderer()->Render(background->GetRenderRect());
+        text->SetRenderRect((bound).OfRect(bounds));
+        text->GetRenderer()->Render(text->GetRenderRect());
+    }
+
+    cwindow_comctl_text_interface* cwindow_comctl_edit::get_text_interface()
+    {
+        return this;
+    }
+
+    void cwindow_comctl_edit::set_text(const string_t& text)
+    {
+        this->text->SetText(CString(CStringA(text.c_str())));
+    }
+
+    bool cwindow_comctl_edit::add_char(int c)
+    {
+        auto t = this->text->GetText();
+        t.AppendChar((wchar_t)c);
+        this->text->SetText(t);
+        return true;
+    }
+
+    int cwindow_comctl_edit::hit(int x, int y) const
+    {
+        if (this->background->GetRenderRect().PtInRect(CPoint(x, y)))
+            return id;
+        return 0;
+    }
+
+    int cwindow_comctl_edit::handle_msg(int code, uint32 param1, uint32 param2)
+    {
+        auto style = _style.lock();
+        switch (code) {
+        case WM_MOUSEENTER:
+        {
+            is_enter = true;
+            text->SetColor(style->get_color(cwindow_style::c_edit_fg_hover));
+            border->SetColor(style->get_color(cwindow_style::c_edit_border_enter));
+        }
+        break;
+        case WM_MOUSELEAVE:
+        {
+            is_enter = false;
+            text->SetColor(style->get_color(cwindow_style::c_edit_fg_def));
+            if (is_focus)
+                border->SetColor(style->get_color(cwindow_style::c_edit_border_focus));
+            else
+                border->SetColor(style->get_color(cwindow_style::c_edit_border_def));
+        }
+        break;
+        case WM_SETFOCUS:
+        {
+            is_focus = true;
+            border->SetColor(style->get_color(cwindow_style::c_edit_border_focus));
+        }
+        break;
+        case WM_KILLFOCUS:
+        {
+            is_focus = false;
+            border->SetColor(style->get_color(cwindow_style::c_edit_border_enter));
+        }
+        break;
+        case WM_LBUTTONDOWN:
+        {
+            auto f = text->GetFont();
+            text->SetFont(f);
+            background->SetColor(style->get_color(cwindow_style::c_edit_bg_focus));
+        }
+        break;
+        case WM_LBUTTONUP:
+        {
+            auto f = text->GetFont();
+            text->SetFont(f);
+            background->SetColor(style->get_color(cwindow_style::c_edit_bg_def));
+        }
+        break;
+        case WM_CHAR:
+        {
+            if (isprint(param1)) {
+                auto t = text->GetText();
+                t.AppendChar((wchar_t)param1);
+                text->SetText(t);
+            }
+            else if (param1 == 22) { // CTRL+V
+                OpenClipboard(window->GetWindowHandle());
+                if (IsClipboardFormatAvailable(CF_TEXT))
+                {
+                    HGLOBAL hg = GetClipboardData(CF_TEXT);
+                    if (hg) {
+                        LPCSTR q = (LPCSTR)GlobalLock(hg);
+                        if (q != NULL)
+                        {
+                            CStringA A(q);
+                            auto t = text->GetText();
+                            t += A;
+                            text->SetText(t);
+                        }
+                        GlobalUnlock(hg);
+                    }
+                }
+                CloseClipboard();
+            }
+        }
+        break;
+        case WM_KEYDOWN:
+        {
+            switch (param1)
+            {
+            case VK_BACK: {
+                auto t = text->GetText();
+                if (!t.IsEmpty()) {
+                    t.Delete(t.GetLength() - 1);
+                }
+                text->SetText(t);
+            }
+                        break;
+            default:
+                break;
+            }
+        }
+        break;
+        }
+        return 0;
+    }
+
+    CSize cwindow_comctl_edit::min_size() const
+    {
+        return background->GetRenderRect().Size();
     }
 }

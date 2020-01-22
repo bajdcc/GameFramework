@@ -16,7 +16,7 @@ int fun_b(int n) {
 }
 int main(int argc, char **argv) {
     put_string("========== [#16 TEST STACK] ==========\n");
-    int answer = fun_a(10);
+    int answer = fun_a(5);
     put_string("Answer: ");
     put_int(answer);
     put_string("\n");

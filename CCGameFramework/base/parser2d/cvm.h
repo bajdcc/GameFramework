@@ -102,6 +102,7 @@ namespace clib {
         void paint_window(const CRect& bounds);
         void reset_ips();
         void hit(int n);
+        bool try_input(int c, bool ch = true);
         int cursor() const;
 
         static void logging(CString s);

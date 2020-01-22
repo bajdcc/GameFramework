@@ -29,7 +29,7 @@ struct __window_msg_struct__ {
 };
 
 int window_get_msg(int id, __window_msg_struct__* s) {
-    int c, i;
+    int c = 0, i;
     __window_msg_struct__ s0;
     char* p = (char*)& s0;
     for (i = 0; c < 0x1000 && i < sizeof(__window_msg_struct__); i++) {
@@ -81,6 +81,7 @@ enum window_comctl_type {
     comctl_label,
     comctl_button,
     comctl_image,
+    comctl_edit,
 };
 
 struct __window_create_comctl_struct__ {
