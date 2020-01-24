@@ -477,7 +477,6 @@ namespace clib {
         }
         post_data(code, pt.x, pt.y);
         if (n == 11) {
-            //post_data(WM_SETCURSOR, pt.x, pt.y);
             auto& hover = cvm::global_state.window_hover;
             if (hover != -1) { // 当前有鼠标悬停
                 if (hover != handle) { // 非当前窗口
@@ -543,7 +542,7 @@ namespace clib {
         time_handler = std::chrono::system_clock::now();
         if (msg.comctl != -1) {
             if (valid_handle(msg.comctl)) {
-                return handles[msg.comctl].comctl->handle_msg(msg.code, msg.param1, msg.param2);
+                return handles[msg.comctl].comctl->handle_msg(msg.code, msg.param1, msg.param2, this);
             }
             return -1;
         }
@@ -601,6 +600,10 @@ namespace clib {
             break;
         case WM_SETCURSOR:
         {
+            if (msg.param1 == 0)
+                cursor = 1;
+            else
+                cursor = msg.param1;
         }
             break;
         case WM_NCCALCSIZE:
@@ -870,9 +873,6 @@ namespace clib {
                 if (is_border(CPoint(param1, param2 + self_title.Height()), cx, cy)) {
                     cursor = sys_cursor(cx, cy);
                 }
-                else {
-                    cursor = 1;
-                }
             }
             else if (code == WM_NCMOUSEMOVE)
             {
@@ -914,6 +914,7 @@ namespace clib {
                 if (comctl != -1) {
                     if (comctl_hover != -1) {
                         if (comctl_hover != comctl) {
+                            cursor = 1;
                             post_data(WM_MOUSELEAVE, 0, 0, comctl_hover);
                             comctl_hover = comctl;
                             post_data(WM_MOUSEENTER, 0, 0, comctl_hover);
@@ -924,9 +925,12 @@ namespace clib {
                         post_data(WM_MOUSEENTER, 0, 0, comctl_hover);
                     }
                 }
-                else if (comctl_hover != -1) {
-                    post_data(WM_MOUSELEAVE, 0, 0, comctl_hover);
-                    comctl_hover = -1;
+                else {
+                    cursor = 1;
+                    if (comctl_hover != -1) {
+                        post_data(WM_MOUSELEAVE, 0, 0, comctl_hover);
+                        comctl_hover = -1;
+                    }
                 }
             }
             else {
@@ -1113,6 +1117,14 @@ namespace clib {
         return false;
     }
 
+    bool cwindow::get_text(int h, string_t& text) const
+    {
+        if (valid_handle(h) && handles[h].comctl->get_text_interface()) {
+            return handles[h].comctl->get_text_interface()->get_text(text);
+        }
+        return false;
+    }
+
     extern string_t limit_string(const string_t& s, uint len);
 
     std::wstring cwindow::to_string() const
@@ -1291,7 +1303,7 @@ namespace clib {
         return id;
     }
 
-    int comctl_base::handle_msg(int code, uint32 param1, uint32 param2)
+    int comctl_base::handle_msg(int code, uint32 param1, uint32 param2, cwindow_interface* wnd)
     {
         return 0;
     }
@@ -1455,6 +1467,11 @@ namespace clib {
         this->text->SetText(CString(CStringA(text.c_str())));
     }
 
+    bool cwindow_comctl_label::get_text(string_t& text)
+    {
+        return false;
+    }
+
     bool cwindow_comctl_label::add_char(int c)
     {
         return false;
@@ -1495,7 +1512,7 @@ namespace clib {
         return 0;
     }
 
-    int cwindow_comctl_label::handle_msg(int code, uint32 param1, uint32 param2)
+    int cwindow_comctl_label::handle_msg(int code, uint32 param1, uint32 param2, cwindow_interface* wnd)
     {
         switch (code) {
         case WM_MOUSEENTER:
@@ -1573,7 +1590,7 @@ namespace clib {
         return 0;
     }
 
-    int cwindow_comctl_button::handle_msg(int code, uint32 param1, uint32 param2)
+    int cwindow_comctl_button::handle_msg(int code, uint32 param1, uint32 param2, cwindow_interface* wnd)
     {
         auto style = _style.lock();
         switch (code) {
@@ -1583,6 +1600,7 @@ namespace clib {
             f.underline = true;
             text->SetFont(f);
             text->SetColor(style->get_color(cwindow_style::c_button_fg_hover));
+            wnd->post_data(WM_SETCURSOR, Window::CursorType::hand);
         }
         break;
         case WM_MOUSELEAVE:
@@ -1723,6 +1741,12 @@ namespace clib {
         this->text->SetText(CString(CStringA(text.c_str())));
     }
 
+    bool cwindow_comctl_edit::get_text(string_t& text)
+    {
+        text = CStringA(this->text->GetText()).GetBuffer(0);
+        return true;
+    }
+
     bool cwindow_comctl_edit::add_char(int c)
     {
         auto t = this->text->GetText();
@@ -1738,7 +1762,7 @@ namespace clib {
         return 0;
     }
 
-    int cwindow_comctl_edit::handle_msg(int code, uint32 param1, uint32 param2)
+    int cwindow_comctl_edit::handle_msg(int code, uint32 param1, uint32 param2, cwindow_interface* wnd)
     {
         auto style = _style.lock();
         switch (code) {
@@ -1748,6 +1772,7 @@ namespace clib {
             text->SetColor(style->get_color(cwindow_style::c_edit_fg_hover));
             if (!is_focus)
                 border->SetColor(style->get_color(cwindow_style::c_edit_border_enter));
+            wnd->post_data(WM_SETCURSOR, Window::CursorType::ibeam);
         }
         break;
         case WM_MOUSELEAVE:
@@ -1814,6 +1839,7 @@ namespace clib {
                 }
                 CloseClipboard();
             }
+            wnd->post_data(WM_DEADCHAR, 0, 0, id);
         }
         break;
         case WM_KEYDOWN:

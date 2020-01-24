@@ -126,6 +126,7 @@ void EditElementRenderer::Render(CRect bounds)
         hr = textLayout->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
         if (!e->IsMultiline())
         {
+            inlineObject = nullptr;
             hr = dwriteFactory->CreateEllipsisTrimmingSign(textLayout, &inlineObject);
             trimming.granularity = DWRITE_TRIMMING_GRANULARITY_CHARACTER;
             trimming.delimiter = 1;

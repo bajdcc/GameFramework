@@ -175,6 +175,11 @@ int window_comctl_set_text(long handle, char* text) {
     interrupt 510;
 }
 
+char* window_comctl_get_text(long handle) {
+    &handle;
+    interrupt 512;
+}
+
 struct __window_comctl_set_ptr_struct__ {
     long handle;
     char* ptr; int len;

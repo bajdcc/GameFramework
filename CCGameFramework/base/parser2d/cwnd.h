@@ -99,9 +99,14 @@ namespace clib {
         static ref create_style(style_t t);
     };
 
+    class cwindow_interface {
+    public:
+        virtual void post_data(const int& code, int param1 = 0, int param2 = 0, int comctl = -1) = 0;
+    };
     class cwindow_comctl_text_interface {
     public:
         virtual void set_text(const string_t& text) = 0;
+        virtual bool get_text(string_t& text) = 0;
         virtual bool add_char(int c) = 0;
     };
 
@@ -125,7 +130,7 @@ namespace clib {
         virtual int hit(int x, int y) const;
         void set_id(int id);
         int get_id() const;
-        virtual int handle_msg(int code, uint32 param1, uint32 param2);
+        virtual int handle_msg(int code, uint32 param1, uint32 param2, cwindow_interface* wnd);
         virtual CSize min_size() const;
     protected:
         int id{ -1 };
@@ -153,7 +158,7 @@ namespace clib {
     };
 
     class cvm;
-    class cwindow {
+    class cwindow : public cwindow_interface {
     public:
         explicit cwindow(cvm* vm, int handle, const string_t& caption, const CRect& location);
         ~cwindow();
@@ -197,7 +202,7 @@ namespace clib {
         };
 
         int handle_msg(const window_msg& msg);
-        void post_data(const int& code, int param1 = 0, int param2 = 0, int comctl = -1);
+        void post_data(const int& code, int param1 = 0, int param2 = 0, int comctl = -1) override;
 
         int create_comctl(window_comctl_type type);
         static string_t cwindow::handle_typename(window_comctl_type t);
@@ -210,6 +215,7 @@ namespace clib {
         bool set_flag(int h, int flag);
         bool set_style(int style);
         bool set_ptr(int h, const std::vector<byte>& data);
+        bool get_text(int h, string_t& text) const;
 
         std::wstring to_string() const;
 
@@ -327,10 +333,11 @@ namespace clib {
         void paint(const CRect& bounds) override;
         cwindow_comctl_text_interface* get_text_interface() override;
         void set_text(const string_t& text) override;
+        bool get_text(string_t& text) override;
         bool add_char(int c) override;
         int set_flag(int flag) override;
         int hit(int x, int y) const override;
-        int handle_msg(int code, uint32 param1, uint32 param2) override;
+        int handle_msg(int code, uint32 param1, uint32 param2, cwindow_interface* wnd) override;
         CSize min_size() const override;
     protected:
         std::shared_ptr<SolidLabelElement> text;
@@ -342,7 +349,7 @@ namespace clib {
         void set_rt(std::shared_ptr<Direct2DRenderTarget> rt, cwindow_style::ref) override;
         void paint(const CRect& bounds) override;
         int hit(int x, int y) const override;
-        int handle_msg(int code, uint32 param1, uint32 param2) override;
+        int handle_msg(int code, uint32 param1, uint32 param2, cwindow_interface* wnd) override;
         CSize min_size() const override;
     private:
         std::shared_ptr<RoundBorderElement> background;
@@ -378,9 +385,10 @@ namespace clib {
         void paint(const CRect& bounds) override;
         cwindow_comctl_text_interface* get_text_interface() override;
         void set_text(const string_t& text) override;
+        bool get_text(string_t& text) override;
         bool add_char(int c) override;
         int hit(int x, int y) const override;
-        int handle_msg(int code, uint32 param1, uint32 param2) override;
+        int handle_msg(int code, uint32 param1, uint32 param2, cwindow_interface* wnd) override;
         CSize min_size() const override;
     private:
         std::shared_ptr<EditElement> text;

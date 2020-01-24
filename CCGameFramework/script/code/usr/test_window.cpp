@@ -18,8 +18,10 @@ int read_file(int id, int handle) {
     int t1id;
     int t3id;
     int t4id;
+    int k1id, k2id;
     long t1;
     long t4;
+    long k1, k2;
     int style = style_win10;
     if (child) {
         window_set_text(id, "- Test window -");
@@ -63,6 +65,10 @@ int read_file(int id, int handle) {
         window_layout_linear_set_horizontal_align(window_get_base(id));
         long text = window_create_comctl(id, comctl_label);
         long text2 = window_create_comctl(id, comctl_edit);
+        k1 = text;
+        k2 = text2;
+        k1id = window_get_comctl(text);
+        k2id = window_get_comctl(text2);
         window_comctl_connect(window_get_base(id), text);
         window_comctl_connect(window_get_base(id), text2);
         window_comctl_set_text(text, "Hello world!!");
@@ -94,6 +100,11 @@ int read_file(int id, int handle) {
                     window_set_style(id, style = style_win10);
                     window_comctl_set_text(t4, "style: win10");
                 }
+            }
+        }
+        if (!child) {
+            if (s.comctl == k2id && s.code == 0x103) {
+                window_comctl_set_text(k1, window_comctl_get_text(k2));
             }
         }
         put_string("[MSG ] Handle: ");

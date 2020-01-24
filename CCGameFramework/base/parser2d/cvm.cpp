@@ -3569,6 +3569,26 @@ namespace clib {
             ctx->ax._i = -1;
             break;
         }
+        case 512:
+        {
+            struct __window_comctl_get_text_struct__ {
+                int handle; int id;
+            };
+            const auto& s = vmm_get<__window_comctl_get_text_struct__>(ctx->ax._ui);
+            auto h = s.handle;
+            auto c = s.id;
+            if (is_window_handle(h)) {
+                auto wnd = handles[h]->data.cwnd;
+                string_t text;
+                if (wnd->get_text(c, text)) {
+                    ctx->ax._i = vmm_malloc(text.length() + 1);
+                    vmm_setstr(ctx->ax._i, text.c_str());
+                    break;
+                }
+            }
+            ctx->ax._i = 0;
+            break;
+        }
         default:
 #if LOG_SYSTEM
             ATLTRACE("[SYSTEM] ERR  | unknown interrupt: %d\n", ctx->ax._i);
