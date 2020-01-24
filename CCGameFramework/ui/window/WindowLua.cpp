@@ -331,7 +331,7 @@ int ui_update_obj(lua_State* L)
         auto text = luaL_checkstring(L, -1); lua_pop(L, 1);
         obj->SetText(CString(text));
         lua_getfield(L, -1, "multiline");
-        auto multiline = (cint)luaL_checkinteger(L, -1) == 0; lua_pop(L, 1);
+        auto multiline = (cint)luaL_checkinteger(L, -1) != 0; lua_pop(L, 1);
         obj->SetMultiline(multiline);
         {
             Font font;

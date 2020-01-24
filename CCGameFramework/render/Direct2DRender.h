@@ -776,20 +776,23 @@ public:
 
     cint GetTypeId()override;
 
-    CColor GetColor();
+    CColor GetColor() const;
     void SetColor(CColor value);
-    const Font& GetFont();
+    const Font& GetFont() const;
     void SetFont(const Font& value);
-    const CString& GetText();
+    const CString& GetText() const;
     void SetText(const CString& value);
-    const bool IsMultiline();
+    const bool IsMultiline() const;
     void SetMultiline(const bool& value);
+    const bool HasCaret() const;
+    void SetCaret(const bool& value);
 
 protected:
     CColor color;
     Font fontProperties;
     CString text;
     bool multiline{ false };
+    bool caret{ false };
 };
 
 class EditElementRenderer : public GraphicsRenderer<EditElement, EditElementRenderer, Direct2DRenderTarget>

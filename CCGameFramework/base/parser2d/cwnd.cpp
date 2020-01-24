@@ -118,9 +118,9 @@ namespace clib {
             case c_button_fg_hover:
                 return CColor(Gdiplus::Color::Black);
             case c_edit_bg_def:
-                return CColor(204, 204, 204);
+                return CColor(Gdiplus::Color::White);
             case c_edit_bg_focus:
-                return CColor(173, 214, 225);
+                return CColor(Gdiplus::Color::White);
             case c_edit_fg_def:
                 return CColor(51, 51, 51);
             case c_edit_fg_hover:
@@ -824,6 +824,10 @@ namespace clib {
                 self_hovered = false;
                 self_drag = false;
                 self_size = false;
+                if (comctl_hover != -1) {
+                    post_data(WM_MOUSELEAVE, 0, 0, comctl_hover);
+                    comctl_hover = -1;
+                }
             }
             else if (code == WM_SETFOCUS)
             {
@@ -838,6 +842,10 @@ namespace clib {
                 self_focused = false;
                 self_drag = false;
                 self_size = false;
+                if (comctl_focus != -1) {
+                    post_data(WM_KILLFOCUS, 0, 0, comctl_focus);
+                    comctl_focus = -1;
+                }
             }
             else if (code == WM_NCLBUTTONDOWN)
             {
@@ -1687,6 +1695,13 @@ namespace clib {
 
     void cwindow_comctl_edit::paint(const CRect& bounds)
     {
+        caret_pt++;
+        if (caret_pt > CARET_BLINK_N) {
+            caret_pt = 0;
+            if (is_focus) {
+                text->SetCaret(!text->HasCaret());
+            }
+        }
         background->SetRenderRect((bound).OfRect(bounds));
         if (bound.Height() > bounds.Height() || bound.Width() > bounds.Width())
             return;
@@ -1731,7 +1746,8 @@ namespace clib {
         {
             is_enter = true;
             text->SetColor(style->get_color(cwindow_style::c_edit_fg_hover));
-            border->SetColor(style->get_color(cwindow_style::c_edit_border_enter));
+            if (!is_focus)
+                border->SetColor(style->get_color(cwindow_style::c_edit_border_enter));
         }
         break;
         case WM_MOUSELEAVE:
@@ -1747,12 +1763,14 @@ namespace clib {
         case WM_SETFOCUS:
         {
             is_focus = true;
+            text->SetCaret(true);
             border->SetColor(style->get_color(cwindow_style::c_edit_border_focus));
         }
         break;
         case WM_KILLFOCUS:
         {
             is_focus = false;
+            text->SetCaret(false);
             border->SetColor(style->get_color(cwindow_style::c_edit_border_enter));
         }
         break;

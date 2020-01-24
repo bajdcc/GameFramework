@@ -11,6 +11,7 @@
 #include "cvfs.h"
 
 #define WINDOW_HANDLE_NUM 1024
+#define CARET_BLINK_N 15
 
 namespace clib {
     class vfs_node_stream_window : public vfs_node_dec {
@@ -388,6 +389,7 @@ namespace clib {
         std::weak_ptr<cwindow_style> _style;
         bool is_enter{ false };
         bool is_focus{ false };
+        int caret_pt{ 0 };
     };
 }
 

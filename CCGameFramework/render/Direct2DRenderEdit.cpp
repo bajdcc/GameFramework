@@ -23,7 +23,7 @@ cint EditElement::GetTypeId()
     return Edit;
 }
 
-CColor EditElement::GetColor()
+CColor EditElement::GetColor() const
 {
     return color;
 }
@@ -40,7 +40,7 @@ void EditElement::SetColor(CColor value)
     }
 }
 
-const Font& EditElement::GetFont()
+const Font& EditElement::GetFont() const
 {
     return fontProperties;
 }
@@ -57,7 +57,7 @@ void EditElement::SetFont(const Font& value)
     }
 }
 
-const CString& EditElement::GetText()
+const CString& EditElement::GetText() const
 {
     return text;
 }
@@ -74,7 +74,7 @@ void EditElement::SetText(const CString& value)
     }
 }
 
-const bool EditElement::IsMultiline()
+const bool EditElement::IsMultiline() const
 {
     return multiline;
 }
@@ -89,6 +89,16 @@ void EditElement::SetMultiline(const bool& value)
             renderer->OnElementStateChanged();
         }
     }
+}
+
+const bool EditElement::HasCaret() const
+{
+    return caret;
+}
+
+void EditElement::SetCaret(const bool& value)
+{
+    caret = value;
 }
 
 void EditElementRenderer::Render(CRect bounds)
@@ -114,7 +124,7 @@ void EditElementRenderer::Render(CRect bounds)
         hr = textLayout->SetWordWrapping(DWRITE_WORD_WRAPPING_WRAP);
         hr = textLayout->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
         hr = textLayout->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
-        if (e->IsMultiline())
+        if (!e->IsMultiline())
         {
             hr = dwriteFactory->CreateEllipsisTrimmingSign(textLayout, &inlineObject);
             trimming.granularity = DWRITE_TRIMMING_GRANULARITY_CHARACTER;
@@ -134,6 +144,17 @@ void EditElementRenderer::Render(CRect bounds)
             brush,
             D2D1_DRAW_TEXT_OPTIONS_NO_SNAP
         );
+        if (e->HasCaret()) {
+            DWRITE_TEXT_METRICS metrics;
+            hr = textLayout->GetMetrics(&metrics);
+            if (SUCCEEDED(hr))
+            {
+                auto right = (FLOAT)(textBounds.left + metrics.widthIncludingTrailingWhitespace + 3.0f);
+                d2dRenderTarget->DrawLine(
+                    { right, (FLOAT)textBounds.top + metrics.top },
+                    { right, (FLOAT)(textBounds.top + metrics.top + metrics.height) }, brush, 1.0f);
+            }
+        }
 
         if (oldMaxWidth != textBounds.Width())
         {
