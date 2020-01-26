@@ -130,6 +130,7 @@ namespace clib {
             return true;
         std::ifstream ifs(path, std::ios::binary);
         if (ifs) {
+            auto start = std::chrono::system_clock::now();
             auto p = ifs.rdbuf();
             auto size = p->pubseekoff(0, std::ios::end, std::ios::in);
             p->pubseekpos(0, std::ios::in);
@@ -140,6 +141,7 @@ namespace clib {
                 return false;
             }
             if (strncmp((const char*)data.data(), "CCOS", 4) == 0) {
+                CString stat;
                 if (strncmp((const char*)data.data() + 4, "TEXT", 4) == 0) {
                     auto size2 = *((uLongf*)(data.data() + 8));
                     if (size2 != data.size() - 12)
@@ -149,11 +151,15 @@ namespace clib {
                     vm->as_root(true);
                     vm->write_vfs(name + ".bin", crev::conv(data));
                     vm->as_root(false);
+                    auto end = std::chrono::system_clock::now();
+                    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+                    stat.Format(L"加载缓存：%S，耗时：%lldms", name.c_str(), duration.count());
+                    vm->add_stat(stat);
                     return true;
                 }
                 else if (strncmp((const char*)data.data() + 4, "ZLIB", 4) == 0) {
                     auto size2 = *((uLongf*)(data.data() + 8));
-                    uLongf newsize;
+                    uLongf newsize = size2;
                     std::vector<byte> newdata(size2);
                     auto r = uncompress(newdata.data(), &newsize, data.data() + 12, data.size() - 12);
                     if (r == Z_OK && newsize == size2) {
@@ -161,6 +167,10 @@ namespace clib {
                         vm->as_root(true);
                         vm->write_vfs(name + ".bin", crev::conv(newdata));
                         vm->as_root(false);
+                        auto end = std::chrono::system_clock::now();
+                        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+                        stat.Format(L"加载缓存：%S，耗时：%lldms", name.c_str(), duration.count());
+                        vm->add_stat(stat);
                         return true;
                     }
                 }
@@ -282,8 +292,17 @@ namespace clib {
             reset_cycles();
             reset_ips();
         }
+        color_bg_stack.resize(1);
+        color_fg_stack.resize(1);
         running = false;
         exited = false;
+    }
+
+    void cgui::clear_cache()
+    {
+        cache.clear();
+        cache_code.clear();
+        cache_dep.clear();
     }
 
     void cgui::draw(CComPtr<ID2D1RenderTarget>& rt, const CRect& bounds, const Parser2DEngine::BrushBag& brushes, bool paused, decimal fps) {
@@ -1024,6 +1043,7 @@ namespace clib {
                 }
             }
         }
+        CString stat;
         try {
             auto c = cache.find(new_path);
             if (c != cache.end()) {
@@ -1032,6 +1052,7 @@ namespace clib {
             auto code = do_include(new_path);
             fail_errno = -2;
             gen.reset();
+            auto start = std::chrono::system_clock::now();
             auto root = p.parse(code, &gen);
 #if LOG_AST
             {
@@ -1043,9 +1064,13 @@ namespace clib {
 #endif
             gen.gen(new_path, root);
             auto file = gen.file();
+            auto end = std::chrono::system_clock::now();
             p.clear_ast();
             cache.insert(std::make_pair(new_path, file));
             save_bin(new_path);
+            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+            stat.Format(L"编译：%S，耗时：%lldms", new_path.c_str(), duration.count());
+            vm->add_stat(stat);
             return vm->load(new_path, file, args);
         }
         catch (const cexception& e) {

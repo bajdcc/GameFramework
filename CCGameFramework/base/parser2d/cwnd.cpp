@@ -1839,7 +1839,7 @@ namespace clib {
                 }
                 CloseClipboard();
             }
-            wnd->post_data(WM_DEADCHAR, 0, 0, id);
+            wnd->post_data(WM_DEADCHAR, param1, 0, id);
         }
         break;
         case WM_KEYDOWN:

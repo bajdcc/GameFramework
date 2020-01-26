@@ -36,6 +36,8 @@
 #define SOFT_KILL_SIGNAL 9
 #define KILL_SIGNAL 99
 #define VFS_LINK_MAX_NUM 5
+#define STAT_DELAY_N 60
+#define STAT_MAX_N 10
 
 #define EXT_LOAD_FUNCNAME "ccos_ext_load"
 #define EXT_UNLOAD_FUNCNAME "ccos_ext_unload"
@@ -2003,7 +2005,8 @@ namespace clib {
     {
         static TCHAR sz[256];
         std::wstringstream ss;
-        if (t == D_PS) {
+        switch (t) {
+        case D_PS: {
             ss << L"[STATE] [FLAG] [PID] [IPS] [COMMAND LINE]     [PAGE]" << std::endl;
             for (auto i = 0; i < TASK_NUM; ++i) {
                 if (tasks[i] && tasks[i]->flag & CTX_VALID) {
@@ -2018,7 +2021,8 @@ namespace clib {
                 }
             }
         }
-        else if (t == D_HTOP) {
+                 break;
+        case D_HTOP: {
             auto root_id = -1;
             // deps[父进程] = [子进程集合]
             std::unordered_map<int, std::list<int>> deps;
@@ -2121,7 +2125,8 @@ namespace clib {
                 }
             }
         }
-        else if (t == D_HANDLE) {
+                   break;
+        case D_HANDLE: {
             for (auto i = 0; i < HANDLE_NUM; ++i) {
                 if (handles[i] && handles[i]->type != h_none) {
                     auto nm = CString(CStringA(limit_string(handles[i]->name, 30).c_str()));
@@ -2131,7 +2136,8 @@ namespace clib {
                 }
             }
         }
-        else if (t == D_WINDOW) {
+                     break;
+        case D_WINDOW: {
             auto tl = draw_bounds.TopLeft();
             _snwprintf_s(sz, sizeof(sz) / sizeof(sz[0]), L"Cursor: %d,%d", global_state.mouse_x - tl.x, global_state.mouse_y - tl.y);
             ss << sz << std::endl << std::endl;
@@ -2139,7 +2145,8 @@ namespace clib {
                 ss << w->to_string() << std::endl;
             }
         }
-        else if (t == D_MEM) {
+                     break;
+        case D_MEM: {
             std::wstringstream ss;
             {
                 if (global_state.input_lock == -1)
@@ -2198,6 +2205,33 @@ namespace clib {
             }
             _snwprintf_s(sz, sizeof(sz) / sizeof(sz[0]), L"%s %23s", L"GUI: ", guiss.str().c_str()); ss << sz << std::endl;
             return CString(ss.str().c_str());
+        }
+                  break;
+        case D_STAT: {
+            if (stat_n > 0) {
+                (*const_cast<int*>(&stat_n))--;
+                if (stat_s.empty()) {
+                    (*const_cast<int*>(&stat_n)) = 0;
+                }
+                else {
+                    ss << (wchar_t)(L'0' + stat_s.size());
+                    for (const auto& s : stat_s) {
+                        ss << s.GetString() << std::endl;
+                    }
+                }
+            }
+            else {
+                if (!stat_s.empty()) {
+                    while (!stat_s.empty()) {
+                        const_cast<std::list<CString>*>(&stat_s)->pop_back();
+                    }
+                }
+                return L"";
+            }
+        }
+                   break;
+        default:
+            break;
         }
         return CString(ss.str().c_str());
     }
@@ -4556,6 +4590,14 @@ namespace clib {
     std::string cvm::ext_get_path(const std::string& name) const
     {
         return "/ext/" + name + "/func";
+    }
+
+    void cvm::add_stat(const CString& s)
+    {
+        stat_n = STAT_DELAY_N;
+        if (stat_s.size() >= STAT_MAX_N)
+            stat_s.pop_front();
+        stat_s.push_back(s);
     }
 
     void cvm::ext_error(const std::string& str)

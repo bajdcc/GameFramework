@@ -104,7 +104,14 @@ int read_file(int id, int handle) {
         }
         if (!child) {
             if (s.comctl == k2id && s.code == 0x103) {
-                window_comctl_set_text(k1, window_comctl_get_text(k2));
+                char* txt = window_comctl_get_text(k2);
+                if (s.param1 == '\r') {
+                    put_string("Input: ");
+                    put_string(txt);
+                    put_string("\n");
+                }
+                window_comctl_set_text(k1, txt);
+                free(txt);
             }
         }
         put_string("[MSG ] Handle: ");

@@ -7,10 +7,10 @@ void run(char* path, char* txt) {
     put_string("[x] ");
     put_string(path);
     put_string(" => ");
-    strcpy(cmd, "/usr/bf_");
+    strcpy(cmd, "/tmp/bf_");
     strcat(cmd, path);
     writefile(cmd, txt, strlen(txt), 1);
-    strcpy(cmd, "bf /usr/bf_");
+    strcpy(cmd, "bf /tmp/bf_");
     strcat(cmd, path);
     sleep(200);
     shell(cmd);

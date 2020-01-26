@@ -119,6 +119,10 @@ int Parser2DEngine::SetType(cint value)
         clib::cgui::singleton().output();
         return 0;
     }
+    if (value == -105) {
+        clib::cgui::singleton().clear_cache();
+        return 0;
+    }
     if (value & 0x40000) {
         clib::cvm::global_state.mouse_x = value & 0xffff;
         return 0;
@@ -230,9 +234,16 @@ void Parser2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
     rt->DrawText(logo.GetBuffer(0), logo.GetLength(), logoTF->textFormat,
         D2D1::RectF((float)bounds.right - 210, (float)bounds.top + 5, (float)bounds.right, (float)bounds.top + 50), logoBrush);
 
+    logo = clib::cgui::singleton().get_disp(clib::cvm::disp_t::D_STAT);
+    if (!logo.IsEmpty()) {
+        auto line = int(logo[0] - L'0');
+        rt->DrawText(logo.GetBuffer(0) + 1, logo.GetLength() - 1, loggingTF->textFormat,
+            D2D1::RectF((float)bounds.left + 10, (float)bounds.bottom - (line)*brushes.gbkFont.size, (float)bounds.left + 200, (float)bounds.bottom), logoBrush);
+    }
+
     if (clib::cvm::global_state.is_logging) {
-        const int span = 12;
-        const int wspan = 16;
+        const int span = loggingFont.size;
+        const int wspan = brushes.gbkFont.size;
         auto R = D2D1::RectF((float)bounds.left + 10, (float)bounds.top + 10, (float)bounds.right - 10, (float)bounds.top + 60);
         rt->FillRectangle(
             D2D1::RectF((float)bounds.left, (float)bounds.top, (float)bounds.right, (float)bounds.bottom),

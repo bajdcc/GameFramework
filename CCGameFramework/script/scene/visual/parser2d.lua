@@ -168,7 +168,7 @@ function M:init_menu(info)
 		end
 	}):attach(slider)
 	Button:new({
-		text = '输出',
+		text = '复制控制台',
 		font_family = '楷体',
 		track_display = 0,
 		font_size = 16,
@@ -194,6 +194,16 @@ function M:init_menu(info)
 		font_size = 16,
 		click = function(this)
 			UIExt.refresh(CurrentScene.layers.pe2d, -101)
+			UIExt.paint()
+		end
+	}):attach(slider)
+	Button:new({
+		text = '清理缓存',
+		font_family = '楷体',
+		track_display = 0,
+		font_size = 16,
+		click = function(this)
+			UIExt.refresh(CurrentScene.layers.pe2d, -105)
 			UIExt.paint()
 		end
 	}):attach(slider)

@@ -112,6 +112,7 @@ namespace clib {
             D_HANDLE,
             D_WINDOW,
             D_MEM,
+            D_STAT,
         };
         CString get_disp(disp_t) const;
 
@@ -119,6 +120,7 @@ namespace clib {
         int ext_unload(const std::string& name) override;
         std::string ext_get_path(const std::string& name) const override;
         void ext_error(const std::string& msg) override;
+        void add_stat(const CString& s);
 
     private:
         // 申请页框
@@ -313,6 +315,8 @@ namespace clib {
             std::function<int(cext*)> unload_func;
         };
         std::map<string_t, ext_struct> exts;
+        int stat_n{ 0 };
+        std::list<CString> stat_s;
 
     public:
         static struct global_state_t {
