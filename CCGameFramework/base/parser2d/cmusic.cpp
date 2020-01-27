@@ -150,7 +150,7 @@ namespace clib {
             std::vector<std::string> times;
             std::smatch sm;
             auto lycn = lyr;
-            if (!lycn.empty() && std::isspace(lycn.back()))
+            if (!lycn.empty() && lycn.back() > 0 && std::isspace(lycn.back()))
                 lycn.erase(lycn.end() - 1);
             for (;;) {
                 if (std::regex_match(lycn, sm, re1)) {

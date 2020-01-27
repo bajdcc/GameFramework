@@ -18,6 +18,9 @@ int reset_cycle() {
 long timestamp() {
     interrupt 102;
 }
+long timestamp_s() {
+    interrupt 103;
+}
 char* stacktrace(char *s) {
     s;
     interrupt 41;
@@ -25,4 +28,8 @@ char* stacktrace(char *s) {
 int load_ext(char* s) {
     s;
     interrupt 90;
+}
+void stat_log(char* s) {
+    s;
+    interrupt 18;
 }

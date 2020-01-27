@@ -120,7 +120,7 @@ namespace clib {
         int ext_unload(const std::string& name) override;
         std::string ext_get_path(const std::string& name) const override;
         void ext_error(const std::string& msg) override;
-        void add_stat(const CString& s);
+        void add_stat(const CString& s, bool show = true);
 
     private:
         // 申请页框
@@ -274,6 +274,7 @@ namespace clib {
             std::chrono::system_clock::time_point record_next;
             int input_redirect{ 0 };
             int output_redirect{ 0 };
+            int output_redirect_bk{ 0 };
             bool input_stop{ false };
             std::deque<char> input_queue;
             std::unordered_set<int> handles;

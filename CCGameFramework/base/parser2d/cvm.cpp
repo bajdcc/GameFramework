@@ -22,6 +22,8 @@
 #define REPORT_ERROR_FILE "error.log"
 #define REPORT_INFO 0
 #define REPORT_INFO_FILE "info.log"
+#define REPORT_STAT 1
+#define REPORT_STAT_FILE "stat.log"
 
 #define REPORT_MEMORY 0
 #define REPORT_MEMORY_FILE "mem.log"
@@ -439,10 +441,23 @@ namespace clib {
         decltype(timers) _timers(timers);
         auto _now = std::chrono::system_clock::now();
         for (const auto& ti : _timers) {
-            if (tasks[ti] && _now >= tasks[ti]->record_next) {
-                if (tasks[ti]->state == CTS_WAIT)
-                    tasks[ti]->state = CTS_RUNNING;
-                timers.erase(ti);
+            if (tasks[ti]) {
+                if (tasks[ti]->state == CTS_WAIT) {
+                    if (_now >= tasks[ti]->record_next) {
+                        tasks[ti]->state = CTS_RUNNING;
+                        timers.erase(ti);
+                    }
+                    else if (!tasks[ti]->sigs.empty()) {
+                        CString s;
+                        s.Format(L"信号：%d，进程：[%d] %S，操作：休眠", tasks[ti]->sigs.front(), ti, tasks[ti]->path.c_str());
+                        add_stat(s);
+                        tasks[ti]->state = CTS_RUNNING;
+                        timers.erase(ti);
+                    }
+                }
+                else if (tasks[ti]->state == CTS_RUNNING) {
+                    timers.erase(ti);
+                }
             }
         }
         if (global_state.interrupt) {
@@ -1593,6 +1608,7 @@ namespace clib {
         ctx->debug = false;
         ctx->input_redirect = -1;
         ctx->output_redirect = -1;
+        ctx->output_redirect_bk = -1;
         ctx->input_queue.clear();
         ctx->input_stop = false;
         available_tasks++;
@@ -1633,7 +1649,8 @@ namespace clib {
                         std::back_inserter(tasks[ctx->output_redirect]->input_queue));
                     ctx->input_redirect = -1;
                 }
-                tasks[ctx->output_redirect]->input_stop = true;
+                if (ctx->output_redirect != ctx->output_redirect_bk)
+                    tasks[ctx->output_redirect]->input_stop = true;
                 ctx->output_redirect = -1;
             }
         }
@@ -1775,6 +1792,7 @@ namespace clib {
             ctx->child.insert(pid);
             tasks[pid]->parent = ctx->id;
             tasks[pid]->paths = ctx->paths;
+            tasks[pid]->sigs = ctx->sigs;
 #if LOG_SYSTEM
             ATLTRACE("[SYSTEM] PROC | Exec: Parent= #%d, Child= #%d\n", ctx->id, pid);
 #endif
@@ -1887,6 +1905,7 @@ namespace clib {
         ctx->debug = old_ctx->debug;
         ctx->input_redirect = -1;
         ctx->output_redirect = -1;
+        ctx->output_redirect_bk = -1;
         ctx->input_stop = old_ctx->input_stop;
         ctx->handles = old_ctx->handles;
         ctx->exited_child.clear();
@@ -2099,8 +2118,9 @@ namespace clib {
                             _snwprintf_s(sz2, sizeof(sz2) / sizeof(sz2[0]), L"(O=%d,Q=%d) ", O, Q);
                         else
                             _snwprintf_s(sz2, sizeof(sz2) / sizeof(sz2[0]), L"(I=%d,O=%d,Q=%d) ", I, O, Q);
-                        _snwprintf_s(sz, sizeof(sz2) / sizeof(sz2[0]), L"#%d %s%s%S", current, sz2,
+                        _snwprintf_s(sz, sizeof(sz2) / sizeof(sz2[0]), L"#%d %s%s%s%S", current, sz2,
                             tasks[current]->state == CTS_RUNNING ? L"* " : L"",
+                            tasks[current]->sigs.empty() ? L"" : L"! ",
                             limit_string(tasks[current]->cmd, 30).c_str());
                         ss << sz << std::endl;
                         printed.set(current);
@@ -3122,16 +3142,33 @@ namespace clib {
         case 402:
         {
             auto json = vmm_getstr(ctx->ax._ui);
-            try {
-                clib::cparser_json p(json);
-                auto root = p.parse();
-                ctx->ax._ui = parse_json(root->child);
-            }
-            catch (const std::exception&) {
+            if (json.empty()) {
                 ctx->ax._ui = 0;
-#if LOG_SYSTEM
-                ATLTRACE("[SYSTEM] ERR  | JSON PARSE ERROR: %s\n", json.substr(0, 100).c_str());
+                CString s;
+                s.Format(L"Json解析失败，进程：[%d] %S，文本为空", ctx->id, ctx->path.c_str());
+                add_stat(s);
+            }
+            else {
+                try {
+                    clib::cparser_json p(json);
+                    auto root = p.parse();
+                    ctx->ax._ui = parse_json(root->child);
+                }
+                catch (const std::exception&) {
+                    ctx->ax._ui = 0;
+                    CString s;
+                    s.Format(L"Json解析失败，进程：[%d] %S", ctx->id, ctx->path.c_str());
+                    add_stat(s);
+#if REPORT_ERROR
+                    {
+                        std::ofstream log(REPORT_ERROR_FILE, std::ios::app | std::ios::out);
+                        log << std::endl << "JSON PARSE ERROR: " << json.c_str() << std::endl;
+                    }
 #endif
+#if LOG_SYSTEM
+                    ATLTRACE("[SYSTEM] ERR  | JSON PARSE ERROR: %s\n", json.substr(0, 100).c_str());
+#endif
+                }
             }
             break;
         }
@@ -3827,7 +3864,15 @@ namespace clib {
         case 16: {
             if (ctx->parent != -1 && tasks[ctx->parent] &&
                 tasks[ctx->parent]->flag & CTX_VALID) {
-                ctx->output_redirect = ctx->parent;
+                CString s;
+                s.Format(L"输出重定向：[%d] -> [%d]，成功", ctx->id, ctx->parent);
+                add_stat(s, false);
+                ctx->output_redirect = ctx->output_redirect_bk = ctx->parent;
+            }
+            else {
+                CString s;
+                s.Format(L"输出重定向：[%d] -> [%d]，失败", ctx->id, ctx->parent);
+                add_stat(s, false);
             }
             break;
         }
@@ -3839,6 +3884,11 @@ namespace clib {
                 ctx->ax._i = ctx->input_queue.front();
                 ctx->input_queue.pop_front();
             }
+            break;
+        }
+        case 18: {
+            CString s(vmm_getstr(ctx->ax._ui).c_str());
+            add_stat(s);
             break;
         }
         case 20: {
@@ -3887,6 +3937,9 @@ namespace clib {
                                 i++;
                             }
                             for (const auto& cc : childs) {
+                                CString s;
+                                s.Format(L"发送信号：%d，进程：[%d] %S，操作：硬中断", right, cc, tasks[cc]->path.c_str());
+                                add_stat(s);
                                 destroy(cc);
                             }
                         }
@@ -3904,10 +3957,16 @@ namespace clib {
                                 i++;
                             }
                             for (const auto& cc : childs) {
+                                CString s;
+                                s.Format(L"发送信号：%d，进程：[%d] %S，操作：软中断", right, cc, tasks[cc]->path.c_str());
+                                add_stat(s);
                                 tasks[cc]->sigs.push(right);
                             }
                         }
                         else {
+                            CString s;
+                            s.Format(L"发送信号：%d，进程：[%d] %S，操作：普通", right, left, tasks[left]->path.c_str());
+                            add_stat(s);
                             tasks[left]->sigs.push(right);
                         }
                     }
@@ -3924,35 +3983,42 @@ namespace clib {
                 ctx->sigs.pop();
             }
             break;
-        case 51:
-            ctx->ax._i = exec_file(vmm_getstr(ctx->ax._ui));
-            ctx->pc += INC_PTR;
-            return true;
         case 50:
             if (ctx->ax._i == 1)
                 ctx->ax._i = ctx->parent;
             else
                 ctx->ax._i = ctx->id;
             break;
+        case 51:
+            if (!ctx->sigs.empty()) { ctx->ax._i = -1; break; }
+            ctx->ax._i = exec_file(vmm_getstr(ctx->ax._ui));
+            ctx->pc += INC_PTR;
+            return true;
         case 52: {
+            if (!ctx->sigs.empty()) { ctx->ax._i = -1; break; }
             if (ctx->exited_child.empty()) {
                 ctx->state = CTS_WAIT;
-                ctx->pc += INC_PTR;
+                ctx->pc -= INC_PTR;
                 return true;
             }
             else {
                 ctx->ax._i = ctx->exited_child.front();
+                CString s;
+                s.Format(L"子进程退出，父进程：[%d] %S，子进程：%d", ctx->id, ctx->path.c_str(), ctx->ax._i);
+                add_stat(s, false);
                 ctx->exited_child.pop_front();
             }
         }
                  break;
         case 53: {
+            if (!ctx->sigs.empty()) { ctx->ax._i = -1; break; }
             ctx->ax._i = exec_file(vmm_getstr(ctx->ax._ui));
             if (ctx->ax._i >= 0 && ctx->ax._i < TASK_NUM)
                 tasks[ctx->ax._i]->state = CTS_WAIT;
             break;
         }
         case 54: {
+            if (!ctx->sigs.empty()) { ctx->ax._i = -1; break; }
             if (ctx->ax._i >= 0 && ctx->ax._i < TASK_NUM) {
                 if (ctx->child.find(ctx->ax._i) != ctx->child.end())
                     tasks[ctx->ax._i]->state = CTS_RUNNING;
@@ -3960,6 +4026,7 @@ namespace clib {
             break;
         }
         case 55: {
+            if (!ctx->sigs.empty()) { ctx->ax._i = -1; break; }
             ctx->pc += INC_PTR;
             ctx->ax._i = fork();
             return true;
@@ -4076,6 +4143,9 @@ namespace clib {
                     break;
                 }
                 if (!ctx->sigs.empty()) {
+                    CString s;
+                    s.Format(L"信号：%d，进程：[%d] %S，操作：读取", ctx->sigs.front(), ctx->id, ctx->path.c_str());
+                    add_stat(s);
                     ctx->ax._i = READ_EOF;
                     break;
                 }
@@ -4137,6 +4207,9 @@ namespace clib {
                     break;
                 }
                 if (!ctx->sigs.empty()) {
+                    CString s;
+                    s.Format(L"信号：%d，进程：[%d] %S，操作：写入", ctx->sigs.front(), ctx->id, ctx->path.c_str());
+                    add_stat(s);
                     ctx->ax._i = READ_EOF;
                     break;
                 }
@@ -4169,6 +4242,9 @@ namespace clib {
                     break;
                 }
                 if (!ctx->sigs.empty()) {
+                    CString s;
+                    s.Format(L"信号：%d，进程：[%d] %S，操作：截断", ctx->sigs.front(), ctx->id, ctx->path.c_str());
+                    add_stat(s);
                     ctx->ax._i = READ_EOF;
                     break;
                 }
@@ -4211,6 +4287,9 @@ namespace clib {
                 if (from->type == h_file && to->type == h_file) {
                     std::vector<byte> data;
                     if (from->data.file->get_data(data) && to->data.file->set_data(data)) {
+                        CString s1;
+                        s1.Format(L"快速复制：从 [%d]，到 [%d]，大小 %d", s.from, s.to, data.size());
+                        add_stat(s1);
                         ctx->ax._i = 0;
                     }
                     else {
@@ -4223,6 +4302,11 @@ namespace clib {
             }
             else {
                 ctx->ax._i = -1;
+            }
+            if (ctx->ax._i != 0) {
+                CString s1;
+                s1.Format(L"快速复制：从 [%d]，到 [%d]，失败 %d", s.from, s.to, ctx->ax._i);
+                add_stat(s1);
             }
         }
                  break;
@@ -4249,6 +4333,9 @@ namespace clib {
                         break;
                     }
                     if (!ctx->sigs.empty()) {
+                        CString s;
+                        s.Format(L"信号：%d，进程：[%d] %S，操作：预读取", ctx->sigs.front(), ctx->id, ctx->path.c_str());
+                        add_stat(s);
                         ctx->ax._i = READ_EOF;
                         break;
                     }
@@ -4267,36 +4354,37 @@ namespace clib {
         }
                  break;
         case 76: {
-            {
-                auto h = ctx->ax._i;
-                if (ctx->handles.find(h) != ctx->handles.end()) {
-                    auto dec = handles[h]->data.file;
-                    auto t = dec->get_handle(h, v_read);
-                    if (t == v_none)
-                        dec->add_handle(h, v_read);
-                    else if (t == v_wait) {
-                        if (ctx->sigs.empty()) {
-                            ctx->pc -= INC_PTR;
-                            return true;
-                        }
-                        else {
-                            ctx->ax._i = -1;
-                            break;
-                        }
+            auto h = ctx->ax._i;
+            if (ctx->handles.find(h) != ctx->handles.end()) {
+                auto dec = handles[h]->data.file;
+                auto t = dec->get_handle(h, v_read);
+                if (t == v_none)
+                    dec->add_handle(h, v_read);
+                else if (t == v_wait) {
+                    if (ctx->sigs.empty()) {
+                        ctx->pc -= INC_PTR;
+                        return true;
                     }
-                    else if (t != v_read || t == v_error) {
+                    else {
                         ctx->ax._i = -1;
                         break;
                     }
-                    if (!ctx->sigs.empty()) {
-                        ctx->ax._i = -1;
-                        break;
-                    }
-                    ctx->ax._i = dec->get_length();
                 }
-                else {
+                else if (t != v_read || t == v_error) {
                     ctx->ax._i = -1;
+                    break;
                 }
+                if (!ctx->sigs.empty()) {
+                    CString s;
+                    s.Format(L"信号：%d，进程：[%d] %S，操作：读长度", ctx->sigs.front(), ctx->id, ctx->path.c_str());
+                    add_stat(s);
+                    ctx->ax._i = -1;
+                    break;
+                }
+                ctx->ax._i = dec->get_length();
+            }
+            else {
+                ctx->ax._i = -1;
             }
         }
                break;
@@ -4322,6 +4410,9 @@ namespace clib {
                     break;
                 }
                 if (!ctx->sigs.empty()) {
+                    CString s;
+                    s.Format(L"信号：%d，进程：[%d] %S，操作：快读取", ctx->sigs.front(), ctx->id, ctx->path.c_str());
+                    add_stat(s);
                     ctx->ax._i = 0;
                     break;
                 }
@@ -4409,6 +4500,9 @@ namespace clib {
                     break;
                 }
                 if (!ctx->sigs.empty()) {
+                    CString s;
+                    s.Format(L"信号：%d，进程：[%d] %S，操作：文本快读取", ctx->sigs.front(), ctx->id, ctx->path.c_str());
+                    add_stat(s);
                     ctx->ax._i = 0;
                     break;
                 }
@@ -4448,7 +4542,11 @@ namespace clib {
         }
         case 102:
             // 单位为微秒
-            ctx->ax._q = std::chrono::high_resolution_clock::now().time_since_epoch().count() / 1000;
+            ctx->ax._q = std::chrono::high_resolution_clock::now().time_since_epoch().count() / std::chrono::milliseconds::period::den;
+            break;
+        case 103:
+            // 单位为毫秒
+            ctx->ax._q = std::chrono::high_resolution_clock::now().time_since_epoch().count() / std::chrono::microseconds::period::den;
             break;
         default:
 #if LOG_SYSTEM
@@ -4592,12 +4690,20 @@ namespace clib {
         return "/ext/" + name + "/func";
     }
 
-    void cvm::add_stat(const CString& s)
+    void cvm::add_stat(const CString& s, bool show)
     {
-        stat_n = STAT_DELAY_N;
-        if (stat_s.size() >= STAT_MAX_N)
-            stat_s.pop_front();
-        stat_s.push_back(s);
+        if (show) {
+            stat_n = STAT_DELAY_N;
+            if (stat_s.size() >= STAT_MAX_N)
+                stat_s.pop_front();
+            stat_s.push_back(s);
+        }
+#if REPORT_STAT
+        {
+            std::ofstream log(REPORT_STAT_FILE, std::ios::app | std::ios::out);
+            log << CStringA(s).GetBuffer(0) << std::endl;
+        }
+#endif
     }
 
     void cvm::ext_error(const std::string& str)

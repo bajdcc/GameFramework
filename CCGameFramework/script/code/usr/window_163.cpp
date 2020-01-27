@@ -38,6 +38,17 @@ void pipe() {
         put_char((char)c);
     }
 }
+void stat(char* s) {
+    stat_log(s);
+    free(s);
+}
+void run_log(char* cmd) {
+    put_string("# ");
+    put_string(cmd);
+    put_string("\n");
+    shell(cmd);
+    free(cmd);
+}
 void run(char* cmd) {
     shell(cmd);
     free(cmd);
@@ -101,7 +112,7 @@ int read_file(int id, int handle, char* playlist) {
         s.code = 0x113;
         s.comctl = -1;
         s.param1 = 1;
-        s.param2 = 500;
+        s.param2 = 200;
         window_default_msg(id, &s);
     }
     while (c = window_get_msg(handle, &s), c < 0x1000) {
@@ -109,15 +120,22 @@ int read_file(int id, int handle, char* playlist) {
         pipe();
         if (s.code == 0x201 || s.code == 0x888) {
             if (s.comctl == t1id || s.code == 0x888) {
+                if (s.code == 0x888) {
+                    stat(format("【听歌】收到自动播放指令"));
+                }
+                else {
+                    stat(format("【听歌】收到强制播放指令"));
+                }
                 if (child != -1) {
                     newline();
                     send_signal(child, 9);
-                    wait();
+                    stat(format("【听歌】等待子进程退出"));
+                    int q = wait();
+                    stat(format("【听歌】子进程已退出 [%d]", q));
                     child = -1;
-                    sleep(1000);
                 }
                 window_comctl_set_text(text5, "控制");
-                if (*ids == '\0' || *ids == '$') {
+                if (*ids == '$') {
                     char* downurl = format("rm /tmp/%s.mp3", ids);
                     put_string(downurl);
                     put_string("\n");
@@ -149,6 +167,7 @@ int read_file(int id, int handle, char* playlist) {
                         ptr = ptr3;
                     }
                 }
+                stat(format("【听歌】准备创建播放进程"));
                 if (*ids == '\0' || *ids == '$') {
                     ptr = begin;
                     s.code = 0x888;
@@ -157,28 +176,43 @@ int read_file(int id, int handle, char* playlist) {
                 }
                 else if ((child = fork()) == -1) {
                     redirect_to_parent();
+                    long last = timestamp_s();
+                    stat(format("【听歌】子进程已开启"));
                     play(ids);
-                    if (recv_signal() == 9) exit(1);
+                    stat(format("【听歌】子进程播放结束"));
+                    if (recv_signal() == 9) {
+                        stat(format("【听歌】子进程收到强制结束指令"));
+                        exit(1);
+                    }
+                    long now = timestamp_s();
+                    if (now - last < 60000000L) {
+                        stat(format("【听歌】子进程播放时间少于一分钟"));
+                        exit(2);
+                    }
                     s.code = 0x888;
                     s.comctl = -1;
                     window_default_msg(id, &s);
+                    stat(format("【听歌】子进程发送自动播放指令"));
                     exit(0);
+                }
+                if (child != -1) {
+                    stat(format("【听歌】创建播放进程 [%d]", child));
                 }
             }
             else if (s.comctl == t5id) {
                 int n = gui_music_ctrl(0);
                 switch (n) {
                 case 0:
-                    window_comctl_set_text(text5, "状态：无音乐");
+                    window_comctl_set_text(text5, "状态: 无音乐");
                     break;
                 case 1:
-                    window_comctl_set_text(text5, "状态：播放中");
+                    window_comctl_set_text(text5, "状态: 播放中");
                     break;
                 case 2:
-                    window_comctl_set_text(text5, "状态：暂停");
+                    window_comctl_set_text(text5, "状态: 暂停");
                     break;
                 case 3:
-                    window_comctl_set_text(text5, "状态：播放中");
+                    window_comctl_set_text(text5, "状态: 播放中");
                     break;
                 }
             }
@@ -213,7 +247,7 @@ int main(int argc, char** argv) {
         free(str);
     }
     if (argc <= 1) {
-        put_string("请输入要播放的歌单编号：");
+        put_string("请输入要播放的歌单编号: ");
         sleep(1000);
         char buf[255];
         input(&buf, 255);
@@ -290,7 +324,7 @@ void play(char* id) {
     char* path = format("/http/post!music.163.com/api/song/detail!id=%s&ids=[%s]", id, id);
     put_string("Open: "); put_string(path); put_string("\n");
     char* json = readfile_fast_str(path);
-    if (json != (char*)0) {
+    if (json != (char*)0 && *json != '\0') {
         json_object* obj = json_parse_obj(json);
         if (obj) {
             put_string("Code: "); put_int(json_obj_get_string(obj, "code")->data.i); put_string("\n");
@@ -309,7 +343,7 @@ void play(char* id) {
             strcpy(picurl, pic);
             free(obj);
             // MP3
-            run(format("api_vfs load /tmp/%s.mp3", id));
+            run_log(format("api_vfs load /tmp/%s.mp3", id));
             char* downurl = format("/tmp/%s.mp3", id);
             int empty = fsize(downurl);
             if (empty <= 0) {
@@ -324,7 +358,7 @@ void play(char* id) {
                 put_string("\n");
                 shell(downurl);
                 put_string("Download OK\n");
-                run(format("api_vfs save /tmp/%s.mp3", id));
+                run_log(format("api_vfs save /tmp/%s.mp3", id));
             }
             else {
                 put_string("OK, ");
@@ -332,7 +366,7 @@ void play(char* id) {
                 put_string(" exists\n");
             }
             // LYRIC
-            run(format("api_vfs load /tmp/%s.txt", id));
+            run_log(format("api_vfs load /tmp/%s.txt", id));
             downurl = format("/tmp/%s.txt", id);
             empty = fsize(downurl);
             if (empty <= 0) {
@@ -348,8 +382,8 @@ void play(char* id) {
                 shell(downurl);
                 put_string("Download OK\n");
                 char* lyric_path = format("/tmp/%s.txt", id);
-                char* lyric_txt; int lryic_len;
-                if (readfile(lyric_path, &lyric_txt, &lryic_len) == 0) {
+                char* lyric_txt;
+                if (((lyric_txt = readfile_fast_str(lyric_path)) != (char*)0) && *lyric_txt != '\0') {
                     json_object* lyric_obj = json_parse_obj(lyric_txt);
                     if (lyric_obj) {
                         put_string("Code: "); put_int(json_obj_get_string(lyric_obj, "code")->data.i); put_string("\n");
@@ -357,13 +391,16 @@ void play(char* id) {
                         if (ll != (json_object*)0) {
                             char* lyric = ll->data.str;
                             writefile(lyric_path, lyric, strlen(lyric), 1);
-                            run(format("api_vfs save /tmp/%s.txt", id));
+                            run_log(format("api_vfs save /tmp/%s.txt", id));
                         }
                         else {
                             writefile(lyric_path, "", 0, 1);
                         }
                     }
                     free(lyric_txt);
+                }
+                else {
+                    put_string("Download lyric error\n");
                 }
                 free(lyric_path);
             }
@@ -374,7 +411,7 @@ void play(char* id) {
             }
             // PIC
             free(downurl);
-            run(format("api_vfs load /tmp/%s.jpg", id));
+            run_log(format("api_vfs load /tmp/%s.jpg", id));
             downurl = format("/tmp/%s.jpg", id);
             empty = fsize(downurl);
             if (empty <= 0) {
@@ -389,7 +426,7 @@ void play(char* id) {
                 put_string("\n");
                 shell(downurl);
                 put_string("Download OK\n");
-                run(format("api_vfs save /tmp/%s.jpg", id));
+                run_log(format("api_vfs save /tmp/%s.jpg", id));
             }
             else {
                 put_string("OK, ");
@@ -414,6 +451,9 @@ void play(char* id) {
             free(picurl);
         }
         free(json);
+    }
+    else {
+        put_string("Download music info error\n");
     }
 }
 char* down_playlist(char* id) {
