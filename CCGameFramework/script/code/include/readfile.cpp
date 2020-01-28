@@ -59,6 +59,7 @@ void __intern_read_file__(int handle, char** out, int* len) {
     close(handle);
     *out = s.text;
     *len = n;
+    return c;
 }
 
 // 读取文件（成功返回零，失败为负）
@@ -66,8 +67,7 @@ int readfile(char* path, char** out, int* len) {
     int handle = open(path);
     if (handle >= 0) {
         load(handle);
-        __intern_read_file__(handle, out, len);
-        return 0;
+        return __intern_read_file__(handle, out, len);
     }
     return handle;
 }

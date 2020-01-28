@@ -64,6 +64,16 @@ namespace clib {
         return false;
     }
 
+    bool vfs_node_dec::set_time(const std::vector<time_t>& data)
+    {
+        return false;
+    }
+
+    bool vfs_node_dec::get_time(std::vector<time_t>& data) const
+    {
+        return false;
+    }
+
     int vfs_node_dec::get_length() const
     {
         return -1;
@@ -194,6 +204,24 @@ namespace clib {
         if (!mod->can_mod(n, 0))
             return false;
         data = n->data;
+        return true;
+    }
+
+    bool vfs_node_file::set_time(const std::vector<time_t>& data)
+    {
+        auto n = node.lock();
+        n->time.create = data[0];
+        n->time.access = data[1];
+        n->time.modify = data[2];
+        return true;
+    }
+
+    bool vfs_node_file::get_time(std::vector<time_t>& data) const
+    {
+        auto n = node.lock();
+        data[0] = n->time.create;
+        data[1] = n->time.access;
+        data[2] = n->time.modify;
         return true;
     }
 

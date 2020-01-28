@@ -62,6 +62,16 @@ namespace clib {
         return false;
     }
 
+    bool vfs_node_dec::set_time(const std::vector<time_t>& data)
+    {
+        return false;
+    }
+
+    bool vfs_node_dec::get_time(std::vector<time_t>& data) const
+    {
+        return false;
+    }
+
     int vfs_node_dec::get_length() const
     {
         return -1;
@@ -199,6 +209,24 @@ namespace clib {
             return false;
         data.resize(n->data.size());
         std::copy(n->data.begin(), n->data.end(), data.begin());
+        return true;
+    }
+
+    bool vfs_node_solid::set_time(const std::vector<time_t>& data)
+    {
+        auto n = node.lock();
+        n->time.create = data[0];
+        n->time.access = data[1];
+        n->time.modify = data[2];
+        return true;
+    }
+
+    bool vfs_node_solid::get_time(std::vector<time_t>& data) const
+    {
+        auto n = node.lock();
+        data[0] = n->time.create;
+        data[1] = n->time.access;
+        data[2] = n->time.modify;
         return true;
     }
 
@@ -577,7 +605,7 @@ namespace clib {
     void cvfs::reset() {
         account.clear();
         account.insert({ 0, vfs_user{ 0, "root", "root" } });
-        account.insert({cc, vfs_user{ cc, "cc", "cc" } });
+        account.insert({ cc, vfs_user{ cc, "cc", "cc" } });
         account.insert({ ext, vfs_user{ ext, "ext", "ext" } });
         current_user = 0;
         last_user = 1;
@@ -743,6 +771,40 @@ namespace clib {
             *dec = new vfs_node_cached(this, str);
             return 0;
         }
+        if (m[1] == "stat") {
+            std::stringstream ss;
+            ss << "Path: " << m[0] << std::endl;
+            char fmt[64];
+            switch (node->type) {
+            case fs_file:
+                ss << "Type: file" << std::endl;
+                break;
+            case fs_dir:
+                ss << "Type: directory" << std::endl;
+                break;
+            case fs_func:
+                ss << "Type: func" << std::endl;
+                break;
+            case fs_magic:
+                ss << "Type: magic" << std::endl;
+                break;
+            case fs_link:
+                ss << "Type: link" << std::endl;
+                break;
+            }
+            ss << "Size: " << node->data.size() << std::endl;
+            if (node->type == fs_dir)
+                ss << "Files: " << node->children.size() << std::endl;
+            ss << "Owner: " << account.at(node->owner).name << std::endl;
+            snprintf(fmt, sizeof(fmt), "%c%9s", node->type == fs_dir ? 'd' : '-', (char*)node->mod);
+            ss << "Mod: " << fmt << std::endl;
+            ss << "Create time: " << file_time(node->time.create) << std::endl;
+            ss << "Access time: " << file_time(node->time.access) << std::endl;
+            ss << "Modify time: " << file_time(node->time.modify) << std::endl;
+            auto str = ss.str();
+            *dec = new vfs_node_cached(this, str);
+            return 0;
+        }
         return -2;
     }
 
@@ -791,6 +853,9 @@ namespace clib {
                     *dec = new vfs_node_fifo(this, node);
                 }
                 else {
+                    if (m.size() > 1) {
+                        return macro(m, node, dec);
+                    }
                     *dec = new vfs_node_solid(this, node);
                 }
             }

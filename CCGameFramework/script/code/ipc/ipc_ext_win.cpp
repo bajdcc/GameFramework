@@ -40,6 +40,7 @@ int main(int argc, char** argv) {
             sleep(100);
             continue;
         }
+        if (recv_signal() == 9) break;
         show(format("request come: %s\n", data));
         if (fork() == -1) {
             redirect_to_parent();
@@ -71,7 +72,7 @@ int main(int argc, char** argv) {
     shell("rm /mutex/__ipc_service_ext_win_mutex__");
     put_string("waiting for process exit...\n");
     send_signal(get_pid(), 9);
-    wait();
+    wait_children();
     put_string("service ext_win stopped\n");
     return 0;
 }

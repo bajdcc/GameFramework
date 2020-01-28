@@ -11,6 +11,9 @@ int sleep(int ms) {
 int wait() {
     interrupt 52;
 }
+int wait_children() {
+    interrupt 82;
+}
 int fork() {
     interrupt 55;
 }

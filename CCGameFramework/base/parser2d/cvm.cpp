@@ -444,13 +444,16 @@ namespace clib {
             if (tasks[ti]) {
                 if (tasks[ti]->state == CTS_WAIT) {
                     if (_now >= tasks[ti]->record_next) {
+                        CString s;
+                        s.Format(L"休眠被唤醒，进程：[%d] %S，操作：休眠，超时", ti, tasks[ti]->path.c_str());
+                        add_stat(s, false);
                         tasks[ti]->state = CTS_RUNNING;
                         timers.erase(ti);
                     }
                     else if (!tasks[ti]->sigs.empty()) {
                         CString s;
-                        s.Format(L"信号：%d，进程：[%d] %S，操作：休眠", tasks[ti]->sigs.front(), ti, tasks[ti]->path.c_str());
-                        add_stat(s);
+                        s.Format(L"休眠被唤醒，信号：%d，进程：[%d] %S，操作：休眠", tasks[ti]->sigs.front(), ti, tasks[ti]->path.c_str());
+                        add_stat(s, false);
                         tasks[ti]->state = CTS_RUNNING;
                         timers.erase(ti);
                     }
@@ -3990,13 +3993,16 @@ namespace clib {
                 ctx->ax._i = ctx->id;
             break;
         case 51:
-            if (!ctx->sigs.empty()) { ctx->ax._i = -1; break; }
+            // if (!ctx->sigs.empty()) { ctx->ax._i = -1; break; }
             ctx->ax._i = exec_file(vmm_getstr(ctx->ax._ui));
             ctx->pc += INC_PTR;
             return true;
         case 52: {
-            if (!ctx->sigs.empty()) { ctx->ax._i = -1; break; }
+            // if (!ctx->sigs.empty()) { ctx->ax._i = -1; break; }
             if (ctx->exited_child.empty()) {
+                CString s;
+                s.Format(L"休眠，进程：[%d] %S", ctx->id, ctx->path.c_str());
+                add_stat(s, false);
                 ctx->state = CTS_WAIT;
                 ctx->pc -= INC_PTR;
                 return true;
@@ -4011,22 +4017,33 @@ namespace clib {
         }
                  break;
         case 53: {
-            if (!ctx->sigs.empty()) { ctx->ax._i = -1; break; }
+            // if (!ctx->sigs.empty()) { ctx->ax._i = -1; break; }
             ctx->ax._i = exec_file(vmm_getstr(ctx->ax._ui));
-            if (ctx->ax._i >= 0 && ctx->ax._i < TASK_NUM)
+            if (ctx->ax._i >= 0 && ctx->ax._i < TASK_NUM) {
+                CString s;
+                s.Format(L"53 暂停，进程：[%d] %S", ctx->id, ctx->path.c_str());
+                add_stat(s, false);
                 tasks[ctx->ax._i]->state = CTS_WAIT;
+            }
             break;
         }
         case 54: {
-            if (!ctx->sigs.empty()) { ctx->ax._i = -1; break; }
+            // if (!ctx->sigs.empty()) { ctx->ax._i = -1; break; }
             if (ctx->ax._i >= 0 && ctx->ax._i < TASK_NUM) {
-                if (ctx->child.find(ctx->ax._i) != ctx->child.end())
+                if (ctx->child.find(ctx->ax._i) != ctx->child.end()) {
+                    CString s;
+                    s.Format(L"54 唤醒，进程：[%d] %S", ctx->id, ctx->path.c_str());
+                    add_stat(s, false);
                     tasks[ctx->ax._i]->state = CTS_RUNNING;
+                }
             }
             break;
         }
         case 55: {
-            if (!ctx->sigs.empty()) { ctx->ax._i = -1; break; }
+            // if (!ctx->sigs.empty()) { ctx->ax._i = -1; break; }
+            CString s;
+            s.Format(L"55 复制，进程：[%d] %S", ctx->id, ctx->path.c_str());
+            add_stat(s, false);
             ctx->pc += INC_PTR;
             ctx->ax._i = fork();
             return true;
@@ -4287,6 +4304,10 @@ namespace clib {
                 if (from->type == h_file && to->type == h_file) {
                     std::vector<byte> data;
                     if (from->data.file->get_data(data) && to->data.file->set_data(data)) {
+                        std::vector<time_t> tv(3);
+                        if (from->data.file->get_time(tv)) {
+                            to->data.file->set_time(tv);
+                        }
                         CString s1;
                         s1.Format(L"快速复制：从 [%d]，到 [%d]，大小 %d", s.from, s.to, data.size());
                         add_stat(s1);
@@ -4522,6 +4543,17 @@ namespace clib {
             }
         }
         break;
+        case 82: {
+            // if (!ctx->sigs.empty()) { ctx->ax._i = -1; break; }
+            if (ctx->child.empty()) {
+                break;
+            }
+            else {
+                ctx->pc -= INC_PTR;
+                return true;
+            }
+        }
+                      break;
         case 90:
         {
             auto ext = trim(vmm_getstr(ctx->ax._ui));
@@ -4536,6 +4568,9 @@ namespace clib {
                 ctx->record_next = std::chrono::system_clock::now() + std::chrono::milliseconds(ctx->ax._i);
             }
             timers.insert(ctx->id);
+            CString s;
+            s.Format(L"100 睡眠，进程：[%d] %S", ctx->id, ctx->path.c_str());
+            add_stat(s, false);
             ctx->state = CTS_WAIT;
             ctx->pc += INC_PTR;
             return true;

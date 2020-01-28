@@ -57,6 +57,8 @@ namespace clib {
         void remove_handle(int handle) override;
         bool set_data(const std::vector<byte>& data) override;
         bool get_data(std::vector<byte>& data) const override;
+        bool set_time(const std::vector<time_t>& data) override;
+        bool get_time(std::vector<time_t>& data) const override;
         int get_length() const override;
     protected:
         explicit vfs_node_file(const vfs_mod_query*, const vfs_node::ref& ref);

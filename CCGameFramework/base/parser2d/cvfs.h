@@ -132,6 +132,8 @@ namespace clib {
         virtual bool get_data(std::vector<byte>& data) const;
         virtual bool set_link(const string_t& data);
         virtual bool get_link(string_t& data) const;
+        virtual bool set_time(const std::vector<time_t>& data);
+        virtual bool get_time(std::vector<time_t>& data) const;
         virtual int get_length() const;
     protected:
         explicit vfs_node_dec(const vfs_mod_query*);
@@ -154,6 +156,8 @@ namespace clib {
         bool get_data(std::vector<byte>& data) const override;
         bool set_link(const string_t& data) override;
         bool get_link(string_t& data) const override;
+        bool set_time(const std::vector<time_t>& data) override;
+        bool get_time(std::vector<time_t>& data) const override;
         int get_length() const override;
     protected:
         explicit vfs_node_solid(const vfs_mod_query*, const vfs_node::ref& ref);

@@ -3,9 +3,9 @@
 #include "/include/string"
 #include "/include/memory"
 int write_file(int handle) {
-    int c, r;
+    int c, r = 0;
     int state = input_lock();
-    while ((c = input_valid()) != -1) {
+    while ((c = input_valid()) != -1 && r < 0x1000) {
         r = write(handle, (char) input_char());
         if (r < 0) {
             switch (r) {

@@ -66,6 +66,16 @@ namespace clib {
         return false;
     }
 
+    bool vfs_node_dec::set_time(const std::vector<time_t>& data)
+    {
+        return false;
+    }
+
+    bool vfs_node_dec::get_time(std::vector<time_t>& data) const
+    {
+        return false;
+    }
+
     int vfs_node_dec::get_length() const
     {
         return -1;
@@ -196,6 +206,24 @@ namespace clib {
         if (!mod->can_mod(n, 0))
             return false;
         data = n->data;
+        return true;
+    }
+    
+    bool vfs_node_file::set_time(const std::vector<time_t>& data)
+    {
+        auto n = node.lock();
+        n->time.create = data[0];
+        n->time.access = data[1];
+        n->time.modify = data[2];
+        return true;
+    }
+
+    bool vfs_node_file::get_time(std::vector<time_t>& data) const
+    {
+        auto n = node.lock();
+        data[0] = n->time.create;
+        data[1] = n->time.access;
+        data[2] = n->time.modify;
         return true;
     }
 
@@ -782,6 +810,76 @@ namespace clib {
         return true;
     }
 
+    bool ConvertFileTimeToLocalTime(const FILETIME* lpFileTime, SYSTEMTIME* lpSystemTime)
+    {
+        if (!lpFileTime || !lpSystemTime) {
+            return false;
+        }
+        FILETIME ftLocal;
+        FileTimeToLocalFileTime(lpFileTime, &ftLocal);
+        FileTimeToSystemTime(&ftLocal, lpSystemTime);
+        return true;
+    }
+
+    bool ConvertLocalTimeToFileTime(const SYSTEMTIME* lpSystemTime, FILETIME* lpFileTime)
+    {
+        if (!lpSystemTime || !lpFileTime) {
+            return false;
+        }
+
+        FILETIME ftLocal;
+        SystemTimeToFileTime(lpSystemTime, &ftLocal);
+        LocalFileTimeToFileTime(&ftLocal, lpFileTime);
+        return true;
+    }
+
+    SYSTEMTIME TimetToSystemTime(time_t t)
+    {
+        FILETIME ft, ft2;
+        SYSTEMTIME pst;
+        LONGLONG nLL = Int32x32To64(t, 10000000) + 116444736000000000;
+        ft.dwLowDateTime = (DWORD)nLL;
+        ft.dwHighDateTime = (DWORD)(nLL >> 32);
+        FileTimeToLocalFileTime(&ft, &ft2);
+        FileTimeToSystemTime(&ft2, &pst);
+        return pst;
+    }
+
+    time_t SystemTimeToTimet(SYSTEMTIME st)
+    {
+        FILETIME ft, ft2;
+        SystemTimeToFileTime(&st, &ft);
+        LocalFileTimeToFileTime(&ft, &ft2);
+        ULARGE_INTEGER ui;
+        ui.LowPart = ft2.dwLowDateTime;
+        ui.HighPart = ft2.dwHighDateTime;
+        time_t pt = (long)((LONGLONG)(ui.QuadPart - 116444736000000000) / 10000000);
+        return pt;
+    }
+
+    bool get_fs_time(const string_t& name, std::vector<time_t>& time)
+    {
+        HANDLE hFile;
+        // Create, Access, Write
+        FILETIME ft[3];
+        SYSTEMTIME st[3];
+
+        auto pp = CString(CStringA(name.c_str()));
+
+        hFile = CreateFile(pp, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
+        if (INVALID_HANDLE_VALUE == hFile) {
+            return false;
+        }
+        GetFileTime(hFile, &ft[0], &ft[1], &ft[2]);
+        for (auto i = 0; i < 3; i++) {
+            ConvertFileTimeToLocalTime(&ft[i], &st[i]);
+            time.push_back(SystemTimeToTimet(st[i]));
+        }
+
+        CloseHandle(hFile);
+        return true;
+    }
+
     int cextfs::macrofile(const std::vector<string_t>& m, const vfs_node::ref& node, vfs_node_dec** dec) const
     {
         static char buf[256];
@@ -823,6 +921,19 @@ namespace clib {
                     }
                     else {
                         *dec = new vfs_node_text(this, "Warning: File does not exist.");
+                    }
+                    auto ctime = now();
+                    node->time.create = ctime;
+                    node->time.access = ctime;
+                    node->time.modify = ctime;
+                    if (ifs) {
+                        ifs.close();
+                        std::vector<time_t> tv;
+                        if (get_fs_time(trans(m[0]), tv)) {
+                            node->time.create = tv[0];
+                            node->time.access = tv[1];
+                            node->time.modify = tv[2];
+                        }
                     }
                     return 0;
                 }

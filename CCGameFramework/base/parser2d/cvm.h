@@ -287,10 +287,6 @@ namespace clib {
         cvfs fs;
         cnet net;
 
-        struct timer_struct {
-            std::chrono::milliseconds span{ 0 };
-            std::chrono::time_point<std::chrono::system_clock> next;
-        };
         std::unordered_set<int> timers;
 
         struct handle_t {
