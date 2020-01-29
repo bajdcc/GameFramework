@@ -67,7 +67,8 @@ int readfile(char* path, char** out, int* len) {
     int handle = open(path);
     if (handle >= 0) {
         load(handle);
-        return __intern_read_file__(handle, out, len);
+        __intern_read_file__(handle, out, len);
+        return 0;
     }
     return handle;
 }
