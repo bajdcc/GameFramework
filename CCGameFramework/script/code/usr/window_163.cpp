@@ -128,10 +128,11 @@ int read_file(int id, int handle, char* playlist) {
                 }
                 if (child != -1) {
                     newline();
-                    send_signal(child, 9);
+                    send_signal(get_pid(), 9);
+                    recv_signal();
                     stat(format("【听歌】等待子进程退出"));
-                    int q = wait();
-                    stat(format("【听歌】子进程已退出 [%d]", q));
+                    wait_children();
+                    stat(format("【听歌】子进程已退出 [%d]", child));
                     child = -1;
                 }
                 window_comctl_set_text(text5, "控制");
@@ -176,18 +177,12 @@ int read_file(int id, int handle, char* playlist) {
                 }
                 else if ((child = fork()) == -1) {
                     redirect_to_parent();
-                    long last = timestamp_s();
                     stat(format("【听歌】子进程已开启"));
                     play(ids);
                     stat(format("【听歌】子进程播放结束"));
                     if (recv_signal() == 9) {
                         stat(format("【听歌】子进程收到强制结束指令"));
                         exit(1);
-                    }
-                    long now = timestamp_s();
-                    if (now - last < 60000000L) {
-                        stat(format("【听歌】子进程播放时间少于一分钟"));
-                        exit(2);
                     }
                     s.code = 0x888;
                     s.comctl = -1;
