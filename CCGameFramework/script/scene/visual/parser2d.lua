@@ -100,7 +100,10 @@ function M:init_event()
 		UIExt.refresh(CurrentScene.layers.pe2d, code)
 	end
 	self.handler[self.win_event.keydown] = function(this, code, scan, flags)
-		if code < 48 then UIExt.refresh(CurrentScene.layers.pe2d, code | 0x20000) end
+		UIExt.refresh(CurrentScene.layers.pe2d, code | 0x20000)
+	end
+	self.handler[self.win_event.syskeydown] = function(this, code, scan, flags)
+		UIExt.refresh(CurrentScene.layers.pe2d, code | 0x20000)
 	end
 	self.handler[self.win_event.timer] = function(this, id)
 		if id == 8 then
