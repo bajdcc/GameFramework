@@ -66,7 +66,6 @@ namespace clib {
 
         void input_set(bool valid);
         void input(int c);
-        void reset_cmd();
         int reset_cycles();
         void hit(int n);
         bool try_input(int c);
@@ -76,6 +75,8 @@ namespace clib {
         std::unordered_set<string_t> get_dep(string_t& path) const;
 
         CString get_disp(cvm::disp_t) const;
+
+        int new_screen(int n);
 
     private:
         void reset_ips();
@@ -97,10 +98,12 @@ namespace clib {
         string_t input_buffer() const;
 
         bool init_screen(int n);
-        bool switch_screen(int n);
 
     public:
         static cgui& singleton();
+
+        bool switch_screen(int n);
+        int current_screen() const;
 
         string_t load_file(const string_t& name);
         bool exist_file(const string_t& name);
@@ -143,6 +146,7 @@ namespace clib {
         };
         std::array<std::unique_ptr<screen_t>, 4> screens;
         int screen_id{ 0 };
+        int screen_ptr{ -1 };
         std::unordered_map<string_t, std::vector<byte>> cache;
         std::unordered_map<string_t, string_t> cache_code;
         std::unordered_map<string_t, std::unordered_set<string_t>> cache_dep;

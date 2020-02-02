@@ -280,6 +280,7 @@ namespace clib {
             std::unordered_set<int> handles;
             std::vector<string_t> paths;
             string_t cmd;
+            int screen_id{ 0 };
         };
         context_t* ctx{ nullptr };
         int available_tasks{ 0 };

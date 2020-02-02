@@ -485,6 +485,7 @@ namespace clib {
 #if LOG_STACK
         std::ofstream log(REPORT_DEBUG_FILE, std::ios::app | std::ios::out);
 #endif
+        cgui::singleton().switch_screen(ctx->screen_id);
         for (auto i = 0; i < cycle; ++i) {
             i++;
             cycles++;
@@ -1622,7 +1623,6 @@ namespace clib {
                 global_state.input->input_content.clear();
                 global_state.input->input_success = false;
                 global_state.input->input_code = 0;
-                cgui::singleton().reset_cmd();
             }
             if (timers.find(ctx->id) != timers.end())
                 timers.erase(ctx->id);
@@ -1788,6 +1788,7 @@ namespace clib {
             tasks[pid]->parent = ctx->id;
             tasks[pid]->paths = ctx->paths;
             tasks[pid]->sigs = ctx->sigs;
+            tasks[pid]->screen_id = ctx->screen_id;
 #if LOG_SYSTEM
             ATLTRACE("[SYSTEM] PROC | Exec: Parent= #%d, Child= #%d\n", ctx->id, pid);
 #endif
@@ -1834,6 +1835,7 @@ namespace clib {
         ctx->parent = old_ctx->id;
         ctx->paths = old_ctx->paths;
         ctx->cmd = old_ctx->cmd;
+        ctx->screen_id = old_ctx->screen_id;
         /* 映射4KB的代码空间 */
         {
             auto size = PAGE_SIZE / sizeof(int);
@@ -2113,9 +2115,16 @@ namespace clib {
                             _snwprintf_s(sz2, sizeof(sz2) / sizeof(sz2[0]), L"(O=%d,Q=%d) ", O, Q);
                         else
                             _snwprintf_s(sz2, sizeof(sz2) / sizeof(sz2[0]), L"(I=%d,O=%d,Q=%d) ", I, O, Q);
-                        _snwprintf_s(sz, sizeof(sz2) / sizeof(sz2[0]), L"#%d %s%s%s%S", current, sz2,
+                        wchar_t s[4] = { 0,0,0 };
+                        if (tasks[current]->screen_id > 0) {
+                            s[0] = L'@';
+                            s[1] = L'0' + tasks[current]->screen_id;
+                            s[2] = L' ';
+                        }
+                        _snwprintf_s(sz, sizeof(sz2) / sizeof(sz2[0]), L"#%d %s%s%s%s%S", current, sz2,
                             tasks[current]->state == CTS_RUNNING ? L"* " : L"",
                             tasks[current]->sigs.empty() ? L"" : L"! ",
+                            s,
                             limit_string(tasks[current]->cmd, 30).c_str());
                         ss << sz << std::endl;
                         printed.set(current);
@@ -3906,6 +3915,10 @@ namespace clib {
             break;
         case 31:
             ctx->ax._ui = vmm_free(ctx->ax._ui);
+            break;
+        case 32:
+            if (cgui::singleton().new_screen(ctx->ax._i) == 0)
+                ctx->screen_id = ctx->ax._i;
             break;
         case 40:
             destroy(ctx->id);

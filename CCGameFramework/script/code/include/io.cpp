@@ -148,3 +148,8 @@ int restore_bg() {
 int restore_fg() {
     gui_cfg('4');
 }
+
+int switch_screen(int n) {
+    n;
+    interrupt 32;
+}

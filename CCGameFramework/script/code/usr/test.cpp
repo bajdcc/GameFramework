@@ -34,6 +34,7 @@ int main(int argc, char **argv) {
         case 24: shell("test_fifo");
         case 25: shell("test_ipc");
         case 26: shell("test_ext");
+        case 27: shell("test_screen");
     }
     return 0;
 }

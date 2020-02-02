@@ -76,3 +76,6 @@ sleep 1 show
 echo 【扩展】
 sleep 1 show
 /usr/test_ext
+echo 【扩展】
+sleep 1 show
+/usr/test_screen

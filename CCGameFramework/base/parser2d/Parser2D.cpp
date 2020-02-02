@@ -230,6 +230,10 @@ void Parser2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
     rt->DrawText(logo.GetBuffer(0), logo.GetLength(), logoTF->textFormat,
         D2D1::RectF((float)bounds.left + 10, (float)bounds.top + 5, (float)bounds.left + 200, (float)bounds.top + 50), logoBrush);
 
+    logo.Format(_T("屏幕（%d）"), clib::cgui::singleton().current_screen());
+    rt->DrawText(logo.GetBuffer(0), logo.GetLength(), logoTF->textFormat,
+        D2D1::RectF((float)bounds.left + 10, (float)bounds.top + 35, (float)bounds.left + 200, (float)bounds.top + 60), logoBrush);
+
     logo.Format(_T("FPS: %2.1f IPS: %S"), inv, ipsf(ips));
     rt->DrawText(logo.GetBuffer(0), logo.GetLength(), logoTF->textFormat,
         D2D1::RectF((float)bounds.right - 210, (float)bounds.top + 5, (float)bounds.right, (float)bounds.top + 50), logoBrush);

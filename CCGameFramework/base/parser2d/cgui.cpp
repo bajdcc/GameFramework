@@ -271,7 +271,12 @@ namespace clib {
             vm.reset();
             gen.reset();
             std::fill(screens.begin(), screens.end(), nullptr);
-            reset_cmd();
+            for (auto& s : screens) {
+                s.reset(nullptr);
+            }
+            init_screen(0);
+            screen_ptr = -1;
+            switch_screen(0);
             reset_cycles();
             reset_ips();
         }
@@ -343,6 +348,8 @@ namespace clib {
     }
 
     void cgui::draw_text(CComPtr<ID2D1RenderTarget>& rt, const CRect& bounds, const Parser2DEngine::BrushBag& brushes) {
+        if (!screens[screen_id])
+            return;
         auto& scr = *screens[screen_id].get();
         auto& cols = scr.cols;
         auto& rows = scr.rows;
@@ -549,7 +556,7 @@ namespace clib {
     }
 
     void cgui::put_char(int c) {
-        auto& scr = *screens[screen_id].get();
+        auto& scr = *screens[screen_ptr].get();
         auto& cols = scr.cols;
         auto& rows = scr.rows;
         auto& buffer = scr.buffer;
@@ -711,7 +718,7 @@ namespace clib {
     }
 
     void cgui::new_line() {
-        auto& scr = *screens[screen_id].get();
+        auto& scr = *screens[screen_ptr].get();
         auto& cols = scr.cols;
         auto& rows = scr.rows;
         auto& buffer = scr.buffer;
@@ -743,7 +750,7 @@ namespace clib {
     }
 
     void cgui::draw_char(const char& c) {
-        auto& scr = *screens[screen_id].get();
+        auto& scr = *screens[screen_ptr].get();
         auto& cols = scr.cols;
         auto& rows = scr.rows;
         auto& buffer = scr.buffer;
@@ -795,7 +802,7 @@ namespace clib {
     }
 
     void cgui::move(bool left) {
-        auto& scr = *screens[screen_id].get();
+        auto& scr = *screens[screen_ptr].get();
         auto& cols = scr.cols;
         auto& rows = scr.rows;
         auto& ptr_x = scr.ptr_x;
@@ -818,7 +825,7 @@ namespace clib {
     }
 
     void cgui::forward(int& x, int& y, bool forward) {
-        auto& scr = *screens[screen_id].get();
+        auto& scr = *screens[screen_ptr].get();
         auto& cols = scr.cols;
         auto& rows = scr.rows;
         auto& buffer = scr.buffer;
@@ -867,7 +874,7 @@ namespace clib {
     }
 
     string_t cgui::input_buffer() const {
-        auto& scr = *screens[screen_id].get();
+        auto& scr = *screens[screen_ptr].get();
         auto& cols = scr.cols;
         auto& rows = scr.rows;
         auto& buffer = scr.buffer;
@@ -925,18 +932,26 @@ namespace clib {
         return true;
     }
 
+    int cgui::current_screen() const
+    {
+        return screen_id;
+    }
+
     bool cgui::switch_screen(int n)
     {
+        if (screen_ptr == n)
+            return true;
         if (n < 0 || n >= (int)screens.size())
             return false;
         if (!screens[n])
             return false;
+        screen_ptr = n;
         cvm::global_state.input = &screens[n]->input;
         return true;
     }
 
     void cgui::resize(int r, int c) {
-        auto& scr = *screens[screen_id].get();
+        auto& scr = *screens[screen_ptr].get();
         auto& memory = scr.memory;
         auto& cols = scr.cols;
         auto& rows = scr.rows;
@@ -1003,7 +1018,7 @@ namespace clib {
     }
 
     CSize cgui::get_size() const {
-        auto& scr = *screens[screen_id].get();
+        auto& scr = *screens[screen_ptr].get();
         return { scr.cols * GUI_FONT_W, scr.rows * GUI_FONT_H };
     }
 
@@ -1022,6 +1037,14 @@ namespace clib {
             return vm->get_disp(t);
         }
         return CString();
+    }
+
+    int cgui::new_screen(int n)
+    {
+        if (n < 0 || n >= (int)screens.size())
+            return 1;
+        init_screen(n);
+        return 0;
     }
 
     void cgui::load_dep(string_t& path, std::unordered_set<string_t>& deps) {
@@ -1253,7 +1276,7 @@ namespace clib {
     }
 
     void cgui::input_set(bool valid) {
-        auto& scr = *screens[screen_id].get();
+        auto& scr = *screens[screen_ptr].get();
         auto& memory = scr.memory;
         auto& cols = scr.cols;
         auto& rows = scr.rows;
@@ -1551,7 +1574,7 @@ namespace clib {
     };
 
     void cgui::input(int c) {
-        auto& scr = *screens[screen_id].get();
+        auto& scr = *screens[screen_ptr].get();
         auto& memory = scr.memory;
         auto& cols = scr.cols;
         auto& rows = scr.rows;
@@ -1578,6 +1601,18 @@ namespace clib {
                 auto cc = c & 0xffff;
                 cc = min(cc, 255);
                 str.Format(L"键盘输入：%d 0x%x %s", cc, cc, mapVirtKey[cc]);
+                if (c & GUI_SPECIAL_MASK) {
+                    auto cc = c & 0xff;
+                    if (cc >= VK_F1 && cc < (VK_F1 + (int)screens.size())) {
+                        if (screens[cc - VK_F1]) {
+                            screen_id = cc - VK_F1;
+                            str.AppendFormat(L"，切换到屏幕（%d）成功", cc - VK_F1);
+                        }
+                        else {
+                            str.AppendFormat(L"，切换到屏幕（%d）失败", cc - VK_F1);
+                        }
+                    }
+                }
             }
             else
                 str.Format(L"键盘输入：%d 0x%x %c", c, c, isprint(c) ? wchar_t(c) : L'?');
@@ -1702,15 +1737,17 @@ namespace clib {
             case VK_RETURN:
                 input('\r');
                 return;
-            case 0x71: // SHIFT
+            /*case 0x71: // SHIFT
                 return;
             case 0x72: // CTRL
                 return;
             case 0x74: // ALT
-                return;
+                return;*/
             case VK_SHIFT: // SHIFT
                 return;
             case VK_CONTROL: // CTRL
+                return;
+            case VK_MENU: // ALT
                 return;
             default:
 #if LOG_VM
@@ -1762,14 +1799,6 @@ namespace clib {
         else {
             put_char((char)(c & 0xff));
         }
-    }
-
-    void cgui::reset_cmd() {
-        auto& scr = *screens[screen_id].get();
-        auto& cmd_state = scr.cmd_state;
-        auto& cmd_string = scr.cmd_string;
-        cmd_state = false;
-        cmd_string.clear();
     }
 
     int cgui::reset_cycles() {
@@ -1853,7 +1882,7 @@ namespace clib {
     }
 
     void cgui::exec_cmd(const string_t& s) {
-        auto& scr = *screens[screen_id].get();
+        auto& scr = *screens[screen_ptr].get();
         auto& cols = scr.cols;
         auto& rows = scr.rows;
         auto& buffer = scr.buffer;

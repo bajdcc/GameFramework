@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
     shell("rm /fifo/sys_entry_console");
     sleep(1000);
     welcome();
-    exec("sh"); wait();
-    exec("/init/exit"); wait();
+    shell("sh");
+    shell("/init/exit");
     return 0;
 }
