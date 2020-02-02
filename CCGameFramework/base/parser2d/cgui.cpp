@@ -47,19 +47,8 @@ extern char** g_argv;
 namespace clib {
 
     cgui::cgui() {
-        buffer = memory.alloc_array<char>((uint)size);
-        assert(buffer);
-        memset(buffer, 0, (uint)size);
-        colors_bg = memory.alloc_array<uint32_t>((uint)size);
-        assert(colors_bg);
-        color_bg = 0;
-        std::fill(colors_bg, colors_bg + size, color_bg);
-        colors_fg = memory.alloc_array<uint32_t>((uint)size);
-        assert(colors_fg);
-        color_fg = MAKE_RGB(255, 255, 255);
-        std::fill(colors_fg, colors_fg + size, color_fg);
-        color_bg_stack.push_back(color_bg);
-        color_fg_stack.push_back(color_fg);
+        init_screen(0);
+        switch_screen(0);
     }
 
     cgui& cgui::singleton() {
@@ -281,19 +270,11 @@ namespace clib {
         if (vm) {
             vm.reset();
             gen.reset();
-            cvm::global_state.input_lock = -1;
-            cvm::global_state.input_content.clear();
-            cvm::global_state.input_waiting_list.clear();
-            cvm::global_state.input_read_ptr = -1;
-            cvm::global_state.input_success = false;
-            cvm::global_state.input_code = 0;
-            input_state = false;
+            std::fill(screens.begin(), screens.end(), nullptr);
             reset_cmd();
             reset_cycles();
             reset_ips();
         }
-        color_bg_stack.resize(1);
-        color_fg_stack.resize(1);
         running = false;
         exited = false;
     }
@@ -307,7 +288,7 @@ namespace clib {
 
     void cgui::draw(CComPtr<ID2D1RenderTarget>& rt, const CRect& bounds, const Parser2DEngine::BrushBag& brushes, bool paused, decimal fps) {
         if (!paused && !entered) {
-            if (cvm::global_state.interrupt) {
+            if (cvm::global_state.input->interrupt) {
                 cycle = GUI_CYCLES;
             }
             else if (cycle_set) {
@@ -362,6 +343,24 @@ namespace clib {
     }
 
     void cgui::draw_text(CComPtr<ID2D1RenderTarget>& rt, const CRect& bounds, const Parser2DEngine::BrushBag& brushes) {
+        auto& scr = *screens[screen_id].get();
+        auto& cols = scr.cols;
+        auto& rows = scr.rows;
+        auto& buffer = scr.buffer;
+        auto& colors_bg = scr.colors_bg;
+        auto& colors_fg = scr.colors_fg;
+        auto& color_bg_stack = scr.color_bg_stack;
+        auto& color_fg_stack = scr.color_fg_stack;
+        auto& input_state = scr.input_state;
+        auto& input_ticks = scr.input_ticks;
+        auto& input_caret = scr.input_caret;
+        auto& ptr_x = scr.ptr_x;
+        auto& ptr_y = scr.ptr_y;
+        auto& ptr_rx = scr.ptr_rx;
+        auto& ptr_ry = scr.ptr_ry;
+        auto& ptr_mx = scr.ptr_mx;
+        auto& ptr_my = scr.ptr_my;
+
         int w = bounds.Width();
         int h = bounds.Height();
         int width = cols * GUI_FONT_W;
@@ -550,6 +549,29 @@ namespace clib {
     }
 
     void cgui::put_char(int c) {
+        auto& scr = *screens[screen_id].get();
+        auto& cols = scr.cols;
+        auto& rows = scr.rows;
+        auto& buffer = scr.buffer;
+        auto& color_bg = scr.color_bg;
+        auto& color_fg = scr.color_fg;
+        auto& colors_bg = scr.colors_bg;
+        auto& colors_fg = scr.colors_fg;
+        auto& color_bg_stack = scr.color_bg_stack;
+        auto& color_fg_stack = scr.color_fg_stack;
+        auto& input_state = scr.input_state;
+        auto& input_ticks = scr.input_ticks;
+        auto& input_caret = scr.input_caret;
+        auto& ptr_x = scr.ptr_x;
+        auto& ptr_y = scr.ptr_y;
+        auto& ptr_rx = scr.ptr_rx;
+        auto& ptr_ry = scr.ptr_ry;
+        auto& ptr_mx = scr.ptr_mx;
+        auto& ptr_my = scr.ptr_my;
+        auto& cmd_state = scr.cmd_state;
+        auto& cmd_string = scr.cmd_string;
+        auto& size = scr.size;
+
         if (cmd_state) {
             if (c == '\033') {
                 static string_t pat{ R"([A-Za-z][0-9a-f]{1,8})" };
@@ -689,6 +711,21 @@ namespace clib {
     }
 
     void cgui::new_line() {
+        auto& scr = *screens[screen_id].get();
+        auto& cols = scr.cols;
+        auto& rows = scr.rows;
+        auto& buffer = scr.buffer;
+        auto& color_bg = scr.color_bg;
+        auto& color_fg = scr.color_fg;
+        auto& colors_bg = scr.colors_bg;
+        auto& colors_fg = scr.colors_fg;
+        auto& ptr_x = scr.ptr_x;
+        auto& ptr_y = scr.ptr_y;
+        auto& ptr_rx = scr.ptr_rx;
+        auto& ptr_ry = scr.ptr_ry;
+        auto& ptr_mx = scr.ptr_mx;
+        auto& ptr_my = scr.ptr_my;
+
         if (ptr_my != -1) {
             if (ptr_my == 0) {
                 ptr_mx = ptr_my = 0;
@@ -706,6 +743,23 @@ namespace clib {
     }
 
     void cgui::draw_char(const char& c) {
+        auto& scr = *screens[screen_id].get();
+        auto& cols = scr.cols;
+        auto& rows = scr.rows;
+        auto& buffer = scr.buffer;
+        auto& color_bg = scr.color_bg;
+        auto& color_fg = scr.color_fg;
+        auto& colors_bg = scr.colors_bg;
+        auto& colors_fg = scr.colors_fg;
+        auto& input_state = scr.input_state;
+        auto& input_ticks = scr.input_ticks;
+        auto& input_caret = scr.input_caret;
+        auto& ptr_x = scr.ptr_x;
+        auto& ptr_y = scr.ptr_y;
+        auto& ptr_rx = scr.ptr_rx;
+        auto& ptr_ry = scr.ptr_ry;
+        auto& size = scr.size;
+
         if (input_state && c) {
             forward(ptr_rx, ptr_ry, true);
             if (!(ptr_x == ptr_rx && ptr_y == ptr_ry)) {
@@ -741,6 +795,16 @@ namespace clib {
     }
 
     void cgui::move(bool left) {
+        auto& scr = *screens[screen_id].get();
+        auto& cols = scr.cols;
+        auto& rows = scr.rows;
+        auto& ptr_x = scr.ptr_x;
+        auto& ptr_y = scr.ptr_y;
+        auto& ptr_rx = scr.ptr_rx;
+        auto& ptr_ry = scr.ptr_ry;
+        auto& ptr_mx = scr.ptr_mx;
+        auto& ptr_my = scr.ptr_my;
+
         if (left) {
             if (ptr_mx + ptr_my * cols < ptr_x + ptr_y * cols) {
                 forward(ptr_x, ptr_y, false);
@@ -754,6 +818,25 @@ namespace clib {
     }
 
     void cgui::forward(int& x, int& y, bool forward) {
+        auto& scr = *screens[screen_id].get();
+        auto& cols = scr.cols;
+        auto& rows = scr.rows;
+        auto& buffer = scr.buffer;
+        auto& color_bg = scr.color_bg;
+        auto& color_fg = scr.color_fg;
+        auto& colors_bg = scr.colors_bg;
+        auto& colors_fg = scr.colors_fg;
+        auto& input_state = scr.input_state;
+        auto& input_ticks = scr.input_ticks;
+        auto& input_caret = scr.input_caret;
+        auto& ptr_x = scr.ptr_x;
+        auto& ptr_y = scr.ptr_y;
+        auto& ptr_rx = scr.ptr_rx;
+        auto& ptr_ry = scr.ptr_ry;
+        auto& ptr_mx = scr.ptr_mx;
+        auto& ptr_my = scr.ptr_my;
+        auto& size = scr.size;
+
         if (forward) {
             if (x == cols - 1) {
                 x = 0;
@@ -784,6 +867,19 @@ namespace clib {
     }
 
     string_t cgui::input_buffer() const {
+        auto& scr = *screens[screen_id].get();
+        auto& cols = scr.cols;
+        auto& rows = scr.rows;
+        auto& buffer = scr.buffer;
+        auto& color_bg = scr.color_bg;
+        auto& color_fg = scr.color_fg;
+        auto& ptr_x = scr.ptr_x;
+        auto& ptr_y = scr.ptr_y;
+        auto& ptr_rx = scr.ptr_rx;
+        auto& ptr_ry = scr.ptr_ry;
+        auto& ptr_mx = scr.ptr_mx;
+        auto& ptr_my = scr.ptr_my;
+
         auto begin = ptr_mx + ptr_my * cols;
         auto end = ptr_x + ptr_y * cols;
         std::stringstream ss;
@@ -794,7 +890,69 @@ namespace clib {
         return ss.str();
     }
 
+    bool cgui::init_screen(int n)
+    {
+        if (n < 0 || n >= (int)screens.size())
+            return false;
+        if (screens[n])
+            return false;
+        screens[n].reset(new screen_t());
+        auto& scr = *screens[n].get();
+        auto& memory = scr.memory;
+        auto& cols = scr.cols;
+        auto& rows = scr.rows;
+        auto& buffer = scr.buffer;
+        auto& color_bg = scr.color_bg;
+        auto& color_fg = scr.color_fg;
+        auto& colors_bg = scr.colors_bg;
+        auto& colors_fg = scr.colors_fg;
+        auto& color_bg_stack = scr.color_bg_stack;
+        auto& color_fg_stack = scr.color_fg_stack;
+        auto& size = scr.size;
+        buffer = memory.alloc_array<char>((uint)size);
+        assert(buffer);
+        memset(buffer, 0, (uint)size);
+        colors_bg = memory.alloc_array<uint32_t>((uint)size);
+        assert(colors_bg);
+        color_bg = 0;
+        std::fill(colors_bg, colors_bg + size, color_bg);
+        colors_fg = memory.alloc_array<uint32_t>((uint)size);
+        assert(colors_fg);
+        color_fg = MAKE_RGB(255, 255, 255);
+        std::fill(colors_fg, colors_fg + size, color_fg);
+        color_bg_stack.push_back(color_bg);
+        color_fg_stack.push_back(color_fg);
+        return true;
+    }
+
+    bool cgui::switch_screen(int n)
+    {
+        if (n < 0 || n >= (int)screens.size())
+            return false;
+        if (!screens[n])
+            return false;
+        cvm::global_state.input = &screens[n]->input;
+        return true;
+    }
+
     void cgui::resize(int r, int c) {
+        auto& scr = *screens[screen_id].get();
+        auto& memory = scr.memory;
+        auto& cols = scr.cols;
+        auto& rows = scr.rows;
+        auto& buffer = scr.buffer;
+        auto& color_bg = scr.color_bg;
+        auto& color_fg = scr.color_fg;
+        auto& colors_bg = scr.colors_bg;
+        auto& colors_fg = scr.colors_fg;
+        auto& ptr_x = scr.ptr_x;
+        auto& ptr_y = scr.ptr_y;
+        auto& ptr_rx = scr.ptr_rx;
+        auto& ptr_ry = scr.ptr_ry;
+        auto& ptr_mx = scr.ptr_mx;
+        auto& ptr_my = scr.ptr_my;
+        auto& size = scr.size;
+
         if (r == 0 && c == 0) {
             r = GUI_ROWS;
             c = GUI_COLS;
@@ -845,7 +1003,8 @@ namespace clib {
     }
 
     CSize cgui::get_size() const {
-        return { cols * GUI_FONT_W, rows * GUI_FONT_H };
+        auto& scr = *screens[screen_id].get();
+        return { scr.cols * GUI_FONT_W, scr.rows * GUI_FONT_H };
     }
 
     std::unordered_set<string_t> cgui::get_dep(string_t& path) const
@@ -1094,6 +1253,26 @@ namespace clib {
     }
 
     void cgui::input_set(bool valid) {
+        auto& scr = *screens[screen_id].get();
+        auto& memory = scr.memory;
+        auto& cols = scr.cols;
+        auto& rows = scr.rows;
+        auto& buffer = scr.buffer;
+        auto& color_bg = scr.color_bg;
+        auto& color_fg = scr.color_fg;
+        auto& colors_bg = scr.colors_bg;
+        auto& colors_fg = scr.colors_fg;
+        auto& ptr_x = scr.ptr_x;
+        auto& ptr_y = scr.ptr_y;
+        auto& ptr_rx = scr.ptr_rx;
+        auto& ptr_ry = scr.ptr_ry;
+        auto& ptr_mx = scr.ptr_mx;
+        auto& ptr_my = scr.ptr_my;
+        auto& input_state = scr.input_state;
+        auto& input_ticks = scr.input_ticks;
+        auto& input_caret = scr.input_caret;
+        auto& size = scr.size;
+
         if (valid) {
             input_state = true;
             ptr_mx = ptr_x;
@@ -1372,6 +1551,27 @@ namespace clib {
     };
 
     void cgui::input(int c) {
+        auto& scr = *screens[screen_id].get();
+        auto& memory = scr.memory;
+        auto& cols = scr.cols;
+        auto& rows = scr.rows;
+        auto& buffer = scr.buffer;
+        auto& color_bg = scr.color_bg;
+        auto& color_fg = scr.color_fg;
+        auto& colors_bg = scr.colors_bg;
+        auto& colors_fg = scr.colors_fg;
+        auto& ptr_x = scr.ptr_x;
+        auto& ptr_y = scr.ptr_y;
+        auto& ptr_rx = scr.ptr_rx;
+        auto& ptr_ry = scr.ptr_ry;
+        auto& ptr_mx = scr.ptr_mx;
+        auto& ptr_my = scr.ptr_my;
+        auto& input_state = scr.input_state;
+        auto& input_ticks = scr.input_ticks;
+        auto& input_caret = scr.input_caret;
+        auto& cmd_state = scr.cmd_state;
+        auto& size = scr.size;
+
         {
             CString str;
             if (c & GUI_SPECIAL_MASK) {
@@ -1384,24 +1584,24 @@ namespace clib {
             vm->add_stat(str);
         }
         if (c == 3) {
-            cvm::global_state.interrupt = true;
+            cvm::global_state.input->interrupt = true;
             cmd_state = false;
             if (input_state) {
                 ptr_x = ptr_rx;
                 ptr_y = ptr_ry;
                 put_char('\n');
-                cvm::global_state.input_content.clear();
-                cvm::global_state.input_read_ptr = 0;
-                cvm::global_state.input_success = true;
-                cvm::global_state.input_code = 0;
+                cvm::global_state.input->input_content.clear();
+                cvm::global_state.input->input_read_ptr = 0;
+                cvm::global_state.input->input_success = true;
+                cvm::global_state.input->input_code = 0;
                 input_state = false;
-                cvm::global_state.input_single = false;
+                cvm::global_state.input->input_single = false;
             }
             return;
         }
         if (!input_state)
             return;
-        if (cvm::global_state.input_single) {
+        if (cvm::global_state.input->input_single) {
             if (c > 0 && c < 256 && (std::isprint(c) || c == '\r')) {
                 if (c == '\r')
                     c = '\n';
@@ -1410,11 +1610,11 @@ namespace clib {
                 ptr_y = ptr_ry;
                 string_t s;
                 s += c;
-                cvm::global_state.input_content = s;
-                cvm::global_state.input_read_ptr = 0;
-                cvm::global_state.input_success = true;
-                cvm::global_state.input_code = 0;
-                cvm::global_state.input_single = false;
+                cvm::global_state.input->input_content = s;
+                cvm::global_state.input->input_read_ptr = 0;
+                cvm::global_state.input->input_success = true;
+                cvm::global_state.input->input_code = 0;
+                cvm::global_state.input->input_single = false;
                 input_state = false;
             }
             else {
@@ -1456,10 +1656,10 @@ namespace clib {
             ptr_x = ptr_rx;
             ptr_y = ptr_ry;
             put_char('\n');
-            cvm::global_state.input_content = input_buffer();
-            cvm::global_state.input_read_ptr = 0;
-            cvm::global_state.input_success = true;
-            cvm::global_state.input_code = 0;
+            cvm::global_state.input->input_content = input_buffer();
+            cvm::global_state.input->input_read_ptr = 0;
+            cvm::global_state.input->input_success = true;
+            cvm::global_state.input->input_code = 0;
             input_state = false;
             return;
         }
@@ -1523,10 +1723,10 @@ namespace clib {
             ATLTRACE("[SYSTEM] GUI  | Input invalid special key: %d\n", c & 0xff);
             return;
             }
-            cvm::global_state.input_content = input_buffer();
-            cvm::global_state.input_read_ptr = 0;
-            cvm::global_state.input_success = true;
-            cvm::global_state.input_code = C;
+            cvm::global_state.input->input_content = input_buffer();
+            cvm::global_state.input->input_read_ptr = 0;
+            cvm::global_state.input->input_success = true;
+            cvm::global_state.input->input_code = C;
             input_state = false;
             auto begin = ptr_mx + ptr_my * cols;
             auto end = ptr_x + ptr_y * cols;
@@ -1565,6 +1765,9 @@ namespace clib {
     }
 
     void cgui::reset_cmd() {
+        auto& scr = *screens[screen_id].get();
+        auto& cmd_state = scr.cmd_state;
+        auto& cmd_string = scr.cmd_string;
         cmd_state = false;
         cmd_string.clear();
     }
@@ -1598,6 +1801,11 @@ namespace clib {
 
     void cgui::output() const
     {
+        auto& scr = *screens[screen_id].get();
+        auto& rows = scr.rows;
+        auto& cols = scr.cols;
+        auto& buffer = scr.buffer;
+
         if (!vm)
             return;
         OpenClipboard(window->GetWindowHandle());
@@ -1645,6 +1853,23 @@ namespace clib {
     }
 
     void cgui::exec_cmd(const string_t& s) {
+        auto& scr = *screens[screen_id].get();
+        auto& cols = scr.cols;
+        auto& rows = scr.rows;
+        auto& buffer = scr.buffer;
+        auto& color_bg = scr.color_bg;
+        auto& color_fg = scr.color_fg;
+        auto& colors_bg = scr.colors_bg;
+        auto& colors_fg = scr.colors_fg;
+        auto& color_bg_stack = scr.color_bg_stack;
+        auto& color_fg_stack = scr.color_fg_stack;
+        auto& ptr_x = scr.ptr_x;
+        auto& ptr_y = scr.ptr_y;
+        auto& ptr_rx = scr.ptr_rx;
+        auto& ptr_ry = scr.ptr_ry;
+        auto& ptr_mx = scr.ptr_mx;
+        auto& ptr_my = scr.ptr_my;
+
         switch (s[0]) {
         case 'B': { // 设置背景色
             color_bg = (uint32_t)std::stoul(s.substr(1), nullptr, 16);

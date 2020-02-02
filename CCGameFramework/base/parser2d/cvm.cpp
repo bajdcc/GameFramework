@@ -111,14 +111,6 @@ namespace clib {
 
     void cvm::init_global()
     {
-        global_state.interrupt = false;
-        global_state.input_lock = -1;
-        global_state.input_waiting_list.clear();
-        global_state.input_content.clear();
-        global_state.input_success = false;
-        global_state.input_read_ptr = -1;
-        global_state.input_code = 0;
-        global_state.input_single = false;
         global_state.hostname = "ccos";
         global_state.gui = false;
         global_state.gui_blur = 0.0f;
@@ -463,8 +455,8 @@ namespace clib {
                 }
             }
         }
-        if (global_state.interrupt) {
-            global_state.interrupt = false;
+        if (global_state.input->interrupt) {
+            global_state.input->interrupt = false;
             std::vector<int> foreground_pids;
             for (int i = 1; i < TASK_NUM; ++i) {
                 if (tasks[i] && (tasks[i]->flag & CTX_VALID) &&
@@ -496,7 +488,7 @@ namespace clib {
         for (auto i = 0; i < cycle; ++i) {
             i++;
             cycles++;
-            if (global_state.interrupt) break;
+            if (global_state.input->interrupt) break;
             if ((ctx->pc & 0xF0000000) != USER_BASE) {
                 if (ctx->pc != 0xE0000FF4 && ctx->pc != 0xE0000FFC) {
 #if LOG_SYSTEM
@@ -1624,12 +1616,12 @@ namespace clib {
         auto old_ctx = ctx;
         ctx = tasks[id].get();
         {
-            if (global_state.input_lock == ctx->id) {
-                global_state.input_lock = -1;
-                global_state.input_read_ptr = -1;
-                global_state.input_content.clear();
-                global_state.input_success = false;
-                global_state.input_code = 0;
+            if (global_state.input->input_lock == ctx->id) {
+                global_state.input->input_lock = -1;
+                global_state.input->input_read_ptr = -1;
+                global_state.input->input_content.clear();
+                global_state.input->input_success = false;
+                global_state.input->input_code = 0;
                 cgui::singleton().reset_cmd();
             }
             if (timers.find(ctx->id) != timers.end())
@@ -2172,19 +2164,19 @@ namespace clib {
         case D_MEM: {
             std::wstringstream ss;
             {
-                if (global_state.input_lock == -1)
+                if (global_state.input->input_lock == -1)
                     _snwprintf_s(sz, sizeof(sz) / sizeof(sz[0]), L"%-18s %9s", L"Input Lock:", L"None");
                 else
-                    _snwprintf_s(sz, sizeof(sz) / sizeof(sz[0]), L"%-18s %9d", L"Input Lock:", global_state.input_lock);
+                    _snwprintf_s(sz, sizeof(sz) / sizeof(sz[0]), L"%-18s %9d", L"Input Lock:", global_state.input->input_lock);
                 ss << sz << std::endl;
-                _snwprintf_s(sz, sizeof(sz) / sizeof(sz[0]), L"%-18s %9s", L"Input Single:", global_state.input_single ? L"Yes" : L"No");
+                _snwprintf_s(sz, sizeof(sz) / sizeof(sz[0]), L"%-18s %9s", L"Input Single:", global_state.input->input_single ? L"Yes" : L"No");
                 ss << sz << std::endl;
                 std::string str;
-                if (global_state.input_waiting_list.empty())
+                if (global_state.input->input_waiting_list.empty())
                     str = "Empty";
                 else {
                     std::stringstream ss2;
-                    std::copy(global_state.input_waiting_list.begin(), global_state.input_waiting_list.end(),
+                    std::copy(global_state.input->input_waiting_list.begin(), global_state.input->input_waiting_list.end(),
                         std::ostream_iterator<int>(ss2, ","));
                     str = ss2.str();
                     str.pop_back();
@@ -2511,7 +2503,7 @@ namespace clib {
     int cvm::stream_write(vfs_stream_t type, byte c)
     {
         if (type == fss_console) {
-            if (global_state.input_lock == -1) {
+            if (global_state.input->input_lock == -1) {
                 cgui::singleton().put_char((char)c);
                 return 0;
             }
@@ -2760,7 +2752,7 @@ namespace clib {
                 ctx->output_redirect = -1;
             }
         }
-        else if (global_state.input_lock == -1) {
+        else if (global_state.input->input_lock == -1) {
             if (id == 0) {
                 cgui::singleton().put_char(ctx->ax._c);
             }
@@ -2770,8 +2762,8 @@ namespace clib {
             }
         }
         else {
-            if (global_state.input_lock != ctx->id)
-                global_state.input_waiting_list.push_back(ctx->id);
+            if (global_state.input->input_lock != ctx->id)
+                global_state.input->input_waiting_list.push_back(ctx->id);
             ctx->state = CTS_WAIT;
             ctx->pc -= INC_PTR;
             return 1;
@@ -3703,7 +3695,7 @@ namespace clib {
             vmm_setstr((uint32_t)ctx->ax._i, global_state.hostname);
             break;
         case 8:
-            if (global_state.input_lock == ctx->id) {
+            if (global_state.input->input_lock == ctx->id) {
                 cgui::singleton().input_char(ctx->ax._c);
             }
             break;
@@ -3713,14 +3705,14 @@ namespace clib {
                 ctx->pc += INC_PTR;
             }
             else {
-                if (global_state.input_lock == -1) {
+                if (global_state.input->input_lock == -1) {
                     ctx->flag |= CTX_INPUT;
-                    global_state.input_lock = ctx->id;
+                    global_state.input->input_lock = ctx->id;
                     ctx->pc += INC_PTR;
                     cgui::singleton().input_set(true);
                 }
                 else {
-                    global_state.input_waiting_list.push_back(ctx->id);
+                    global_state.input->input_waiting_list.push_back(ctx->id);
                     ctx->state = CTS_WAIT;
                     ctx->pc -= INC_PTR;
                 }
@@ -3743,29 +3735,29 @@ namespace clib {
                     ctx->input_redirect = -1;
                 }
             }
-            else if (global_state.input_lock == ctx->id) {
-                if (global_state.input_success) {
-                    if (global_state.input_read_ptr >= (int)global_state.input_content.length()) {
+            else if (global_state.input->input_lock == ctx->id) {
+                if (global_state.input->input_success) {
+                    if (global_state.input->input_read_ptr >= (int)global_state.input->input_content.length()) {
                         ctx->ax._i = -1;
                         ctx->pc += INC_PTR;
                         // INPUT COMPLETE
-                        for (auto& _id : global_state.input_waiting_list) {
+                        for (auto& _id : global_state.input->input_waiting_list) {
                             if (tasks[_id] && tasks[_id]->flag & CTX_VALID) {
                                 assert(tasks[_id]->state == CTS_WAIT);
                                 tasks[_id]->state = CTS_RUNNING;
                             }
                         }
-                        global_state.input_lock = -1;
-                        global_state.input_waiting_list.clear();
-                        global_state.input_read_ptr = -1;
-                        global_state.input_content.clear();
-                        global_state.input_success = false;
-                        global_state.input_code = 0;
+                        global_state.input->input_lock = -1;
+                        global_state.input->input_waiting_list.clear();
+                        global_state.input->input_read_ptr = -1;
+                        global_state.input->input_content.clear();
+                        global_state.input->input_success = false;
+                        global_state.input->input_code = 0;
                         cgui::singleton().input_set(false);
                         return true;
                     }
                     else {
-                        ctx->ax._i = global_state.input_content[global_state.input_read_ptr++];
+                        ctx->ax._i = global_state.input->input_content[global_state.input->input_read_ptr++];
                         break;
                     }
                 }
@@ -3779,21 +3771,21 @@ namespace clib {
             return true;
         }
         case 12: {
-            if (ctx->input_redirect == -1 && global_state.input_lock == ctx->id) {
-                if (global_state.input_success) {
+            if (ctx->input_redirect == -1 && global_state.input->input_lock == ctx->id) {
+                if (global_state.input->input_success) {
                     // INPUT INTERRUPT
-                    for (auto& _id : global_state.input_waiting_list) {
+                    for (auto& _id : global_state.input->input_waiting_list) {
                         if (tasks[_id] && tasks[_id]->flag & CTX_VALID) {
                             assert(tasks[_id]->state == CTS_WAIT);
                             tasks[_id]->state = CTS_RUNNING;
                         }
                     }
-                    global_state.input_lock = -1;
-                    global_state.input_waiting_list.clear();
-                    global_state.input_read_ptr = -1;
-                    global_state.input_content.clear();
-                    global_state.input_success = false;
-                    global_state.input_code = 0;
+                    global_state.input->input_lock = -1;
+                    global_state.input->input_waiting_list.clear();
+                    global_state.input->input_read_ptr = -1;
+                    global_state.input->input_content.clear();
+                    global_state.input->input_success = false;
+                    global_state.input->input_code = 0;
                     cgui::singleton().input_set(false);
                 }
             }
@@ -3821,29 +3813,29 @@ namespace clib {
                     ctx->input_redirect = -1;
                 }
             }
-            else if (global_state.input_lock == ctx->id) {
-                if (global_state.input_success) {
-                    if (global_state.input_read_ptr >= (int)global_state.input_content.length()) {
-                        if (global_state.input_code != 0) {
-                            ctx->ax._i = global_state.input_code;
-                            global_state.input_code = 0;
+            else if (global_state.input->input_lock == ctx->id) {
+                if (global_state.input->input_success) {
+                    if (global_state.input->input_read_ptr >= (int)global_state.input->input_content.length()) {
+                        if (global_state.input->input_code != 0) {
+                            ctx->ax._i = global_state.input->input_code;
+                            global_state.input->input_code = 0;
                             break;
                         }
                         ctx->ax._i = -1;
                         ctx->pc += INC_PTR;
                         // INPUT COMPLETE
-                        for (auto& _id : global_state.input_waiting_list) {
+                        for (auto& _id : global_state.input->input_waiting_list) {
                             if (tasks[_id] && tasks[_id]->flag & CTX_VALID) {
                                 assert(tasks[_id]->state == CTS_WAIT);
                                 tasks[_id]->state = CTS_RUNNING;
                             }
                         }
                         ctx->flag &= ~CTX_INPUT;
-                        global_state.input_lock = -1;
-                        global_state.input_waiting_list.clear();
-                        global_state.input_read_ptr = -1;
-                        global_state.input_content.clear();
-                        global_state.input_success = false;
+                        global_state.input->input_lock = -1;
+                        global_state.input->input_waiting_list.clear();
+                        global_state.input->input_read_ptr = -1;
+                        global_state.input->input_content.clear();
+                        global_state.input->input_success = false;
                         cgui::singleton().input_set(false);
                         return true;
                     }
@@ -3862,7 +3854,7 @@ namespace clib {
             return true;
         }
         case 15:
-            global_state.input_single = true;
+            global_state.input->input_single = true;
                  break;
         case 16: {
             if (ctx->parent != -1 && tasks[ctx->parent] &&
@@ -3895,13 +3887,13 @@ namespace clib {
             break;
         }
         case 20: {
-            if (global_state.input_lock == -1) {
+            if (global_state.input->input_lock == -1) {
                 set_resize_id.insert(ctx->id);
                 cgui::singleton().resize(ctx->ax._i >> 16, ctx->ax._i & 0xFFFF);
             }
             else {
-                if (global_state.input_lock != ctx->id)
-                    global_state.input_waiting_list.push_back(ctx->id);
+                if (global_state.input->input_lock != ctx->id)
+                    global_state.input->input_waiting_list.push_back(ctx->id);
                 ctx->state = CTS_WAIT;
                 ctx->pc -= INC_PTR;
                 return true;

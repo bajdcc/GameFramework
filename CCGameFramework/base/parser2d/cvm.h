@@ -316,7 +316,9 @@ namespace clib {
         std::list<CString> stat_s;
 
     public:
-        static struct global_state_t {
+        class global_input_t {
+        public:
+            global_input_t() = default;
             bool interrupt{ false };
             int input_lock{ -1 };
             std::vector<int> input_waiting_list;
@@ -325,6 +327,9 @@ namespace clib {
             int input_read_ptr{ -1 };
             int input_code{ 0 };
             bool input_single{ false };
+        };
+        static struct global_state_t {
+            global_input_t* input{ nullptr };
             string_t hostname{ "ccos" };
             bool gui{ false };
             float gui_blur{ 0.0f };

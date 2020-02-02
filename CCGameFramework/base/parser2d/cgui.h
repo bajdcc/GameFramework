@@ -96,6 +96,9 @@ namespace clib {
         void forward(int& x, int& y, bool forward);
         string_t input_buffer() const;
 
+        bool init_screen(int n);
+        bool switch_screen(int n);
+
     public:
         static cgui& singleton();
 
@@ -111,35 +114,42 @@ namespace clib {
         cgen gen;
         cparser p;
         std::unique_ptr<cvm> vm;
-        memory_pool<GUI_MEMORY> memory;
-        char* buffer{ nullptr };
-        uint32_t* colors_bg{ nullptr };
-        uint32_t* colors_fg{ nullptr };
+        class screen_t {
+        public:
+            screen_t() = default;
+            memory_pool<GUI_MEMORY> memory;
+            char* buffer{ nullptr };
+            uint32_t* colors_bg{ nullptr };
+            uint32_t* colors_fg{ nullptr };
+            std::vector<uint32_t> color_bg_stack;
+            std::vector<uint32_t> color_fg_stack;
+            int ptr_x{ 0 };
+            int ptr_y{ 0 };
+            int ptr_mx{ 0 };
+            int ptr_my{ 0 };
+            int ptr_rx{ 0 };
+            int ptr_ry{ 0 };
+            int rows{ GUI_ROWS };
+            int cols{ GUI_COLS };
+            int size{ GUI_SIZE };
+            bool input_state{ false };
+            int input_ticks{ 0 };
+            bool input_caret{ false };
+            bool cmd_state{ false };
+            std::vector<char> cmd_string;
+            uint32_t color_bg;
+            uint32_t color_fg;
+            cvm::global_input_t input;
+        };
+        std::array<std::unique_ptr<screen_t>, 4> screens;
+        int screen_id{ 0 };
         std::unordered_map<string_t, std::vector<byte>> cache;
         std::unordered_map<string_t, string_t> cache_code;
         std::unordered_map<string_t, std::unordered_set<string_t>> cache_dep;
-        std::vector<uint32_t> color_bg_stack;
-        std::vector<uint32_t> color_fg_stack;
         bool running{ false };
         bool exited{ false };
         int cycle{ GUI_CYCLES };
         int ticks{ GUI_TICKS };
-        int ptr_x{ 0 };
-        int ptr_y{ 0 };
-        int ptr_mx{ 0 };
-        int ptr_my{ 0 };
-        int ptr_rx{ 0 };
-        int ptr_ry{ 0 };
-        int rows{ GUI_ROWS };
-        int cols{ GUI_COLS };
-        int size{ GUI_SIZE };
-        bool input_state{ false };
-        int input_ticks{ 0 };
-        bool input_caret{ false };
-        bool cmd_state{ false };
-        std::vector<char> cmd_string;
-        uint32_t color_bg;
-        uint32_t color_fg;
         int cycles{ 0 };
         int cycle_speed{ 0 };
         int cycle_stable{ 0 };
