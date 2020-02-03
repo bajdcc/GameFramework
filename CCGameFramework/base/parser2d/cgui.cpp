@@ -47,8 +47,10 @@ extern char** g_argv;
 namespace clib {
 
     cgui::cgui() {
+        std::fill(screen_ref.begin(), screen_ref.end(), 0);
         init_screen(0);
         switch_screen(0);
+        switch_screen_display(0);
     }
 
     cgui& cgui::singleton() {
@@ -277,6 +279,10 @@ namespace clib {
             init_screen(0);
             screen_ptr = -1;
             switch_screen(0);
+            screen_id = -1;
+            switch_screen_display(0);
+            std::fill(screen_ref.begin(), screen_ref.end(), 0);
+            screen_interrupt.clear();
             reset_cycles();
             reset_ips();
         }
@@ -713,8 +719,11 @@ namespace clib {
         }
     }
 
-    void cgui::input_char(char c) {
+    void cgui::input_call(int c) {
+        auto old = screen_ptr;
+        screen_ptr = screen_id;
         input(c);
+        screen_ptr = old;
     }
 
     void cgui::new_line() {
@@ -905,6 +914,7 @@ namespace clib {
             return false;
         screens[n].reset(new screen_t());
         auto& scr = *screens[n].get();
+        auto& input = scr.input;
         auto& memory = scr.memory;
         auto& cols = scr.cols;
         auto& rows = scr.rows;
@@ -916,6 +926,7 @@ namespace clib {
         auto& color_bg_stack = scr.color_bg_stack;
         auto& color_fg_stack = scr.color_fg_stack;
         auto& size = scr.size;
+        input.id = n;
         buffer = memory.alloc_array<char>((uint)size);
         assert(buffer);
         memset(buffer, 0, (uint)size);
@@ -929,12 +940,68 @@ namespace clib {
         std::fill(colors_fg, colors_fg + size, color_fg);
         color_bg_stack.push_back(color_bg);
         color_fg_stack.push_back(color_fg);
+        if (vm) {
+            CString s;
+            s.Format(L"初始化屏幕（%d）", n);
+            vm->add_stat(s);
+        }
+        return true;
+    }
+
+    bool cgui::switch_screen_display(int n)
+    {
+        if (screen_id == n)
+            return true;
+        if (n < 0 || n >= (int)screens.size())
+            return false;
+        if (!screens[n])
+            return false;
+        screen_id = n;
+        cvm::global_state.input_s = &screens[n]->input;
         return true;
     }
 
     int cgui::current_screen() const
     {
         return screen_id;
+    }
+
+    void cgui::screen_ref_add(int n)
+    {
+        if (n < 0 || n >= (int)screens.size())
+            return;
+        if (!screens[n])
+            return;
+        screen_ref[n]++;
+    }
+
+    void cgui::screen_ref_dec(int n)
+    {
+        if (n < 0 || n >= (int)screens.size())
+            return;
+        if (!screens[n])
+            return;
+        screen_ref[n]--;
+        if (n != 0 && screen_ref[n] <= 0) {
+            if (screen_id == n) {
+                switch_screen_display(0);
+            }
+            screens[n].reset(nullptr);
+            if (vm) {
+                CString s;
+                s.Format(L"关闭屏幕（%d）", n);
+                vm->add_stat(s);
+            }
+        }
+    }
+
+    cvm::global_input_t* cgui::get_screen_interrupt()
+    {
+        if (screen_interrupt.empty())
+        return nullptr;
+        auto n = screen_interrupt.back();
+        screen_interrupt.pop_back();
+        return &screens[n]->input;
     }
 
     bool cgui::switch_screen(int n)
@@ -1600,43 +1667,53 @@ namespace clib {
             if (c & GUI_SPECIAL_MASK) {
                 auto cc = c & 0xffff;
                 cc = min(cc, 255);
-                str.Format(L"键盘输入：%d 0x%x %s", cc, cc, mapVirtKey[cc]);
+                str.Format(L"屏幕（%d）键盘输入：%d 0x%x %s", screen_ptr, cc, cc, mapVirtKey[cc]);
                 if (c & GUI_SPECIAL_MASK) {
-                    auto cc = c & 0xff;
-                    if (cc >= VK_F1 && cc < (VK_F1 + (int)screens.size())) {
-                        if (screens[cc - VK_F1]) {
-                            screen_id = cc - VK_F1;
-                            str.AppendFormat(L"，切换到屏幕（%d）成功", cc - VK_F1);
+                    auto cc = (c & 0xff) - VK_F1;
+                    if (cc >= 0 && cc < (int)screens.size()) {
+                        if (switch_screen_display(cc)) {
+                            str.AppendFormat(L"，切换到屏幕（%d）成功", cc);
                         }
                         else {
-                            str.AppendFormat(L"，切换到屏幕（%d）失败", cc - VK_F1);
+                            str.AppendFormat(L"，切换到屏幕（%d）失败", cc);
                         }
                     }
                 }
             }
             else
-                str.Format(L"键盘输入：%d 0x%x %c", c, c, isprint(c) ? wchar_t(c) : L'?');
+                str.Format(L"屏幕（%d）键盘输入：%d 0x%x %c", screen_ptr, c, c, isprint(c) ? wchar_t(c) : L'?');
             vm->add_stat(str);
         }
         if (c == 3) {
-            cvm::global_state.input->interrupt = true;
+            screen_interrupt.push_back(screen_ptr);
+            cvm::global_state.input_s->interrupt = true;
             cmd_state = false;
             if (input_state) {
                 ptr_x = ptr_rx;
                 ptr_y = ptr_ry;
                 put_char('\n');
-                cvm::global_state.input->input_content.clear();
-                cvm::global_state.input->input_read_ptr = 0;
-                cvm::global_state.input->input_success = true;
-                cvm::global_state.input->input_code = 0;
+                cvm::global_state.input_s->input_content.clear();
+                cvm::global_state.input_s->input_read_ptr = 0;
+                cvm::global_state.input_s->input_success = true;
+                cvm::global_state.input_s->input_code = 0;
                 input_state = false;
-                cvm::global_state.input->input_single = false;
+                cvm::global_state.input_s->input_single = false;
+            }
+            if (screen_ptr == 0) {
+                for (auto i = 1; i < (int)screens.size(); i++) {
+                    if (screens[i]) {
+                        screen_ptr = i;
+                        input(c);
+                        screens[i]->input.interrupt_force = true;
+                    }
+                }
+                screen_ptr = 0;
             }
             return;
         }
         if (!input_state)
             return;
-        if (cvm::global_state.input->input_single) {
+        if (cvm::global_state.input_s->input_single) {
             if (c > 0 && c < 256 && (std::isprint(c) || c == '\r')) {
                 if (c == '\r')
                     c = '\n';
@@ -1645,11 +1722,11 @@ namespace clib {
                 ptr_y = ptr_ry;
                 string_t s;
                 s += c;
-                cvm::global_state.input->input_content = s;
-                cvm::global_state.input->input_read_ptr = 0;
-                cvm::global_state.input->input_success = true;
-                cvm::global_state.input->input_code = 0;
-                cvm::global_state.input->input_single = false;
+                cvm::global_state.input_s->input_content = s;
+                cvm::global_state.input_s->input_read_ptr = 0;
+                cvm::global_state.input_s->input_success = true;
+                cvm::global_state.input_s->input_code = 0;
+                cvm::global_state.input_s->input_single = false;
                 input_state = false;
             }
             else {
@@ -1691,10 +1768,10 @@ namespace clib {
             ptr_x = ptr_rx;
             ptr_y = ptr_ry;
             put_char('\n');
-            cvm::global_state.input->input_content = input_buffer();
-            cvm::global_state.input->input_read_ptr = 0;
-            cvm::global_state.input->input_success = true;
-            cvm::global_state.input->input_code = 0;
+            cvm::global_state.input_s->input_content = input_buffer();
+            cvm::global_state.input_s->input_read_ptr = 0;
+            cvm::global_state.input_s->input_success = true;
+            cvm::global_state.input_s->input_code = 0;
             input_state = false;
             return;
         }
@@ -1760,10 +1837,10 @@ namespace clib {
             ATLTRACE("[SYSTEM] GUI  | Input invalid special key: %d\n", c & 0xff);
             return;
             }
-            cvm::global_state.input->input_content = input_buffer();
-            cvm::global_state.input->input_read_ptr = 0;
-            cvm::global_state.input->input_success = true;
-            cvm::global_state.input->input_code = C;
+            cvm::global_state.input_s->input_content = input_buffer();
+            cvm::global_state.input_s->input_read_ptr = 0;
+            cvm::global_state.input_s->input_success = true;
+            cvm::global_state.input_s->input_code = C;
             input_state = false;
             auto begin = ptr_mx + ptr_my * cols;
             auto end = ptr_x + ptr_y * cols;

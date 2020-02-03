@@ -455,15 +455,28 @@ namespace clib {
                 }
             }
         }
-        if (global_state.input->interrupt) {
-            global_state.input->interrupt = false;
+        auto scr_int = cgui::singleton().get_screen_interrupt();
+        if (scr_int) {
+            scr_int->interrupt = false;
+            auto id = scr_int->id;
             std::vector<int> foreground_pids;
-            for (int i = 1; i < TASK_NUM; ++i) {
-                if (tasks[i] && (tasks[i]->flag & CTX_VALID) &&
-                    !(tasks[i]->flag & CTX_SERVICE) &&
-                    (tasks[i]->flag & CTX_FOREGROUND) &&
-                    tasks[i]->parent != 0)
-                    foreground_pids.push_back(i);
+            if (scr_int->interrupt_force) {
+                for (int i = 1; i < TASK_NUM; ++i) {
+                    if (tasks[i] && (tasks[i]->flag & CTX_VALID) &&
+                        tasks[i]->screen_id == id &&
+                        tasks[i]->parent != 0)
+                        foreground_pids.push_back(i);
+                }
+            }
+            else {
+                for (int i = 1; i < TASK_NUM; ++i) {
+                    if (tasks[i] && (tasks[i]->flag & CTX_VALID) &&
+                        tasks[i]->screen_id == id &&
+                        !(tasks[i]->flag & CTX_SERVICE) &&
+                        (tasks[i]->flag & CTX_FOREGROUND) &&
+                        tasks[i]->parent != 0)
+                        foreground_pids.push_back(i);
+                }
             }
 #if LOG_SYSTEM
             ATLTRACE("[SYSTEM] SIG  | Received Ctrl-C!\n");
@@ -1738,6 +1751,7 @@ namespace clib {
                 fs.rm(ss.str());
             }
         }
+        cgui::singleton().screen_ref_dec(ctx->screen_id);
         tasks[id].reset(nullptr);
         ctx = old_ctx;
         available_tasks--;
@@ -1789,6 +1803,7 @@ namespace clib {
             tasks[pid]->paths = ctx->paths;
             tasks[pid]->sigs = ctx->sigs;
             tasks[pid]->screen_id = ctx->screen_id;
+            cgui::singleton().screen_ref_add(ctx->screen_id);
 #if LOG_SYSTEM
             ATLTRACE("[SYSTEM] PROC | Exec: Parent= #%d, Child= #%d\n", ctx->id, pid);
 #endif
@@ -1836,6 +1851,7 @@ namespace clib {
         ctx->paths = old_ctx->paths;
         ctx->cmd = old_ctx->cmd;
         ctx->screen_id = old_ctx->screen_id;
+        cgui::singleton().screen_ref_add(ctx->screen_id);
         /* 映射4KB的代码空间 */
         {
             auto size = PAGE_SIZE / sizeof(int);
@@ -3705,7 +3721,7 @@ namespace clib {
             break;
         case 8:
             if (global_state.input->input_lock == ctx->id) {
-                cgui::singleton().input_char(ctx->ax._c);
+                cgui::singleton().input_call(ctx->ax._c);
             }
             break;
         case 10: {
@@ -3917,8 +3933,11 @@ namespace clib {
             ctx->ax._ui = vmm_free(ctx->ax._ui);
             break;
         case 32:
-            if (cgui::singleton().new_screen(ctx->ax._i) == 0)
+            if (cgui::singleton().new_screen(ctx->ax._i) == 0) {
+                cgui::singleton().screen_ref_dec(ctx->screen_id);
                 ctx->screen_id = ctx->ax._i;
+                cgui::singleton().screen_ref_add(ctx->screen_id);
+            }
             break;
         case 40:
             destroy(ctx->id);

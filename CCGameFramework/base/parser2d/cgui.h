@@ -41,6 +41,7 @@
 #define GUI_INPUT_CARET 15
 #define GUI_MEMORY (256 * 1024)
 #define GUI_SPECIAL_MASK 0x20000
+#define GUI_SCREEN_N 4
 
 namespace clib {
 
@@ -57,7 +58,7 @@ namespace clib {
 
         void put_string(const string_t& str);
         void put_char(int c);
-        void input_char(char c);
+        void input_call(int c);
 
         void set_cycle(int cycle);
         void set_ticks(int ticks);
@@ -98,12 +99,16 @@ namespace clib {
         string_t input_buffer() const;
 
         bool init_screen(int n);
+        bool switch_screen_display(int n);
 
     public:
         static cgui& singleton();
 
         bool switch_screen(int n);
         int current_screen() const;
+        void screen_ref_add(int n);
+        void screen_ref_dec(int n);
+        cvm::global_input_t* get_screen_interrupt();
 
         string_t load_file(const string_t& name);
         bool exist_file(const string_t& name);
@@ -140,12 +145,14 @@ namespace clib {
             bool input_caret{ false };
             bool cmd_state{ false };
             std::vector<char> cmd_string;
-            uint32_t color_bg;
-            uint32_t color_fg;
+            uint32_t color_bg{ 0 };
+            uint32_t color_fg{ 0xffffff };
             cvm::global_input_t input;
         };
-        std::array<std::unique_ptr<screen_t>, 4> screens;
-        int screen_id{ 0 };
+        std::array<std::unique_ptr<screen_t>, GUI_SCREEN_N> screens;
+        std::array<int, GUI_SCREEN_N> screen_ref;
+        std::vector<int> screen_interrupt;
+        int screen_id{ -1 };
         int screen_ptr{ -1 };
         std::unordered_map<string_t, std::vector<byte>> cache;
         std::unordered_map<string_t, string_t> cache_code;
