@@ -40,7 +40,6 @@ int main(int argc, char** argv) {
             sleep(100);
             continue;
         }
-        if (recv_signal() == 9) break;
         show(format("request come: %s\n", data));
         if (fork() == -1) {
             redirect_to_parent();

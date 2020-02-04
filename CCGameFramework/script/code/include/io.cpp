@@ -80,7 +80,7 @@ int io_pipe() {
 int input(char *text, int len) {
     int i, c;
     int state = input_lock();
-    input_string(text);
+    if (*text) input_string(text);
     for (i = 0; i < len - 1 && ((c = input_valid()) != -1); ++i) {
         if (c <= INPUT_BEGIN) {
             input_unlock();

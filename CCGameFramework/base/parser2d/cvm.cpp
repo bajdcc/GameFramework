@@ -2189,19 +2189,19 @@ namespace clib {
         case D_MEM: {
             std::wstringstream ss;
             {
-                if (global_state.input->input_lock == -1)
+                if (global_state.input_s->input_lock == -1)
                     _snwprintf_s(sz, sizeof(sz) / sizeof(sz[0]), L"%-18s %9s", L"Input Lock:", L"None");
                 else
-                    _snwprintf_s(sz, sizeof(sz) / sizeof(sz[0]), L"%-18s %9d", L"Input Lock:", global_state.input->input_lock);
+                    _snwprintf_s(sz, sizeof(sz) / sizeof(sz[0]), L"%-18s %9d", L"Input Lock:", global_state.input_s->input_lock);
                 ss << sz << std::endl;
-                _snwprintf_s(sz, sizeof(sz) / sizeof(sz[0]), L"%-18s %9s", L"Input Single:", global_state.input->input_single ? L"Yes" : L"No");
+                _snwprintf_s(sz, sizeof(sz) / sizeof(sz[0]), L"%-18s %9s", L"Input Single:", global_state.input_s->input_single ? L"Yes" : L"No");
                 ss << sz << std::endl;
                 std::string str;
-                if (global_state.input->input_waiting_list.empty())
+                if (global_state.input_s->input_waiting_list.empty())
                     str = "Empty";
                 else {
                     std::stringstream ss2;
-                    std::copy(global_state.input->input_waiting_list.begin(), global_state.input->input_waiting_list.end(),
+                    std::copy(global_state.input_s->input_waiting_list.begin(), global_state.input_s->input_waiting_list.end(),
                         std::ostream_iterator<int>(ss2, ","));
                     str = ss2.str();
                     str.pop_back();
@@ -3933,11 +3933,16 @@ namespace clib {
             ctx->ax._ui = vmm_free(ctx->ax._ui);
             break;
         case 32:
-            if (cgui::singleton().new_screen(ctx->ax._i) == 0) {
+        {
+            auto ret = cgui::singleton().new_screen(ctx->ax._i);
+            if (ret == 0) {
                 cgui::singleton().screen_ref_dec(ctx->screen_id);
                 ctx->screen_id = ctx->ax._i;
                 cgui::singleton().screen_ref_add(ctx->screen_id);
+                cgui::singleton().switch_screen(ctx->screen_id);
             }
+            ctx->ax._i = ret;
+        }
             break;
         case 40:
             destroy(ctx->id);

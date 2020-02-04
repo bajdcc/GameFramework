@@ -1110,6 +1110,8 @@ namespace clib {
     {
         if (n < 0 || n >= (int)screens.size())
             return 1;
+        if (screens[n])
+            return 2;
         init_screen(n);
         return 0;
     }
