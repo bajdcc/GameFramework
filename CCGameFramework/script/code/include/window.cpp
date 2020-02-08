@@ -82,6 +82,7 @@ enum window_comctl_type {
     comctl_button,
     comctl_image,
     comctl_edit,
+    comctl_svg,
 };
 
 struct __window_create_comctl_struct__ {

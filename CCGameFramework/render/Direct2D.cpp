@@ -29,6 +29,7 @@ static void InitRenderer()
     Parser2DElementRenderer::Register();
     Mice2DElementRenderer::Register();
     MPM2DElementRenderer::Register();
+    SVG2DElementRenderer::Register();
 }
 
 Direct2D::Direct2D()

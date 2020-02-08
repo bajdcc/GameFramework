@@ -30,6 +30,7 @@ enum ElementId
     Parser2D = 1106,
     Mice2D = 1107,
     MPM2D = 1108,
+    SVG2D = 1109,
     Edit = 1200
 };
 
@@ -46,7 +47,7 @@ public:
     virtual ~IGraphicsElement(){}
     virtual cint GetTypeId() = 0;
     virtual std::shared_ptr<IGraphicsElementFactory> GetFactory() = 0;
-    virtual std::shared_ptr<IGraphicsRenderer> GetRenderer() = 0;
+    virtual std::shared_ptr<IGraphicsRenderer>& GetRenderer() = 0;
     virtual void SetRenderRect(CRect bounds) = 0;
     virtual CRect GetRenderRect() = 0;
     virtual std::vector<std::shared_ptr<IGraphicsElement>>& GetChildren() = 0;
@@ -128,7 +129,7 @@ public:
     {
         return factory.lock();
     }
-    std::shared_ptr<IGraphicsRenderer> GetRenderer()override
+    std::shared_ptr<IGraphicsRenderer>& GetRenderer()override
     {
         return renderer;
     }
@@ -1083,7 +1084,6 @@ public:
     int Refresh(int arg);
 
 protected:
-    CStringA text;
     FLOAT opacity{ 1.0f };
     cint type{ 0 };
 };
@@ -1107,5 +1107,48 @@ private:
 };
 
 #pragma endregion MPM2D
+
+#pragma region SVG2D
+
+class SVG2DElement : public GraphicsElement<SVG2DElement>
+{
+public:
+    SVG2DElement();
+    ~SVG2DElement();
+
+    static CString GetElementTypeName();
+
+    cint GetTypeId()override;
+
+    FLOAT GetOpacity()const;
+    void SetOpacity(FLOAT value);
+
+    cint GetType()const;
+    void SetType(cint value);
+
+    CStringA GetText()const;
+    void SetText(const CStringA& value);
+
+protected:
+    CStringA text;
+    FLOAT opacity{ 1.0f };
+    cint type{ 0 };
+};
+
+class SVG2DElementRenderer : public GraphicsRenderer<SVG2DElement, SVG2DElementRenderer, Direct2DRenderTarget>
+{
+public:
+    void Render(CRect bounds)override;
+    ~SVG2DElementRenderer();
+
+    void OnElementStateChanged()override;
+
+protected:
+    void InitializeInternal()override;
+    void FinalizeInternal()override;
+    void RenderTargetChangedInternal(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget, std::shared_ptr<Direct2DRenderTarget> newRenderTarget)override;
+};
+
+#pragma endregion SVG2D
 
 #endif

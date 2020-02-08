@@ -607,6 +607,7 @@ xcopy /r /y /e /d "$(ProjectDir)img" "$(TargetDir)img"</Command>
     <ClCompile Include="render\Direct2DRender.cpp" />
     <ClCompile Include="render\Direct2DRenderEdit.cpp" />
     <ClCompile Include="render\Direct2DRenderImage.cpp" />
+    <ClCompile Include="render\Direct2DRenderSvg.cpp" />
     <ClCompile Include="render\Direct2DRenderTarget.cpp" />
     <ClCompile Include="lua_ext\UI.cpp" />
     <ClCompile Include="render\Direct2DRenderX86.cpp" />
@@ -759,6 +760,9 @@ xcopy /r /y /e /d "$(ProjectDir)img" "$(TargetDir)img"</Command>
       <FileType>Document</FileType>
     </Text>
     <Text Include="script\scene\visual\mpm2d.lua">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="script\lib\ui\svg2d.lua">
       <FileType>Document</FileType>
     </Text>
   </ItemGroup>

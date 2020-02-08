@@ -198,6 +198,7 @@ namespace clib {
             comctl_button,
             comctl_image,
             comctl_edit,
+            comctl_svg,
             comctl_end,
         };
 
@@ -398,6 +399,20 @@ namespace clib {
         bool is_enter{ false };
         bool is_focus{ false };
         int caret_pt{ 0 };
+    };
+
+    class cwindow_comctl_svg : public comctl_base, public cwindow_comctl_text_interface {
+    public:
+        cwindow_comctl_svg();
+        void set_rt(std::shared_ptr<Direct2DRenderTarget> rt, cwindow_style::ref) override;
+        void paint(const CRect& bounds) override;
+        cwindow_comctl_text_interface* get_text_interface() override;
+        void set_text(const string_t& text) override;
+        bool get_text(string_t& text) override;
+        bool add_char(int c) override;
+        CSize min_size() const override;
+    private:
+        std::shared_ptr<SVG2DElement> svg;
     };
 }
 

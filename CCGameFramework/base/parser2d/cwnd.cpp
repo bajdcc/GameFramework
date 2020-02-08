@@ -717,6 +717,7 @@ namespace clib {
         case comctl_button: return new cwindow_comctl_button();
         case comctl_image: return new cwindow_comctl_image();
         case comctl_edit: return new cwindow_comctl_edit();
+        case comctl_svg: return new cwindow_comctl_svg();
         }
         vm->error("invalid comctl id");
         return nullptr;
@@ -1022,6 +1023,7 @@ namespace clib {
             std::make_tuple(comctl_button, "button"),
             std::make_tuple(comctl_image, "image"),
             std::make_tuple(comctl_edit, "edit"),
+            std::make_tuple(comctl_svg, "svg"),
             std::make_tuple(comctl_end, "end"),
         };
         assert(t >= comctl_none && t < comctl_end);
@@ -1866,5 +1868,51 @@ namespace clib {
     CSize cwindow_comctl_edit::min_size() const
     {
         return background->GetRenderRect().Size();
+    }
+
+    cwindow_comctl_svg::cwindow_comctl_svg(): comctl_base(cwindow::comctl_svg)
+    {
+        svg = SVG2DElement::Create();
+    }
+
+    void cwindow_comctl_svg::set_rt(std::shared_ptr<Direct2DRenderTarget> rt, cwindow_style::ref)
+    {
+        svg->GetRenderer()->SetRenderTarget(rt);
+    }
+
+    void cwindow_comctl_svg::paint(const CRect& bounds)
+    {
+        svg->SetRenderRect((bound).OfRect(bounds));
+        if (bound.Height() > bounds.Height() || bound.Width() > bounds.Width())
+            return;
+        if (bound.Height() > svg->GetRenderRect().Height() || bound.Width() > svg->GetRenderRect().Width())
+            return;
+        svg->GetRenderer()->Render(svg->GetRenderRect());
+    }
+
+    cwindow_comctl_text_interface* cwindow_comctl_svg::get_text_interface()
+    {
+        return this;
+    }
+
+    void cwindow_comctl_svg::set_text(const string_t& text)
+    {
+        svg->SetText(CStringA(text.c_str()));
+    }
+
+    bool cwindow_comctl_svg::get_text(string_t& text)
+    {
+        text = svg->GetText().GetBuffer(0);
+        return true;
+    }
+
+    bool cwindow_comctl_svg::add_char(int c)
+    {
+        return false;
+    }
+
+    CSize cwindow_comctl_svg::min_size() const
+    {
+        return svg->GetRenderer()->GetMinSize();
     }
 }

@@ -11,7 +11,7 @@ int read_file(int id, int handle) {
     int c;
     window_layout_linear_set_vertical_align(window_get_base(id));
     window_set_style(id, style_win10_white);
-    long text = window_create_comctl(id, comctl_label);
+    long text = window_create_comctl(id, comctl_svg);
     long text2 = window_create_comctl(id, comctl_label);
     long text3 = window_create_comctl(id, comctl_label);
     long text4 = window_create_comctl(id, comctl_image);
@@ -19,6 +19,7 @@ int read_file(int id, int handle) {
     window_comctl_connect(window_get_base(id), text2);
     window_comctl_connect(window_get_base(id), text3);
     window_comctl_connect(window_get_base(id), text4);
+    window_comctl_set_text(text, "");
     window_comctl_set_text(text2, "请稍后");
     window_comctl_set_bound(text, 10, 10, 290, 50);
     window_comctl_set_bound(text2, 10, 10, 290, 30);
