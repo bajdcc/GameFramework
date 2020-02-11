@@ -62,20 +62,31 @@ int read_file(int id, int handle) {
     }
     else {
         window_set_text(id, "- Test window 2 -");
-        window_layout_linear_set_horizontal_align(window_get_base(id));
+        window_layout_linear_set_vertical_align(window_get_base(id));
+        long layout = window_create_comctl(id, layout_linear);
+        window_layout_linear_set_horizontal_align(layout);
+        long layout2 = window_create_comctl(id, layout_linear);
+        window_layout_linear_set_horizontal_align(layout2);
         long text = window_create_comctl(id, comctl_label);
         long text2 = window_create_comctl(id, comctl_edit);
+        long text3 = window_create_comctl(id, comctl_label);
         k1 = text;
         k2 = text2;
         k1id = window_get_comctl(text);
         k2id = window_get_comctl(text2);
-        window_comctl_connect(window_get_base(id), text);
-        window_comctl_connect(window_get_base(id), text2);
+        window_comctl_connect(window_get_base(id), layout);
+        window_comctl_connect(window_get_base(id), layout2);
+        window_comctl_connect(layout, text);
+        window_comctl_connect(layout, text2);
+        window_comctl_connect(layout2, text3);
         window_comctl_set_text(text, "Hello world!!");
         window_comctl_set_text(text2, "Hello world!!!");
+        window_comctl_set_text(text3, "Hello world!!!");
         window_comctl_set_bound(text, 10, 10, 200, 30);
         window_comctl_set_bound(text2, 10, 10, 200, 30);
+        window_comctl_set_bound(text3, 10, 10, 200, 30);
     }
+    window_layout_recalc_bounds(id);
     __window_msg_struct__ s;
     resize(30, 100);
     while (c = window_get_msg(handle, &s), c < 0x1000) {
@@ -150,9 +161,9 @@ int main(int argc, char **argv) {
     s.caption = "Test window";
     s.left = 10;
     if (child)
-        s.top = 280;
-    else
         s.top = 50;
+    else
+        s.top = 280;
     s.width = 200;
     s.height = 200;
     int id = window_create(&s);

@@ -1,5 +1,7 @@
 #include "stdafx.h"
 #include "Direct2DRender.h"
+#include <nanosvg\nanosvg.h>
+#include <nanosvg\nanosvgrast.h>
 
 #pragma region SVG
 SVG2DElement::SVG2DElement()
@@ -64,11 +66,13 @@ void SVG2DElementRenderer::Render(CRect bounds)
     {
         auto rt = renderTarget.lock();
         auto d2dRenderTarget = rt->GetDirect2DRenderTarget();
-        auto brush = rt->CreateDirect2DBrush(CColor(D2D1::ColorF::Red));
-        d2dRenderTarget->FillRectangle(
-            D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
-            brush
-        );
+        if (m_bitmap) {
+            auto brush = rt->CreateDirect2DBrush(CColor(D2D1::ColorF::Red));
+            d2dRenderTarget->FillRectangle(
+                D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
+                brush
+            );
+        }
     }
     GraphicsRenderer::Render(bounds);
 }
@@ -79,6 +83,7 @@ SVG2DElementRenderer::~SVG2DElementRenderer()
 
 void SVG2DElementRenderer::OnElementStateChanged()
 {
+    RecreateImage();
 }
 
 void SVG2DElementRenderer::InitializeInternal()
@@ -91,6 +96,16 @@ void SVG2DElementRenderer::FinalizeInternal()
 
 void SVG2DElementRenderer::RenderTargetChangedInternal(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget, std::shared_ptr<Direct2DRenderTarget> newRenderTarget)
 {
+    m_rt.Release();
+    m_bitmap.Release();
+    RecreateImage();
+}
+
+void SVG2DElementRenderer::RecreateImage()
+{
+    auto e = element.lock();
+    auto text = e->GetText();
+    auto rect = e->GetRenderRect();
 }
 
 #pragma endregion SVG

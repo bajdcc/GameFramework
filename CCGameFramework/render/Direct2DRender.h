@@ -1147,6 +1147,12 @@ protected:
     void InitializeInternal()override;
     void FinalizeInternal()override;
     void RenderTargetChangedInternal(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget, std::shared_ptr<Direct2DRenderTarget> newRenderTarget)override;
+
+    void RecreateImage();
+
+private:
+    CComPtr<ID2D1BitmapRenderTarget> m_rt;
+    CComPtr<ID2D1Bitmap> m_bitmap;
 };
 
 #pragma endregion SVG2D

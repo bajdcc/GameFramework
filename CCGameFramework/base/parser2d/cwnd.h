@@ -305,6 +305,7 @@ namespace clib {
         std::vector<int> get_list() const;
         int hit(int x, int y) const override;
     protected:
+        virtual void changed();
         std::vector<comctl_base*> children;
     };
 
@@ -312,6 +313,9 @@ namespace clib {
     public:
         cwindow_layout_absolute();
         void paint(const CRect& bounds) override;
+        int set_flag(int flag) override;
+    protected:
+        void changed() override;
     };
 
     class cwindow_layout_linear : public cwindow_layout {
@@ -320,6 +324,8 @@ namespace clib {
         void paint(const CRect& bounds) override;
         int set_flag(int flag) override;
         CSize min_size() const override;
+    protected:
+        void changed() override;
     private:
         enum align_type {
             vertical,

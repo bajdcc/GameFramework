@@ -94,6 +94,7 @@ namespace clib {
         fs.load("/usr/badapple.txt");
         fs.load("/usr/test_command.txt");
         fs.load("/usr/test_lua.txt");
+        fs.load("/usr/tiger.txt");
         fs.load("/init/init.txt");
         fs.load("/init/ipc.txt");
         fs.load_bin("/usr/github.png");

@@ -282,6 +282,8 @@ xcopy /r /y /e /d "$(ProjectDir)img" "$(TargetDir)img"</Command>
     <ClInclude Include="base\mpm2d\math\m2.h" />
     <ClInclude Include="base\mpm2d\math\v2.h" />
     <ClInclude Include="base\mpm2d\MPM2D.h" />
+    <ClInclude Include="base\nanosvg\nanosvg.h" />
+    <ClInclude Include="base\nanosvg\nanosvgrast.h" />
     <ClInclude Include="base\parser2d\cast.h" />
     <ClInclude Include="base\parser2d\cexception.h" />
     <ClInclude Include="base\parser2d\cext.h" />
@@ -456,6 +458,8 @@ xcopy /r /y /e /d "$(ProjectDir)img" "$(TargetDir)img"</Command>
     <ClCompile Include="base\mice2d\Mice2DRender.cpp" />
     <ClCompile Include="base\mpm2d\MPM2D.cpp" />
     <ClCompile Include="base\mpm2d\MPM2DRender.cpp" />
+    <ClCompile Include="base\nanosvg\nanosvg.cpp" />
+    <ClCompile Include="base\nanosvg\nanosvgrast.cpp" />
     <ClCompile Include="base\parser2d\cast.cpp" />
     <ClCompile Include="base\parser2d\cexception.cpp" />
     <ClCompile Include="base\parser2d\cext.cpp" />

@@ -1337,11 +1337,17 @@ namespace clib {
             children.push_back(child);
         else
             ATLVERIFY(!"comctl already has parent!");
+        changed();
     }
 
     void cwindow_layout::remove(comctl_base* child)
     {
         children.erase(std::remove(children.begin(), children.end(), child), children.end());
+        changed();
+    }
+
+    void cwindow_layout::changed()
+    {
     }
 
     std::vector<int> cwindow_layout::get_list() const
@@ -1376,6 +1382,30 @@ namespace clib {
             c->paint(bounds);
     }
 
+    int cwindow_layout_absolute::set_flag(int flag)
+    {
+        if (flag == -1) {
+            for (auto& c : children) {
+                c->set_flag(flag);
+            }
+            changed();
+        }
+        return 0;
+    }
+
+    void cwindow_layout_absolute::changed()
+    {
+        auto b = cwindow_layout::min_size();
+        for (auto& c : children) {
+            b.cx = __max(b.cx, c->get_bound().Width());
+            b.cy = __max(b.cy, c->get_bound().Height());
+        }
+        if (!children.empty()) {
+            bound.TopLeft() = children[0]->get_bound().TopLeft();
+        }
+        bound.SetRect(bound.TopLeft(), bound.TopLeft() + b);
+    }
+
     cwindow_layout_linear::cwindow_layout_linear() : cwindow_layout(cwindow::layout_linear)
     {
     }
@@ -1404,6 +1434,14 @@ namespace clib {
     {
         switch (flag)
         {
+        case -1:
+        {
+            for (auto& c : children) {
+                c->set_flag(flag);
+            }
+            changed();
+        }
+            break;
         case 0:
             align = vertical;
             break;
@@ -1435,6 +1473,33 @@ namespace clib {
             }
         }
         return lt + b;
+    }
+
+    void cwindow_layout_linear::changed()
+    {
+        auto b = cwindow_layout::min_size();
+        if (align == vertical) {
+            for (auto& c : children) {
+                b.cx = __max(b.cx, c->get_bound().Width());
+                b.cy += c->get_bound().Height();
+            }
+        }
+        else if (align == horizontal) {
+            for (auto& c : children) {
+                b.cx += c->get_bound().Width();
+                b.cy = __max(b.cy, c->get_bound().Height());
+            }
+        }
+        else {
+            for (auto& c : children) {
+                b.cx = __max(b.cx, c->get_bound().Width());
+                b.cy = __max(b.cy, c->get_bound().Height());
+            }
+        }
+        if (!children.empty()) {
+            bound.TopLeft() = children[0]->get_bound().TopLeft();
+        }
+        bound.SetRect(bound.TopLeft(), bound.TopLeft() + b);
     }
 
     cwindow_comctl_label::cwindow_comctl_label() : comctl_base(cwindow::comctl_label)

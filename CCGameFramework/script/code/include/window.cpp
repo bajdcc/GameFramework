@@ -215,6 +215,8 @@ int window_get_handle(long handle) {
 
 int window_layout_linear_set_vertical_align(long handle) { window_comctl_set_flag(handle, 0); }
 int window_layout_linear_set_horizontal_align(long handle) { window_comctl_set_flag(handle, 1); }
+int window_layout_recalc_bounds(int id) { window_comctl_set_flag(window_get_base(id), -1); }
+
 
 // ----------------------------------------
 // LABEL
