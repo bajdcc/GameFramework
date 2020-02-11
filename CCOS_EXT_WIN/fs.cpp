@@ -855,7 +855,7 @@ namespace clib {
                 auto hwnd = (DWORD)FindWindowA(nullptr, (char*)v.data());
                 snprintf(buf, sizeof(buf), "%8X", hwnd);
                 auto str = string_t(buf);
-                node->data.reserve(str.length());
+                node->data.resize(str.length());
                 std::copy(str.begin(), str.end(), node->data.begin());
                 *dec = new vfs_node_text(this, str);
                 return 0;

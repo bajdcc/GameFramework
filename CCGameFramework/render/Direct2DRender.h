@@ -1151,7 +1151,6 @@ protected:
     void RecreateImage();
 
 private:
-    CComPtr<ID2D1BitmapRenderTarget> m_rt;
     CComPtr<ID2D1Bitmap> m_bitmap;
 };
 

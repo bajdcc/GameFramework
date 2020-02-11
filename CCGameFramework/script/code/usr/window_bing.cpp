@@ -25,7 +25,7 @@ int main(int argc, char** argv) {
     json_object* obj = json_parse_obj(out);
     strcpy(buf, "window_image /http/bin!www.bing.com");
     strcat(buf, json_obj_get_string(json_array_get(json_obj_get_string(obj, "images"), 0), "url")->data.str);
-    put_string("#");
+    put_string("# ");
     put_string(buf);
     put_string("\n");
     shell(buf);

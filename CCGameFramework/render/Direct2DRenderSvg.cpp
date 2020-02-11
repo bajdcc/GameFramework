@@ -67,10 +67,11 @@ void SVG2DElementRenderer::Render(CRect bounds)
         auto rt = renderTarget.lock();
         auto d2dRenderTarget = rt->GetDirect2DRenderTarget();
         if (m_bitmap) {
-            auto brush = rt->CreateDirect2DBrush(CColor(D2D1::ColorF::Red));
-            d2dRenderTarget->FillRectangle(
+            d2dRenderTarget->DrawBitmap(
+                m_bitmap,
                 D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
-                brush
+                e->GetOpacity(),
+                D2D1_BITMAP_INTERPOLATION_MODE_LINEAR
             );
         }
     }
@@ -96,16 +97,30 @@ void SVG2DElementRenderer::FinalizeInternal()
 
 void SVG2DElementRenderer::RenderTargetChangedInternal(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget, std::shared_ptr<Direct2DRenderTarget> newRenderTarget)
 {
-    m_rt.Release();
-    m_bitmap.Release();
     RecreateImage();
 }
 
 void SVG2DElementRenderer::RecreateImage()
 {
+    m_bitmap.Release();
     auto e = element.lock();
+    auto rt = renderTarget.lock();
     auto text = e->GetText();
-    auto rect = e->GetRenderRect();
+    if (text.IsEmpty())return;
+    auto rast = nsvgCreateRasterizer();
+    auto image = nsvgParse(text.GetBuffer(0), "px", 96);
+    auto w = (int)image->width;
+    auto h = (int)image->height;
+    e->SetRenderRect(CRect(CPoint(), CSize(w, h)));
+    auto WICBitmap = rt->CreateBitmap(w, h);
+    m_bitmap = rt->GetBitmapFromWIC(WICBitmap);
+    auto img = new BYTE[w * h * 4];
+    nsvgRasterize(rast, image, 0, 0, 1, img, w, h, w * 4);
+    auto d2dRect = D2D1::RectU(0, 0, w, h);
+    m_bitmap->CopyFromMemory(&d2dRect, img, w * 4);
+    delete[]img;
+    nsvgDeleteRasterizer(rast);
+    nsvgDelete(image);
 }
 
 #pragma endregion SVG

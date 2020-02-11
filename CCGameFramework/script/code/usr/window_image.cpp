@@ -35,9 +35,9 @@ int main(int argc, char** argv) {
     strcpy(buf, "/tmp/window-image-");
     strcat(buf, out);
     strcat(buf, ".image");
-    int ff = fempty(buf);
-    if (ff < 0 || ff == 1) {
-        if (ff == 1) rm(buf);
+    int ff = fsize(buf);
+    if (ff <= 0) {
+        if (ff == 0) rm(buf);
         set_fg(240, 0, 0);
         put_string("[Error] File not exists.");
         restore_fg();

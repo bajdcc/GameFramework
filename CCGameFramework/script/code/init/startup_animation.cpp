@@ -11,10 +11,10 @@ int read_file(int id, int handle) {
     int c;
     window_layout_linear_set_vertical_align(window_get_base(id));
     window_set_style(id, style_win10_white);
-    long text = window_create_comctl(id, comctl_svg);
+    long text = window_create_comctl(id, comctl_label);
     long text2 = window_create_comctl(id, comctl_label);
     long text3 = window_create_comctl(id, comctl_label);
-    long text4 = window_create_comctl(id, comctl_label);
+    long text4 = window_create_comctl(id, comctl_image);
     window_comctl_connect(window_get_base(id), text);
     window_comctl_connect(window_get_base(id), text2);
     window_comctl_connect(window_get_base(id), text3);

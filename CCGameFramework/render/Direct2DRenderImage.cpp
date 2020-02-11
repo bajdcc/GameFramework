@@ -90,9 +90,6 @@ void QRImageElementRenderer::CreateImage(std::shared_ptr<Direct2DRenderTarget> r
         rect.Width = bitmap->GetPixelSize().width;
         rect.Height = bitmap->GetPixelSize().height;
         BYTE* buffer = new BYTE[rect.Width * rect.Height * 4];
-        HRESULT hr = WICBitmap->CopyPixels(&rect, rect.Width * 4, rect.Width * rect.Height * 4, buffer);
-        if (FAILED(hr))
-            ATLASSERT(!"CopyPixels failed");
         auto count = rect.Width * rect.Height;
         BYTE* read = buffer;
         auto color = e->GetColor();

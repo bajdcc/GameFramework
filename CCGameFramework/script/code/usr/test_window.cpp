@@ -7,6 +7,7 @@
 #include "/include/proc"
 #include "/include/readfile"
 #include "/include/json"
+#include "/include/shell"
 int child;
 int read_file(int id, int handle) {
     int c;
@@ -69,7 +70,7 @@ int read_file(int id, int handle) {
         window_layout_linear_set_horizontal_align(layout2);
         long text = window_create_comctl(id, comctl_label);
         long text2 = window_create_comctl(id, comctl_edit);
-        long text3 = window_create_comctl(id, comctl_label);
+        long text3 = window_create_comctl(id, comctl_svg);
         k1 = text;
         k2 = text2;
         k1id = window_get_comctl(text);
@@ -81,10 +82,15 @@ int read_file(int id, int handle) {
         window_comctl_connect(layout2, text3);
         window_comctl_set_text(text, "Hello world!!");
         window_comctl_set_text(text2, "Hello world!!!");
-        window_comctl_set_text(text3, "Hello world!!!");
+        char* svgStr = readfile_fast_str("/usr/tiger.txt");
+        window_comctl_set_text(text3, svgStr);
+        free(svgStr);
         window_comctl_set_bound(text, 10, 10, 200, 30);
         window_comctl_set_bound(text2, 10, 10, 200, 30);
-        window_comctl_set_bound(text3, 10, 10, 200, 30);
+        window_comctl_set_bound(text3, 10, 10, 410, 480);
+        shell("echo CC GameFramework Window > /ext/win/func/file/window_id");
+        shell("cat /ext/win/func/file/window_id:window:find_by_name");
+        shell("cat /ext/win/func/file/window_id:window:post_message:112:F030");
     }
     window_layout_recalc_bounds(id);
     __window_msg_struct__ s;

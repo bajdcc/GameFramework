@@ -124,8 +124,8 @@ namespace clib {
         virtual cwindow_layout* get_layout();
         virtual cwindow_comctl_text_interface* get_text_interface();
         virtual cwindow_comctl_ptr* get_ptr();
-        void set_bound(const CRect& bound);
-        CRect get_bound() const;
+        virtual void set_bound(const CRect& bound);
+        virtual CRect get_bound() const;
         virtual int set_flag(int flag);
         virtual int hit(int x, int y) const;
         void set_id(int id);
