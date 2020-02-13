@@ -87,7 +87,7 @@ int read_file(int id, int handle) {
         free(svgStr);
         window_comctl_set_bound(text, 10, 10, 200, 30);
         window_comctl_set_bound(text2, 10, 10, 200, 30);
-        window_comctl_set_bound(text3, 10, 10, 410, 480);
+        window_comctl_set_bound(text3, 10, 10, 410, 410);
         shell("echo CC GameFramework Window > /ext/win/func/file/window_id");
         shell("cat /ext/win/func/file/window_id:window:find_by_name");
         shell("cat /ext/win/func/file/window_id:window:post_message:112:F030");

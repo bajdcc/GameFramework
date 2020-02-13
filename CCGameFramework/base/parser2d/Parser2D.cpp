@@ -266,7 +266,7 @@ void Parser2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
         auto disp = clib::cgui::singleton().get_disp(clib::cvm::D_HANDLE);
         rt->DrawText(disp, disp.GetLength(), loggingTF->textFormat, R, logoBrush);
         R.top += span;
-        auto lines = 1;
+        auto lines = 3;
         {
             for (auto i = 0; i < disp.GetLength(); i++) {
                 if (disp[i] == L'\n') lines++;

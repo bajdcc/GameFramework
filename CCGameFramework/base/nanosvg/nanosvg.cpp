@@ -57,7 +57,7 @@
 #define NSVG_INLINE inline
 #endif
 
-#define NANOSVG_ALL_COLOR_KEYWORD
+#define NANOSVG_ALL_COLOR_KEYWORDS
 
 
 static int nsvg__isspace(char c)
@@ -1284,7 +1284,7 @@ static unsigned int nsvg__parseColor(const char* str)
 
 static float nsvg__parseOpacity(const char* str)
 {
-    float val = nsvg__atof(str);
+    float val = (float)nsvg__atof(str);
     if (val < 0.0f) val = 0.0f;
     if (val > 1.0f) val = 1.0f;
     return val;
@@ -1292,7 +1292,7 @@ static float nsvg__parseOpacity(const char* str)
 
 static float nsvg__parseMiterLimit(const char* str)
 {
-    float val = nsvg__atof(str);
+    float val = (float)nsvg__atof(str);
     if (val < 0.0f) val = 0.0f;
     return val;
 }
@@ -1325,7 +1325,7 @@ static NSVGcoordinate nsvg__parseCoordinateRaw(const char* str)
     NSVGcoordinate coord = { 0, NSVG_UNITS_USER };
     char buf[64];
     coord.units = nsvg__parseUnits(nsvg__parseNumber(str, buf, 64));
-    coord.value = nsvg__atof(buf);
+    coord.value = (float)nsvg__atof(buf);
     return coord;
 }
 
@@ -1361,7 +1361,7 @@ static int nsvg__parseTransformArgs(const char* str, float* args, int maxNa, int
         if (*ptr == '-' || *ptr == '+' || *ptr == '.' || nsvg__isdigit(*ptr)) {
             if (*na >= maxNa) return 0;
             ptr = nsvg__parseNumber(ptr, it, 64);
-            args[(*na)++] = (float)nsvg__atof(it);
+            args[(*na)++] = (float)(float)nsvg__atof(it);
         }
         else {
             ++ptr;
@@ -2112,7 +2112,7 @@ static void nsvg__parsePath(NSVGparser* p, const char** attr)
             if (!*item) break;
             if (nsvg__isnum(item[0])) {
                 if (nargs < 10)
-                    args[nargs++] = (float)nsvg__atof(item);
+                    args[nargs++] = (float)(float)nsvg__atof(item);
                 if (nargs >= rargs) {
                     switch (cmd) {
                     case 'm':
@@ -2372,7 +2372,7 @@ static void nsvg__parsePoly(NSVGparser* p, const char** attr, int closeFlag)
                 nargs = 0;
                 while (*s) {
                     s = nsvg__getNextPathItem(s, item);
-                    args[nargs++] = (float)nsvg__atof(item);
+                    args[nargs++] = (float)(float)nsvg__atof(item);
                     if (nargs >= 2) {
                         if (npts == 0)
                             nsvg__moveTo(p, args[0], args[1]);
@@ -2406,19 +2406,19 @@ static void nsvg__parseSVG(NSVGparser* p, const char** attr)
                 const char* s = attr[i + 1];
                 char buf[64];
                 s = nsvg__parseNumber(s, buf, 64);
-                p->viewMinx = nsvg__atof(buf);
+                p->viewMinx = (float)nsvg__atof(buf);
                 while (*s && (nsvg__isspace(*s) || *s == '%' || *s == ',')) s++;
                 if (!*s) return;
                 s = nsvg__parseNumber(s, buf, 64);
-                p->viewMiny = nsvg__atof(buf);
+                p->viewMiny = (float)nsvg__atof(buf);
                 while (*s && (nsvg__isspace(*s) || *s == '%' || *s == ',')) s++;
                 if (!*s) return;
                 s = nsvg__parseNumber(s, buf, 64);
-                p->viewWidth = nsvg__atof(buf);
+                p->viewWidth = (float)nsvg__atof(buf);
                 while (*s && (nsvg__isspace(*s) || *s == '%' || *s == ',')) s++;
                 if (!*s) return;
                 s = nsvg__parseNumber(s, buf, 64);
-                p->viewHeight = nsvg__atof(buf);
+                p->viewHeight = (float)nsvg__atof(buf);
             }
             else if (strcmp(attr[i], "preserveAspectRatio") == 0) {
                 if (strstr(attr[i + 1], "none") != 0) {

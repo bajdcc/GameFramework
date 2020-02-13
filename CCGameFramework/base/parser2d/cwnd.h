@@ -126,6 +126,7 @@ namespace clib {
         virtual cwindow_comctl_ptr* get_ptr();
         virtual void set_bound(const CRect& bound);
         virtual CRect get_bound() const;
+        virtual CRect get_render_bound() const;
         virtual int set_flag(int flag);
         virtual int hit(int x, int y) const;
         void set_id(int id);
@@ -342,6 +343,7 @@ namespace clib {
         void set_text(const string_t& text) override;
         bool get_text(string_t& text) override;
         bool add_char(int c) override;
+        CRect get_render_bound() const override;
         int set_flag(int flag) override;
         int hit(int x, int y) const override;
         int handle_msg(int code, uint32 param1, uint32 param2, cwindow_interface* wnd) override;
@@ -355,6 +357,7 @@ namespace clib {
         cwindow_comctl_button();
         void set_rt(std::shared_ptr<Direct2DRenderTarget> rt, cwindow_style::ref) override;
         void paint(const CRect& bounds) override;
+        CRect get_render_bound() const override;
         int hit(int x, int y) const override;
         int handle_msg(int code, uint32 param1, uint32 param2, cwindow_interface* wnd) override;
         CSize min_size() const override;
@@ -378,6 +381,7 @@ namespace clib {
         cwindow_comctl_image* get_image() override;
         void set_rt(std::shared_ptr<Direct2DRenderTarget> rt, cwindow_style::ref) override;
         void paint(const CRect& bounds) override;
+        CRect get_render_bound() const override;
         int hit(int x, int y) const override;
         CSize min_size() const override;
         void set_data(const std::vector<byte>& data) override;
@@ -394,6 +398,7 @@ namespace clib {
         void set_text(const string_t& text) override;
         bool get_text(string_t& text) override;
         bool add_char(int c) override;
+        CRect get_render_bound() const override;
         int hit(int x, int y) const override;
         int handle_msg(int code, uint32 param1, uint32 param2, cwindow_interface* wnd) override;
         CSize min_size() const override;
@@ -416,6 +421,8 @@ namespace clib {
         void set_text(const string_t& text) override;
         bool get_text(string_t& text) override;
         bool add_char(int c) override;
+        CRect get_render_bound() const override;
+        int hit(int x, int y) const override;
         CSize min_size() const override;
     private:
         std::shared_ptr<SVG2DElement> svg;

@@ -1202,12 +1202,16 @@ namespace clib {
                         ss << sz;
                         const auto& ctl = handles[current].comctl;
                         const auto& b = ctl->get_bound();
+                        const auto& r = ctl->get_render_bound();
                         const auto& ms = ctl->min_size();
                         if (ctl->get_layout())
-                            _snwprintf_s(sz, sizeof(sz) / sizeof(sz[0]), L" Min=%dx%d ", ms.cx, ms.cy);
-                        else
                             _snwprintf_s(sz, sizeof(sz) / sizeof(sz[0]), L" Size= %dx%d, Loc= %d,%d,%d,%d, Min=%dx%d ",
                                 b.Width(), b.Height(), b.left, b.top, b.right, b.bottom,
+                                ms.cx, ms.cy);
+                        else
+                            _snwprintf_s(sz, sizeof(sz) / sizeof(sz[0]), L" Size= %dx%d, Loc= %d,%d,%d,%d, Rdr= %d,%d,%d,%d, Min=%dx%d ",
+                                b.Width(), b.Height(), b.left, b.top, b.right, b.bottom,
+                                r.left, r.top, r.right, r.bottom,
                                 ms.cx, ms.cy);
                         ss << sz;
                         if (this->comctl_focus == current)
@@ -1281,6 +1285,11 @@ namespace clib {
     }
 
     CRect comctl_base::get_bound() const
+    {
+        return bound;
+    }
+
+    CRect comctl_base::get_render_bound() const
     {
         return bound;
     }
@@ -1364,7 +1373,7 @@ namespace clib {
             return -1;
         for (auto c = children.rbegin(); c != children.rend(); c++) {
             auto h = (*c)->hit(x, y);
-            if (h) 
+            if (h > 0) 
                 return h;
         }
         return -1;
@@ -1544,6 +1553,11 @@ namespace clib {
         return false;
     }
 
+    CRect cwindow_comctl_label::get_render_bound() const
+    {
+        return text->GetRenderRect();
+    }
+
     int cwindow_comctl_label::set_flag(int flag)
     {
         switch (flag)
@@ -1650,6 +1664,11 @@ namespace clib {
         cwindow_comctl_label::paint(bounds);
     }
 
+    CRect cwindow_comctl_button::get_render_bound() const
+    {
+        return background->GetRenderRect();
+    }
+
     int cwindow_comctl_button::hit(int x, int y) const
     {
         if (this->background->GetRenderRect().PtInRect(CPoint(x, y)))
@@ -1738,6 +1757,11 @@ namespace clib {
         img->GetRenderer()->Render(img->GetRenderRect());
     }
 
+    CRect cwindow_comctl_image::get_render_bound() const
+    {
+        return img->GetRenderRect();
+    }
+
     int cwindow_comctl_image::hit(int x, int y) const
     {
         if (this->img->GetRenderRect().PtInRect(CPoint(x, y)))
@@ -1820,6 +1844,11 @@ namespace clib {
         t.AppendChar((wchar_t)c);
         this->text->SetText(t);
         return true;
+    }
+
+    CRect cwindow_comctl_edit::get_render_bound() const
+    {
+        return background->GetRenderRect();
     }
 
     int cwindow_comctl_edit::hit(int x, int y) const
@@ -1976,8 +2005,20 @@ namespace clib {
         return false;
     }
 
+    CRect cwindow_comctl_svg::get_render_bound() const
+    {
+        return svg->GetRenderRect();
+    }
+
+    int cwindow_comctl_svg::hit(int x, int y) const
+    {
+        if (this->svg->GetRenderRect().PtInRect(CPoint(x, y)))
+            return id;
+        return 0;
+    }
+
     CSize cwindow_comctl_svg::min_size() const
     {
-        return svg->GetRenderer()->GetMinSize();
+        return svg->GetRenderRect().Size();
     }
 }
