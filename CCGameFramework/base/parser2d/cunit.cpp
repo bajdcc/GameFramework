@@ -492,6 +492,7 @@ namespace clib {
                         }
                         if (flag) {
                             indep = j;
+                            break;
                         }
                     }
                 }

@@ -721,29 +721,19 @@ LEX_T(t) clexer::get_store_##t(int index) const \
         auto i = index;
         auto prev = str[i];
         // 寻找非'\"'的第一个'"'
-        for (i++; i < length; prev = str[i++]) {
-            if (str[i] == '"') {
-                if (prev != '\\') {
-                    break;
-                }
-                else {
-                    auto j = i - 2;
-                    if (j == index) {
-                        i++; break;
-                    }
-                    for (; j > 0 && str[j] == '\\'; --j);
-                    if (j == i - 2) {
+        for (i++; i < length; i++) {
+            if (str[i] == '\\') {
+                if (str[i + 1] == '\\' || str[i + 1] == '"') {
+                    i++;
+                    if (str[i + 1] == '"') {
                         i++;
-                        continue;
-                    }
-                    else if ((i - j) % 2 == 0) {
                         break;
                     }
-                    else {
-                        return record_error(e_invalid_string, i - index + 1);
-                    }
+                    continue;
                 }
+                continue;
             }
+            if (str[i] == '"')break;
         }
         auto j = i;
         if (j == length) { // " EOF
@@ -838,11 +828,23 @@ LEX_T(t) clexer::get_store_##t(int index) const \
          // 寻找第一个 '*/'
             char prev = 0;
             auto newline = 0;
-            for (++i; i < length && (prev != '*' || (str[i]) != '/');
-                prev = str[i++], prev == '\n' ? ++newline : 0);
+            auto col = column;
+            for (;;) {
+                if (prev == '*' && str[i] == '/')
+                    break;
+                prev = str[i++];
+                if (prev == '\n') {
+                    ++newline;
+                    col = 1;
+                }
+                else {
+                    col++;
+                }
+            }
             i++;
             bags._comment = str.substr(index + 2, i - index - 1);
             move(i - index, newline); // 检查换行
+            column = col;
             return l_comment;
         }
     }

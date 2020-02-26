@@ -16,6 +16,9 @@ int welcome() {
     put_string("# Type \"help\" for help.\n\n");
     restore_fg();
 }
+/*
+    OS EntryPoint
+*/
 int main(int argc, char** argv) {
     put_string("\f");
     put_string("Starting OS...\n");

@@ -465,28 +465,7 @@ namespace clib {
             }
             if (bk->direction == b_fallback) {
                 if (bk->trans_ids.empty()) {
-                    if (jump_state != -1) {
-                        bool suc = false;
-                        while (true) {
-                            if (bks.back().current_state != jump_state) {
-                                bks.pop_back();
-                                if (bks.empty()) {
-                                    break;
-                                }
-                            }
-                            else {
-                                jump_state = -1;
-                                suc = true;
-                                break;
-                            }
-                        }
-                        if (suc) {
-                            bks.back().direction = b_error;
-                            bk = &bks.back();
-                        }
-                        else break;
-                    }
-                    else if (bks.size() > 1) {
+                    if (bks.size() > 1) {
                         bks.pop_back();
                         bks.back().direction = b_error;
                         bk = &bks.back();
