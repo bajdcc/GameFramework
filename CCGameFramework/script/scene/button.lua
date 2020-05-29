@@ -196,6 +196,12 @@ function M:init_menu(info)
 	end
 	menu.children[11].layers.fg:update()
 
+	menu.children[12]:reset('JSĞéÄâ»ú')
+	menu.children[12].click = function()
+		FlipScene('JS')
+	end
+	menu.children[12].layers.fg:update()
+
 	UIExt.paint()
 end
 

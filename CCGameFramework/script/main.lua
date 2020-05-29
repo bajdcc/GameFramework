@@ -56,7 +56,9 @@ Window = {
 		MPM2d = "script.scene.visual.mpm2d",
 		-- X86
 		X86 = "script.scene.simu.x86",
+		-- VM
 		Parser2d = "script.scene.visual.parser2d",
+		JS = "script.scene.visual.clibjs",
 	}
 }
 

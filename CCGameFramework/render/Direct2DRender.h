@@ -9,6 +9,7 @@
 #include <base/parser2d/parser2d.h>
 #include <base/mice2d/Mice2d.h>
 #include <base/mpm2d/MPM2D.h>
+#include <base/clibjs/JS2D.h>
 #include "utils.h"
 
 #pragma region Base
@@ -31,6 +32,7 @@ enum ElementId
     Mice2D = 1107,
     MPM2D = 1108,
     SVG2D = 1109,
+    JS2D = 1110,
     Edit = 1200
 };
 
@@ -205,7 +207,7 @@ public:
         renderTarget = _renderTarget;
         RenderTargetChangedInternal(oldRenderTarget, renderTarget.lock());
         auto e = element.lock();
-        for (std::shared_ptr<IGraphicsElement>& child : e->GetChildren())
+        for (auto & child : e->GetChildren())
         {
             child->GetRenderer()->SetRenderTarget(_renderTarget);
         }
@@ -1155,5 +1157,51 @@ private:
 };
 
 #pragma endregion SVG2D
+
+#pragma region Parser2D
+
+class JS2DElement : public GraphicsElement<JS2DElement>
+{
+public:
+    JS2DElement();
+    ~JS2DElement();
+
+    static CString GetElementTypeName();
+
+    cint GetTypeId()override;
+
+    FLOAT GetOpacity()const;
+    void SetOpacity(FLOAT value);
+
+    cint GetType()const;
+    void SetType(cint value);
+
+    int Refresh(int arg);
+
+protected:
+    CStringA text;
+    FLOAT opacity{ 1.0f };
+    cint type{ 0 };
+};
+
+class JS2DElementRenderer : public GraphicsRenderer<JS2DElement, JS2DElementRenderer, Direct2DRenderTarget>
+{
+public:
+    void Render(CRect bounds)override;
+    ~JS2DElementRenderer();
+    int Refresh(int arg);
+
+    void OnElementStateChanged()override;
+
+protected:
+    void InitializeInternal()override;
+    void FinalizeInternal()override;
+    void RenderTargetChangedInternal(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget, std::shared_ptr<Direct2DRenderTarget> newRenderTarget)override;
+
+private:
+    JS2DEngine engine;
+};
+
+#pragma endregion Parser2D
 
 #endif

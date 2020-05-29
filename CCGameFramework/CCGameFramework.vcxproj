@@ -228,6 +228,16 @@ xcopy /r /y /e /d "$(ProjectDir)img" "$(TargetDir)img"</Command>
     <ClInclude Include="base\clib2d\Clib2D.h" />
     <ClInclude Include="base\clib2d\m2.h" />
     <ClInclude Include="base\clib2d\v2.h" />
+    <ClInclude Include="base\clibjs\cjs.h" />
+    <ClInclude Include="base\clibjs\cjsast.h" />
+    <ClInclude Include="base\clibjs\cjsgen.h" />
+    <ClInclude Include="base\clibjs\cjslexer.h" />
+    <ClInclude Include="base\clibjs\cjsmem.h" />
+    <ClInclude Include="base\clibjs\cjsparser.h" />
+    <ClInclude Include="base\clibjs\cjsruntime.h" />
+    <ClInclude Include="base\clibjs\cjstypes.h" />
+    <ClInclude Include="base\clibjs\cjsunit.h" />
+    <ClInclude Include="base\clibjs\JS2D.h" />
     <ClInclude Include="base\curl\curl.h" />
     <ClInclude Include="base\curl\curlbuild.h" />
     <ClInclude Include="base\curl\curlrules.h" />
@@ -290,18 +300,18 @@ xcopy /r /y /e /d "$(ProjectDir)img" "$(TargetDir)img"</Command>
     <ClInclude Include="base\parser2d\cgen.h" />
     <ClInclude Include="base\parser2d\cgui.h" />
     <ClInclude Include="base\parser2d\clexer.h" />
-    <ClInclude Include="base\parser2d\cmusic.h" />
-    <ClInclude Include="base\parser2d\crev.h" />
-    <ClInclude Include="base\parser2d\cui.h" />
-    <ClInclude Include="base\parser2d\cwnd.h" />
-    <ClInclude Include="base\parser2d\Parser2D.h" />
     <ClInclude Include="base\parser2d\cmem.h" />
+    <ClInclude Include="base\parser2d\cmusic.h" />
     <ClInclude Include="base\parser2d\cnet.h" />
     <ClInclude Include="base\parser2d\cparser.h" />
+    <ClInclude Include="base\parser2d\crev.h" />
+    <ClInclude Include="base\parser2d\cui.h" />
     <ClInclude Include="base\parser2d\cunit.h" />
     <ClInclude Include="base\parser2d\cvfs.h" />
     <ClInclude Include="base\parser2d\cvm.h" />
+    <ClInclude Include="base\parser2d\cwnd.h" />
     <ClInclude Include="base\parser2d\memory.h" />
+    <ClInclude Include="base\parser2d\Parser2D.h" />
     <ClInclude Include="base\parser2d\types.h" />
     <ClInclude Include="base\parser\cast.h" />
     <ClInclude Include="base\parser\cexception.h" />
@@ -422,6 +432,20 @@ xcopy /r /y /e /d "$(ProjectDir)img" "$(TargetDir)img"</Command>
     <ClCompile Include="base\clib2d\Clib2DRender.cpp" />
     <ClCompile Include="base\clib2d\m2.cpp" />
     <ClCompile Include="base\clib2d\v2.cpp" />
+    <ClCompile Include="base\clibjs\cjs.cpp" />
+    <ClCompile Include="base\clibjs\cjsast.cpp" />
+    <ClCompile Include="base\clibjs\cjsgen.cpp" />
+    <ClCompile Include="base\clibjs\cjsgen_ast.cpp" />
+    <ClCompile Include="base\clibjs\cjslexer.cpp" />
+    <ClCompile Include="base\clibjs\cjsmem.cpp" />
+    <ClCompile Include="base\clibjs\cjsparser.cpp" />
+    <ClCompile Include="base\clibjs\cjsruntime.cpp" />
+    <ClCompile Include="base\clibjs\cjsruntime_base.cpp" />
+    <ClCompile Include="base\clibjs\cjsruntime_object.cpp" />
+    <ClCompile Include="base\clibjs\cjstypes.cpp" />
+    <ClCompile Include="base\clibjs\cjsunit.cpp" />
+    <ClCompile Include="base\clibjs\JS2D.cpp" />
+    <ClCompile Include="base\clibjs\JS2DRender.cpp" />
     <ClCompile Include="base\json\cjast.cpp" />
     <ClCompile Include="base\json\cjdom.cpp" />
     <ClCompile Include="base\json\cjlexer.cpp" />
@@ -466,18 +490,18 @@ xcopy /r /y /e /d "$(ProjectDir)img" "$(TargetDir)img"</Command>
     <ClCompile Include="base\parser2d\cgen.cpp" />
     <ClCompile Include="base\parser2d\cgui.cpp" />
     <ClCompile Include="base\parser2d\clexer.cpp" />
-    <ClCompile Include="base\parser2d\cmusic.cpp" />
-    <ClCompile Include="base\parser2d\crev.cpp" />
-    <ClCompile Include="base\parser2d\cui.cpp" />
-    <ClCompile Include="base\parser2d\cwnd.cpp" />
-    <ClCompile Include="base\parser2d\Parser2D.cpp" />
-    <ClCompile Include="base\parser2d\Parser2DRender.cpp" />
     <ClCompile Include="base\parser2d\cmem.cpp" />
+    <ClCompile Include="base\parser2d\cmusic.cpp" />
     <ClCompile Include="base\parser2d\cnet.cpp" />
     <ClCompile Include="base\parser2d\cparser.cpp" />
+    <ClCompile Include="base\parser2d\crev.cpp" />
+    <ClCompile Include="base\parser2d\cui.cpp" />
     <ClCompile Include="base\parser2d\cunit.cpp" />
     <ClCompile Include="base\parser2d\cvfs.cpp" />
     <ClCompile Include="base\parser2d\cvm.cpp" />
+    <ClCompile Include="base\parser2d\cwnd.cpp" />
+    <ClCompile Include="base\parser2d\Parser2D.cpp" />
+    <ClCompile Include="base\parser2d\Parser2DRender.cpp" />
     <ClCompile Include="base\parser2d\types.cpp" />
     <ClCompile Include="base\pe2d\Geometries.cpp" />
     <ClCompile Include="base\pe2d\Geometries2D.cpp" />
@@ -769,6 +793,15 @@ xcopy /r /y /e /d "$(ProjectDir)img" "$(TargetDir)img"</Command>
     <Text Include="script\lib\ui\svg2d.lua">
       <FileType>Document</FileType>
     </Text>
+    <Text Include="script\lib\ui\clibjs.lua">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="script\scene\visual\clibjs.lua">
+      <FileType>Document</FileType>
+    </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="script\vfs\.gitignore" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

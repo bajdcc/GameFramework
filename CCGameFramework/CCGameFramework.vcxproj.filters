@@ -478,51 +478,6 @@
     <ClInclude Include="base\parser\types.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="base\parser2d\cast.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="base\parser2d\cexception.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="base\parser2d\cgen.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="base\parser2d\cgui.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="base\parser2d\clexer.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="base\parser2d\cmem.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="base\parser2d\cnet.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="base\parser2d\cparser.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="base\parser2d\cunit.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="base\parser2d\cvfs.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="base\parser2d\cvm.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="base\parser2d\memory.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="base\parser2d\types.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="base\parser2d\Parser2D.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="base\parser2d\cui.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="base\json\cjast.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -533,12 +488,6 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="base\json\cjlexer.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="base\parser2d\cmusic.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="base\parser2d\cwnd.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="base\pthread\pthread.h">
@@ -559,16 +508,10 @@
     <ClInclude Include="base\zlib\zlib.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="base\parser2d\crev.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="base\mice2d\Mice2D.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="base\mice2d\MiceAtom.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="base\parser2d\cext.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="base\mpm2d\MPM2D.h">
@@ -584,6 +527,93 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="base\nanosvg\nanosvgrast.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\clibjs\cjs.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\clibjs\cjsast.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\clibjs\cjsgen.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\clibjs\cjslexer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\clibjs\cjsmem.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\clibjs\cjsparser.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\clibjs\cjsruntime.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\clibjs\cjstypes.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\clibjs\cjsunit.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\clibjs\JS2D.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\parser2d\cast.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\parser2d\cexception.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\parser2d\cext.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\parser2d\cgen.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\parser2d\cgui.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\parser2d\clexer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\parser2d\cmem.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\parser2d\cmusic.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\parser2d\cnet.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\parser2d\cparser.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\parser2d\crev.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\parser2d\cui.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\parser2d\cunit.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\parser2d\cvfs.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\parser2d\cvm.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\parser2d\cwnd.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\parser2d\memory.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\parser2d\Parser2D.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\parser2d\types.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -918,51 +948,6 @@
     <ClCompile Include="base\clib2d\v2.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="base\parser2d\cast.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="base\parser2d\cexception.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="base\parser2d\cgen.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="base\parser2d\cgui.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="base\parser2d\clexer.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="base\parser2d\cmem.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="base\parser2d\cnet.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="base\parser2d\cparser.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="base\parser2d\cunit.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="base\parser2d\cvfs.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="base\parser2d\cvm.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="base\parser2d\types.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="base\parser2d\Parser2D.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="base\parser2d\Parser2DRender.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="base\parser2d\cui.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="base\json\cjast.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -975,15 +960,6 @@
     <ClCompile Include="base\json\cjlexer.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="base\parser2d\cmusic.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="base\parser2d\cwnd.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="base\parser2d\crev.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="base\mice2d\Mice2D.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -991,9 +967,6 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="base\mice2d\MiceAtom.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="base\parser2d\cext.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="base\mpm2d\MPM2D.cpp">
@@ -1009,6 +982,105 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="base\nanosvg\nanosvgrast.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\clibjs\cjs.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\clibjs\cjsast.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\clibjs\cjsgen.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\clibjs\cjsgen_ast.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\clibjs\cjslexer.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\clibjs\cjsmem.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\clibjs\cjsparser.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\clibjs\cjsruntime.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\clibjs\cjsruntime_base.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\clibjs\cjsruntime_object.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\clibjs\cjstypes.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\clibjs\cjsunit.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\clibjs\JS2D.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\clibjs\JS2DRender.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\parser2d\cast.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\parser2d\cexception.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\parser2d\cext.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\parser2d\cgen.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\parser2d\cgui.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\parser2d\clexer.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\parser2d\cmem.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\parser2d\cmusic.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\parser2d\cnet.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\parser2d\cparser.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\parser2d\crev.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\parser2d\cui.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\parser2d\cunit.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\parser2d\cvfs.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\parser2d\cvm.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\parser2d\cwnd.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\parser2d\Parser2D.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\parser2d\Parser2DRender.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\parser2d\types.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -1148,5 +1220,14 @@
     <Text Include="script\lib\ui\svg2d.lua">
       <Filter>脚本</Filter>
     </Text>
+    <Text Include="script\lib\ui\clibjs.lua">
+      <Filter>脚本</Filter>
+    </Text>
+    <Text Include="script\scene\visual\clibjs.lua">
+      <Filter>脚本</Filter>
+    </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="script\vfs\.gitignore" />
   </ItemGroup>
 </Project>

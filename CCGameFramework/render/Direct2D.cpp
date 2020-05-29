@@ -30,6 +30,7 @@ static void InitRenderer()
     Mice2DElementRenderer::Register();
     MPM2DElementRenderer::Register();
     SVG2DElementRenderer::Register();
+    JS2DElementRenderer::Register();
 }
 
 Direct2D::Direct2D()
