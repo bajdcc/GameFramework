@@ -469,6 +469,14 @@ int ui_refresh_obj(lua_State * L)
         }
         return 1;
     }
+    case JS2D:
+    {
+        auto obj = std::dynamic_pointer_cast<JS2DElement>(o);
+        {
+            lua_pushinteger(L, obj->Refresh(arg));
+        }
+        return 1;
+    }
     case Edit:
         break;
     default:

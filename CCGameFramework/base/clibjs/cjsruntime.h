@@ -12,7 +12,7 @@
 #include <map>
 #include "cjsgen.h"
 
-#define ROOT_DIR "./"
+#define ROOT_DIR "script/js/"
 
 #define JS_BOOL(op) (std::dynamic_pointer_cast<jsv_boolean>(op)->b)
 #define JS_NUM(op) (std::dynamic_pointer_cast<jsv_number>(op)->number)
@@ -310,6 +310,7 @@ namespace clib {
         cjsruntime &operator=(const cjsruntime &) = delete;
 
         void init(void *);
+        int run_internal(int cycle, int& cycles);
 
         int eval(cjs_code_result::ref code, const std::string &_path, bool top);
         void set_readonly(bool);
@@ -448,6 +449,9 @@ namespace clib {
             // error
             jsv_object::ref _proto_error;
             jsv_function::ref f_error;
+            // cycle
+            int cycle{ 0 };
+            int cycles{ 0 };
         } permanents;
         cjs_runtime_reuse reuse;
         struct timeout_t {
@@ -464,6 +468,7 @@ namespace clib {
             std::map<std::time_t, std::list<std::shared_ptr<timeout_t>>> queues;
             std::unordered_map<uint32_t, std::shared_ptr<timeout_t>> ids;
         } timeout;
+        bool idle{ false };
     };
 }
 

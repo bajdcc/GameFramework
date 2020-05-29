@@ -15,6 +15,7 @@
 #include <regex>
 #include "cjsruntime.h"
 #include "cjsast.h"
+#include "cjsgui.h"
 #include "cjs.h"
 
 #define DUMP_STEP 0
@@ -94,9 +95,10 @@ namespace clib {
         }
         auto result = call_internal(true, 0);
         if (result == 0) {
-            if (current_stack->ret_value.lock())
-                std::cout << current_stack->ret_value.lock()->to_string(this, 1) << std::endl;
-            eval_timeout();
+            if (current_stack->ret_value.lock()) {
+                cjsgui::singleton().put_string(current_stack->ret_value.lock()->to_string(this, 1));
+                cjsgui::singleton().put_char('\n');
+            }
             delete_stack(current_stack);
             stack.pop_back();
             paths.pop_back();
@@ -113,6 +115,11 @@ namespace clib {
             const auto &codes = current_stack->info->codes;
             const auto &pc = current_stack->pc;
             while (true) {
+                if (top) {
+                    if (permanents.cycle <= 0)
+                        return 10;
+                    permanents.cycle--;
+                }
                 if (pc >= (int) codes.size()) {
                     r = 4;
                     break;
@@ -126,6 +133,7 @@ namespace clib {
                 dump_step(c);
 #endif
                 r = run(c);
+                permanents.cycles++;
 #if DUMP_STEP && SHOW_EXTRA
                 dump_step2(c);
 #endif
@@ -210,7 +218,9 @@ namespace clib {
                 current_stack = stack.back();
                 current_stack->stack.clear();
                 if (obj) {
-                    std::cerr << "Uncaught " << obj->to_string(this, 1) << std::endl;
+                    cjsgui::singleton().put_string("Uncaught ");
+                    cjsgui::singleton().put_string(obj->to_string(this, 1));
+                    cjsgui::singleton().put_char('\n');
                 }
             } else {
                 return 9;
@@ -365,7 +375,7 @@ namespace clib {
     }
 
     void cjsruntime::eval_timeout() {
-        while (!timeout.ids.empty()) {
+        if (!timeout.ids.empty()) {
             auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - timeout.startup_time;
             if ((*timeout.queues.begin()).first < now) {
                 auto &v = (*timeout.queues.begin()).second;
@@ -381,7 +391,6 @@ namespace clib {
                     api_setTimeout(callback->time, callback->func, callback->args, callback->attr, callback->once);
                 }
             }
-            cjs_sleep(10);
         }
     }
 
@@ -397,6 +406,29 @@ namespace clib {
 
     void cjsruntime::set_readonly(bool flag) {
         readonly = flag;
+        if (flag)
+            permanents.cycle = 0;
+        else
+            permanents.cycle = INT_MAX;
+    }
+
+    int cjsruntime::run_internal(int cycle, int& cycles)
+    {
+        permanents.cycle = cycle;
+        permanents.cycles = 0;
+        auto result = call_internal(true, 0);
+        cycles += permanents.cycles;
+        if (!idle && result == 0) {
+            if (current_stack->ret_value.lock()) {
+                cjsgui::singleton().put_string(current_stack->ret_value.lock()->to_string(this, 1));
+                cjsgui::singleton().put_char('\n');
+            }
+            idle = true;
+        }
+        if (result != 10) {
+            eval_timeout();
+        }
+        return result;
     }
 
     int cjsruntime::run(const cjs_code &code) {
@@ -1483,14 +1515,14 @@ namespace clib {
     bool cjsruntime::get_file(std::string &filename, std::string &content) const {
         if (filename.empty())
             return false;
-        if (check_file(paths.back() + filename, content)) {
+        if (check_file(ROOT_DIR + paths.back() + filename, content)) {
             if (paths.back() != ROOT_DIR)
                 filename = paths.back() + filename;
             return true;
         }
         if (check_file(ROOT_DIR + filename, content)) {
             if (filename.substr(0, 2) != ROOT_DIR)
-                filename = ROOT_DIR + filename;
+                filename = filename;
             return true;
         }
         return false;

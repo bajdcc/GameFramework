@@ -23,9 +23,7 @@ public:
 private:
     void RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds);
 
-    bool check_cord(int x, int y) const;
-    void bresenham(int x0, int y0, int x1, int y1);
-    bool setpixel(int x, int y);
+    void reset();
 
 private:
     CComPtr<ID2D1SolidColorBrush> bg;

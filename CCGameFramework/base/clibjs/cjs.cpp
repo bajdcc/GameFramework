@@ -11,11 +11,15 @@
 #include "cjs.h"
 #include "cjsparser.h"
 #include "cjsgen.h"
+#include <ui\gdi\Gdi.h>
 
 #define LOG_AST 0
 #define LOG_FILE 0
-#define LOG_FILENAME "output.txt"
-#define LIBRARY_FILE ROOT_DIR R"(lib/clib.js)"
+#define LOG_FILENAME "js_output.log"
+#define LIBRARY_FILE R"(lib/clib.js)"
+
+#define STAT_DELAY_N 60
+#define STAT_MAX_N 10
 
 namespace clib {
 
@@ -71,6 +75,51 @@ namespace clib {
             return exec(code_name, ss.str());
         }
         return rt.eval(std::move(code), filename, top);
+    }
+
+    void cjs::add_stat(const CString& s, bool show)
+    {
+        {
+            if (show) {
+                stat_n = STAT_DELAY_N;
+                if (stat_s.size() >= STAT_MAX_N)
+                    stat_s.pop_front();
+                stat_s.push_back(s);
+            }
+#if REPORT_STAT
+            {
+                std::ofstream log(REPORT_STAT_FILE, std::ios::app | std::ios::out);
+                log << CStringA(s).GetBuffer(0) << std::endl;
+            }
+#endif
+        }
+    }
+
+    void cjs::paint_window(const CRect& bounds)
+    {
+    }
+
+    void cjs::reset_ips()
+    {
+    }
+
+    void cjs::hit(int n)
+    {
+    }
+
+    bool cjs::try_input(int c, bool ch)
+    {
+        return false;
+    }
+
+    int cjs::cursor() const
+    {
+        return 0;
+    }
+
+    bool cjs::run(int cycle, int& cycles)
+    {
+        return rt.run_internal(cycle, cycles) != 11;
     }
 
     void cjs::init_lib() {

@@ -559,6 +559,9 @@
     <ClInclude Include="base\clibjs\JS2D.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="base\clibjs\cjsgui.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
     <ClInclude Include="base\parser2d\cast.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -1026,6 +1029,9 @@
     <ClCompile Include="base\clibjs\JS2DRender.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="base\clibjs\cjsgui.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
     <ClCompile Include="base\parser2d\cast.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -1229,5 +1235,14 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="script\vfs\.gitignore" />
+    <None Include="script\js\src\main.js" />
+    <None Include="script\js\src\test_1.js" />
+    <None Include="script\js\src\test_2.js" />
+    <None Include="script\js\src\test_4.js" />
+    <None Include="script\js\src\test_3.js" />
+    <None Include="script\js\lib\clib.js" />
+    <None Include="script\js\lib\clib_array.js" />
+    <None Include="script\js\lib\clib_error.js" />
+    <None Include="script\js\lib\clib_function.js" />
   </ItemGroup>
 </Project>

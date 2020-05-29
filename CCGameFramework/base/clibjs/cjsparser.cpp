@@ -14,13 +14,13 @@
 #include "cjsast.h"
 
 #define REPORT_ERROR 0
-#define REPORT_ERROR_FILE "parsing.log"
+#define REPORT_ERROR_FILE "js_parsing.log"
 
 #define TRACE_PARSING 0
 #define TRACE_PARSING_LOG 0
 #define DUMP_LEXER 0
 #define DUMP_PDA 0
-#define DUMP_PDA_FILE "PDA.txt"
+#define DUMP_PDA_FILE "js_PDA.txt"
 #define DEBUG_AST 0
 #define CHECK_AST 0
 

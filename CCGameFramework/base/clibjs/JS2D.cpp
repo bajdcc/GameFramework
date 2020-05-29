@@ -1,5 +1,6 @@
 ﻿#include "stdafx.h"
 #include "JS2D.h"
+#include "cjsgui.h"
 #include "render/Direct2DRenderTarget.h"
 #include <ui\window\Window.h>
 
@@ -93,8 +94,59 @@ void JS2DEngine::Reset(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget, st
     }
 }
 
+void JS2DEngine::reset()
+{
+    auto_fresh = 1;
+    GLOBAL_STATE.gui = false;
+    rt2.Release();
+    bitmap.Release();
+    rect.Width = 0;
+    rect.Height = 0;
+    cur_bursh.Release();
+}
+
 int JS2DEngine::SetType(cint value)
 {
+    if (value == -100) {
+        paused = !paused;
+        return 1;
+    }
+    if (value == -101) {
+        clib::cjsgui::singleton().reset();
+        reset();
+        return 1;
+    }
+    if (value == -103) {
+        GLOBAL_STATE.is_logging = !GLOBAL_STATE.is_logging;
+        return 1;
+    }
+    if (value == -102) {
+        return clib::cjsgui::singleton().cursor();
+    }
+    if (value == -104) {
+        clib::cjsgui::singleton().output();
+        return 0;
+    }
+    if (value == -105) {
+        clib::cjsgui::singleton().clear_cache();
+        return 0;
+    }
+    if (value & 0x40000) {
+        GLOBAL_STATE.mouse_x = value & 0xffff;
+        return 0;
+    }
+    if (value & 0x80000) {
+        GLOBAL_STATE.mouse_y = value & 0xffff;
+        return 0;
+    }
+    if (value & 0x100000 && !GLOBAL_STATE.gui) {
+        clib::cjsgui::singleton().hit(value & 0xffff);
+        return 0;
+    }
+    if (value > 0 && clib::cjsgui::singleton().try_input(value)) {
+        return 0;
+    }
+    clib::cjsgui::singleton().input_call(value);
     return 0;
 }
 
@@ -114,4 +166,157 @@ static char* ipsf(double ips) {
 
 void JS2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
 {
+    auto now = std::chrono::system_clock::now();
+    // 计算每帧时间间隔
+    dt = std::chrono::duration_cast<std::chrono::duration<double>>(now - last_clock).count();
+    cycles += clib::cjsgui::singleton().reset_cycles();
+
+    auto inv = 1.0 / dt;
+    if (dt > FRAME) {
+        ips = cycles * dt;
+        cycles = 0;
+        dt = min(dt, FRAME);
+        dt_inv = 1.0 / dt;
+        last_clock = now;
+    }
+
+    rt->FillRectangle(
+        D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
+        bg
+    );
+    clib::cjsgui::singleton().draw(rt, bounds, brushes, paused, dt_inv * FRAME);
+    if (GLOBAL_STATE.gui)
+    {
+        if (!bitmap)
+        {
+            if (rect.Width == 0 || rect.Height == 0) {
+                auto size = bounds.Size();
+                rect.Width = size.cx;
+                rect.Height = size.cy;
+            }
+            rt2 = d2drt.lock()->CreateBitmapRenderTarget(D2D1::SizeF((float)rect.Width, (float)rect.Height));
+            rt2->GetBitmap(&bitmap);
+            if (!cur_bursh)
+                cur_bursh = d2drt.lock()->CreateDirect2DBrush(CColor());
+            rt2->BeginDraw();
+            rt2->Clear(D2D1::ColorF(D2D1::ColorF::Black));
+            rt2->EndDraw();
+        }
+        if (auto_fresh >= 1)
+        {
+            bitmap = nullptr;
+            rt2->GetBitmap(&bitmap);
+        }
+        if (auto_fresh == 2) {
+            auto_fresh = 0;
+        }
+        if (GLOBAL_STATE.gui_blur > 0.0f) {
+            CComPtr<ID2D1Effect> gaussianBlurEffect;
+            auto dev = Direct2D::Singleton().GetDirect2DDeviceContext();
+            dev->CreateEffect(CLSID_D2D1GaussianBlur, &gaussianBlurEffect);
+            gaussianBlurEffect->SetInput(0, bitmap);
+            gaussianBlurEffect->SetValue(D2D1_GAUSSIANBLUR_PROP_STANDARD_DEVIATION, GLOBAL_STATE.gui_blur);
+            dev->DrawImage(
+                gaussianBlurEffect.p,
+                D2D1::Point2F((FLOAT)bounds.left, (FLOAT)bounds.top),
+                D2D1::RectF(0.0f, 0.0f, (FLOAT)bounds.Width(), (FLOAT)bounds.Height()),
+                D2D1_INTERPOLATION_MODE_LINEAR
+            );
+        }
+        else
+            rt->DrawBitmap(
+                bitmap,
+                D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
+                1.0f,
+                D2D1_BITMAP_INTERPOLATION_MODE_LINEAR
+            );
+    }
+    else if (bitmap) {
+        reset();
+    }
+
+    CString logo(_T("JavaScript解释器 clibjs @bajdcc"));
+
+    rt->DrawText(logo.GetBuffer(0), logo.GetLength(), logoTF->textFormat,
+        D2D1::RectF((float)bounds.left + 10, (float)bounds.top + 5, (float)bounds.left + 200, (float)bounds.top + 50), logoBrush);
+
+    logo.Format(_T("屏幕（%d）"), clib::cjsgui::singleton().current_screen());
+    rt->DrawText(logo.GetBuffer(0), logo.GetLength(), logoTF->textFormat,
+        D2D1::RectF((float)bounds.left + 10, (float)bounds.top + 35, (float)bounds.left + 200, (float)bounds.top + 60), logoBrush);
+
+    logo.Format(_T("FPS: %2.1f IPS: %S"), inv, ipsf(ips));
+    rt->DrawText(logo.GetBuffer(0), logo.GetLength(), logoTF->textFormat,
+        D2D1::RectF((float)bounds.right - 210, (float)bounds.top + 5, (float)bounds.right, (float)bounds.top + 50), logoBrush);
+
+    logo = clib::cjsgui::singleton().get_disp(clib::types::D_STAT);
+    if (!logo.IsEmpty()) {
+        auto line = int(logo[0] - L'0');
+        rt->DrawText(logo.GetBuffer(0) + 1, logo.GetLength() - 1, loggingTF->textFormat,
+            D2D1::RectF((float)bounds.left + 10, (float)bounds.bottom - (line)*brushes.gbkFont.size, (float)bounds.left + 200, (float)bounds.bottom), logoBrush);
+    }
+
+    if (GLOBAL_STATE.is_logging) {
+        const int span = loggingFont.size;
+        const int wspan = brushes.gbkFont.size;
+        auto R = D2D1::RectF((float)bounds.left + 10, (float)bounds.top + 10, (float)bounds.right - 10, (float)bounds.top + 60);
+        rt->FillRectangle(
+            D2D1::RectF((float)bounds.left, (float)bounds.top, (float)bounds.right, (float)bounds.bottom),
+            bg_log
+        );
+        for (auto& l : GLOBAL_STATE.logging) {
+            rt->DrawText(l.GetBuffer(0), l.GetLength(), loggingTF->textFormat, R, logoBrush);
+            R.top += span;
+            R.bottom += span;
+            if (R.top + span >= bounds.bottom) {
+                break;
+            }
+        }
+        R.top += span;
+        R.bottom = (float)bounds.bottom;
+        auto disp = clib::cjsgui::singleton().get_disp(clib::types::D_HANDLE);
+        rt->DrawText(disp, disp.GetLength(), loggingTF->textFormat, R, logoBrush);
+        R.top += span;
+        auto lines = 3;
+        {
+            for (auto i = 0; i < disp.GetLength(); i++) {
+                if (disp[i] == L'\n') lines++;
+            }
+        }
+        R.top += lines * span;
+        disp = clib::cjsgui::singleton().get_disp(clib::types::D_WINDOW);
+        rt->DrawText(disp, disp.GetLength(), loggingTF->textFormat, R, logoBrush);
+        R = D2D1::RectF((float)bounds.right - 400, (float)bounds.top + 10, (float)bounds.right - 10, (float)bounds.bottom);
+        disp = clib::cjsgui::singleton().get_disp(clib::types::D_PS);
+        rt->DrawText(disp, disp.GetLength(), loggingTF->textFormat, R, logoBrush);
+        lines = 3;
+        {
+            for (auto i = 0; i < disp.GetLength(); i++) {
+                if (disp[i] == L'\n') lines++;
+            }
+        }
+        auto RM = R;
+        RM.top += lines * span;
+        auto side = lines < 20;
+        if (side)
+            R.top = RM.top;
+        else
+            R.left -= 600;
+        disp = clib::cjsgui::singleton().get_disp(clib::types::D_HTOP);
+        rt->DrawText(disp, disp.GetLength(), loggingTF->textFormat, R, logoBrush);
+        lines = 0;
+        {
+            for (auto i = 0; i < disp.GetLength(); i++) {
+                if (disp[i] == L'\n') lines++;
+            }
+        }
+        if (side) {
+            R.top += lines * wspan + span;
+        }
+        else {
+            R = RM;
+            R.top += 3 * span;
+        }
+        disp = clib::cjsgui::singleton().get_disp(clib::types::D_MEM);
+        rt->DrawText(disp, disp.GetLength(), loggingTF->textFormat, R, logoBrush);
+    }
 }

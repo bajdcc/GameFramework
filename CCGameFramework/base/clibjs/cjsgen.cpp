@@ -945,7 +945,6 @@ namespace clib {
                 code->arrow = true;
                 copy_info(code, asts[0]);
                 code->end = tmps.back()->end;
-                asts.pop_back();
                 if (asts.size() >= 2 && (AST_IS_OP_N(*(asts.rbegin() + 1), T_ELLIPSIS))) {
                     asts.erase(asts.begin() + (asts.size() - 2));
                     code->rest = true;

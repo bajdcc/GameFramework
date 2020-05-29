@@ -231,6 +231,7 @@ xcopy /r /y /e /d "$(ProjectDir)img" "$(TargetDir)img"</Command>
     <ClInclude Include="base\clibjs\cjs.h" />
     <ClInclude Include="base\clibjs\cjsast.h" />
     <ClInclude Include="base\clibjs\cjsgen.h" />
+    <ClInclude Include="base\clibjs\cjsgui.h" />
     <ClInclude Include="base\clibjs\cjslexer.h" />
     <ClInclude Include="base\clibjs\cjsmem.h" />
     <ClInclude Include="base\clibjs\cjsparser.h" />
@@ -436,6 +437,7 @@ xcopy /r /y /e /d "$(ProjectDir)img" "$(TargetDir)img"</Command>
     <ClCompile Include="base\clibjs\cjsast.cpp" />
     <ClCompile Include="base\clibjs\cjsgen.cpp" />
     <ClCompile Include="base\clibjs\cjsgen_ast.cpp" />
+    <ClCompile Include="base\clibjs\cjsgui.cpp" />
     <ClCompile Include="base\clibjs\cjslexer.cpp" />
     <ClCompile Include="base\clibjs\cjsmem.cpp" />
     <ClCompile Include="base\clibjs\cjsparser.cpp" />
@@ -801,6 +803,15 @@ xcopy /r /y /e /d "$(ProjectDir)img" "$(TargetDir)img"</Command>
     </Text>
   </ItemGroup>
   <ItemGroup>
+    <None Include="script\js\lib\clib.js" />
+    <None Include="script\js\lib\clib_array.js" />
+    <None Include="script\js\lib\clib_error.js" />
+    <None Include="script\js\lib\clib_function.js" />
+    <None Include="script\js\src\main.js" />
+    <None Include="script\js\src\test_1.js" />
+    <None Include="script\js\src\test_2.js" />
+    <None Include="script\js\src\test_3.js" />
+    <None Include="script\js\src\test_4.js" />
     <None Include="script\vfs\.gitignore" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

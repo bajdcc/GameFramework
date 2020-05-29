@@ -13,11 +13,12 @@
 #include <fstream>
 #include "cjsruntime.h"
 #include "cjsast.h"
+#include "cjsgui.h"
 #include "cjsparser.h"
 
 #define DUMP_PRINT_FILE_ENABLE 0
 #define DUMP_PRINT_FILE_AUTO_CLEAR 1
-#define DUMP_PRINT_FILE "debug_print.txt"
+#define DUMP_PRINT_FILE "js_debug_print.txt"
 
 #define LOG_AST 0
 #define LOG_FILE 0
@@ -184,7 +185,7 @@ namespace clib {
             }
             ss << std::endl;
             auto s = ss.str();
-            std::cout << ss.str();
+            cjsgui::singleton().put_string(ss.str());
             func->stack.push_back(js.new_undefined());
             return 0;
         };
@@ -201,7 +202,7 @@ namespace clib {
             }
             ss << std::endl;
             auto s = ss.str();
-            std::cerr << ss.str();
+            cjsgui::singleton().put_string(ss.str());
             func->stack.push_back(js.new_undefined());
             return 0;
         };

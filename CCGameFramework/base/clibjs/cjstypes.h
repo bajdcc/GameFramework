@@ -11,6 +11,17 @@
 namespace clib {
     namespace types {
 
+        using decimal = double;
+
+        enum disp_t {
+            D_PS,
+            D_HTOP,
+            D_HANDLE,
+            D_WINDOW,
+            D_MEM,
+            D_STAT,
+        };
+
         enum js_lexer_t {
             NONE,
             NUMBER,
