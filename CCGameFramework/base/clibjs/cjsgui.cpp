@@ -20,6 +20,10 @@
 #undef REPORT_ERROR_FILE
 #endif
 #define REPORT_ERROR_FILE "js_runtime.log"
+#define REPORT_STAT 1
+#define REPORT_STAT_FILE "stat.log"
+#define STAT_DELAY_N 60
+#define STAT_MAX_N 10
 
 #define AST_FILE "js_ast.log"
 
@@ -299,6 +303,19 @@ namespace clib {
         if (exited)
             return;
         if (running) {
+            if (vm->get_state() == 1) {
+                vm->set_state(2);
+                std::vector<std::string> args;
+                if (g_argc > 0) {
+                    args.emplace_back(ENTRY_FILE);
+                    for (int i = 1; i < g_argc; ++i) {
+                        args.emplace_back(g_argv[i]);
+                    }
+                }
+                if (compile(ENTRY_FILE, args, decltype(args)()) == -1) {
+                    running = false;
+                }
+            }
             try {
                 if (!vm->run(cycle, cycles)) {
                     running = false;
@@ -325,16 +342,7 @@ namespace clib {
         else {
             if (!vm) {
                 vm = std::make_unique<cjs>();
-                std::vector<std::string> args;
-                if (g_argc > 0) {
-                    args.emplace_back(ENTRY_FILE);
-                    for (int i = 1; i < g_argc; ++i) {
-                        args.emplace_back(g_argv[i]);
-                    }
-                }
-                if (compile(ENTRY_FILE, args, decltype(args)()) != -1) {
-                    running = true;
-                }
+                running = true;
             }
         }
     }
@@ -870,7 +878,62 @@ namespace clib {
 
     CString cjsgui::get_disp(types::disp_t t) const
     {
-        return CString();
+        static TCHAR sz[256];
+        std::wstringstream ss;
+        switch (t) {
+        case D_PS:
+            break;
+        case D_HTOP:
+            break;
+        case D_HANDLE:
+            break;
+        case D_WINDOW:
+            break;
+        case D_MEM:
+            break;
+        case D_STAT: {
+            if (stat_n > 0) {
+                (*const_cast<int*>(&stat_n))--;
+                if (stat_s.empty()) {
+                    (*const_cast<int*>(&stat_n)) = 0;
+                }
+                else {
+                    ss << (wchar_t)(L'0' + stat_s.size());
+                    for (const auto& s : stat_s) {
+                        ss << s.GetString() << std::endl;
+                    }
+                }
+            }
+            else {
+                if (!stat_s.empty()) {
+                    while (!stat_s.empty()) {
+                        const_cast<std::list<CString>*>(&stat_s)->pop_back();
+                    }
+                }
+                return L"";
+            }
+        }
+                   break;
+        default:
+            break;
+        }
+        return CString(ss.str().c_str());
+    }
+
+    void cjsgui::add_stat(const CString& s, bool show)
+    {
+        if (show) {
+            stat_n = STAT_DELAY_N;
+            if (stat_s.size() >= STAT_MAX_N)
+                stat_s.pop_front();
+            stat_s.push_back(s);
+        }
+#if REPORT_STAT
+        {
+            std::ofstream log(REPORT_STAT_FILE, std::ios::app | std::ios::out);
+            log << CStringA(s).GetBuffer(0) << std::endl;
+        }
+#endif
     }
 
     int cjsgui::new_screen(int n)

@@ -8,10 +8,11 @@
 #include <fstream>
 #include <cassert>
 #include <sstream>
+#include <ui\gdi\Gdi.h>
 #include "cjs.h"
 #include "cjsparser.h"
 #include "cjsgen.h"
-#include <ui\gdi\Gdi.h>
+#include "cjsgui.h"
 
 #define LOG_AST 0
 #define LOG_FILE 0
@@ -27,7 +28,6 @@ namespace clib {
         rt.set_readonly(false);
         rt.init(this);
         init_lib();
-        rt.set_readonly(true);
     }
 
     backtrace_direction cjs::check(js_pda_edge_t edge, js_ast_node *node) {
@@ -37,9 +37,10 @@ namespace clib {
     void cjs::error_handler(int, const std::vector<js_pda_trans> &, int &) {
     }
 
-    int cjs::exec(const std::string &filename, const std::string &input, bool top) {
+    int cjs::exec(const std::string &filename, const std::string &input) {
         if (input.empty())
             return 0;
+        CString stat;
         auto p = std::make_unique<cjsparser>();
         std::string error_string;
         std::string code_name;
@@ -47,6 +48,7 @@ namespace clib {
             code_name = filename;
         else
             code_name = "(" + filename + ":1:1) <entry>";
+        auto last = std::chrono::system_clock::now();
         cjs_code_result::ref code;
         try {
             if (p->parse(input, error_string, this) == nullptr) {
@@ -70,11 +72,16 @@ namespace clib {
             code->code->debugName = code_name;
             g = nullptr;
         } catch (const clib::cjs_exception &e) {
+            stat.Format(L"编译：%S，失败", filename.c_str());
+            cjsgui::singleton().add_stat(stat);
             std::stringstream ss;
             ss << "throw new SyntaxError('" << jsv_string::convert(e.message()) << "')";
             return exec(code_name, ss.str());
         }
-        return rt.eval(std::move(code), filename, top);
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - last);
+        stat.Format(L"编译：%S，耗时：%lldms", filename.c_str(), duration.count());
+        cjsgui::singleton().add_stat(stat);
+        return rt.eval(std::move(code), filename);
     }
 
     void cjs::add_stat(const CString& s, bool show)
@@ -120,6 +127,16 @@ namespace clib {
     bool cjs::run(int cycle, int& cycles)
     {
         return rt.run_internal(cycle, cycles) != 11;
+    }
+
+    int cjs::get_state() const
+    {
+        return rt.get_state();
+    }
+
+    void cjs::set_state(int n) 
+    {
+        return rt.set_state(n);
     }
 
     void cjs::init_lib() {

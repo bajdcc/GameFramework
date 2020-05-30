@@ -32,7 +32,7 @@
 #define GUI_CYCLES 1000
 #define GUI_MAX_SPEED 4
 #define GUI_TICKS 16
-#define GUI_MAX_CYCLE_N 100000000
+#define GUI_MAX_CYCLE_N 10000
 #define GUI_MAX_CYCLE (GUI_MAX_CYCLE_N / GUI_TICKS)
 #define GUI_MIN_CYCLE 10
 #define GUI_MIN_FPS_RATE 0.6
@@ -76,6 +76,7 @@ namespace clib {
         std::unordered_set<std::string> get_dep(std::string& path) const;
 
         CString get_disp(types::disp_t) const;
+        void add_stat(const CString& s, bool show = true);
 
         int new_screen(int n);
 
@@ -186,6 +187,8 @@ namespace clib {
         bool cycle_set{ false };
         bool entered{ false };
         std::chrono::time_point<std::chrono::system_clock> last_time{ std::chrono::system_clock::now() };
+        int stat_n{ 0 };
+        std::list<CString> stat_s;
 
     public:
         global_input_t* get_screen_interrupt();

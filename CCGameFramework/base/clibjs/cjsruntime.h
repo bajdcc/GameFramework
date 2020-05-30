@@ -242,8 +242,10 @@ namespace clib {
     public:
         using ref = std::shared_ptr<cjs_function_info>;
         using weak_ref = std::weak_ptr<cjs_function_info>;
-        explicit cjs_function_info(const js_sym_code_t::ref &code, js_value_new &n);
+        cjs_function_info() = default;
+        cjs_function_info(const js_sym_code_t::ref &code, js_value_new &n);
         static js_value::ref load_const(const cjs_consts &c, int op, js_value_new &n);
+        static ref create_default();
         bool arrow{false};
         std::string debugName;
         std::string simpleName;
@@ -273,8 +275,9 @@ namespace clib {
     public:
         using ref = std::shared_ptr<cjs_function>;
         using weak_ref = std::weak_ptr<cjs_function>;
-        explicit cjs_function(const js_sym_code_t::ref &code, js_value_new &n);
-        explicit cjs_function(cjs_function_info::ref code);
+        cjs_function() = default;
+        cjs_function(const js_sym_code_t::ref &code, js_value_new &n);
+        cjs_function(cjs_function_info::ref code);
         void reset(const js_sym_code_t::ref &code, js_value_new &n);
         void reset(cjs_function_info::ref code);
         void clear();
@@ -312,7 +315,7 @@ namespace clib {
         void init(void *);
         int run_internal(int cycle, int& cycles);
 
-        int eval(cjs_code_result::ref code, const std::string &_path, bool top);
+        int eval(cjs_code_result::ref code, const std::string &_path);
         void set_readonly(bool);
 
         jsv_number::ref new_number(double n) override;
@@ -339,6 +342,8 @@ namespace clib {
 
         static bool to_number(const js_value::ref &, double &);
         static std::vector<js_value::weak_ref> to_array(const js_value::ref &);
+        int get_state() const;
+        void set_state(int);
 
     private:
         int run(const cjs_code &code);
@@ -452,6 +457,9 @@ namespace clib {
             // cycle
             int cycle{ 0 };
             int cycles{ 0 };
+            int state{ 0 };
+            // stack
+            cjs_function::ref default_stack;
         } permanents;
         cjs_runtime_reuse reuse;
         struct timeout_t {
@@ -468,7 +476,6 @@ namespace clib {
             std::map<std::time_t, std::list<std::shared_ptr<timeout_t>>> queues;
             std::unordered_map<uint32_t, std::shared_ptr<timeout_t>> ids;
         } timeout;
-        bool idle{ false };
     };
 }
 

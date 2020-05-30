@@ -24,7 +24,7 @@ namespace clib {
         backtrace_direction check(js_pda_edge_t, js_ast_node*) override;
         void error_handler(int, const std::vector<js_pda_trans>&, int&) override;
 
-        int exec(const std::string &filename, const std::string& input, bool top = true);
+        int exec(const std::string &filename, const std::string& input);
 
         void add_stat(const CString& s, bool show = true);
 
@@ -35,6 +35,8 @@ namespace clib {
         int cursor() const;
 
         bool run(int cycle, int& cycles);
+        int get_state() const;
+        void set_state(int);
 
     private:
         void init_lib();

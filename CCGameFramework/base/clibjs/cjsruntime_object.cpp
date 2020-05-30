@@ -746,6 +746,13 @@ namespace clib {
         return nullptr;
     }
 
+    cjs_function_info::ref cjs_function_info::create_default()
+    {
+        auto info = std::make_shared<cjs_function_info>();
+        info->debugName = info->simpleName = info->fullName = info->text = "<default>";
+        return info;
+    }
+
     // ----------------------------------
 
     std::string jsv_boolean::_str_t = "true";

@@ -231,7 +231,7 @@ namespace clib {
             if (js.get_file(filename, content)) {
                 func->pc++;
                 js.exec(filename, content);
-                return 3;
+                return 1;
             }
             func->stack.push_back(js.new_undefined());
             return 0;
@@ -422,5 +422,9 @@ namespace clib {
             return 0;
         };
         permanents.global_env->obj.insert({permanents.f_error->name, permanents.f_error});
+        // default func
+        permanents.default_stack = std::make_shared<cjs_function>();
+        permanents.default_stack->name = "<default>";
+        permanents.default_stack->info = cjs_function_info::create_default();
     }
 }

@@ -56,7 +56,7 @@ namespace clib {
         return ceil(d);
     }
 
-    int cjsruntime::eval(cjs_code_result::ref code, const std::string &_path, bool top) {
+    int cjsruntime::eval(cjs_code_result::ref code, const std::string &_path) {
         if (code->code->codes.empty()) {
             return exec(jsv_string::convert(_path), "throw new SyntaxError('Compile error')");
         }
@@ -77,7 +77,7 @@ namespace clib {
                 }
             }
         }
-        if (top) {
+        if (!current_stack) {
             stack.clear();
             auto top_stack = std::make_shared<cjs_function>(code->code, *this);
             stack.push_back(top_stack);
@@ -85,25 +85,15 @@ namespace clib {
             current_stack->envs = permanents.global_env;
             current_stack->_this = permanents.global_env;
             current_stack->trys.push_back(std::make_shared<sym_try_t>(sym_try_t{}));
-        } else {
+        }
+        else {
             auto exec_stack = std::make_shared<cjs_function>(code->code, *this);
             exec_stack->envs = new_object();
             exec_stack->_this = stack.front()->envs;
             stack.push_back(exec_stack);
             current_stack = stack.back();
-            return 0;
         }
-        auto result = call_internal(true, 0);
-        if (result == 0) {
-            if (current_stack->ret_value.lock()) {
-                cjsgui::singleton().put_string(current_stack->ret_value.lock()->to_string(this, 1));
-                cjsgui::singleton().put_char('\n');
-            }
-            delete_stack(current_stack);
-            stack.pop_back();
-            paths.pop_back();
-        }
-        return result;
+        return 0;
     }
 
     int cjsruntime::call_internal(bool top, size_t stack_size) {
@@ -120,8 +110,11 @@ namespace clib {
                         return 10;
                     permanents.cycle--;
                 }
-                if (pc >= (int) codes.size()) {
-                    r = 4;
+                if (pc >= (int)codes.size()) {
+                    if (current_stack == permanents.default_stack)
+                        r = 2;
+                    else
+                        r = 4;
                     break;
                 }
                 const auto &c = codes.at(pc);
@@ -148,18 +141,18 @@ namespace clib {
                 current_stack = stack.back();
                 continue;
             }
-            if (r == 2) {
+            else if (r == 2) {
                 if (!current_stack->ret_value.lock())
                     current_stack->ret_value =
                             current_stack->stack.empty() ? new_undefined() : pop();
             }
-            if (r == 3) {
+            else if (r == 3) {
                 continue;
             }
-            if (r == 4) {
+            else if (r == 4) {
                 current_stack->ret_value = new_undefined();
             }
-            if (r == 9) { // throw
+            else if (r == 9) { // throw
                 trys = get_try();
                 if (trys && trys->stack_size > 0 && trys->stack_size <= stack.size() && trys->obj_size <= current_stack->stack.size()) {
                     if (trys->stack_size <= stack.size()) {
@@ -327,7 +320,11 @@ namespace clib {
 
     js_value::ref cjsruntime::fast_api(const jsv_function::ref &func, js_value::weak_ref &_this,
                                        std::vector<js_value::weak_ref> &args, uint32_t attr, int *r) {
+        auto size = stack.size();
         auto ret = call_api(func, _this, args, attr);
+        while (ret == 10) {
+            call_internal(false, size);
+        }
         if (r)
             *r = ret;
         if (ret != 0)
@@ -375,13 +372,22 @@ namespace clib {
     }
 
     void cjsruntime::eval_timeout() {
+        if (current_stack || !stack.empty())
+            return;
         if (!timeout.ids.empty()) {
             auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - timeout.startup_time;
             if ((*timeout.queues.begin()).first < now) {
-                auto &v = (*timeout.queues.begin()).second;
+                auto& v = (*timeout.queues.begin()).second;
                 auto callback = v.front();
+                stack.clear();
+                stack.push_back(permanents.default_stack);
+                current_stack = stack.back();
+                current_stack->envs = permanents.global_env;
+                current_stack->_this = permanents.global_env;
+                current_stack->trys.push_back(std::make_shared<sym_try_t>(sym_try_t{}));
+                paths.emplace_back(ROOT_DIR);
                 js_value::weak_ref env = stack.front()->envs;
-                call_api(callback->func, env, callback->args, callback->attr);
+                call_api(callback->func, env, callback->args, callback->attr | jsv_function::at_fast);
                 v.pop_front();
                 if (v.empty()) {
                     timeout.queues.erase(timeout.queues.begin());
@@ -406,26 +412,30 @@ namespace clib {
 
     void cjsruntime::set_readonly(bool flag) {
         readonly = flag;
-        if (flag)
-            permanents.cycle = 0;
-        else
-            permanents.cycle = INT_MAX;
     }
 
     int cjsruntime::run_internal(int cycle, int& cycles)
     {
         permanents.cycle = cycle;
-        permanents.cycles = 0;
-        auto result = call_internal(true, 0);
-        cycles += permanents.cycles;
-        if (!idle && result == 0) {
-            if (current_stack->ret_value.lock()) {
-                cjsgui::singleton().put_string(current_stack->ret_value.lock()->to_string(this, 1));
-                cjsgui::singleton().put_char('\n');
+        auto result = 0;
+        if (current_stack) {
+            result = call_internal(true, 0);
+            cycles += permanents.cycles;
+            if (result == 0) {
+                if (current_stack->ret_value.lock()) {
+                    cjsgui::singleton().put_string(current_stack->ret_value.lock()->to_string(this, 1));
+                    cjsgui::singleton().put_char('\n');
+                }
+                delete_stack(current_stack);
+                stack.pop_back();
+                paths.pop_back();
+                current_stack = nullptr;
             }
-            idle = true;
         }
         if (result != 10) {
+            if (permanents.state == 0 && !current_stack) {
+                permanents.state = 1;
+            }
             eval_timeout();
         }
         return result;
@@ -1467,7 +1477,7 @@ namespace clib {
     }
 
     int cjsruntime::exec(const std::string &n, const std::string &s) {
-        return ((cjs *) pjs)->exec(n, s, false);
+        return ((cjs *) pjs)->exec(n, s);
     }
 
     std::string cjsruntime::get_stacktrace() const {
@@ -1591,6 +1601,19 @@ namespace clib {
         return ret;
     }
 
+    int cjsruntime::get_state() const
+    {
+        return permanents.state;
+    }
+
+    void cjsruntime::set_state(int n)
+    {
+        if (n == 2) {
+            set_readonly(true);
+        }
+        permanents.state = n;
+    }
+
     void cjsruntime::reuse_value(const js_value::ref &v) {
         if (!v)
             return;
@@ -1652,6 +1675,10 @@ namespace clib {
     }
 
     void cjsruntime::delete_stack(const cjs_function::ref &f) {
+        if (f == permanents.default_stack) {
+            f->ret_value.reset();
+            return;
+        }
         f->clear();
         reuse_stack.push_back(f);
     }
