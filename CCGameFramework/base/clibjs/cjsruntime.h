@@ -287,6 +287,7 @@ namespace clib {
         cjs_function_info::ref info;
         std::string name{"UNKNOWN"};
         int pc{0};
+        std::string exec;
         std::vector<js_value::weak_ref> stack;
         js_value::weak_ref ret_value;
         js_value::weak_ref _this;
@@ -471,9 +472,9 @@ namespace clib {
             uint32_t attr{0};
         };
         struct timeout_struct {
-            std::time_t startup_time{std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
+            std::chrono::system_clock::time_point startup_time{ std::chrono::system_clock::now() };
             uint32_t global_id{0};
-            std::map<std::time_t, std::list<std::shared_ptr<timeout_t>>> queues;
+            std::map<std::chrono::milliseconds::rep, std::list<std::shared_ptr<timeout_t>>> queues;
             std::unordered_map<uint32_t, std::shared_ptr<timeout_t>> ids;
         } timeout;
     };

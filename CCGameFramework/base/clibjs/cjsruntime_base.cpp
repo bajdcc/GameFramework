@@ -202,7 +202,9 @@ namespace clib {
             }
             ss << std::endl;
             auto s = ss.str();
+            cjsgui::singleton().put_string("\033FFF0000\033");
             cjsgui::singleton().put_string(ss.str());
+            cjsgui::singleton().put_string("\033S4\033");
             func->stack.push_back(js.new_undefined());
             return 0;
         };
@@ -230,8 +232,7 @@ namespace clib {
             std::string content;
             if (js.get_file(filename, content)) {
                 func->pc++;
-                js.exec(filename, content);
-                return 1;
+                return js.exec(filename, content);
             }
             func->stack.push_back(js.new_undefined());
             return 0;

@@ -23,7 +23,7 @@
 #define REPORT_STAT 1
 #define REPORT_STAT_FILE "stat.log"
 #define STAT_DELAY_N 60
-#define STAT_MAX_N 10
+#define STAT_MAX_N 25
 
 #define AST_FILE "js_ast.log"
 

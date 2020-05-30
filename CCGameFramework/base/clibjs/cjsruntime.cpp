@@ -82,18 +82,20 @@ namespace clib {
             auto top_stack = std::make_shared<cjs_function>(code->code, *this);
             stack.push_back(top_stack);
             current_stack = stack.back();
+            current_stack->exec = _path;
             current_stack->envs = permanents.global_env;
             current_stack->_this = permanents.global_env;
             current_stack->trys.push_back(std::make_shared<sym_try_t>(sym_try_t{}));
         }
         else {
-            auto exec_stack = std::make_shared<cjs_function>(code->code, *this);
+            auto exec_stack = new_stack(code->code);
+            exec_stack->exec = _path;
             exec_stack->envs = new_object();
             exec_stack->_this = stack.front()->envs;
             stack.push_back(exec_stack);
             current_stack = stack.back();
         }
-        return 0;
+        return 3;
     }
 
     int cjsruntime::call_internal(bool top, size_t stack_size) {
@@ -157,6 +159,8 @@ namespace clib {
                 if (trys && trys->stack_size > 0 && trys->stack_size <= stack.size() && trys->obj_size <= current_stack->stack.size()) {
                     if (trys->stack_size <= stack.size()) {
                         for (auto s = stack.size(); s > trys->stack_size; s--) {
+                            if (!stack.back()->exec.empty())
+                                paths.pop_back();
                             delete_stack(stack.back());
                             stack.pop_back();
                         }
@@ -187,6 +191,12 @@ namespace clib {
                 has_throw = true;
                 break;
             }
+            if (!current_stack->exec.empty()) {
+                CString s;
+                s.Format(L"退出：%S", current_stack->exec.c_str());
+                cjsgui::singleton().add_stat(s);
+                paths.pop_back();
+            }
             if (stack.size() > 1) {
                 auto ret = stack.back()->ret_value;
                 delete_stack(current_stack);
@@ -205,14 +215,18 @@ namespace clib {
                 auto obj = trys ? trys->obj.lock() : nullptr;
                 auto n = stack.size();
                 for (size_t i = 1; i < n; i++) {
+                    if (!stack.back()->exec.empty())
+                        paths.pop_back();
                     delete_stack(stack.back());
                     stack.pop_back();
                 }
                 current_stack = stack.back();
                 current_stack->stack.clear();
                 if (obj) {
+                    cjsgui::singleton().put_string("\033FFF0000\033");
                     cjsgui::singleton().put_string("Uncaught ");
                     cjsgui::singleton().put_string(obj->to_string(this, 1));
+                    cjsgui::singleton().put_string("\033S4\033");
                     cjsgui::singleton().put_char('\n');
                 }
             } else {
@@ -333,7 +347,9 @@ namespace clib {
     }
 
     double cjsruntime::api_setTimeout(int time, const jsv_function::ref &func, std::vector<js_value::weak_ref> args, uint32_t attr, bool once) {
-        auto t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - timeout.startup_time;
+        using namespace std::chrono;
+        using namespace std::chrono_literals;
+        auto t = duration_cast<milliseconds>(system_clock::now() - timeout.startup_time + time * 1ms).count();
         if (timeout.queues.find(t) == timeout.queues.end()) {
             timeout.queues[t] = std::list<std::shared_ptr<timeout_t>>();
         }
@@ -363,9 +379,9 @@ namespace clib {
                 if (f2 != ff->second.end()) {
                     ff->second.erase(f2);
                 }
-            }
-            if (ff->second.empty()) {
-                timeout.queues.erase(ff);
+                if (ff->second.empty()) {
+                    timeout.queues.erase(ff);
+                }
             }
             timeout.ids.erase(i);
         }
@@ -375,26 +391,40 @@ namespace clib {
         if (current_stack || !stack.empty())
             return;
         if (!timeout.ids.empty()) {
-            auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - timeout.startup_time;
+            using namespace std::chrono;
+            using namespace std::chrono_literals;
+            auto now = duration_cast<milliseconds>(std::chrono::system_clock::now() - timeout.startup_time).count();
             if ((*timeout.queues.begin()).first < now) {
                 auto& v = (*timeout.queues.begin()).second;
                 auto callback = v.front();
                 stack.clear();
                 stack.push_back(permanents.default_stack);
                 current_stack = stack.back();
+                current_stack->name = callback->func->name;
+                current_stack->exec = callback->func->name;
                 current_stack->envs = permanents.global_env;
                 current_stack->_this = permanents.global_env;
                 current_stack->trys.push_back(std::make_shared<sym_try_t>(sym_try_t{}));
                 paths.emplace_back(ROOT_DIR);
                 js_value::weak_ref env = stack.front()->envs;
+                CString s;
+                s.Format(L"Timeout：%S", current_stack->exec.c_str());
+                cjsgui::singleton().add_stat(s);
                 call_api(callback->func, env, callback->args, callback->attr | jsv_function::at_fast);
+                current_stack = stack.back();
                 v.pop_front();
                 if (v.empty()) {
                     timeout.queues.erase(timeout.queues.begin());
                 }
-                timeout.ids.erase(callback->id);
                 if (!callback->once) {
-                    api_setTimeout(callback->time, callback->func, callback->args, callback->attr, callback->once);
+                    auto t = duration_cast<milliseconds>(system_clock::now() - timeout.startup_time + callback->time * 1ms).count();
+                    if (timeout.queues.find(t) == timeout.queues.end()) {
+                        timeout.queues[t] = std::list<std::shared_ptr<timeout_t>>();
+                    }
+                    timeout.queues[t].push_back(callback);
+                }
+                else {
+                    timeout.ids.erase(callback->id);
                 }
             }
         }
@@ -421,14 +451,9 @@ namespace clib {
         if (current_stack) {
             result = call_internal(true, 0);
             cycles += permanents.cycles;
-            if (result == 0) {
-                if (current_stack->ret_value.lock()) {
-                    cjsgui::singleton().put_string(current_stack->ret_value.lock()->to_string(this, 1));
-                    cjsgui::singleton().put_char('\n');
-                }
+            if (result != 10) {
                 delete_stack(current_stack);
                 stack.pop_back();
-                paths.pop_back();
                 current_stack = nullptr;
             }
         }
@@ -1676,6 +1701,7 @@ namespace clib {
 
     void cjsruntime::delete_stack(const cjs_function::ref &f) {
         if (f == permanents.default_stack) {
+            f->name = "<default>";
             f->ret_value.reset();
             return;
         }
