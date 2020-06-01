@@ -295,6 +295,7 @@ xcopy /r /y /e /d "$(ProjectDir)img" "$(TargetDir)img"</Command>
     <ClInclude Include="base\mpm2d\MPM2D.h" />
     <ClInclude Include="base\nanosvg\nanosvg.h" />
     <ClInclude Include="base\nanosvg\nanosvgrast.h" />
+    <ClInclude Include="base\nlohmann_json\json.h" />
     <ClInclude Include="base\parser2d\cast.h" />
     <ClInclude Include="base\parser2d\cexception.h" />
     <ClInclude Include="base\parser2d\cext.h" />

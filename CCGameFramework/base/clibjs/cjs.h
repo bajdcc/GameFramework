@@ -8,12 +8,11 @@
 
 #include <string>
 #include "ui/gdi/Gdi.h"
-#include "cjsparser.h"
 #include "cjsruntime.h"
 
 namespace clib {
 
-    class cjs : public csemantic {
+    class cjs {
     public:
         cjs();
         ~cjs() = default;
@@ -21,18 +20,16 @@ namespace clib {
         cjs(const cjs&) = delete;
         cjs& operator=(const cjs&) = delete;
 
-        backtrace_direction check(js_pda_edge_t, js_ast_node*) override;
-        void error_handler(int, const std::vector<js_pda_trans>&, int&) override;
-
-        int exec(const std::string &filename, const std::string& input);
-
         void add_stat(const CString& s, bool show = true);
+
+        int exec(const std::string& filename, const std::string& input);
 
         void paint_window(const CRect& bounds);
         void reset_ips();
         void hit(int n);
         bool try_input(int c, bool ch = true);
         int cursor() const;
+        void clear_cache();
 
         bool run(int cycle, int& cycles);
         int get_state() const;

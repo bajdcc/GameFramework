@@ -73,8 +73,6 @@ namespace clib {
         int cursor() const;
         void output() const;
 
-        std::unordered_set<std::string> get_dep(std::string& path) const;
-
         CString get_disp(types::disp_t) const;
         void add_stat(const CString& s, bool show = true);
 
@@ -174,9 +172,6 @@ namespace clib {
         std::vector<int> screen_interrupt;
         int screen_id{ -1 };
         int screen_ptr{ -1 };
-        std::unordered_map<std::string, std::vector<byte>> cache;
-        std::unordered_map<std::string, std::string> cache_code;
-        std::unordered_map<std::string, std::unordered_set<std::string>> cache_dep;
         bool running{ false };
         bool exited{ false };
         int cycle{ GUI_CYCLES };

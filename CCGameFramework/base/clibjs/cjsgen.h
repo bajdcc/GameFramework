@@ -11,6 +11,7 @@
 #include <memory>
 #include <unordered_set>
 #include "cjsast.h"
+#include <base\nlohmann_json\json.h>
 
 #define LAMBDA_ID "<lambda>"
 
@@ -503,6 +504,10 @@ namespace clib {
         const std::vector<const char *> &get_names_data() const;
         const std::vector<const char *> &get_globals_data() const;
         const std::vector<const char *> &get_derefs_data() const;
+        void conv_funcs(const std::unordered_map<std::shared_ptr<js_sym_code_t>, int>& funcs);
+        void restore_funcs(const std::vector<std::shared_ptr<js_sym_code_t>>& funcs);
+        void to_json(nlohmann::json&) const;
+        void from_json(const nlohmann::json&);
     private:
         std::unordered_map<double, int> numbers;
         std::unordered_map<std::string, int> strings;
@@ -511,6 +516,7 @@ namespace clib {
         std::unordered_map<std::string, int> derefs;
         std::unordered_map<std::string, int> names;
         std::unordered_map<int, std::weak_ptr<js_sym_code_t>> functions;
+        std::unordered_map<int, int> function_ids;
         std::vector<js_runtime_t> consts;
         std::vector<char *> consts_data;
         std::vector<const char *> names_data;
@@ -563,6 +569,8 @@ namespace clib {
         std::string to_string() const override;
         int gen_rvalue(ijsgen &gen) override;
         int set_parent(js_sym_t::ref node) override;
+        void to_json(nlohmann::json&) const;
+        void from_json(const nlohmann::json&);
         js_ast_node *name{nullptr};
         bool arrow{false};
         bool rest{false};
@@ -581,7 +589,7 @@ namespace clib {
     };
 
     struct cjs_code_result {
-        using ref = std::unique_ptr<cjs_code_result>;
+        using ref = std::shared_ptr<cjs_code_result>;
         js_sym_code_t::ref code;
         std::vector<js_sym_code_t::ref> funcs;
     };

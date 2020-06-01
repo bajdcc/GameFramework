@@ -253,6 +253,46 @@ namespace clib {
         return derefs_data;
     }
 
+    void cjs_consts::conv_funcs(const std::unordered_map<js_sym_code_t::ref, int>& funcs)
+    {
+        for (const auto& s : functions) {
+            function_ids.insert({ s.first, funcs.at(s.second.lock()) });
+        }
+    }
+
+    void cjs_consts::restore_funcs(const std::vector<std::shared_ptr<js_sym_code_t>>& funcs)
+    {
+        for (auto& s : function_ids) {
+            functions.insert({ s.first, funcs[s.second] });
+        }
+    }
+
+    void cjs_consts::to_json(nlohmann::json& j) const
+    {
+        j = nlohmann::json{
+            {"numbers", numbers},
+            {"strings", strings},
+            {"regexes", regexes},
+            {"globals", globals},
+            {"derefs", derefs},
+            {"names", names},
+            {"function_ids", function_ids},
+            {"index", index},
+        };
+    }
+
+    void cjs_consts::from_json(const nlohmann::json& j)
+    {
+        j.at("numbers").get_to(numbers);
+        j.at("strings").get_to(strings);
+        j.at("regexes").get_to(regexes);
+        j.at("globals").get_to(globals);
+        j.at("derefs").get_to(derefs);
+        j.at("names").get_to(names);
+        j.at("function_ids").get_to(function_ids);
+        j.at("index").get_to(index);
+    }
+
     bool cjsgen::gen_code(js_ast_node *node, const std::string *str, const std::string &name) {
         filename = name;
         text = str;
@@ -267,9 +307,15 @@ namespace clib {
         decltype(codes) _codes(1 + funcs.size());
         _codes[0] = codes.front();
         std::copy(funcs.begin(), funcs.end(), _codes.begin() + 1);
-        for (auto &c : _codes) {
+        std::unordered_map<js_sym_code_t::ref, int> func2id;
+        auto i = 0;
+        for (auto& c : _codes) {
+            func2id.insert({ c, i++ });
             c->consts.save();
             c->text = text->substr(c->start, c->end - c->start);
+        }
+        for (auto& c : _codes) {
+            c->consts.conv_funcs(func2id);
         }
 #if DUMP_CODE && DEBUG_MODE
         dump();
@@ -280,7 +326,7 @@ namespace clib {
     cjs_code_result::ref cjsgen::get_code() const {
         if (codes.empty())
             return nullptr;
-        auto result = std::make_unique<cjs_code_result>();
+        auto result = std::make_shared<cjs_code_result>();
         result->code = codes.front();
         result->funcs = funcs;
         return std::move(result);

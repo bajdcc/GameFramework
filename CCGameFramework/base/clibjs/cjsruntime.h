@@ -10,6 +10,7 @@
 #include <chrono>
 #include <list>
 #include <map>
+#include "cjsparser.h"
 #include "cjsgen.h"
 
 #define ROOT_DIR "script/js/"
@@ -305,7 +306,7 @@ namespace clib {
         std::vector<jsv_function::ref> reuse_functions;
     };
 
-    class cjsruntime : public js_value_new {
+    class cjsruntime : public js_value_new, public csemantic {
     public:
         cjsruntime() = default;
         ~cjsruntime() = default;
@@ -313,7 +314,7 @@ namespace clib {
         cjsruntime(const cjsruntime &) = delete;
         cjsruntime &operator=(const cjsruntime &) = delete;
 
-        void init(void *);
+        void init();
         int run_internal(int cycle, int& cycles);
 
         int eval(cjs_code_result::ref code, const std::string &_path);
@@ -345,6 +346,13 @@ namespace clib {
         static std::vector<js_value::weak_ref> to_array(const js_value::ref &);
         int get_state() const;
         void set_state(int);
+
+        void clear_cache();
+
+        backtrace_direction check(js_pda_edge_t, js_ast_node*) override;
+        void error_handler(int, const std::vector<js_pda_trans>&, int&) override;
+        cjs_code_result::ref load_cache(const std::string& filename);
+        void save_cache(const std::string& filename, cjs_code_result::ref) const;
 
     private:
         int run(const cjs_code &code);
@@ -391,7 +399,6 @@ namespace clib {
         sym_try_t::ref get_try() const;
 
     private:
-        void *pjs{nullptr};
         bool readonly{true};
         std::vector<cjs_function::ref> stack;
         cjs_function::ref current_stack;
@@ -461,6 +468,8 @@ namespace clib {
             int state{ 0 };
             // stack
             cjs_function::ref default_stack;
+            // cache
+            std::unordered_map<std::string, cjs_code_result::ref> caches;
         } permanents;
         cjs_runtime_reuse reuse;
         struct timeout_t {

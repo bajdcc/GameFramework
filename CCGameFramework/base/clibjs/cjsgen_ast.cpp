@@ -11,6 +11,48 @@
 #include "cjsgen.h"
 #include "cjsast.h"
 
+namespace nlohmann {
+    template<>
+    struct adl_serializer<clib::cjs_consts> {
+        static void to_json(json& j, const clib::cjs_consts& v) {
+            v.to_json(j);
+        }
+
+        static void from_json(const json& j, clib::cjs_consts& v) {
+            v.from_json(j);
+        }
+    };
+
+    template<>
+    struct adl_serializer<clib::cjs_code> {
+        static void to_json(json& j, const clib::cjs_code& v) {
+            j = nlohmann::json{
+                {"line", v.line},
+                {"column", v.column},
+                {"start", v.start},
+                {"end", v.end},
+                {"code", v.code},
+                {"opnum", v.opnum},
+                {"op1", v.op1},
+                {"op2", v.op2},
+                {"desc", v.desc},
+            };
+        }
+
+        static void from_json(const json& j, clib::cjs_code& v) {
+            j.at("line").get_to(v.line);
+            j.at("column").get_to(v.column);
+            j.at("start").get_to(v.start);
+            j.at("end").get_to(v.end);
+            j.at("code").get_to(v.code);
+            j.at("opnum").get_to(v.opnum);
+            j.at("op1").get_to(v.op1);
+            j.at("op2").get_to(v.op2);
+            j.at("desc").get_to(v.desc);
+        }
+    };
+}
+
 namespace clib {
 
     js_symbol_t js_sym_t::get_type() const {
@@ -1614,5 +1656,35 @@ namespace clib {
         if (body)
             body->set_parent(shared_from_this());
         return js_sym_t::set_parent(node);
+    }
+
+    void js_sym_code_t::to_json(nlohmann::json& j) const
+    {
+        j = nlohmann::json{
+            {"arrow", arrow},
+            {"rest", rest},
+            {"fullName", fullName},
+            {"simpleName", simpleName},
+            {"debugName", debugName},
+            {"text", text},
+            {"args", args_str},
+            {"consts", consts},
+            {"codes", codes},
+            {"closure", closure_str},
+        };
+    }
+
+    void js_sym_code_t::from_json(const nlohmann::json& j)
+    {
+        j.at("arrow").get_to(arrow);
+        j.at("rest").get_to(rest);
+        j.at("fullName").get_to(fullName);
+        j.at("simpleName").get_to(simpleName);
+        j.at("debugName").get_to(debugName);
+        j.at("text").get_to(text);
+        j.at("args").get_to(args_str);
+        j.at("consts").get_to(consts);
+        j.at("codes").get_to(codes);
+        j.at("closure").get_to(closure_str);
     }
 }

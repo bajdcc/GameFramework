@@ -25,8 +25,7 @@
 
 namespace clib {
 
-    void cjsruntime::init(void *p) {
-        pjs = p;
+    void cjsruntime::init() {
         // proto
         permanents._proto_root = _new_object(js_value::at_const | js_value::at_readonly);
         permanents._proto_number = _new_object(js_value::at_const | js_value::at_readonly);

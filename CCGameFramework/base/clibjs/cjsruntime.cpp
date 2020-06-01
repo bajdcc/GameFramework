@@ -18,6 +18,12 @@
 #include "cjsgui.h"
 #include "cjs.h"
 
+#define BINARY_VERBOSE 1
+#if BINARY_VERBOSE
+#define BINARY_EXT ".json.bin"
+#else
+#define BINARY_EXT ".bson.bin"
+#endif
 #define DUMP_STEP 0
 #define DUMP_ENV 1
 #define DUMP_CLOSURE 0
@@ -34,6 +40,61 @@
 #include <unistd.h>
 #define cjs_sleep(n) sleep(n / 1000)
 #endif
+
+#include <base\nlohmann_json\json.h>
+
+namespace nlohmann {
+    template<>
+    struct adl_serializer<std::vector<char*>> {
+        static void to_json(json& j, const clib::cjs_consts& v) {
+            v.to_json(j);
+        }
+
+        static void from_json(const json& j, clib::cjs_consts& v) {
+            v.from_json(j);
+        }
+    };
+
+    template<>
+    struct adl_serializer<clib::js_sym_code_t> {
+        static void to_json(json& j, const clib::js_sym_code_t& v) {
+            v.to_json(j);
+        }
+
+        static void from_json(const json& j, clib::js_sym_code_t& v) {
+            v.from_json(j);
+        }
+    };
+
+    template<>
+    struct adl_serializer<clib::js_sym_code_t::ref> {
+        static void to_json(json& j, const clib::js_sym_code_t::ref& v) {
+            v->to_json(j);
+        }
+    };
+
+    template<>
+    struct adl_serializer<clib::cjs_code_result::ref> {
+        static void to_json(json& j, const clib::cjs_code_result::ref& v) {
+            j = nlohmann::json{
+                {"code", v->code},
+                {"funcs", v->funcs},
+            };
+        }
+
+        static void from_json(const json& j, clib::cjs_code_result::ref& v) {
+            v = std::make_shared<clib::cjs_code_result>();
+            v->code = std::make_shared<clib::js_sym_code_t>();
+            j.at("code").get_to(*v->code);
+            v->funcs.resize(j.at("funcs").size());
+            const auto& f = j.at("funcs");
+            for (size_t i = 0; i < f.size(); i++) {
+                v->funcs[i] = std::make_shared<clib::js_sym_code_t>();
+                f[i].get_to(*v->funcs[i]);
+            }
+        }
+    };
+}
 
 namespace clib {
 
@@ -1501,8 +1562,62 @@ namespace clib {
         return err;
     }
 
-    int cjsruntime::exec(const std::string &n, const std::string &s) {
-        return ((cjs *) pjs)->exec(n, s);
+    int cjsruntime::exec(const std::string& filename, const std::string& input) {
+        if (input.empty())
+            return 0;
+        CString stat;
+        auto p = std::make_unique<cjsparser>();
+        std::string error_string;
+        std::string code_name;
+        cjs_code_result::ref code;
+        auto f = permanents.caches.find(filename);
+        if (f != permanents.caches.end()) {
+            return eval(f->second, filename);
+        }
+        if (!filename.empty() && (filename[0] == '<' || filename[0] == '('))
+            code_name = filename;
+        else {
+            code = load_cache(filename);
+            if (code)
+                return eval(std::move(code), filename);
+            code_name = "(" + filename + ":1:1) <entry>";
+        }
+        auto last = std::chrono::system_clock::now();
+        try {
+            if (p->parse(input, error_string, this) == nullptr) {
+                std::stringstream ss;
+                ss << "throw new SyntaxError('" << jsv_string::convert(error_string) << "')";
+                return exec(code_name, ss.str());
+            }
+#if LOG_AST
+            cjsast::print(p->root(), 0, input, std::cout);
+#endif
+            auto g = std::make_unique<cjsgen>();
+            g->gen_code(p->root(), &input, filename);
+            p = nullptr;
+#if LOG_FILE
+            std::ofstream ofs(LOG_FILENAME);
+            if (ofs)
+                cjsast::print(p.root(), 0, input, ofs);
+#endif
+            code = g->get_code();
+            save_cache(filename, code);
+            permanents.caches.insert({ filename, code });
+            assert(code);
+            code->code->debugName = code_name;
+            g = nullptr;
+        }
+        catch (const clib::cjs_exception & e) {
+            stat.Format(L"编译：%S，失败", filename.c_str());
+            cjsgui::singleton().add_stat(stat);
+            std::stringstream ss;
+            ss << "throw new SyntaxError('" << jsv_string::convert(e.message()) << "')";
+            return exec(code_name, ss.str());
+        }
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - last);
+        stat.Format(L"编译：%S，耗时：%lldms", filename.c_str(), duration.count());
+        cjsgui::singleton().add_stat(stat);
+        return eval(std::move(code), filename);
     }
 
     std::string cjsruntime::get_stacktrace() const {
@@ -1637,6 +1752,79 @@ namespace clib {
             set_readonly(true);
         }
         permanents.state = n;
+    }
+
+    void cjsruntime::clear_cache()
+    {
+        permanents.caches.clear();
+    }
+
+    backtrace_direction cjsruntime::check(js_pda_edge_t edge, js_ast_node* node) {
+        return b_next;
+    }
+
+    void cjsruntime::error_handler(int, const std::vector<js_pda_trans>&, int&) {
+    }
+
+    cjs_code_result::ref cjsruntime::load_cache(const std::string& filename)
+    {
+        CString stat;
+        auto start = std::chrono::system_clock::now();
+        using nlohmann::json;
+        auto json_name = ROOT_DIR + filename + BINARY_EXT;
+#if BINARY_VERBOSE
+        std::ifstream ifs(json_name);
+        if (!ifs)
+            return nullptr;
+        json j;
+        ifs >> j;
+        cjs_code_result::ref result = j;
+#else
+        std::ifstream ifs(json_name, std::ios::binary);
+        if (!ifs)
+            return nullptr;
+        auto p = ifs.rdbuf();
+        auto size = p->pubseekoff(0, std::ios::end, std::ios::in);
+        p->pubseekpos(0, std::ios::in);
+        std::vector<uint8_t> data;
+        data.resize((size_t)size);
+        p->sgetn((char*)data.data(), size);
+        auto bson = json::from_bson(data);
+        cjs_code_result::ref result = bson;
+#endif
+        std::vector<js_sym_code_t::ref> funcs;
+        funcs.push_back(result->code);
+        std::copy(result->funcs.begin(), result->funcs.end(), std::back_inserter(funcs));
+        for (auto& f : funcs) {
+            f->consts.restore_funcs(funcs);
+        }
+        for (auto& f : funcs) {
+            f->consts.save();
+        }
+        auto end = std::chrono::system_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+        stat.Format(L"加载缓存：%S，耗时：%lldms", filename.c_str(), duration);
+        cjsgui::singleton().add_stat(stat);
+        return result;
+    }
+
+    void cjsruntime::save_cache(const std::string& filename, cjs_code_result::ref code) const
+    {
+        if (filename.empty())
+            return;
+        if ((filename[0] == '<' || filename[0] == '('))
+            return;
+        using nlohmann::json;
+        json j = code;
+        auto json_name = ROOT_DIR + filename + BINARY_EXT;
+#if BINARY_VERBOSE
+        std::ofstream ofs(json_name);
+        ofs << j.dump(2);
+#else
+        std::ofstream ofs(json_name, std::ios::binary);
+        auto bson = json::to_bson(j);
+        ofs.write((const char*)bson.data(), bson.size());
+#endif
     }
 
     void cjsruntime::reuse_value(const js_value::ref &v) {

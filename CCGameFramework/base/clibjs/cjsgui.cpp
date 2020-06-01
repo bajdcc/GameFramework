@@ -81,9 +81,7 @@ namespace clib {
 
     void cjsgui::clear_cache()
     {
-        cache.clear();
-        cache_code.clear();
-        cache_dep.clear();
+        vm->clear_cache();
     }
 
     void cjsgui::draw(CComPtr<ID2D1RenderTarget>& rt, const CRect& bounds, const JS2DEngine::BrushBag& brushes, bool paused, decimal fps) {
@@ -865,15 +863,6 @@ namespace clib {
     CSize cjsgui::get_size() const {
         auto& scr = *screens[screen_ptr].get();
         return { scr.cols * GUI_FONT_W, scr.rows * GUI_FONT_H };
-    }
-
-    std::unordered_set<std::string> cjsgui::get_dep(std::string& path) const
-    {
-        auto f = cache_code.find(path);
-        if (f != cache_code.end()) {
-            return cache_dep.at(path);
-        }
-        return std::unordered_set<std::string>();
     }
 
     CString cjsgui::get_disp(types::disp_t t) const
