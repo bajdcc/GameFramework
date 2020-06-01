@@ -18,7 +18,7 @@
 #include "cjsgui.h"
 #include "cjs.h"
 
-#define BINARY_VERBOSE 1
+#define BINARY_VERBOSE 0
 #if BINARY_VERBOSE
 #define BINARY_EXT ".json.bin"
 #else
@@ -1766,12 +1766,73 @@ namespace clib {
     void cjsruntime::error_handler(int, const std::vector<js_pda_trans>&, int&) {
     }
 
+    static bool ConvertFileTimeToLocalTime(const FILETIME* lpFileTime, SYSTEMTIME* lpSystemTime)
+    {
+        if (!lpFileTime || !lpSystemTime) {
+            return false;
+        }
+        FILETIME ftLocal;
+        FileTimeToLocalFileTime(lpFileTime, &ftLocal);
+        FileTimeToSystemTime(&ftLocal, lpSystemTime);
+        return true;
+    }
+
+    static bool ConvertLocalTimeToFileTime(const SYSTEMTIME* lpSystemTime, FILETIME* lpFileTime)
+    {
+        if (!lpSystemTime || !lpFileTime) {
+            return false;
+        }
+
+        FILETIME ftLocal;
+        SystemTimeToFileTime(lpSystemTime, &ftLocal);
+        LocalFileTimeToFileTime(&ftLocal, lpFileTime);
+        return true;
+    }
+
+    static bool get_fs_time(const std::string& name, std::vector<std::string>& time)
+    {
+        std::smatch res;
+
+        HANDLE hFile;
+        // Create, Access, Write
+        FILETIME ft[3];
+        SYSTEMTIME st[3];
+
+        auto pp = CString(CStringA(name.c_str()));
+
+        hFile = CreateFile(pp, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
+        if (INVALID_HANDLE_VALUE == hFile) {
+            return false;
+        }
+        GetFileTime(hFile, &ft[0], &ft[1], &ft[2]);
+        for (auto i = 0; i < 3; i++) {
+            ConvertFileTimeToLocalTime(&ft[i], &st[i]);
+            CStringA buf;
+            buf.Format("%04d-%02d-%02d %02d:%02d:%02d.%03d",
+                st[i].wYear,
+                st[i].wMonth,
+                st[i].wDay,
+                st[i].wHour,
+                st[i].wMinute,
+                st[i].wSecond,
+                st[i].wMilliseconds);
+            time.push_back(buf.GetBuffer(0));
+        }
+
+        CloseHandle(hFile);
+        return true;
+    }
+
     cjs_code_result::ref cjsruntime::load_cache(const std::string& filename)
     {
         CString stat;
         auto start = std::chrono::system_clock::now();
         using nlohmann::json;
         auto json_name = ROOT_DIR + filename + BINARY_EXT;
+        std::vector<std::string> t1, t2;
+        if (get_fs_time(filename, t1) && get_fs_time(json_name, t2) && t1[2] > t2[2]) {
+            return nullptr;
+        }
 #if BINARY_VERBOSE
         std::ifstream ifs(json_name);
         if (!ifs)
