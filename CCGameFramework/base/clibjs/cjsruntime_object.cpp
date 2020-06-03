@@ -899,6 +899,46 @@ namespace clib {
             flag & _g ? std::regex_constants::match_any : std::regex_constants::match_default);
     }
 
+    bool jsv_regexp::match(const std::string& origin, std::vector<std::tuple<std::string, bool>>& matches)
+    {
+        if (flag & _g) {
+            std::sregex_iterator iter(origin.begin(), origin.end(), re);
+            std::sregex_iterator end;
+            std::sregex_iterator prev;
+            while (iter != end) {
+                auto s = iter->prefix().str();
+                if (!s.empty()) {
+                    matches.push_back({ s, false });
+                }
+                matches.push_back({ iter->str(), true });
+                prev = iter;
+                ++iter;
+            }
+            if (prev != end) {
+                auto s = prev->suffix().str();
+                if (!s.empty())
+                    matches.push_back({ s, false });
+            }
+            return true;
+        }
+        else {
+            std::smatch sm;
+            if (std::regex_search(origin, sm, re)) {
+                auto s = sm.prefix().str();
+                if (!s.empty()) {
+                    matches.push_back({ s, false });
+                }
+                matches.push_back({ sm.str(), true });
+                s = sm.suffix().str();
+                if (!s.empty()) {
+                    matches.push_back({ s, false });
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+
     std::string jsv_regexp::replace(const std::string& origin, const std::string& pat, const std::string& replacer)
     {
         size_t start_pos = origin.find(pat);

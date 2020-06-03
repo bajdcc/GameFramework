@@ -1,7 +1,11 @@
 console.log(new RegExp("ab").test("abc"));
 console.log(/\d+/.test("abc123"));
-console.log("123123123".replace(/1(\d)/g, "0$1"));
-console.log("123123123".replace('1', "0"));
+console.log("-123123123".replace(/1(\d)/, "0$1"));
+console.log("-123123123".replace(/1(\d)/g, "0$1"));
+console.log("-123123123".replace('1', "0"));
+console.log("-123123123".replace(/1(\d)/, x => 0 + x));
+console.log("-123123123".replace(new RegExp('1\\d', 'g'), x => 0 + x));
+console.log("-123123123".replace('1', x => 0 + x));
 console.log(JSON.stringify({})); // '{}'
 console.log(JSON.stringify(true)); // 'true'
 console.log(JSON.stringify("foo")); // '"foo"'

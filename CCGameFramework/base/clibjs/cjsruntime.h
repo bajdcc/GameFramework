@@ -286,6 +286,7 @@ namespace clib {
         void init(const std::string& str, const std::string& flag);
         bool test(const std::string& str);
         std::string replace(const std::string& origin, const std::string& replacer);
+        bool match(const std::string& origin, std::vector<std::tuple<std::string, bool>>& matches);
         static std::string replace(const std::string& origin, const std::string& pat, const std::string& replacer);
         std::string str_origin;
         std::string str;

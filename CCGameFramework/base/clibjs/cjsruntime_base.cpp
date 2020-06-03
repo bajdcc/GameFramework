@@ -159,7 +159,29 @@ namespace clib {
                     return 0;
                 }
                 else {
-                    func->stack.push_back(js.new_undefined());
+                    auto rep = JS_FUN(_replacer);
+                    std::vector<std::tuple<std::string, bool>> matches;
+                    if (!JS_RE(re)->match(origin, matches)) {
+                        func->stack.push_back(js.new_string(origin));
+                        return 0;
+                    }
+                    for (auto& s : matches) {
+                        if (std::get<1>(s)) {
+                            auto& str = std::get<0>(s);
+                            auto r = 0;
+                            std::vector<js_value::weak_ref> args;
+                            args.push_back(js.new_string(str));
+                            auto v = js.fast_api(rep, _this, args, 0, &r);
+                            if (r != 0)
+                                return r;
+                            str = v->to_string(&js, 0);
+                        }
+                    }
+                    std::stringstream ss;
+                    for (auto& s : matches) {
+                        ss << std::get<0>(s);
+                    }
+                    func->stack.push_back(js.new_string(ss.str()));
                     return 0;
                 }
             }
@@ -170,7 +192,16 @@ namespace clib {
                     return 0;
                 }
                 else {
-                    func->stack.push_back(js.new_undefined());
+                    auto rep = JS_FUN(_replacer);
+                    auto pat = re->to_string(&js, 0);
+                    auto r = 0;
+                    std::vector<js_value::weak_ref> args;
+                    args.push_back(js.new_string(pat));
+                    auto v = js.fast_api(rep, _this, args, 0, &r);
+                    if (r != 0)
+                        return r;
+                    auto v2 = v->to_string(&js, 0);
+                    func->stack.push_back(js.new_string(jsv_regexp::replace(origin, pat, v2)));
                     return 0;
                 }
             }
