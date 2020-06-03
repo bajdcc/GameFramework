@@ -733,27 +733,30 @@ namespace clib {
         info = std::move(code);
     }
 
-    cjs_function_info::cjs_function_info(const js_sym_code_t::ref &code, js_value_new &n) {
+    cjs_function_info::cjs_function_info(const js_sym_code_t::ref& code, js_value_new& n) {
         arrow = code->arrow;
-        debugName = std::move(code->debugName);
-        simpleName = std::move(code->simpleName);
-        fullName = std::move(code->fullName);
-        args = std::move(code->args_str);
+        debugName = code->debugName;
+        simpleName = code->simpleName;
+        fullName = code->fullName;
+        args = code->args_str;
         std::copy(code->closure_str.begin(), code->closure_str.end(), std::back_inserter(closure));
-        codes = std::move(code->codes);
-        text = std::move(code->text);
+        codes = code->codes;
+        text = code->text;
         rest = code->rest;
-        args_num = (int) args.size() - (rest ? 1 : 0);
-        const auto &c = code->consts;
+        args_num = (int)args.size() - (rest ? 1 : 0);
+        const auto& c = code->consts;
         std::copy(c.get_names_data().begin(),
-                  c.get_names_data().end(),
-                  std::back_inserter(names));
+            c.get_names_data().end(),
+            std::back_inserter(names));
         std::copy(c.get_globals_data().begin(),
-                  c.get_globals_data().end(),
-                  std::back_inserter(globals));
+            c.get_globals_data().end(),
+            std::back_inserter(globals));
         std::copy(c.get_derefs_data().begin(),
-                  c.get_derefs_data().end(),
-                  std::back_inserter(derefs));
+            c.get_derefs_data().end(),
+            std::back_inserter(derefs));
+        std::copy(c.get_debugs_data().begin(),
+            c.get_debugs_data().end(),
+            std::back_inserter(debugs));
         consts.resize(c.get_consts_data().size());
         for (size_t i = 0; i < c.get_consts_data().size(); i++) {
             consts[i] = load_const(c, i, n);

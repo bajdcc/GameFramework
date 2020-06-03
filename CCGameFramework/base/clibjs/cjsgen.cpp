@@ -114,6 +114,15 @@ namespace clib {
             }
             return f->second;
         }
+        if (type == gs_debug) {
+            auto f = debugs.find(str);
+            if (f == debugs.end()) {
+                auto idx = (int)debugs.size();
+                debugs.insert({ str, idx });
+                return idx;
+            }
+            return f->second;
+        }
         assert(!"invalid type");
         return -1;
     }
@@ -178,6 +187,10 @@ namespace clib {
             fprintf(stdout, "C [#%03d] [DEREF ] %s\n", i++, x);
         }
         i = 0;
+        for (const auto &x : debugs_data) {
+            fprintf(stdout, "C [#%03d] [DEBUG ] %s\n", i++, x);
+        }
+        i = 0;
         for (const auto &x : consts_data) {
             switch (consts[i]) {
                 case r_regex:
@@ -213,6 +226,8 @@ namespace clib {
         std::fill(globals_data.begin(), globals_data.end(), nullptr);
         derefs_data.resize(derefs.size());
         std::fill(derefs_data.begin(), derefs_data.end(), nullptr);
+        debugs_data.resize(debugs.size());
+        std::fill(debugs_data.begin(), debugs_data.end(), nullptr);
         for (const auto &x : strings) {
             consts[x.second] = r_string;
             consts_data[x.second] = (char *) &x.first;
@@ -238,6 +253,9 @@ namespace clib {
         for (const auto &x : derefs) {
             derefs_data[x.second] = x.first.c_str();
         }
+        for (const auto &x : debugs) {
+            debugs_data[x.second] = x.first.c_str();
+        }
     }
 
     const std::vector<char *> &cjs_consts::get_consts_data() const {
@@ -254,6 +272,10 @@ namespace clib {
 
     const std::vector<const char *> &cjs_consts::get_derefs_data() const {
         return derefs_data;
+    }
+
+    const std::vector<const char *> &cjs_consts::get_debugs_data() const {
+        return debugs_data;
     }
 
     void cjs_consts::conv_funcs(const std::unordered_map<js_sym_code_t::ref, int>& funcs)
@@ -278,6 +300,7 @@ namespace clib {
             {"regexes", regexes},
             {"globals", globals},
             {"derefs", derefs},
+            {"debugs", debugs},
             {"names", names},
             {"function_ids", function_ids},
             {"index", index},
@@ -291,6 +314,7 @@ namespace clib {
         j.at("regexes").get_to(regexes);
         j.at("globals").get_to(globals);
         j.at("derefs").get_to(derefs);
+        j.at("debugs").get_to(debugs);
         j.at("names").get_to(names);
         j.at("function_ids").get_to(function_ids);
         j.at("index").get_to(index);

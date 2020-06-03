@@ -649,9 +649,6 @@ namespace clib {
                 if (y != rows - 1) {
                     y++;
                 }
-                else {
-                    __asm int 3;
-                }
             }
             else {
                 x++;

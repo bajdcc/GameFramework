@@ -269,6 +269,7 @@ namespace clib {
         std::vector<std::string> names;
         std::vector<std::string> globals;
         std::vector<std::string> derefs;
+        std::vector<std::string> debugs;
         std::vector<js_value::ref> consts;
         std::vector<cjs_code> codes;
         std::vector<std::string> closure;
@@ -516,8 +517,6 @@ namespace clib {
             int state{ 0 };
             // stack
             cjs_function::ref default_stack;
-            // cache
-            std::unordered_map<std::string, cjs_code_result::ref> caches;
         } permanents;
         cjs_runtime_reuse reuse;
         struct timeout_t {
@@ -534,6 +533,7 @@ namespace clib {
             std::map<std::chrono::milliseconds::rep, std::list<std::shared_ptr<timeout_t>>> queues;
             std::unordered_map<uint32_t, std::shared_ptr<timeout_t>> ids;
         } timeout;
+        static std::unordered_map<std::string, cjs_code_result::ref> caches;
     };
 }
 

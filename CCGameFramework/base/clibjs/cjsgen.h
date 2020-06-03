@@ -489,21 +489,23 @@ namespace clib {
             gs_global,
             gs_deref,
             gs_regex,
+            gs_debug,
         };
         int get_number(double n);
-        int get_string(const std::string &str, get_string_t type);
+        int get_string(const std::string& str, get_string_t type);
         int get_function(std::shared_ptr<js_sym_code_t> code);
         std::string get_desc(int n) const;
         js_runtime_t get_type(int n) const;
-        char *get_data(int n) const;
-        const char *get_name(int n) const;
-        const char *get_global(int n) const;
-        void dump(const std::string *text) const;
+        char* get_data(int n) const;
+        const char* get_name(int n) const;
+        const char* get_global(int n) const;
+        void dump(const std::string* text) const;
         void save();
-        const std::vector<char *> &get_consts_data() const;
-        const std::vector<const char *> &get_names_data() const;
-        const std::vector<const char *> &get_globals_data() const;
-        const std::vector<const char *> &get_derefs_data() const;
+        const std::vector<char*>& get_consts_data() const;
+        const std::vector<const char*>& get_names_data() const;
+        const std::vector<const char*>& get_globals_data() const;
+        const std::vector<const char*>& get_derefs_data() const;
+        const std::vector<const char*>& get_debugs_data() const;
         void conv_funcs(const std::unordered_map<std::shared_ptr<js_sym_code_t>, int>& funcs);
         void restore_funcs(const std::vector<std::shared_ptr<js_sym_code_t>>& funcs);
         void to_json(nlohmann::json&) const;
@@ -515,14 +517,16 @@ namespace clib {
         std::unordered_map<std::string, int> globals;
         std::unordered_map<std::string, int> derefs;
         std::unordered_map<std::string, int> names;
+        std::unordered_map<std::string, int> debugs;
         std::unordered_map<int, std::weak_ptr<js_sym_code_t>> functions;
         std::unordered_map<int, int> function_ids;
         std::vector<js_runtime_t> consts;
-        std::vector<char *> consts_data;
-        std::vector<const char *> names_data;
-        std::vector<const char *> globals_data;
-        std::vector<const char *> derefs_data;
-        int index{0};
+        std::vector<char*> consts_data;
+        std::vector<const char*> names_data;
+        std::vector<const char*> globals_data;
+        std::vector<const char*> derefs_data;
+        std::vector<const char*> debugs_data;
+        int index{ 0 };
     };
 
     void copy_info(js_sym_t::ref dst, js_sym_t::ref src);

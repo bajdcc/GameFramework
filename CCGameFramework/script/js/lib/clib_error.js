@@ -15,4 +15,11 @@ SyntaxError = function (message) {
 };
 SyntaxError.prototype = new Error();
 sys.builtin(SyntaxError);
+TypeError = function (message) {
+    this.name = "TypeError";
+    this.message = message || "";
+    this.stack = console.trace();
+};
+TypeError.prototype = new Error();
+sys.builtin(TypeError);
 return;
