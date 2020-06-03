@@ -51,6 +51,7 @@ namespace clib {
         // length
         auto _int_0 = _new_number(0, js_value::at_const | js_value::at_refs);
         auto _int_1 = _new_number(1, js_value::at_const | js_value::at_refs);
+        auto _int_2 = _new_number(1, js_value::at_const | js_value::at_refs);
         auto _empty_string = _new_string("", js_value::at_const | js_value::at_refs);
         // proto
         permanents._proto_root->add("__type__", _new_string("Root", js_value::at_const | js_value::at_refs));
@@ -140,6 +141,41 @@ namespace clib {
         permanents._proto_function->add(permanents._proto_function_apply->name, permanents._proto_function_apply);
         permanents._proto_number->add("__type__", _new_string("Number", js_value::at_const | js_value::at_refs));
         permanents._proto_string->add("__type__", _new_string("String", js_value::at_const | js_value::at_refs));
+        permanents._proto_string_replace = _new_function(nullptr, js_value::at_const | js_value::at_readonly);
+        permanents._proto_string_replace->add("length", _int_2);
+        permanents._proto_string_replace->name = "replace";
+        permanents._proto_string_replace->builtin = [](auto& func, auto& _this, auto& __args, auto& js, auto attr) {
+            auto f = _this.lock();
+            if (__args.size() < 2) {
+                func->stack.push_back(_this);
+                return 0;
+            }
+            auto origin = f->to_string(&js, 0);
+            auto re = __args[0].lock();
+            auto _replacer = __args[1].lock();
+            if (re->get_type() == r_regex) {
+                if (_replacer->get_type() != r_function) {
+                    func->stack.push_back(js.new_string(JS_RE(re)->replace(origin, _replacer->to_string(&js, 0))));
+                    return 0;
+                }
+                else {
+                    func->stack.push_back(js.new_undefined());
+                    return 0;
+                }
+            }
+            else {
+                if (_replacer->get_type() != r_function) {
+                    auto str_replacer = _replacer->to_string(&js, 0);
+                    func->stack.push_back(js.new_string(jsv_regexp::replace(origin, re->to_string(&js, 0), str_replacer)));
+                    return 0;
+                }
+                else {
+                    func->stack.push_back(js.new_undefined());
+                    return 0;
+                }
+            }
+        };
+        permanents._proto_string->add(permanents._proto_string_replace->name, permanents._proto_string_replace);
 #if DUMP_PRINT_FILE_ENABLE
         permanents._debug_print = _new_function(nullptr, js_value::at_const | js_value::at_readonly);
         permanents._debug_print->add("length", _int_1);

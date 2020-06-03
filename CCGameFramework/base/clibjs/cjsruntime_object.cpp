@@ -817,17 +817,14 @@ namespace clib {
         str_origin.clear();
         str.clear();
         error.clear();
-        std::swap(re_match, std::regex());
-        if (tested) {
-            tested = false;
-            std::swap(re_test, std::regex());
-        }
+        std::swap(re, std::regex());
         return std::dynamic_pointer_cast<jsv_regexp>(shared_from_this());
     }
 
     void jsv_regexp::init(const std::string& str, bool escape)
     {
         auto s = str.empty() ? DEFAULT_VALUE : str;
+        auto f = std::regex::ECMAScript | std::regex::optimize;
         if (escape) {
             assert(s.front() == '/');
             str_origin = s.substr(1);
@@ -838,15 +835,15 @@ namespace clib {
                     break;
                 }
                 switch (back) {
-                    case 'i': flag |= _i; break;
-                    case 'g': flag |= _g; break;
-                    case 'm': flag |= _m; break;
-                    default: {
-                        std::stringstream ss;
-                        ss << s << ": invalid regex flag: " << back;
-                        error = ss.str();
-                        return;
-                    }
+                case 'i': flag |= _i; f |= std::regex::icase; break;
+                case 'g': flag |= _g; break;
+                case 'm': flag |= _m; break;
+                default: {
+                    std::stringstream ss;
+                    ss << s << ": invalid regex flag: " << back;
+                    error = ss.str();
+                    return;
+                }
                 }
                 str_origin.pop_back();
             }
@@ -857,7 +854,7 @@ namespace clib {
             this->str = "/" + s + "/";
         }
         try {
-            re_match = std::regex(str_origin);
+            re = std::regex(str_origin, f);
         }
         catch (const std::exception & e) {
             error = e.what();
@@ -867,9 +864,10 @@ namespace clib {
     void jsv_regexp::init(const std::string& str, const std::string& flag)
     {
         auto s = str.empty() ? DEFAULT_VALUE : str;
+        auto f = std::regex::ECMAScript | std::regex::optimize;
         for (const auto& s : flag) {
             switch (s) {
-                case 'i': this->flag |= _i; break;
+                case 'i': this->flag |= _i; f |= std::regex::icase; break;
                 case 'g': this->flag |= _g; break;
                 case 'm': this->flag |= _m; break;
                 default: {
@@ -883,7 +881,7 @@ namespace clib {
         this->str_origin = s;
         this->str = "/" + s + "/" + flag;
         try {
-            re_match = std::regex(str_origin);
+            re = std::regex(str_origin, f);
         }
         catch (const std::exception & e) {
             error = e.what();
@@ -892,18 +890,23 @@ namespace clib {
 
     bool jsv_regexp::test(const std::string& str)
     {
-        if (!tested) {
-            tested = true;
-            try {
-                re_test = std::regex(str_origin, std::regex::ECMAScript | std::regex::optimize);
-            }
-            catch (const std::exception & e) {
-                assert(!"invalid regex for test");
-                error = e.what();
-                return false;
-            }
-        }
-        return std::regex_search(str, re_test);
+        return std::regex_search(str, re);
+    }
+
+    std::string jsv_regexp::replace(const std::string& origin, const std::string& replacer)
+    {
+        return std::regex_replace(origin, re, replacer,
+            flag & _g ? std::regex_constants::match_any : std::regex_constants::match_default);
+    }
+
+    std::string jsv_regexp::replace(const std::string& origin, const std::string& pat, const std::string& replacer)
+    {
+        size_t start_pos = origin.find(pat);
+        if (start_pos == std::string::npos)
+            return origin;
+        auto dst = origin;
+        dst.replace(start_pos, pat.length(), replacer);
+        return dst;
     }
 
     // ----------------------------------

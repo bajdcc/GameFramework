@@ -285,10 +285,11 @@ namespace clib {
         void init(const std::string& str, bool escape = false);
         void init(const std::string& str, const std::string& flag);
         bool test(const std::string& str);
+        std::string replace(const std::string& origin, const std::string& replacer);
+        static std::string replace(const std::string& origin, const std::string& pat, const std::string& replacer);
         std::string str_origin;
         std::string str;
-        std::regex re_match;
-        std::regex re_test;
+        std::regex re;
         std::string error;
     private:
         enum flag_t {
@@ -296,7 +297,6 @@ namespace clib {
             _g = 2,
             _m = 4,
         };
-        bool tested{ false };
         int flag{ 0 };
         static std::string DEFAULT_VALUE;
     };
@@ -482,6 +482,7 @@ namespace clib {
             jsv_function::ref _proto_object_toString;
             jsv_function::ref _proto_object_valueOf;
             jsv_object::ref _proto_string;
+            jsv_function::ref _proto_string_replace;
             jsv_object::ref _proto_root;
             // console
             jsv_object::ref console;
