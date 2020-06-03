@@ -151,10 +151,10 @@ namespace clib {
             std::vector<uint32_t> color_fg_stack;
             int ptr_x{ 0 };
             int ptr_y{ 0 };
-            int ptr_mx{ 0 };
-            int ptr_my{ 0 };
-            int ptr_rx{ 0 };
-            int ptr_ry{ 0 };
+            int ptr_mx{ -1 };
+            int ptr_my{ -1 };
+            int ptr_rx{ -1 };
+            int ptr_ry{ -1 };
             int rows{ GUI_ROWS };
             int cols{ GUI_COLS };
             int size{ GUI_SIZE };

@@ -22,8 +22,8 @@
 #define REPORT_ERROR_FILE "js_runtime.log"
 #define REPORT_STAT 1
 #define REPORT_STAT_FILE "stat.log"
-#define STAT_DELAY_N 60
-#define STAT_MAX_N 25
+#define STAT_DELAY_N 50
+#define STAT_MAX_N 10
 
 #define AST_FILE "js_ast.log"
 
@@ -476,10 +476,10 @@ namespace clib {
         else if (c == '\f') {
             ptr_x = 0;
             ptr_y = 0;
-            ptr_mx = 0;
-            ptr_my = 0;
-            ptr_rx = 0;
-            ptr_ry = 0;
+            ptr_mx = -1;
+            ptr_my = -1;
+            ptr_rx = -1;
+            ptr_ry = -1;
             std::fill(buffer.begin(), buffer.end(), 0);
             std::fill(colors_bg.begin(), colors_bg.end(), color_bg);
             std::fill(colors_fg.begin(), colors_fg.end(), color_fg);
@@ -541,9 +541,11 @@ namespace clib {
             }
         }
         memcpy(buffer.data(), buffer.data() + cols, (uint)cols * (rows - 1));
-        memset(buffer.data() + cols * (rows - 1), 0, (uint)cols);
+        std::fill(buffer.begin() + cols * (rows - 1), buffer.end(), 0);
         memcpy(colors_bg.data(), colors_bg.data() + cols, (uint)cols * (rows - 1) * sizeof(uint32_t));
+        std::fill(colors_bg.begin() + cols * (rows - 1), colors_bg.end(), color_bg);
         memcpy(colors_fg.data(), colors_fg.data() + cols, (uint)cols * (rows - 1) * sizeof(uint32_t));
+        std::fill(colors_fg.begin() + cols * (rows - 1), colors_fg.end(), color_fg);
     }
 
     void cjsgui::draw_char(const char& c) {
@@ -646,6 +648,9 @@ namespace clib {
                 x = 0;
                 if (y != rows - 1) {
                     y++;
+                }
+                else {
+                    __asm int 3;
                 }
             }
             else {

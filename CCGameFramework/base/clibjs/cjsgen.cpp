@@ -180,6 +180,9 @@ namespace clib {
         i = 0;
         for (const auto &x : consts_data) {
             switch (consts[i]) {
+                case r_regex:
+                    fprintf(stdout, "C [#%03d] [REGEX ] %s\n", i, ((std::string *) x)->c_str());
+                    break;
                 case r_string:
                     fprintf(stdout, "C [#%03d] [STRING] %s\n", i, ((std::string *) x)->c_str());
                     break;
@@ -1058,12 +1061,12 @@ namespace clib {
                 if (exp->get_type() != s_member_dot) {
                     auto t = std::make_shared<js_sym_member_dot_t>(exp);
                     copy_info(t, exp);
-                    t->dots.push_back(asts.front());
+                    t->dots.push_back(conv2str(asts.front()));
                     t->end = asts.front()->end;
                     (tmp.rbegin() + 2)->back() = t;
                 } else {
                     auto t = std::dynamic_pointer_cast<js_sym_member_dot_t>(exp);
-                    t->dots.push_back(asts.front());
+                    t->dots.push_back(conv2str(asts.front()));
                     t->end = asts.front()->end;
                 }
                 asts.clear();
@@ -1151,40 +1154,42 @@ namespace clib {
             }
                 break;
             case c_newExpression: {
+                js_sym_t::ref r;
                 auto exp = std::make_shared<js_sym_new_t>();
-                if (tmps.size() == 1 && tmps.front()->get_type() == s_call_function) {
-                    auto call = std::dynamic_pointer_cast<js_sym_call_function_t>(tmps.front());
-                    copy_info(exp, asts.front());
-                    exp->end = call->end;
-                    exp->obj = call->obj;
-                    exp->args = call->args;
-                    exp->rests = call->rests;
-                } else {
-                    copy_info(exp, asts.front());
-                    exp->end = tmps.back()->end;
-                    assert(tmps.front()->get_base_type() == s_expression);
-                    exp->obj = to_exp(tmps.front());
-                    if (asts.size() <= 1) {
-                        std::transform(tmps.begin() + 1, tmps.end(),
-                                       std::back_inserter(exp->args),
-                                       [](const auto &s) {
-                                           assert(s->get_base_type() == s_expression);
-                                           return std::dynamic_pointer_cast<js_sym_exp_t>(s);
-                                       });
-                    } else {
-                        size_t i = 1;
-                        for (auto s = tmps.begin() + 1; s != tmps.end(); s++) {
-                            if (i < asts.size() && (*s)->start > asts[i]->start) {
-                                exp->rests.push_back(exp->args.size());
-                                i++;
-                            }
-                            exp->args.push_back(to_exp(*s));
-                        }
+                r = exp;
+                copy_info(exp, asts.front());
+                exp->end = tmps.back()->end;
+                assert(tmps.front()->get_base_type() == s_expression);
+                exp->obj = to_exp(tmps.front());
+                size_t i = 1;
+                for (auto s = tmps.begin() + 1; s != tmps.end(); s++) {
+                    if (i < asts.size() && (*s)->start > asts[i]->start) {
+                        exp->rests.push_back(exp->args.size());
+                        i++;
+                    }
+                    exp->args.push_back(to_exp(*s));
+                }
+                if (exp->obj->get_type() == s_member_dot) {
+                    auto dot = std::dynamic_pointer_cast<js_sym_member_dot_t>(exp->obj);
+                    if (dot->exp->get_type() == s_call_function && dot->dots.size() == 1) {
+                        auto f = std::dynamic_pointer_cast<js_sym_call_function_t>(dot->exp);
+                        auto new_exp = std::make_shared<js_sym_new_t>();
+                        copy_info(new_exp, f);
+                        new_exp->obj = f->obj;
+                        new_exp->args = f->args;
+                        new_exp->rests = f->rests;
+                        auto new_call_method = std::make_shared<js_sym_call_method_t>();
+                        copy_info(new_call_method, exp);
+                        new_call_method->obj = new_exp;
+                        new_call_method->method = dot->dots.front();
+                        new_call_method->args = exp->args;
+                        new_call_method->rests = exp->rests;
+                        r = new_call_method;
                     }
                 }
                 asts.clear();
                 tmps.clear();
-                tmps.push_back(exp);
+                tmps.push_back(r);
             }
                 break;
             case c_deleteExpression:
@@ -2289,5 +2294,30 @@ namespace clib {
             c.desc = buf;
             idx++;
         }
+    }
+
+    js_ast_node* cjsgen::conv2str(js_ast_node* n)
+    {
+        if (n->flag == a_literal || n->flag == a_string) {
+            return n;
+        }
+        if (n->flag == a_keyword) {
+            switch (n->data._keyword) {
+                case K_TRUE:
+                case K_FALSE:
+                case K_NULL:
+                case K_UNDEFINED:
+                case K_THIS:
+                    return n;
+                default:
+                    break;
+            }
+            n->flag = a_literal;
+            reserveWords.push_back(text->substr(n->start, n->end - n->start));
+            n->data._identifier = reserveWords.back().c_str();
+            return n;
+        }
+        assert(!"invalid type");
+        return n;
     }
 }

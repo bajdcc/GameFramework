@@ -444,7 +444,7 @@ namespace clib {
         }
     }
 
-    js_value::ref jsv_object::get(const std::string &key) const {
+    js_value::ref jsv_object::gets(const std::string &key) const {
         auto f = obj.find(key);
         if (f != obj.end()) {
             return f->second.lock();
@@ -459,11 +459,10 @@ namespace clib {
         }
         auto p = proto;
         while (p) {
-            assert(p->get_type() == r_object);
-            const auto &o = JS_OBJ(p);
-            auto f2 = o.find(key);
-            if (f2 != o.end()) {
-                return f2->second.lock();
+            assert(!p->is_primitive());
+            auto o = JS_OBJ(p)->get(key);
+            if (o) {
+                return o;
             }
             p = p->__proto__.lock();
         }
@@ -480,7 +479,7 @@ namespace clib {
             t = conv_number;
         switch (t) {
             case conv_number: {
-                auto value = get("valueOf");
+                auto value = gets("valueOf");
                 if (value && value->get_type() == r_function) {
                     std::vector<js_value::weak_ref> args;
                     js_value::weak_ref _this = std::const_pointer_cast<js_value>(shared_from_this());
@@ -488,7 +487,7 @@ namespace clib {
                     if (ret->is_primitive())
                         return ret;
                 }
-                value = get("toString");
+                value = gets("toString");
                 if (value && value->get_type() == r_function) {
                     std::vector<js_value::weak_ref> args;
                     js_value::weak_ref _this = std::const_pointer_cast<js_value>(shared_from_this());
@@ -499,7 +498,7 @@ namespace clib {
             }
                 break;
             case conv_string: {
-                auto value = get("toString");
+                auto value = gets("toString");
                 if (value && value->get_type() == r_function) {
                     std::vector<js_value::weak_ref> args;
                     js_value::weak_ref _this = std::const_pointer_cast<js_value>(shared_from_this());
@@ -507,7 +506,7 @@ namespace clib {
                     if (ret->is_primitive())
                         return ret;
                 }
-                value = get("valueOf");
+                value = gets("valueOf");
                 if (value && value->get_type() == r_function) {
                     std::vector<js_value::weak_ref> args;
                     js_value::weak_ref _this = std::const_pointer_cast<js_value>(shared_from_this());
@@ -520,6 +519,7 @@ namespace clib {
             default:
                 break;
         }
+        assert(!"to_primitive error");
         return nullptr;
     }
 
@@ -535,7 +535,7 @@ namespace clib {
                 return f->second.lock()->to_string(n, 0);
             }
         }
-        auto value = get("toString");
+        auto value = gets("toString");
         if (value && value->get_type() == r_function) {
             auto f = JS_FUN(value);
             if (!f->builtin) {
@@ -573,8 +573,49 @@ namespace clib {
 
     jsv_object::ref jsv_object::clear() {
         obj.clear();
+        keys.clear();
         special.clear();
         return std::dynamic_pointer_cast<jsv_object>(shared_from_this());
+    }
+
+    const std::vector<std::string>& jsv_object::get_keys() const
+    {
+        return keys;
+    }
+
+    js_value::ref jsv_object::get(const std::string& key) const
+    {
+        auto f = obj.find(key);
+        if (f == obj.end())
+            return nullptr;
+        return f->second.lock();
+    }
+
+    void jsv_object::add(const std::string& key, const js_value::weak_ref& value)
+    {
+        if (obj.find(key) == obj.end()) {
+            obj.insert({key, value});
+            keys.push_back(key);
+        }
+        else {
+            obj[key] = value;
+        }
+    }
+
+    void jsv_object::remove(const std::string& key)
+    {
+        auto f = obj.find(key);
+        if (f == obj.end()) {
+            return;
+        }
+        obj.erase(f);
+        keys.erase(std::remove_if(keys.begin(), keys.end(), [key](const auto& x) {return x == key; }), keys.end());
+    }
+
+    void jsv_object::copy_from(const jsv_object::ref& o)
+    {
+        obj = o->obj;
+        keys = o->keys;
     }
 
     // ----------------------------------
@@ -649,26 +690,23 @@ namespace clib {
     }
 
     void cjs_function::store_name(const std::string &n, js_value::weak_ref obj) {
-        envs.lock()->obj[n] = std::move(obj);
+        envs.lock()->add(n, std::move(obj));
     }
 
     void cjs_function::store_fast(const std::string &n, js_value::weak_ref obj) {
-        envs.lock()->obj[n] = std::move(obj);
+        envs.lock()->add(n, std::move(obj));
     }
 
     void cjs_function::store_deref(const std::string &n, js_value::weak_ref obj) {
         auto c = closure.lock();
         if (!c)
             return;
-        const auto &cc = JS_OBJ(c);
-        auto f = cc.find(n);
-        if (f == cc.end())
+        auto var = JS_OBJ(c)->get(n);
+        if (!var)
             return;
-        auto var = f->second.lock();
-        if (var->get_type() != r_object)
+        if (var->is_primitive())
             return;
-        auto &cc2 = JS_OBJ(var);
-        cc2[n] = std::move(obj);
+        JS_OBJ(var)->add(n, std::move(obj));
     }
 
     void cjs_function::clear() {
@@ -730,6 +768,11 @@ namespace clib {
                 return n.new_number(*(double *) c.get_data(op));
             case r_string:
                 return n.new_string(*(std::string *) c.get_data(op));
+            case r_regex: {
+                auto re = n.new_regexp();
+                re->init(*(std::string*) c.get_data(op), true);
+                return re;
+            }
             case r_boolean:
                 break;
             case r_object:
@@ -752,6 +795,115 @@ namespace clib {
         auto info = std::make_shared<cjs_function_info>();
         info->debugName = info->simpleName = info->fullName = info->text = "<default>";
         return info;
+    }
+
+    // ----------------------------------
+
+    std::string jsv_regexp::DEFAULT_VALUE = "(?:)";
+
+    js_runtime_t jsv_regexp::get_type()
+    {
+        return r_regex;
+    }
+
+    std::string jsv_regexp::to_string(js_value_new* n, int hint) const
+    {
+        return str;
+    }
+
+    jsv_regexp::ref jsv_regexp::clear2()
+    {
+        jsv_object::clear();
+        str_origin.clear();
+        str.clear();
+        error.clear();
+        std::swap(re_match, std::regex());
+        if (tested) {
+            tested = false;
+            std::swap(re_test, std::regex());
+        }
+        return std::dynamic_pointer_cast<jsv_regexp>(shared_from_this());
+    }
+
+    void jsv_regexp::init(const std::string& str, bool escape)
+    {
+        auto s = str.empty() ? DEFAULT_VALUE : str;
+        if (escape) {
+            assert(s.front() == '/');
+            str_origin = s.substr(1);
+            while (!this->str_origin.empty()) {
+                auto back = this->str_origin.back();
+                if (back == '/') {
+                    str_origin.pop_back();
+                    break;
+                }
+                switch (back) {
+                    case 'i': flag |= _i; break;
+                    case 'g': flag |= _g; break;
+                    case 'm': flag |= _m; break;
+                    default: {
+                        std::stringstream ss;
+                        ss << s << ": invalid regex flag: " << back;
+                        error = ss.str();
+                        return;
+                    }
+                }
+                str_origin.pop_back();
+            }
+            this->str = s;
+        }
+        else {
+            str_origin = s;
+            this->str = "/" + s + "/";
+        }
+        try {
+            re_match = std::regex(str_origin);
+        }
+        catch (const std::exception & e) {
+            error = e.what();
+        }
+    }
+
+    void jsv_regexp::init(const std::string& str, const std::string& flag)
+    {
+        auto s = str.empty() ? DEFAULT_VALUE : str;
+        for (const auto& s : flag) {
+            switch (s) {
+                case 'i': this->flag |= _i; break;
+                case 'g': this->flag |= _g; break;
+                case 'm': this->flag |= _m; break;
+                default: {
+                    std::stringstream ss;
+                    ss << s << ": invalid regex flag: " << s;
+                    error = ss.str();
+                    return;
+                }
+            }
+        }
+        this->str_origin = s;
+        this->str = "/" + s + "/" + flag;
+        try {
+            re_match = std::regex(str_origin);
+        }
+        catch (const std::exception & e) {
+            error = e.what();
+        }
+    }
+
+    bool jsv_regexp::test(const std::string& str)
+    {
+        if (!tested) {
+            tested = true;
+            try {
+                re_test = std::regex(str_origin, std::regex::ECMAScript | std::regex::optimize);
+            }
+            catch (const std::exception & e) {
+                assert(!"invalid regex for test");
+                error = e.what();
+                return false;
+            }
+        }
+        return std::regex_search(str, re_test);
     }
 
     // ----------------------------------

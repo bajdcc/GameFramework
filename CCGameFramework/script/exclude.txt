@@ -1,0 +1,4 @@
+.bin
+exclude.txt
+vfs
+.map

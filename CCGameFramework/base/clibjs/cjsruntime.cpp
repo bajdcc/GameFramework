@@ -18,7 +18,7 @@
 #include "cjsgui.h"
 #include "cjs.h"
 
-#define BINARY_VERBOSE 0
+#define BINARY_VERBOSE 1
 #if BINARY_VERBOSE
 #define BINARY_EXT ".json.bin"
 #else
@@ -107,7 +107,7 @@ namespace clib {
         return s;
     }
 
-    double fix(const double &d) {
+    double fix(const double& d) {
         if (std::isinf(d) || std::isnan(d))
             return 0.0;
         if (d == 0) {
@@ -117,20 +117,23 @@ namespace clib {
         return ceil(d);
     }
 
-    int cjsruntime::eval(cjs_code_result::ref code, const std::string &_path) {
+    int cjsruntime::eval(cjs_code_result::ref code, const std::string& _path) {
         if (code->code->codes.empty()) {
             return exec(jsv_string::convert(_path), "throw new SyntaxError('Compile error')");
         }
         if (_path.empty() || _path[0] == '<') {
             paths.emplace_back(ROOT_DIR);
-        } else {
+        }
+        else {
             if (_path.back() == '/') {
                 paths.push_back(_path);
-            } else {
+            }
+            else {
                 auto f = _path.find_last_of('/');
                 if (f != std::string::npos) {
                     paths.push_back(_path.substr(0, f + 1));
-                } else {
+                }
+                else {
                     if (paths.empty())
                         paths.emplace_back(ROOT_DIR);
                     else
@@ -165,8 +168,8 @@ namespace clib {
         auto has_throw = false;
         sym_try_t::ref trys;
         while (stack.size() > stack_size) {
-            const auto &codes = current_stack->info->codes;
-            const auto &pc = current_stack->pc;
+            const auto& codes = current_stack->info->codes;
+            const auto& pc = current_stack->pc;
             while (true) {
                 if (top) {
                     if (permanents.cycle <= 0)
@@ -180,8 +183,8 @@ namespace clib {
                         r = 4;
                     break;
                 }
-                const auto &c = codes.at(pc);
-                if (pc + 1 == (int) codes.size() && c.code == POP_TOP) {
+                const auto& c = codes.at(pc);
+                if (pc + 1 == (int)codes.size() && c.code == POP_TOP) {
                     r = 2;
                     break;
                 }
@@ -207,7 +210,7 @@ namespace clib {
             else if (r == 2) {
                 if (!current_stack->ret_value.lock())
                     current_stack->ret_value =
-                            current_stack->stack.empty() ? new_undefined() : pop();
+                    current_stack->stack.empty() ? new_undefined() : pop();
             }
             else if (r == 3) {
                 continue;
@@ -239,7 +242,8 @@ namespace clib {
                             push(new_undefined());
                         current_stack->pc = trys->jump_catch;
                         trys->jump_catch = 0;
-                    } else if (trys->jump_finally != 0) {
+                    }
+                    else if (trys->jump_finally != 0) {
                         current_stack->pc = trys->jump_finally;
                     }
                     if (trys->jump_finally == 0) {
@@ -264,7 +268,8 @@ namespace clib {
                 stack.pop_back();
                 current_stack = stack.back();
                 push(ret);
-            } else {
+            }
+            else {
                 if (top)
                     break;
                 delete_stack(current_stack);
@@ -290,62 +295,63 @@ namespace clib {
                     cjsgui::singleton().put_string("\033S4\033");
                     cjsgui::singleton().put_char('\n');
                 }
-            } else {
+            }
+            else {
                 return 9;
             }
         }
         return 0;
     }
 
-    int cjsruntime::call_api(int type, js_value::weak_ref &_this,
-                             std::vector<js_value::weak_ref> &args, uint32_t attr) {
+    int cjsruntime::call_api(int type, js_value::weak_ref& _this,
+        std::vector<js_value::weak_ref>& args, uint32_t attr) {
         switch ((js_value_new::api) type) {
-            case API_none:
-                break;
-            case API_setTimeout:
-            case API_setInterval: {
-                if (args.empty()) {
-                    push(new_undefined());
-                    break;
-                }
-                auto arg = args.front().lock();
-                if (arg->get_type() != r_function) {
-                    push(new_undefined());
-                    break;
-                }
-                auto arg_n = 1;
-                auto time = 0;
-                if (args.size() > 1) {
-                    time = (int)args[1].lock()->to_number(this);
-                    arg_n++;
-                }
-                std::vector<js_value::weak_ref> _args(args.begin() + arg_n, args.end());
-                push(new_number(api_setTimeout(time, JS_FUN(arg), _args, attr, type == API_setTimeout)));
-            }
-                break;
-            case API_clearTimeout:
-            case API_clearInterval: {
-                if (args.empty()) {
-                    push(new_undefined());
-                    break;
-                }
-                api_clearTimeout(args.front().lock()->to_number(this));
+        case API_none:
+            break;
+        case API_setTimeout:
+        case API_setInterval: {
+            if (args.empty()) {
                 push(new_undefined());
+                break;
             }
+            auto arg = args.front().lock();
+            if (arg->get_type() != r_function) {
+                push(new_undefined());
                 break;
-            default:
+            }
+            auto arg_n = 1;
+            auto time = 0;
+            if (args.size() > 1) {
+                time = (int)args[1].lock()->to_number(this);
+                arg_n++;
+            }
+            std::vector<js_value::weak_ref> _args(args.begin() + arg_n, args.end());
+            push(new_number(api_setTimeout(time, JS_FUN(arg), _args, attr, type == API_setTimeout)));
+        }
+                            break;
+        case API_clearTimeout:
+        case API_clearInterval: {
+            if (args.empty()) {
+                push(new_undefined());
                 break;
+            }
+            api_clearTimeout(args.front().lock()->to_number(this));
+            push(new_undefined());
+        }
+                              break;
+        default:
+            break;
         }
         return 0;
     }
 
-    int cjsruntime::call_api(const jsv_function::ref &func, js_value::weak_ref &_this,
-                             std::vector<js_value::weak_ref> &args, uint32_t attr) {
+    int cjsruntime::call_api(const jsv_function::ref& func, js_value::weak_ref& _this,
+        std::vector<js_value::weak_ref>& args, uint32_t attr) {
         assert(_this.lock());
         auto stack_size = stack.size();
         bool fast = attr & jsv_function::at_fast;
         if (fast) {
-            attr &= ~(uint32_t) jsv_function::at_fast;
+            attr &= ~(uint32_t)jsv_function::at_fast;
         }
         if (func->builtin)
             return func->builtin(current_stack, _this, args, *this, attr);
@@ -355,34 +361,34 @@ namespace clib {
         _new_stack->_this = _this;
         _new_stack->name = func->name;
         if (!func->code->arrow && func->code->simpleName.front() != '<')
-            env->obj[func->code->simpleName] = func;
+            env->add(func->code->simpleName, func);
         auto arg = new_object();
-        env->obj["arguments"] = arg;
+        env->add("arguments", arg);
         size_t i = 0;
         size_t args_num = func->code->args_num;
         auto n = args.size();
         for (; i < n; i++) {
             std::stringstream ss;
             ss << i;
-            arg->obj[ss.str()] = args.at(i);
+            arg->add(ss.str(), args.at(i));
             if (i < args_num)
-                env->obj[func->code->args.at(i)] = args.at(i);
+                env->add(func->code->args.at(i), args.at(i));
         }
         for (; i < args_num; i++) {
-            env->obj[func->code->args.at(i)] = new_undefined();
+            env->add(func->code->args.at(i), new_undefined());
         }
         if (func->code->rest) {
             auto rest = new_array();
-            env->obj[func->code->args.at(args_num)] = rest;
+            env->add(func->code->args.at(args_num), rest);
             auto j = 0;
             for (i = args_num; i < n; i++) {
                 std::stringstream ss;
                 ss << j++;
-                rest->obj[ss.str()] = args.at(i);
+                rest->add(ss.str(), args.at(i));
             }
-            rest->obj["length"] = new_number(j);
+            rest->add("length", new_number(j));
         }
-        arg->obj["length"] = new_number(n);
+        arg->add("length", new_number(n));
         if (func->closure.lock())
             _new_stack->closure = func->closure;
         if (fast) {
@@ -393,8 +399,8 @@ namespace clib {
         return call_internal(false, stack_size);
     }
 
-    js_value::ref cjsruntime::fast_api(const jsv_function::ref &func, js_value::weak_ref &_this,
-                                       std::vector<js_value::weak_ref> &args, uint32_t attr, int *r) {
+    js_value::ref cjsruntime::fast_api(const jsv_function::ref& func, js_value::weak_ref& _this,
+        std::vector<js_value::weak_ref>& args, uint32_t attr, int* r) {
         auto size = stack.size();
         auto ret = call_api(func, _this, args, attr);
         while (ret == 10) {
@@ -407,7 +413,7 @@ namespace clib {
         return pop().lock();
     }
 
-    double cjsruntime::api_setTimeout(int time, const jsv_function::ref &func, std::vector<js_value::weak_ref> args, uint32_t attr, bool once) {
+    double cjsruntime::api_setTimeout(int time, const jsv_function::ref& func, std::vector<js_value::weak_ref> args, uint32_t attr, bool once) {
         using namespace std::chrono;
         using namespace std::chrono_literals;
         auto t = duration_cast<milliseconds>(system_clock::now() - timeout.startup_time + time * 1ms).count();
@@ -422,21 +428,21 @@ namespace clib {
         s->args = std::move(args);
         s->attr = attr;
         timeout.queues[t].push_back(s);
-        timeout.ids.insert({s->id, s});
-        return (double) s->id;
+        timeout.ids.insert({ s->id, s });
+        return (double)s->id;
     }
 
     void cjsruntime::api_clearTimeout(double id) {
         if (std::isinf(id) || std::isnan(id))
             return;
-        auto i = (uint32_t) id;
+        auto i = (uint32_t)id;
         auto f = timeout.ids.find(i);
         if (f != timeout.ids.end()) {
             auto time = f->second->time;
             auto ff = timeout.queues.find(time);
             if (ff != timeout.queues.end()) {
                 auto f2 = std::find_if(ff->second.begin(), ff->second.end(),
-                                       [i](const auto &x) { return x->id == i; });
+                    [i](const auto& x) { return x->id == i; });
                 if (f2 != ff->second.end()) {
                     ff->second.erase(f2);
                 }
@@ -527,738 +533,743 @@ namespace clib {
         return result;
     }
 
-    int cjsruntime::run(const cjs_code &code) {
+    int cjsruntime::run(const cjs_code& code) {
         switch (code.code) {
-            case LOAD_EMPTY: {
-                js_value::ref v;
-                push(v);
+        case LOAD_EMPTY: {
+            js_value::ref v;
+            push(v);
+        }
+                       break;
+        case LOAD_NULL:
+            push(new_null());
+            break;
+        case LOAD_UNDEFINED:
+            push(new_undefined());
+            break;
+        case LOAD_TRUE:
+            push(new_boolean(true));
+            break;
+        case LOAD_FALSE:
+            push(new_boolean(false));
+            break;
+        case LOAD_ZERO:
+            push(code.op1 == 0 ? permanents._zero : permanents._minus_zero);
+            break;
+        case LOAD_THIS: {
+            auto failed = true;
+            for (auto i = stack.rbegin(); i != stack.rend(); i++) {
+                if (!(*i)->info->arrow) {
+                    push((*i)->_this);
+                    failed = false;
+                    break;
+                }
             }
-                break;
-            case LOAD_NULL:
-                push(new_null());
-                break;
-            case LOAD_UNDEFINED:
+            if (failed)
                 push(new_undefined());
-                break;
-            case LOAD_TRUE:
-                push(new_boolean(true));
-                break;
-            case LOAD_FALSE:
+        }
+                      break;
+        case POP_TOP:
+            pop();
+            break;
+        case DUP_TOP:
+            push(top());
+            break;
+        case NOP:
+            break;
+        case INSTANCE_OF: {
+            auto op2 = pop().lock();
+            auto op1 = pop().lock();
+            if (op1->get_type() != r_object) {
                 push(new_boolean(false));
                 break;
-            case LOAD_ZERO:
-                push(code.op1 == 0 ? permanents._zero : permanents._minus_zero);
+            }
+            if (op2->get_type() != r_function) {
+                push(new_boolean(false));
                 break;
-            case LOAD_THIS: {
-                auto failed = true;
-                for (auto i = stack.rbegin(); i != stack.rend(); i++) {
-                    if (!(*i)->info->arrow) {
-                        push((*i)->_this);
-                        failed = false;
+            }
+            const auto& ff = JS_OBJ(op2)->get("prototype");
+            if (!ff) {
+                push(new_boolean(false));
+                break;
+            }
+            auto proto = op1->__proto__.lock();
+            if (!proto) {
+                push(new_boolean(false));
+                break;
+            }
+            auto p = proto;
+            auto failed = true;
+            while (p) {
+                assert(!p->is_primitive());
+                if (p == ff) {
+                    failed = false;
+                    break;
+                }
+                p = p->__proto__.lock();
+            }
+            push(new_boolean(!failed));
+        }
                         break;
-                    }
-                }
-                if (failed)
-                    push(new_undefined());
-            }
-                break;
-            case POP_TOP:
-                pop();
-                break;
-            case DUP_TOP:
-                push(top());
-                break;
-            case NOP:
-                break;
-            case INSTANCE_OF: {
-                auto op2 = pop().lock();
-                auto op1 = pop().lock();
-                if (op1->get_type() != r_object) {
-                    push(new_boolean(false));
-                    break;
-                }
-                if (op2->get_type() != r_function) {
-                    push(new_boolean(false));
-                    break;
-                }
-                const auto &f = JS_OBJ(op2);
-                auto ff = f.find("prototype");
-                if (ff == f.end()) {
-                    push(new_boolean(false));
-                    break;
-                }
-                auto proto = op1->__proto__.lock();
-                if (!proto) {
-                    push(new_boolean(false));
-                    break;
-                }
-                auto p = proto;
-                auto failed = true;
-                while (p) {
-                    assert(p->get_type() == r_object);
-                    if (p == ff->second.lock()) {
-                        failed = false;
-                        break;
-                    }
-                    p = p->__proto__.lock();
-                }
-                push(new_boolean(!failed));
-            }
-                break;
-            case UNARY_POSITIVE:
-            case UNARY_NEGATIVE:
-            case UNARY_NOT:
-            case UNARY_INVERT:
-            case UNARY_NEW:
-            case UNARY_TYPEOF: {
-                auto op1 = pop().lock();
-                auto result = op1->unary_op(*this, code.code);
-                assert(result);
-                push(result);
-            }
-                break;
-            case UNARY_DELETE: {
-                auto n = code.op1;
-                if (n >= -1) {
-                    auto key = n >= 0 ? current_stack->info->names.at(code.op1) : pop().lock()->to_string(this, 0);
-                    auto obj = pop().lock();
-                    if (!obj->is_primitive()) {
-                        auto &o = JS_OBJ(obj);
-                        auto f = o.find(key);
-                        if (f != o.end()) {
-                            auto k = f->second.lock();
-                            if (k->attr & js_value::at_readonly) {
-                                push(new_boolean(false));
-                                break;
-                            }
-                            o.erase(f);
-                        }
-                    }
-                    push(new_boolean(true));
-                } else if (n == -2) {
-                    auto op = code.op2;
-                    auto var = load_global(op);
-                    if (var) {
-                        if (var->attr & js_value::at_readonly) {
+        case UNARY_POSITIVE:
+        case UNARY_NEGATIVE:
+        case UNARY_NOT:
+        case UNARY_INVERT:
+        case UNARY_NEW:
+        case UNARY_TYPEOF: {
+            auto op1 = pop().lock();
+            auto result = op1->unary_op(*this, code.code);
+            assert(result);
+            push(result);
+        }
+                         break;
+        case UNARY_DELETE: {
+            auto n = code.op1;
+            if (n >= -1) {
+                auto key = n >= 0 ? current_stack->info->names.at(code.op1) : pop().lock()->to_string(this, 0);
+                auto obj = pop().lock();
+                if (!obj->is_primitive()) {
+                    auto f = JS_OBJ(obj)->get(key);
+                    if (f) {
+                        if (f->attr & js_value::at_readonly) {
                             push(new_boolean(false));
                             break;
-                        } else {
-                            remove_global(op);
                         }
-                    }
-                    push(new_boolean(true));
-                } else if (n == -8) {
-                    pop();
-                    push(new_boolean(true));
-                } else {
-                    assert(!"invalid delete");
-                }
-            }
-                break;
-            case BINARY_MATRIX_MULTIPLY:
-                break;
-            case INPLACE_MATRIX_MULTIPLY:
-                break;
-            case COMPARE_LESS:
-            case COMPARE_LESS_EQUAL:
-            case COMPARE_EQUAL:
-            case COMPARE_NOT_EQUAL:
-            case COMPARE_GREATER:
-            case COMPARE_GREATER_EQUAL:
-            case COMPARE_FEQUAL:
-            case COMPARE_FNOT_EQUAL:
-            case BINARY_POWER:
-            case BINARY_MULTIPLY:
-            case BINARY_MODULO:
-            case BINARY_ADD:
-            case BINARY_SUBTRACT:
-            case BINARY_FLOOR_DIVIDE:
-            case BINARY_TRUE_DIVIDE:
-            case BINARY_LSHIFT:
-            case BINARY_RSHIFT:
-            case BINARY_URSHIFT:
-            case BINARY_AND:
-            case BINARY_XOR:
-            case BINARY_OR: {
-                auto op2 = pop().lock();
-                auto op1 = pop().lock();
-                auto r = 0;
-                auto ret = binop(code.code, op1, op2, &r);
-                if (r != 0)
-                    return r;
-                push(ret);
-            }
-                break;
-            case LOAD_ATTR:
-            case BINARY_SUBSCR: {
-                auto key = code.code == LOAD_ATTR ?
-                           current_stack->info->names.at(code.op1) :
-                           pop().lock()->to_string(this, 0);
-                auto obj = pop().lock();
-                if (!obj->is_primitive()) {
-                    auto value = JS_O(obj)->get(key);
-                    if (value) {
-                        push(value);
-                        break;
+                        JS_OBJ(obj)->remove(key);
                     }
                 }
-                push(permanents._undefined);
+                push(new_boolean(true));
             }
-                break;
-            case BINARY_INC:
-            case BINARY_DEC: {
-                auto op1 = pop().lock();
-                auto r = 0;
-                auto ret = binop(
-                        code.code == BINARY_INC ? BINARY_ADD : BINARY_SUBTRACT,
-                        op1,
-                        permanents._one, &r);
-                if (r != 0)
-                    return r;
-                assert(ret);
-                push(ret);
-            }
-                break;
-            case STORE_SUBSCR: {
-                auto key = pop().lock()->to_string(this, 0);
-                auto obj = pop().lock();
-                auto value = top();
-                auto &o = JS_OBJ(obj);
-                if (!obj->is_primitive()) {
-                    auto f = o.find(key);
-                    if (f != o.end() && (readonly && (f->second.lock()->attr & js_value::at_readonly))) {
+            else if (n == -2) {
+                auto op = code.op2;
+                auto var = load_global(op);
+                if (var) {
+                    if (var->attr & js_value::at_readonly) {
+                        push(new_boolean(false));
                         break;
                     }
-                    o[key] = std::move(value);
+                    else {
+                        remove_global(op);
+                    }
+                }
+                push(new_boolean(true));
+            }
+            else if (n == -8) {
+                pop();
+                push(new_boolean(true));
+            }
+            else {
+                assert(!"invalid delete");
+            }
+        }
+                         break;
+        case BINARY_MATRIX_MULTIPLY:
+            break;
+        case INPLACE_MATRIX_MULTIPLY:
+            break;
+        case COMPARE_LESS:
+        case COMPARE_LESS_EQUAL:
+        case COMPARE_EQUAL:
+        case COMPARE_NOT_EQUAL:
+        case COMPARE_GREATER:
+        case COMPARE_GREATER_EQUAL:
+        case COMPARE_FEQUAL:
+        case COMPARE_FNOT_EQUAL:
+        case BINARY_POWER:
+        case BINARY_MULTIPLY:
+        case BINARY_MODULO:
+        case BINARY_ADD:
+        case BINARY_SUBTRACT:
+        case BINARY_FLOOR_DIVIDE:
+        case BINARY_TRUE_DIVIDE:
+        case BINARY_LSHIFT:
+        case BINARY_RSHIFT:
+        case BINARY_URSHIFT:
+        case BINARY_AND:
+        case BINARY_XOR:
+        case BINARY_OR: {
+            auto op2 = pop().lock();
+            auto op1 = pop().lock();
+            auto r = 0;
+            auto ret = binop(code.code, op1, op2, &r);
+            if (r != 0)
+                return r;
+            push(ret);
+        }
+                      break;
+        case LOAD_ATTR:
+        case BINARY_SUBSCR: {
+            auto key = code.code == LOAD_ATTR ?
+                current_stack->info->names.at(code.op1) :
+                pop().lock()->to_string(this, 0);
+            auto obj = pop().lock();
+            if (!obj->is_primitive()) {
+                auto value = JS_O(obj)->get(key);
+                if (value) {
+                    push(value);
                     break;
                 }
             }
-                break;
-            case GET_ITER: {
-                auto obj = top().lock();
-                if (obj->get_type() == r_object) {
-                    auto &o = JS_OBJ(obj);
-                    pop();
-                    auto arr = new_array();
-                    if (obj->__proto__.lock() != permanents._proto_array) {
-                        std::vector<std::string> ar(o.size());
-                        std::transform(o.begin(), o.end(), ar.begin(), [](auto &x) { return x.first; });
-                        for (size_t i = 0; i < ar.size(); i++) {
-                            std::stringstream ss;
-                            ss << i;
-                            arr->obj[ss.str()] = new_string(ar[i]);
-                        }
-                        arr->obj["length"] = new_number(ar.size());
-                        push(arr);
-                    } else {
-                        auto f = o.find("length");
-                        if (f != o.end()) {
-                            auto len = f->second.lock();
-                            auto i = 0, j = 0;
-                            if (len->get_type() == r_number) {
-                                auto l = JS_NUM(len);
-                                if (!std::isinf(l) && !std::isnan(l)) {
-                                    auto L = (int) l;
-                                    std::stringstream ss;
-                                    while (i < L) {
-                                        ss.str("");
-                                        ss << j++;
-                                        auto ff = o.find(ss.str());
-                                        if (ff != o.end()) {
-                                            arr->obj[ss.str()] = new_string(ff->first);
-                                        }
-                                        i++;
-                                    }
-                                }
-                            }
-                            arr->obj["length"] = new_number(j);
-                        } else {
-                            arr->obj["length"] = new_number(0.0);
-                        }
-                        push(arr);
-                    }
-                    push(new_number(0.0));
-                } else {
-                    assert(!"invalid iter");
+            push(permanents._undefined);
+        }
+                          break;
+        case BINARY_INC:
+        case BINARY_DEC: {
+            auto op1 = pop().lock();
+            auto r = 0;
+            auto ret = binop(
+                code.code == BINARY_INC ? BINARY_ADD : BINARY_SUBTRACT,
+                op1,
+                permanents._one, &r);
+            if (r != 0)
+                return r;
+            assert(ret);
+            push(ret);
+        }
+                       break;
+        case STORE_SUBSCR: {
+            auto key = pop().lock()->to_string(this, 0);
+            auto obj = pop().lock();
+            auto value = top();
+            auto o = JS_OBJ(obj);
+            if (!obj->is_primitive()) {
+                auto f = o->get(key);
+                if (f && (readonly && (f->attr & js_value::at_readonly))) {
+                    break;
                 }
+                o->add(key, std::move(value));
+                break;
             }
-                break;
-            case RETURN_VALUE:
-                return 2;
-            case STORE_NAME: {
-                auto obj = top();
-                auto id = code.op1;
-                auto name = current_stack->info->names.at(id);
-                current_stack->store_name(name, obj);
-            }
-                break;
-            case DELETE_NAME:
-                break;
-            case UNPACK_SEQUENCE: {
-                auto obj = pop().lock();
-                if (obj->get_type() == r_object) {
-                    const auto &o = JS_OBJ(obj);
-                    if (obj->__proto__.lock() == permanents._proto_array) {
-                        auto f = o.find("length");
-                        if (f != o.end()) {
-                            auto len = f->second.lock();
-                            if (len->get_type() == r_number) {
-                                auto l = JS_NUM(len);
-                                if (!std::isinf(l) && !std::isnan(l)) {
-                                    for (auto i = 0; i < l; i++) {
-                                        std::stringstream ss;
-                                        ss << i;
-                                        auto ff = o.find(ss.str());
-                                        if (ff != o.end()) {
-                                            push(ff->second);
-                                        }
-                                    }
-                                    break;
-                                }
-                            }
-                        }
+        }
+                         break;
+        case GET_ITER: {
+            auto obj = top().lock();
+            if (!obj->is_primitive()) {
+                auto o = JS_OBJ(obj);
+                pop();
+                auto arr = new_array();
+                if (obj->__proto__.lock() != permanents._proto_array) {
+                    auto ar = o->get_keys();
+                    for (size_t i = 0; i < ar.size(); i++) {
+                        std::stringstream ss;
+                        ss << i;
+                        arr->add(ss.str(), new_string(ar[i]));
                     }
+                    arr->add("length", new_number(ar.size()));
+                    push(arr);
                 }
-                push(obj); // failed
-            }
-                break;
-            case FOR_ITER: {
-                auto jmp = code.op1;
-                auto idx = pop().lock();
-                assert(idx->get_type() == r_number);
-                auto i = JS_NUM(idx);
-                assert(!std::isinf(i) && !std::isnan(i));
-                auto obj = top().lock();
-                assert(obj->get_type() == r_object && obj->__proto__.lock() == permanents._proto_array);
-                const auto &o = JS_OBJ(obj);
-                auto f = o.find("length");
-                if (f != o.end()) {
-                    auto len = f->second.lock();
-                    if (len->get_type() == r_number) {
-                        auto l = JS_NUM(len);
-                        if (!std::isinf(l) && !std::isnan(l)) {
-                            if (i < l) {
+                else {
+                    auto len = o->get("length");
+                    if (len) {
+                        auto i = 0, j = 0;
+                        if (len->get_type() == r_number) {
+                            auto l = JS_NUM(len);
+                            if (!std::isinf(l) && !std::isnan(l)) {
+                                auto L = (int)l;
                                 std::stringstream ss;
-                                auto failed = true;
-                                while (i < l) {
+                                while (i < L) {
                                     ss.str("");
-                                    ss << i;
-                                    auto ff = o.find(ss.str());
-                                    if (ff != o.end()) {
-                                        push(new_number(i + 1));
-                                        push(ff->second);
-                                        failed = false;
-                                        break;
+                                    ss << j++;
+                                    auto ff = o->get(ss.str());
+                                    if (ff) {
+                                        arr->add(ss.str(), new_string(ss.str()));
                                     }
                                     i++;
                                 }
-                                if (failed) {
-                                    current_stack->pc += jmp;
-                                    pop();
-                                    return 0;
+                            }
+                        }
+                        arr->add("length", new_number(j));
+                    }
+                    else {
+                        arr->add("length", new_number(0.0));
+                    }
+                    push(arr);
+                }
+                push(new_number(0.0));
+            }
+            else {
+                assert(!"invalid iter");
+            }
+        }
+                     break;
+        case RETURN_VALUE:
+            return 2;
+        case STORE_NAME: {
+            auto obj = top();
+            auto id = code.op1;
+            auto name = current_stack->info->names.at(id);
+            current_stack->store_name(name, obj);
+        }
+                       break;
+        case DELETE_NAME:
+            break;
+        case UNPACK_SEQUENCE: {
+            auto obj = pop().lock();
+            if (!obj->is_primitive()) {
+                const auto o = JS_OBJ(obj);
+                if (obj->__proto__.lock() == permanents._proto_array) {
+                    auto len = o->get("length");
+                    if (len) {
+                        if (len->get_type() == r_number) {
+                            auto l = JS_NUM(len);
+                            if (!std::isinf(l) && !std::isnan(l)) {
+                                for (auto i = 0; i < l; i++) {
+                                    std::stringstream ss;
+                                    ss << i;
+                                    auto ff = o->get(ss.str());
+                                    if (ff) {
+                                        push(ff);
+                                    }
                                 }
                                 break;
                             }
-                            current_stack->pc += jmp;
-                            pop();
-                            return 0;
-                        }
-                    }
-                }
-                assert(!"invalid iter");
-            }
-                break;
-            case UNPACK_EX: {
-                auto obj = pop().lock();
-                if (obj->get_type() == r_object) {
-                    const auto &o = JS_OBJ(obj);
-                    if (obj->__proto__.lock() == permanents._proto_object) {
-                        for (const auto &s : o) {
-                            push(new_string(s.first));
-                            push(s.second);
                         }
                     }
                 }
             }
-                break;
-            case STORE_ATTR: {
-                auto n = code.op1;
-                auto key = current_stack->info->names.at(n);
-                auto obj = pop().lock();
-                auto value = top();
-                auto &o = JS_OBJ(obj);
-                if (!obj->is_primitive()) {
-                    auto f = o.find(key);
-                    if (f != o.end() && (readonly && (f->second.lock()->attr & js_value::at_readonly))) {
-                        break;
+            push(obj); // failed
+        }
+                            break;
+        case FOR_ITER: {
+            auto jmp = code.op1;
+            auto idx = pop().lock();
+            assert(idx->get_type() == r_number);
+            auto i = JS_NUM(idx);
+            assert(!std::isinf(i) && !std::isnan(i));
+            auto obj = top().lock();
+            assert(!obj->is_primitive() && obj->__proto__.lock() == permanents._proto_array);
+            const auto o = JS_OBJ(obj);
+            auto len = o->get("length");
+            if (len) {
+                if (len->get_type() == r_number) {
+                    auto l = JS_NUM(len);
+                    if (!std::isinf(l) && !std::isnan(l)) {
+                        if (i < l) {
+                            std::stringstream ss;
+                            auto failed = true;
+                            while (i < l) {
+                                ss.str("");
+                                ss << i;
+                                auto ff = o->get(ss.str());
+                                if (ff) {
+                                    push(new_number(i + 1));
+                                    push(ff);
+                                    failed = false;
+                                    break;
+                                }
+                                i++;
+                            }
+                            if (failed) {
+                                current_stack->pc += jmp;
+                                pop();
+                                return 0;
+                            }
+                            break;
+                        }
+                        current_stack->pc += jmp;
+                        pop();
+                        return 0;
                     }
-                    o[key] = std::move(value);
+                }
+            }
+            assert(!"invalid iter");
+        }
+                     break;
+        case UNPACK_EX: {
+            auto obj = pop().lock();
+            if (!obj->is_primitive()) {
+                const auto o = JS_OBJ(obj);
+                if (obj->__proto__.lock() == permanents._proto_object) {
+                    for (const auto& s : o->get_keys()) {
+                        push(new_string(s));
+                        push(o->get(s));
+                    }
+                }
+            }
+        }
+                      break;
+        case STORE_ATTR: {
+            auto n = code.op1;
+            auto key = current_stack->info->names.at(n);
+            auto obj = pop().lock();
+            auto value = top();
+            if (!obj->is_primitive()) {
+                auto o = JS_OBJ(obj);
+                auto f = o->get(key);
+                if (f && (readonly && (f->attr & js_value::at_readonly))) {
                     break;
                 }
-            }
+                o->add(key, std::move(value));
                 break;
-            case STORE_GLOBAL: {
-                auto obj = top();
-                auto id = code.op1;
-                auto name = current_stack->info->globals.at(id);
-                stack.front()->store_name(name, obj);
             }
-                break;
-            case LOAD_CONST: {
-                auto op = code.op1;
-                auto var = load_const(op);
-                push(var);
+        }
+                       break;
+        case STORE_GLOBAL: {
+            auto obj = top();
+            auto id = code.op1;
+            auto name = current_stack->info->globals.at(id);
+            stack.front()->store_name(name, obj);
+        }
+                         break;
+        case LOAD_CONST: {
+            auto op = code.op1;
+            auto var = load_const(op);
+            push(var);
+        }
+                       break;
+        case LOAD_NAME: {
+            auto op = code.op1;
+            auto var = load_name(op);
+            push(var);
+        }
+                      break;
+        case BUILD_LIST: {
+            auto n = code.op1;
+            if (n == -1) {
+                assert(!current_stack->rests.empty());
+                n = (int)current_stack->stack.size() - current_stack->rests.back();
+                current_stack->rests.pop_back();
             }
-                break;
-            case LOAD_NAME: {
-                auto op = code.op1;
-                auto var = load_name(op);
-                push(var);
-            }
-                break;
-            case BUILD_LIST: {
-                auto n = code.op1;
-                if (n == -1) {
-                    assert(!current_stack->rests.empty());
-                    n = (int) current_stack->stack.size() - current_stack->rests.back();
-                    current_stack->rests.pop_back();
-                }
-                assert(current_stack->stack.size() >= (size_t) n);
-                auto obj = new_array();
-                std::stringstream ss;
-                for (auto i = n - 1; i >= 0; i--) {
-                    auto v = pop().lock();
-                    if (v) {
-                        ss.str("");
-                        ss << i;
-                        obj->obj[ss.str()] = v;
-                    }
-                }
-                obj->obj["length"] = new_number(n);
-                push(obj);
-            }
-                break;
-            case BUILD_MAP: {
-                auto n = code.op1;
-                if (n == -1) {
-                    assert(!current_stack->rests.empty());
-                    n = ((int) current_stack->stack.size() - current_stack->rests.back()) / 2;
-                    current_stack->rests.pop_back();
-                }
-                assert(current_stack->stack.size() >= ((size_t) n) * 2);
-                auto obj = new_object();
-                for (auto i = 0; i < n; i++) {
-                    auto v = pop();
-                    auto k = pop().lock();
-                    if (k->get_type() == r_string) {
-                        obj->obj.insert({JS_STR(k), v});
-                    } else if (k->get_type() == r_number) {
-                        std::stringstream ss;
-                        ss << JS_NUM(k);
-                        obj->obj.insert({ss.str(), v});
-                    } else {
-                        continue;
-                    }
-                }
-                push(obj);
-            }
-                break;
-            case JUMP_FORWARD: {
-                auto jmp = code.op1;
-                current_stack->pc += jmp;
-                return 0;
-            }
-            case JUMP_IF_FALSE_OR_POP: {
-                auto jmp = code.op1;
-                const auto &t = top();
-                if (!t.lock()->to_bool()) {
-                    current_stack->pc = jmp;
-                    return 0;
-                } else {
-                    pop();
+            assert(current_stack->stack.size() >= (size_t)n);
+            auto obj = new_array();
+            std::stringstream ss;
+            for (auto i = n - 1; i >= 0; i--) {
+                auto v = pop().lock();
+                if (v) {
+                    ss.str("");
+                    ss << i;
+                    obj->add(ss.str(), v);
                 }
             }
-                break;
-            case JUMP_IF_TRUE_OR_POP: {
-                auto jmp = code.op1;
-                const auto &t = top();
-                if (t.lock()->to_bool()) {
-                    current_stack->pc = jmp;
-                    return 0;
-                } else {
-                    pop();
+            obj->add("length", new_number(n));
+            push(obj);
+        }
+                       break;
+        case BUILD_MAP: {
+            auto n = code.op1;
+            if (n == -1) {
+                assert(!current_stack->rests.empty());
+                n = ((int)current_stack->stack.size() - current_stack->rests.back()) / 2;
+                current_stack->rests.pop_back();
+            }
+            assert(current_stack->stack.size() >= ((size_t)n) * 2);
+            auto obj = new_object();
+            for (auto i = 0; i < n; i++) {
+                auto v = pop();
+                auto k = pop().lock();
+                if (k->get_type() == r_string) {
+                    obj->add(JS_STR(k), v);
+                }
+                else if (k->get_type() == r_number) {
+                    std::stringstream ss;
+                    ss << JS_NUM(k);
+                    obj->add(ss.str(), v);
+                }
+                else {
+                    continue;
                 }
             }
-                break;
-            case JUMP_ABSOLUTE: {
-                auto jmp = code.op1;
+            push(obj);
+        }
+                      break;
+        case JUMP_FORWARD: {
+            auto jmp = code.op1;
+            current_stack->pc += jmp;
+            return 0;
+        }
+        case JUMP_IF_FALSE_OR_POP: {
+            auto jmp = code.op1;
+            const auto& t = top();
+            if (!t.lock()->to_bool()) {
                 current_stack->pc = jmp;
                 return 0;
             }
-            case POP_JUMP_IF_FALSE: {
-                auto jmp = code.op1;
-                auto t = pop();
-                if (!t.lock()->to_bool()) {
-                    current_stack->pc = jmp;
-                    return 0;
-                }
+            else {
+                pop();
             }
-                break;
-            case POP_JUMP_IF_TRUE: {
-                auto jmp = code.op1;
-                auto t = pop();
-                if (t.lock()->to_bool()) {
-                    current_stack->pc = jmp;
-                    return 0;
-                }
+        }
+                                 break;
+        case JUMP_IF_TRUE_OR_POP: {
+            auto jmp = code.op1;
+            const auto& t = top();
+            if (t.lock()->to_bool()) {
+                current_stack->pc = jmp;
+                return 0;
             }
-                break;
-            case LOAD_GLOBAL: {
-                auto op = code.op1;
-                auto var = load_global(op);
-                if (var) {
-                    push(var);
-                } else {
-                    auto name = current_stack->info->globals.at(op);
-                    std::stringstream ss;
-                    ss << "throw new ReferenceError('" << jsv_string::convert(name) << " is not defined')";
-                    auto _stack_size = stack.size();
-                    auto r = exec("<error>", ss.str());
-                    if (r != 0)
-                        return r;
-                    return call_internal(false, _stack_size);
-                }
+            else {
+                pop();
             }
-                break;
-            case SETUP_FINALLY: {
-                auto op1 = code.op1 == 0 ? 0 : (current_stack->pc + code.op1);
-                auto op2 = code.op2 == 0 ? 0 : (current_stack->pc + code.op2);
-                current_stack->trys.push_back(std::make_shared<sym_try_t>(sym_try_t{stack.size(), current_stack->stack.size(), op1, op2, js_value::weak_ref()}));
+        }
+                                break;
+        case JUMP_ABSOLUTE: {
+            auto jmp = code.op1;
+            current_stack->pc = jmp;
+            return 0;
+        }
+        case POP_JUMP_IF_FALSE: {
+            auto jmp = code.op1;
+            auto t = pop();
+            if (!t.lock()->to_bool()) {
+                current_stack->pc = jmp;
+                return 0;
             }
-                break;
-            case THROW: {
-                auto trys = get_try();
-                assert(trys);
-                trys->obj = pop().lock();
+        }
+                              break;
+        case POP_JUMP_IF_TRUE: {
+            auto jmp = code.op1;
+            auto t = pop();
+            if (t.lock()->to_bool()) {
+                current_stack->pc = jmp;
+                return 0;
             }
-                return 9;
-            case POP_FINALLY:
-                return 9;
-            case EXIT_FINALLY:
-                assert(!current_stack->trys.empty());
-                current_stack->trys.pop_back();
-                break;
-            case LOAD_FAST: {
-                auto op = code.op1;
-                auto var = load_fast(op);
+        }
+                             break;
+        case LOAD_GLOBAL: {
+            auto op = code.op1;
+            auto var = load_global(op);
+            if (var) {
                 push(var);
             }
-                break;
-            case STORE_FAST: {
-                auto obj = top();
-                auto id = code.op1;
-                auto name = current_stack->info->names.at(id);
-                current_stack->store_fast(name, obj);
+            else {
+                auto name = current_stack->info->globals.at(op);
+                std::stringstream ss;
+                ss << "throw new ReferenceError('" << jsv_string::convert(name) << " is not defined')";
+                auto _stack_size = stack.size();
+                auto r = exec("<load_global::error>", ss.str());
+                if (r != 0)
+                    return r;
+                return call_internal(false, _stack_size);
             }
+        }
+                        break;
+        case SETUP_FINALLY: {
+            auto op1 = code.op1 == 0 ? 0 : (current_stack->pc + code.op1);
+            auto op2 = code.op2 == 0 ? 0 : (current_stack->pc + code.op2);
+            current_stack->trys.push_back(std::make_shared<sym_try_t>(sym_try_t{ stack.size(), current_stack->stack.size(), op1, op2, js_value::weak_ref() }));
+        }
+                          break;
+        case THROW: {
+            auto trys = get_try();
+            assert(trys);
+            trys->obj = pop().lock();
+        }
+                  return 9;
+        case POP_FINALLY:
+            return 9;
+        case EXIT_FINALLY:
+            assert(!current_stack->trys.empty());
+            current_stack->trys.pop_back();
+            break;
+        case LOAD_FAST: {
+            auto op = code.op1;
+            auto var = load_fast(op);
+            push(var);
+        }
+                      break;
+        case STORE_FAST: {
+            auto obj = top();
+            auto id = code.op1;
+            auto name = current_stack->info->names.at(id);
+            current_stack->store_fast(name, obj);
+        }
+                       break;
+        case CALL_FUNCTION: {
+            auto n = code.op1;
+            if (n == -1) {
+                assert(!current_stack->rests.empty());
+                n = (int)current_stack->stack.size() - current_stack->rests.back();
+                current_stack->rests.pop_back();
+            }
+            assert((int)current_stack->stack.size() > n);
+            std::vector<js_value::weak_ref> args;
+            args.resize(n);
+            auto m = n;
+            while (m-- > 0) {
+                args[m] = pop();
+            }
+            auto f = pop();
+            if (f.lock()->get_type() != r_function) {
+                push(new_undefined());
                 break;
-            case CALL_FUNCTION: {
-                auto n = code.op1;
-                if (n == -1) {
-                    assert(!current_stack->rests.empty());
-                    n = (int) current_stack->stack.size() - current_stack->rests.back();
-                    current_stack->rests.pop_back();
+            }
+            auto func = JS_FUN(f.lock());
+            js_value::weak_ref _this = JS_V(stack.front()->envs.lock());
+            auto r = call_api(func, _this, args, jsv_function::at_fast);
+            if (r != 0)
+                return r;
+        }
+                          break;
+        case MAKE_FUNCTION: {
+            auto op = (uint32_t)code.op1;
+            if (op & 8U) {
+                auto name = pop();
+                auto f = pop();
+                auto closure = pop();
+                if (f.lock()->get_type() != r_function) {
+                    push(new_undefined());
+                    break;
                 }
-                assert((int) current_stack->stack.size() > n);
-                std::vector<js_value::weak_ref> args;
-                args.resize(n);
-                auto m = n;
-                while (m-- > 0) {
-                    args[m] = pop();
+                assert(name.lock()->get_type() == r_string);
+                assert(!closure.lock()->is_primitive());
+                auto parent = JS_FUN(f.lock());
+                auto func = new_function();
+                func->code = parent->code;
+                func->name = JS_STR(name.lock());
+                if (closure.lock()) {
+                    auto c = new_object();
+                    c->copy_from(JS_OBJ(closure.lock()));
+                    func->closure = c;
                 }
+                auto len = new_number(func->code->args_num);
+                func->add("length", len);
+                push(func);
+            }
+            else {
+                auto name = pop();
                 auto f = pop();
                 if (f.lock()->get_type() != r_function) {
                     push(new_undefined());
                     break;
                 }
-                auto func = JS_FUN(f.lock());
-                js_value::weak_ref _this = JS_V(stack.front()->envs.lock());
-                auto r = call_api(func, _this, args, jsv_function::at_fast);
-                if (r != 0)
-                    return r;
+                assert(name.lock()->get_type() == r_string);
+                auto parent = JS_FUN(f.lock());
+                auto func = new_function();
+                func->code = parent->code;
+                func->name = JS_STR(name.lock());
+                auto len = new_number(func->code->args_num);
+                func->add("length", len);
+                push(func);
             }
-                break;
-            case MAKE_FUNCTION: {
-                auto op = (uint32_t) code.op1;
-                if (op & 8U) {
-                    auto name = pop();
-                    auto f = pop();
-                    auto closure = pop();
-                    if (f.lock()->get_type() != r_function) {
-                        push(new_undefined());
+        }
+                          break;
+        case LOAD_CLOSURE: {
+            auto op = code.op1;
+            auto var = current_stack->info->names.at(op);
+            push(new_string(var));
+            push(load_closure(var));
+        }
+                         break;
+        case LOAD_DEREF: {
+            auto op = code.op1;
+            auto var = current_stack->info->derefs.at(op);
+            push(load_deref(var));
+        }
+                       break;
+        case STORE_DEREF: {
+            auto obj = top();
+            auto id = code.op1;
+            auto name = current_stack->info->derefs.at(id);
+            current_stack->store_deref(name, obj);
+        }
                         break;
-                    }
-                    assert(name.lock()->get_type() == r_string);
-                    assert(closure.lock()->get_type() == r_object);
-                    auto parent = JS_FUN(f.lock());
-                    auto func = new_function();
-                    func->code = parent->code;
-                    func->name = JS_STR(name.lock());
-                    if (closure.lock()) {
-                        auto c = new_object();
-                        c->obj = JS_OBJ(closure.lock());
-                        func->closure = c;
-                    }
-                    auto len = new_number(func->code->args_num);
-                    func->obj.insert({"length", len});
-                    push(func);
-                } else {
-                    auto name = pop();
-                    auto f = pop();
-                    if (f.lock()->get_type() != r_function) {
-                        push(new_undefined());
-                        break;
-                    }
-                    assert(name.lock()->get_type() == r_string);
-                    auto parent = JS_FUN(f.lock());
-                    auto func = new_function();
-                    func->code = parent->code;
-                    func->name = JS_STR(name.lock());
-                    auto len = new_number(func->code->args_num);
-                    func->obj.insert({"length", len});
-                    push(func);
-                }
+        case REST_ARGUMENT:
+            current_stack->rests.push_back(current_stack->stack.size());
+            break;
+        case CALL_FUNCTION_EX: {
+            auto n = code.op1;
+            if (n == -1) {
+                assert(!current_stack->rests.empty());
+                n = (int)current_stack->stack.size() - current_stack->rests.back();
+                current_stack->rests.pop_back();
             }
-                break;
-            case LOAD_CLOSURE: {
-                auto op = code.op1;
-                auto var = current_stack->info->names.at(op);
-                push(new_string(var));
-                push(load_closure(var));
+            assert((int)current_stack->stack.size() > n);
+            std::vector<js_value::weak_ref> args(n);
+            auto m = n;
+            while (m-- > 0) {
+                args[m] = pop();
             }
+            auto f = pop();
+            if (f.lock()->get_type() != r_function) {
+                push(new_undefined());
                 break;
-            case LOAD_DEREF: {
-                auto op = code.op1;
-                auto var = current_stack->info->derefs.at(op);
-                push(load_deref(var));
             }
-                break;
-            case STORE_DEREF: {
-                auto obj = top();
-                auto id = code.op1;
-                auto name = current_stack->info->derefs.at(id);
-                current_stack->store_deref(name, obj);
-            }
-                break;
-            case REST_ARGUMENT:
-                current_stack->rests.push_back(current_stack->stack.size());
-                break;
-            case CALL_FUNCTION_EX: {
-                auto n = code.op1;
-                if (n == -1) {
-                    assert(!current_stack->rests.empty());
-                    n = (int) current_stack->stack.size() - current_stack->rests.back();
-                    current_stack->rests.pop_back();
-                }
-                assert((int) current_stack->stack.size() > n);
-                std::vector<js_value::weak_ref> args(n);
-                auto m = n;
-                while (m-- > 0) {
-                    args[m] = pop();
-                }
-                auto f = pop();
-                if (f.lock()->get_type() != r_function) {
-                    push(new_undefined());
-                    break;
-                }
-                auto func = JS_FUN(f.lock());
-                auto _this = new_object();
-                auto prototype = func->get("prototype");
-                if (!prototype || prototype->is_primitive())
-                    _this->__proto__ = permanents._proto_object;
-                else
-                    _this->__proto__ = prototype;
-                js_value::weak_ref t = _this;
-                auto r = 0;
-                auto ret = fast_api(func, t, args, jsv_function::at_new_function, &r);
-                if (ret->is_primitive())
-                    push(t);
-                else
-                    push(ret);
-                if (r != 0)
-                    return r;
-            }
-                break;
-            case LOAD_METHOD: {
-                auto n = code.op1;
-                auto key = current_stack->info->names.at(n);
-                auto obj = top();
-                if (obj.lock()->get_type() == r_object || obj.lock()->get_type() == r_function) {
-                    const auto &o = JS_OBJ(obj.lock());
-                    auto f = o.find(key);
-                    if (f != o.end()) {
-                        if (f->second.lock()->get_type() == r_function)
-                            push(f->second);
-                        else
-                            push(new_undefined()); // type error
-                        break;
-                    }
-                }
-                auto proto = obj.lock()->__proto__.lock();
-                if (!proto) {
-                    push(new_undefined()); // type error
-                    break;
-                }
-                auto p = proto;
-                auto failed = true;
-                while (p) {
-                    if (p->get_type() != r_object) {
+            auto func = JS_FUN(f.lock());
+            auto _this = new_object();
+            auto prototype = func->get("prototype");
+            if (!prototype || prototype->is_primitive())
+                _this->__proto__ = permanents._proto_object;
+            else
+                _this->__proto__ = prototype;
+            js_value::weak_ref t = _this;
+            auto r = 0;
+            auto ret = fast_api(func, t, args, jsv_function::at_new_function, &r);
+            if (ret->is_primitive())
+                push(t);
+            else
+                push(ret);
+            if (r != 0)
+                return r;
+        }
+                             break;
+        case LOAD_METHOD: {
+            auto n = code.op1;
+            auto key = current_stack->info->names.at(n);
+            auto obj = top();
+            if (!obj.lock()->is_primitive()) {
+                const auto o = JS_OBJ(obj.lock());
+                auto f = o->get(key);
+                if (f) {
+                    if (f->get_type() == r_function)
+                        push(f);
+                    else
                         push(new_undefined()); // type error
-                        break;
-                    }
-                    const auto &ob = JS_OBJ(p);
-                    auto f = ob.find(key);
-                    if (f != ob.end()) {
-                        if (f->second.lock()->get_type() == r_function) {
-                            failed = false;
-                            push(f->second);
-                        }
-                        break;
-                    }
-                    p = p->__proto__.lock();
-                }
-                if (failed)
-                    push(new_undefined()); // type error
-            }
-                break;
-            case CALL_METHOD: {
-                auto n = code.op1;
-                if (n == -1) {
-                    assert(!current_stack->rests.empty());
-                    n = (int) current_stack->stack.size() - current_stack->rests.back();
-                    current_stack->rests.pop_back();
-                }
-                assert((int) current_stack->stack.size() > n);
-                std::vector<js_value::weak_ref> args(n);
-                auto m = n;
-                while (m-- > 0) {
-                    args[m] = pop();
-                }
-                auto f = pop();
-                auto _this = pop().lock();
-                if (f.lock()->get_type() != r_function) {
-                    push(new_undefined());
                     break;
                 }
-                auto func = JS_FUN(f.lock());
-                js_value::weak_ref t = _this;
-                auto r = call_api(func, t, args, jsv_function::at_fast);
-                if (r != 0)
-                    return r;
             }
+            auto proto = obj.lock()->__proto__.lock();
+            if (!proto) {
+                push(new_undefined()); // type error
                 break;
-            default:
-                assert(!"invalid opcode");
-                return 1;
+            }
+            auto p = proto;
+            auto failed = true;
+            while (p) {
+                if (p->get_type() != r_object) {
+                    push(new_undefined()); // type error
+                    break;
+                }
+                const auto f = JS_OBJ(p)->get(key);
+                if (f) {
+                    if (f->get_type() == r_function) {
+                        failed = false;
+                        push(f);
+                    }
+                    break;
+                }
+                p = p->__proto__.lock();
+            }
+            if (failed)
+                push(new_undefined()); // type error
+        }
+                        break;
+        case CALL_METHOD: {
+            auto n = code.op1;
+            if (n == -1) {
+                assert(!current_stack->rests.empty());
+                n = (int)current_stack->stack.size() - current_stack->rests.back();
+                current_stack->rests.pop_back();
+            }
+            assert((int)current_stack->stack.size() > n);
+            std::vector<js_value::weak_ref> args(n);
+            auto m = n;
+            while (m-- > 0) {
+                args[m] = pop();
+            }
+            auto f = pop();
+            auto _this = pop().lock();
+            if (f.lock()->get_type() != r_function) {
+                push(new_undefined());
+                break;
+            }
+            auto func = JS_FUN(f.lock());
+            js_value::weak_ref t = _this;
+            auto r = call_api(func, t, args, jsv_function::at_fast);
+            if (r != 0)
+                return r;
+        }
+                        break;
+        default:
+            assert(!"invalid opcode");
+            return 1;
         }
 
         current_stack->pc++;
@@ -1275,9 +1286,10 @@ namespace clib {
 
     js_value::ref cjsruntime::load_fast(int op) {
         auto name = current_stack->info->names.at(op);
-        auto L = current_stack->envs.lock()->obj.find(name);
-        if (L != current_stack->envs.lock()->obj.end()) {
-            return L->second.lock();
+        auto o = current_stack->envs.lock();
+        auto L = o->get(name);
+        if (L) {
+            return L;
         }
         return permanents._undefined;
     }
@@ -1285,9 +1297,10 @@ namespace clib {
     js_value::ref cjsruntime::load_name(int op) {
         auto name = current_stack->info->names.at(op);
         for (auto i = stack.rbegin(); i != stack.rend(); i++) {
-            auto L = (*i)->envs.lock()->obj.find(name);
-            if (L != (*i)->envs.lock()->obj.end()) {
-                return L->second.lock();
+            auto o = (*i)->envs.lock();
+            auto L = o->get(name);
+            if (L) {
+                return L;
             }
         }
         assert(!"cannot find value by name");
@@ -1296,35 +1309,35 @@ namespace clib {
 
     js_value::ref cjsruntime::load_global(int op) {
         auto g = current_stack->info->globals.at(op);
-        auto &obj = stack.front()->envs.lock()->obj;
-        auto G = obj.find(g);
-        if (G != obj.end()) {
-            return G->second.lock();
+        auto o = stack.front()->envs.lock();
+        auto G = o->get(g);
+        if (G) {
+            return G;
         }
         return nullptr;
     }
 
     bool cjsruntime::remove_global(int op) {
         auto g = current_stack->info->globals.at(op);
-        auto &obj = stack.front()->envs.lock()->obj;
-        auto G = obj.find(g);
-        if (G != obj.end()) {
-            obj.erase(G);
+        auto o = stack.front()->envs.lock();
+        auto G = o->get(g);
+        if (G) {
+            o->remove(g);
             return true;
         }
         return false;
     }
 
-    js_value::ref cjsruntime::load_closure(const std::string &name) {
+    js_value::ref cjsruntime::load_closure(const std::string& name) {
         for (auto i = stack.rbegin(); i != stack.rend(); i++) {
             if ((*i)->closure.lock()) {
-                auto L = (*i)->closure.lock()->obj.find(name);
-                if (L != (*i)->closure.lock()->obj.end()) {
-                    return L->second.lock();
+                auto L = (*i)->closure.lock()->get(name);
+                if (L) {
+                    return L;
                 }
             }
-            auto L2 = (*i)->envs.lock()->obj.find(name);
-            if (L2 != (*i)->envs.lock()->obj.end()) {
+            auto L2 = (*i)->envs.lock()->get(name);
+            if (L2) {
                 return (*i)->envs.lock();
             }
         }
@@ -1332,16 +1345,15 @@ namespace clib {
         return permanents._undefined;
     }
 
-    js_value::ref cjsruntime::load_deref(const std::string &name) {
+    js_value::ref cjsruntime::load_deref(const std::string& name) {
         if (current_stack->closure.lock()) {
-            auto f = current_stack->closure.lock()->obj.find(name);
-            if (f != current_stack->closure.lock()->obj.end()) {
-                auto ctx = f->second.lock();
-                if (ctx->get_type() == r_object) {
-                    const auto &obj = JS_OBJ(ctx);
-                    auto f2 = obj.find(name);
-                    if (f2 != obj.end()) {
-                        return f2->second.lock();
+            auto ctx = current_stack->closure.lock()->get(name);
+            if (ctx) {
+                if (!ctx->is_primitive()) {
+                    const auto obj = JS_OBJ(ctx);
+                    auto f2 = obj->get(name);
+                    if (f2) {
+                        return f2;
                     }
                 }
             }
@@ -1354,7 +1366,7 @@ namespace clib {
         current_stack->stack.push_back(std::move(value));
     }
 
-    const js_value::weak_ref &cjsruntime::top() const {
+    const js_value::weak_ref& cjsruntime::top() const {
         assert(!current_stack->stack.empty());
         return current_stack->stack.back();
     }
@@ -1366,25 +1378,25 @@ namespace clib {
         return p;
     }
 
-    js_value::ref cjsruntime::register_value(const js_value::ref &value) {
+    js_value::ref cjsruntime::register_value(const js_value::ref& value) {
         if (value)
             objs.push_back(value);
         return value;
     }
 
-    void cjsruntime::dump_step(const cjs_code &c) const {
+    void cjsruntime::dump_step(const cjs_code& c) const {
         fprintf(stdout, "R [%04d] %s\n", current_stack->pc, c.desc.c_str());
     }
 
-    void cjsruntime::dump_step2(const cjs_code &c) const {
+    void cjsruntime::dump_step2(const cjs_code& c) const {
         if (!stack.empty() && !stack.front()->stack.empty())
             std::cout << std::setfill('=') << std::setw(60) << "" << std::endl;
         for (auto s = stack.rbegin(); s != stack.rend(); s++) {
             fprintf(stdout, "**** Stack [%p] \"%.100s\" '%.100s'\n",
-                    s->get(), (*s)->name.c_str(),
-                    (*s)->info ? (*s)->info->text.c_str() : "[builtin]");
-            const auto &st = (*s)->stack;
-            auto sti = (int) st.size();
+                s->get(), (*s)->name.c_str(),
+                (*s)->info ? (*s)->info->text.c_str() : "[builtin]");
+            const auto& st = (*s)->stack;
+            auto sti = (int)st.size();
             fprintf(stdout, "this | [%p] \n", (*s)->_this.lock().get());
             for (auto s2 = st.rbegin(); s2 != st.rend(); s2++) {
                 fprintf(stdout, "%4d | [%p] ", sti--, s2->lock().get());
@@ -1396,31 +1408,35 @@ namespace clib {
                     print(s2->lock(), 0, std::cout);
             }
 #if DUMP_ENV
-            const auto &env = (*s)->envs.lock()->obj;
+            const auto& _env = (*s)->envs.lock();
+            const auto& env = _env->get_keys();
             if (!env.empty()) {
                 std::cout << std::setfill('-') << std::setw(60) << "" << std::endl;
-                for (const auto &e : env) {
+                for (const auto& e : env) {
+                    auto o = _env->get(e);
                     fprintf(stdout, " Env | [%p] \"%.100s\" '%.100s' ",
-                            e.second.lock().get(), e.first.c_str(),
-                            e.second.lock()->to_string(nullptr, 0).c_str());
-                    if (e.second.lock() == permanents.global_env)
+                        o.get(), e.c_str(),
+                        o->to_string(nullptr, 0).c_str());
+                    if (o == permanents.global_env)
                         fprintf(stdout, "<global env>\n");
-                    else if (e.second.lock()->attr & js_value::at_readonly)
+                    else if (o->attr & js_value::at_readonly)
                         fprintf(stdout, "<builtin>\n");
                     else
-                        print(e.second.lock(), 0, std::cout);
+                        print(o, 0, std::cout);
                 }
             }
 #endif
 #if DUMP_CLOSURE
             if ((*s)->closure.lock()) {
-                const auto &cl = (*s)->closure.lock()->obj;
+                const auto& _cl = (*s)->closure.lock();
+                const auto& cl = _cl->get_keys();
                 std::cout << std::setfill('-') << std::setw(60) << "" << std::endl;
-                for (const auto &e : cl) {
+                for (const auto& e : cl) {
+                    auto o = _cl->get(e);
                     fprintf(stdout, " Clo | [%p] \"%.100s\" '%.100s' ",
-                            e.second.lock().get(), e.first.c_str(),
-                            e.second.lock()->to_string(nullptr, 1).c_str());
-                    print(e.second.lock(), 0, std::cout);
+                        o.get(), e.c_str(),
+                        o->to_string(nullptr, 1).c_str());
+                    print(o, 0, std::cout);
                 }
             }
             std::cout << std::setfill('-') << std::setw(60) << "" << std::endl;
@@ -1431,7 +1447,7 @@ namespace clib {
     void cjsruntime::dump_step3() const {
         if (objs.empty())
             return;
-        for (const auto &s : objs) {
+        for (const auto& s : objs) {
             fprintf(stdout, " GC  | [%p] Mark: %d, ", s.get(), s->marked);
             print(s, 0, std::cout);
         }
@@ -1466,7 +1482,7 @@ namespace clib {
         return std::move(r);
     }
 
-    jsv_string::ref cjsruntime::new_string(const std::string &s) {
+    jsv_string::ref cjsruntime::new_string(const std::string& s) {
         if (s.empty())
             return permanents._empty;
         if (reuse.reuse_strings.empty()) {
@@ -1500,25 +1516,25 @@ namespace clib {
         return std::move(r);
     }
 
-    jsv_object::ref cjsruntime::new_object_box(const js_value::ref &v) {
+    jsv_object::ref cjsruntime::new_object_box(const js_value::ref& v) {
         auto obj = new_object();
         switch (v->get_type()) {
-            case r_number:
-                obj->__proto__ = permanents._proto_number;
-                break;
-            case r_string:
-                obj->__proto__ = permanents._proto_string;
-                break;
-            case r_boolean:
-                obj->__proto__ = permanents._proto_boolean;
-                break;
-            case r_function:
-                obj->__proto__ = permanents._proto_function;
-                break;
-            default:
-                break;
+        case r_number:
+            obj->__proto__ = permanents._proto_number;
+            break;
+        case r_string:
+            obj->__proto__ = permanents._proto_string;
+            break;
+        case r_boolean:
+            obj->__proto__ = permanents._proto_boolean;
+            break;
+        case r_function:
+            obj->__proto__ = permanents._proto_function;
+            break;
+        default:
+            break;
         }
-        obj->special.insert({"PrimitiveValue", v});
+        obj->special.insert({ "PrimitiveValue", v });
         return obj;
     }
 
@@ -1543,7 +1559,7 @@ namespace clib {
         return permanents._undefined;
     }
 
-    cjs_function::ref cjsruntime::new_func(const cjs_function_info::ref &code) {
+    cjs_function::ref cjsruntime::new_func(const cjs_function_info::ref& code) {
         auto f = new_stack(code);
         stack.push_back(f);
         return f;
@@ -1552,8 +1568,22 @@ namespace clib {
     jsv_object::ref cjsruntime::new_array() {
         auto arr = new_object();
         arr->__proto__ = permanents._proto_array;
-        arr->obj["length"] = new_number(0.0);
+        arr->add("length", new_number(0.0));
         return arr;
+    }
+
+    jsv_regexp::ref cjsruntime::new_regexp()
+    {
+        if (reuse.reuse_regexes.empty()) {
+            auto s = _new_regex();
+            register_value(s);
+            return s;
+        }
+        auto r = reuse.reuse_regexes.back();
+        register_value(r);
+        r->__proto__ = permanents._proto_regexp;
+        reuse.reuse_regexes.pop_back();
+        return std::move(r);
     }
 
     jsv_object::ref cjsruntime::new_error(int type) {
@@ -1574,10 +1604,12 @@ namespace clib {
         if (f != permanents.caches.end()) {
             return eval(f->second, filename);
         }
+        auto needCache = false;
         if (!filename.empty() && (filename[0] == '<' || filename[0] == '('))
             code_name = filename;
         else {
             code = load_cache(filename);
+            needCache = true;
             if (code)
                 return eval(std::move(code), filename);
             code_name = "(" + filename + ":1:1) <entry>";
@@ -1601,10 +1633,11 @@ namespace clib {
                 cjsast::print(p.root(), 0, input, ofs);
 #endif
             code = g->get_code();
-            save_cache(filename, code);
-            permanents.caches.insert({ filename, code });
             assert(code);
             code->code->debugName = code_name;
+            save_cache(filename, code);
+            if (needCache)
+                permanents.caches.insert({ filename, code });
             g = nullptr;
         }
         catch (const clib::cjs_exception & e) {
@@ -1628,10 +1661,11 @@ namespace clib {
             ss << j-- << ": ";
             if ((*i)->pc < (int)(*i)->info->codes.size()) {
                 sx.str("");
-                const auto &c = (*i)->info->codes[(*i)->pc];
+                const auto& c = (*i)->info->codes[(*i)->pc];
                 sx << "($1:" << c.line << ":" << c.column << ")$2";
                 ss << std::regex_replace((*i)->name, r, sx.str());
-            } else {
+            }
+            else {
                 ss << (*i)->name;
             }
             if (!(*i)->info)
@@ -1644,14 +1678,14 @@ namespace clib {
         return s;
     }
 
-    bool cjsruntime::set_builtin(const std::shared_ptr<jsv_object> &obj) {
+    bool cjsruntime::set_builtin(const std::shared_ptr<jsv_object>& obj) {
         if (readonly)
             return false;
         obj->attr |= js_value::at_readonly;
         return true;
     }
 
-    static bool check_file(const std::string &filename, std::string &content) {
+    static bool check_file(const std::string& filename, std::string& content) {
         std::ifstream file(filename);
         if (file) {
             std::stringstream buffer;
@@ -1662,7 +1696,7 @@ namespace clib {
         return false;
     }
 
-    bool cjsruntime::get_file(std::string &filename, std::string &content) const {
+    bool cjsruntime::get_file(std::string& filename, std::string& content) const {
         if (filename.empty())
             return false;
         if (check_file(ROOT_DIR + paths.back() + filename, content)) {
@@ -1678,52 +1712,51 @@ namespace clib {
         return false;
     }
 
-    bool cjsruntime::to_number(const js_value::ref &obj, double &d) {
+    bool cjsruntime::to_number(const js_value::ref& obj, double& d) {
         switch (obj->get_type()) {
-            case r_number:
-                d = JS_NUM(obj);
+        case r_number:
+            d = JS_NUM(obj);
+            return true;
+        case r_string: {
+            switch (JS_STR2NUM(obj, d)) {
+            case 0:
+            case 1:
+                d = 0.0;
                 return true;
-            case r_string: {
-                switch (JS_STR2NUM(obj, d)) {
-                    case 0:
-                    case 1:
-                        d = 0.0;
-                        return true;
-                    case 2:
-                        return true;
-                    case 3:
-                        return false;
-                    default:
-                        break;
-                }
-            }
-                break;
-            case r_boolean:
-                d = JS_BOOL(obj) ? 1.0 : 0.0;
-                break;
-            case r_function:
-            case r_object:
-            case r_null:
-            case r_undefined:
-                break;
+            case 2:
+                return true;
+            case 3:
+                return false;
             default:
-                assert(!"invalid number");
                 break;
+            }
+        }
+                     break;
+        case r_boolean:
+            d = JS_BOOL(obj) ? 1.0 : 0.0;
+            break;
+        case r_function:
+        case r_object:
+        case r_null:
+        case r_undefined:
+            break;
+        default:
+            assert(!"invalid number");
+            break;
         }
         return false;
     }
 
-    std::vector<js_value::weak_ref> cjsruntime::to_array(const js_value::ref &f) {
+    std::vector<js_value::weak_ref> cjsruntime::to_array(const js_value::ref& f) {
         std::vector<std::weak_ptr<js_value>> ret;
         if (f->get_type() != r_object) {
             return ret;
         }
-        const auto &obj = JS_OBJ(f);
-        auto l = obj.find("length");
-        if (l == obj.end()) {
+        const auto obj = JS_OBJ(f);
+        auto len = obj->get("length");
+        if (!len) {
             return ret;
         }
-        auto len = l->second.lock();
         auto length = 0;
         double d = 0.0;
         if (to_number(len, d)) {
@@ -1733,9 +1766,9 @@ namespace clib {
         for (auto i = 0; i < length; i++) {
             std::stringstream ss;
             ss << i;
-            auto ff = obj.find(ss.str());
-            if (ff != obj.end()) {
-                ret.push_back(ff->second);
+            auto ff = obj->get(ss.str());
+            if (ff) {
+                ret.push_back(ff);
             }
         }
         return ret;
@@ -1828,9 +1861,10 @@ namespace clib {
         CString stat;
         auto start = std::chrono::system_clock::now();
         using nlohmann::json;
-        auto json_name = ROOT_DIR + filename + BINARY_EXT;
+        auto file = ROOT_DIR + filename;
+        auto json_name = file + BINARY_EXT;
         std::vector<std::string> t1, t2;
-        if (get_fs_time(filename, t1) && get_fs_time(json_name, t2) && t1[2] > t2[2]) {
+        if (get_fs_time(file, t1) && get_fs_time(json_name, t2) && t1[2] > t2[2]) {
             return nullptr;
         }
 #if BINARY_VERBOSE
@@ -1888,43 +1922,48 @@ namespace clib {
 #endif
     }
 
-    void cjsruntime::reuse_value(const js_value::ref &v) {
+    void cjsruntime::reuse_value(const js_value::ref& v) {
         if (!v)
             return;
         v->__proto__.reset();
         switch (v->get_type()) {
-            case r_number:
-                reuse.reuse_numbers.push_back(
-                        std::dynamic_pointer_cast<jsv_number>(v));
-                break;
-            case r_string:
-                reuse.reuse_strings.push_back(
-                        std::dynamic_pointer_cast<jsv_string>(v)->clear());
-                break;
-            case r_boolean:
-                reuse.reuse_booleans.push_back(
-                        std::dynamic_pointer_cast<jsv_boolean>(v));
-                break;
-            case r_object:
-                reuse.reuse_objects.push_back(
-                        std::dynamic_pointer_cast<jsv_object>(v)->clear());
-                break;
-            case r_function:
-                reuse.reuse_functions.push_back(
-                        std::dynamic_pointer_cast<jsv_function>(v)->clear2());
-                break;
-            default:
-                break;
+        case r_number:
+            reuse.reuse_numbers.push_back(
+                std::dynamic_pointer_cast<jsv_number>(v));
+            break;
+        case r_string:
+            reuse.reuse_strings.push_back(
+                std::dynamic_pointer_cast<jsv_string>(v)->clear());
+            break;
+        case r_boolean:
+            reuse.reuse_booleans.push_back(
+                std::dynamic_pointer_cast<jsv_boolean>(v));
+            break;
+        case r_object:
+            reuse.reuse_objects.push_back(
+                std::dynamic_pointer_cast<jsv_object>(v)->clear());
+            break;
+        case r_function:
+            reuse.reuse_functions.push_back(
+                std::dynamic_pointer_cast<jsv_function>(v)->clear2());
+            break;
+        case r_regex:
+            reuse.reuse_regexes.push_back(
+                std::dynamic_pointer_cast<jsv_regexp>(v)->clear2());
+            break;
+        default:
+            break;
         }
     }
 
-    cjs_function::ref cjsruntime::new_stack(const js_sym_code_t::ref &code) {
+    cjs_function::ref cjsruntime::new_stack(const js_sym_code_t::ref& code) {
         if (reuse_stack.empty()) {
             auto st = std::make_shared<cjs_function>(code, *this);
             st->envs = new_object();
             st->_this = stack.front()->envs;
             return st;
-        } else {
+        }
+        else {
             auto st = reuse_stack.back();
             st->envs = new_object();
             reuse_stack.pop_back();
@@ -1933,13 +1972,14 @@ namespace clib {
         }
     }
 
-    cjs_function::ref cjsruntime::new_stack(const cjs_function_info::ref &code) {
+    cjs_function::ref cjsruntime::new_stack(const cjs_function_info::ref& code) {
         if (reuse_stack.empty()) {
             auto st = std::make_shared<cjs_function>(code);
             st->envs = new_object();
             st->_this = stack.front()->envs;
             return st;
-        } else {
+        }
+        else {
             auto st = reuse_stack.back();
             st->envs = new_object();
             reuse_stack.pop_back();
@@ -1948,7 +1988,7 @@ namespace clib {
         }
     }
 
-    void cjsruntime::delete_stack(const cjs_function::ref &f) {
+    void cjsruntime::delete_stack(const cjs_function::ref& f) {
         if (f == permanents.default_stack) {
             f->name = "<default>";
             f->ret_value.reset();
@@ -1960,15 +2000,15 @@ namespace clib {
 
     void cjsruntime::gc() {
         permanents.global_env->mark(0);
-        std::for_each(objs.begin(), objs.end(), [](auto &x) { x->mark(0); });
-        for (const auto &s : stack) {
-            const auto &st = s->stack;
-            const auto &ret = s->ret_value.lock();
-            const auto &th = s->_this.lock();
-            const auto &env = s->envs.lock();
-            const auto &closure = s->closure.lock();
-            const auto &tr = s->trys;
-            for (const auto &s2 : st) {
+        std::for_each(objs.begin(), objs.end(), [](auto& x) { x->mark(0); });
+        for (const auto& s : stack) {
+            const auto& st = s->stack;
+            const auto& ret = s->ret_value.lock();
+            const auto& th = s->_this.lock();
+            const auto& env = s->envs.lock();
+            const auto& closure = s->closure.lock();
+            const auto& tr = s->trys;
+            for (const auto& s2 : st) {
                 if (s2.lock())
                     s2.lock()->mark(1);
             }
@@ -1979,14 +2019,14 @@ namespace clib {
                 th->mark(3);
             if (ret)
                 th->mark(4);
-            for (const auto &s2 : tr) {
+            for (const auto& s2 : tr) {
                 if (s2->obj.lock())
                     s2->obj.lock()->mark(7);
             }
         }
-        for (const auto &s : timeout.ids) {
+        for (const auto& s : timeout.ids) {
             s.second->func->mark(5);
-            for (const auto &s2 : s.second->args) {
+            for (const auto& s2 : s.second->args) {
                 s2.lock()->mark(6);
             }
         }
@@ -2003,7 +2043,8 @@ namespace clib {
                     reuse_value(*i);
                 }
                 i = objs.erase(i);
-            } else
+            }
+            else
                 i++;
         }
 #if DUMP_STEP
@@ -2014,7 +2055,7 @@ namespace clib {
     jsv_number::ref cjsruntime::_new_number(double n, uint32_t attr) {
         auto s = std::make_shared<jsv_number>(n);
         if (attr & js_value::at_refs) {
-            attr &= (uint32_t) ~js_value::at_refs;
+            attr &= (uint32_t)~js_value::at_refs;
             permanents.refs.push_back(s);
         }
         if (attr > 0U) s->attr = attr;
@@ -2022,10 +2063,10 @@ namespace clib {
         return s;
     }
 
-    jsv_string::ref cjsruntime::_new_string(const std::string &str, uint32_t attr) {
+    jsv_string::ref cjsruntime::_new_string(const std::string& str, uint32_t attr) {
         auto s = std::make_shared<jsv_string>(str);
         if (attr & js_value::at_refs) {
-            attr &= (uint32_t) ~js_value::at_refs;
+            attr &= (uint32_t)~js_value::at_refs;
             permanents.refs.push_back(s);
         }
         if (attr > 0U) s->attr = attr;
@@ -2036,7 +2077,7 @@ namespace clib {
     jsv_boolean::ref cjsruntime::_new_boolean(bool b, uint32_t attr) {
         auto s = std::make_shared<jsv_boolean>(b);
         if (attr & js_value::at_refs) {
-            attr &= (uint32_t) ~js_value::at_refs;
+            attr &= (uint32_t)~js_value::at_refs;
             permanents.refs.push_back(s);
         }
         if (attr > 0U) s->attr = attr;
@@ -2047,7 +2088,7 @@ namespace clib {
     jsv_object::ref cjsruntime::_new_object(uint32_t attr) {
         auto s = std::make_shared<jsv_object>();
         if (attr & js_value::at_refs) {
-            attr &= (uint32_t) ~js_value::at_refs;
+            attr &= (uint32_t)~js_value::at_refs;
             permanents.refs.push_back(s);
         }
         if (attr > 0U) s->attr = attr;
@@ -2058,18 +2099,19 @@ namespace clib {
     jsv_function::ref cjsruntime::_new_function(jsv_object::ref proto, uint32_t attr) {
         auto s = std::make_shared<jsv_function>();
         if (attr & js_value::at_refs) {
-            attr &= (uint32_t) ~js_value::at_refs;
+            attr &= (uint32_t)~js_value::at_refs;
             permanents.refs.push_back(s);
         }
         if (attr > 0U) s->attr = attr;
         s->__proto__ = permanents._proto_function;
         if (proto) {
-            proto->obj["constructor"] = s;
-            s->obj["prototype"] = proto;
-        } else {
+            proto->add("constructor", s);
+            s->add("prototype", proto);
+        }
+        else {
             auto prototype = _new_object(js_value::at_refs);
-            prototype->obj["constructor"] = s;
-            s->obj["prototype"] = prototype;
+            prototype->add("constructor", s);
+            s->add("prototype", prototype);
         }
         return s;
     }
@@ -2077,7 +2119,7 @@ namespace clib {
     jsv_null::ref cjsruntime::_new_null(uint32_t attr) {
         auto s = std::make_shared<jsv_null>();
         if (attr & js_value::at_refs) {
-            attr &= (uint32_t) ~js_value::at_refs;
+            attr &= (uint32_t)~js_value::at_refs;
             permanents.refs.push_back(s);
         }
         if (attr > 0U) s->attr = attr;
@@ -2088,7 +2130,7 @@ namespace clib {
     jsv_undefined::ref cjsruntime::_new_undefined(uint32_t attr) {
         auto s = std::make_shared<jsv_undefined>();
         if (attr & js_value::at_refs) {
-            attr &= (uint32_t) ~js_value::at_refs;
+            attr &= (uint32_t)~js_value::at_refs;
             permanents.refs.push_back(s);
         }
         if (attr > 0U) s->attr = attr;
@@ -2096,32 +2138,43 @@ namespace clib {
         return s;
     }
 
-    js_value::ref cjsruntime::binop(int code, const js_value::ref &_op1, const js_value::ref &_op2, int *r) {
+    jsv_regexp::ref cjsruntime::_new_regex(uint32_t attr) {
+        auto s = std::make_shared<jsv_regexp>();
+        if (attr & js_value::at_refs) {
+            attr &= (uint32_t)~js_value::at_refs;
+            permanents.refs.push_back(s);
+        }
+        if (attr > 0U) s->attr = attr;
+        s->__proto__ = permanents._proto_regexp;
+        return s;
+    }
+
+    js_value::ref cjsruntime::binop(int code, const js_value::ref& _op1, const js_value::ref& _op2, int* r) {
         assert(r);
         auto conv = js_value::conv_number;
         switch (code) {
-            case COMPARE_EQUAL:
-            case COMPARE_FEQUAL:
-            case COMPARE_NOT_EQUAL:
-            case COMPARE_FNOT_EQUAL: {
-                if (!_op1->is_primitive() && !_op2->is_primitive()) {
-                    switch (code) {
-                        case COMPARE_EQUAL:
-                            return new_boolean(_op1 == _op2);
-                        case COMPARE_NOT_EQUAL:
-                            return new_boolean(_op1 != _op2);
-                        case COMPARE_FEQUAL:
-                            return new_boolean(_op1 == _op2);
-                        case COMPARE_FNOT_EQUAL:
-                            return new_boolean(_op1 != _op2);
-                        default:
-                            break;
-                    }
+        case COMPARE_EQUAL:
+        case COMPARE_FEQUAL:
+        case COMPARE_NOT_EQUAL:
+        case COMPARE_FNOT_EQUAL: {
+            if (!_op1->is_primitive() && !_op2->is_primitive()) {
+                switch (code) {
+                case COMPARE_EQUAL:
+                    return new_boolean(_op1 == _op2);
+                case COMPARE_NOT_EQUAL:
+                    return new_boolean(_op1 != _op2);
+                case COMPARE_FEQUAL:
+                    return new_boolean(_op1 == _op2);
+                case COMPARE_FNOT_EQUAL:
+                    return new_boolean(_op1 != _op2);
+                default:
+                    break;
                 }
             }
-                break;
-            default:
-                break;
+        }
+                               break;
+        default:
+            break;
         }
         auto op1 = _op1->to_primitive(*this, js_value::conv_default, r);
         assert(op1);
@@ -2130,215 +2183,217 @@ namespace clib {
         if (code == BINARY_ADD) {
             if (op1->get_type() == r_string || op2->get_type() == r_string)
                 conv = js_value::conv_string;
-        } else {
+        }
+        else {
             switch (code) {
-                case COMPARE_LESS:
-                case COMPARE_LESS_EQUAL:
-                case COMPARE_GREATER:
-                case COMPARE_GREATER_EQUAL:
-                    if (op1->get_type() == r_string && op2->get_type() == r_string)
-                        conv = js_value::conv_string;
-                    break;
-                default:
-                    break;
+            case COMPARE_LESS:
+            case COMPARE_LESS_EQUAL:
+            case COMPARE_GREATER:
+            case COMPARE_GREATER_EQUAL:
+                if (op1->get_type() == r_string && op2->get_type() == r_string)
+                    conv = js_value::conv_string;
+                break;
+            default:
+                break;
             }
         }
         if (conv == js_value::conv_string) {
             auto s1 = op1->to_string(this, op1->get_type() == r_number ? 1 : 0);
             auto s2 = op2->to_string(this, op2->get_type() == r_number ? 1 : 0);
             switch (code) {
-                case COMPARE_LESS:
-                    return new_boolean(s1 < s2);
-                case COMPARE_LESS_EQUAL:
-                    return new_boolean(s1 <= s2);
-                case COMPARE_GREATER:
-                    return new_boolean(s1 > s2);
-                case COMPARE_GREATER_EQUAL:
-                    return new_boolean(s1 >= s2);
-                case BINARY_ADD:
-                    return new_string(s1 + s2);
-                default:
-                    assert(!"invalid binop type");
-                    break;
+            case COMPARE_LESS:
+                return new_boolean(s1 < s2);
+            case COMPARE_LESS_EQUAL:
+                return new_boolean(s1 <= s2);
+            case COMPARE_GREATER:
+                return new_boolean(s1 > s2);
+            case COMPARE_GREATER_EQUAL:
+                return new_boolean(s1 >= s2);
+            case BINARY_ADD:
+                return new_string(s1 + s2);
+            default:
+                assert(!"invalid binop type");
+                break;
             }
-        } else {
+        }
+        else {
             double s1, s2;
             switch (code) {
-                case COMPARE_LESS:
-                    s1 = op1->to_number(this);
-                    s2 = op2->to_number(this);
-                    return new_boolean(s1 < s2);
-                case COMPARE_LESS_EQUAL:
-                    s1 = op1->to_number(this);
-                    s2 = op2->to_number(this);
-                    return new_boolean(s1 <= s2);
-                case COMPARE_GREATER:
-                    s1 = op1->to_number(this);
-                    s2 = op2->to_number(this);
-                    return new_boolean(s1 > s2);
-                case COMPARE_GREATER_EQUAL:
-                    s1 = op1->to_number(this);
-                    s2 = op2->to_number(this);
-                    return new_boolean(s1 >= s2);
-                case COMPARE_EQUAL: {
-                    if (op1->get_type() != op2->get_type()) {
-                        if (op1->get_type() == r_null) {
-                            return new_boolean(op2->get_type() == r_undefined);
-                        }
-                        if (op2->get_type() == r_null) {
-                            return new_boolean(op1->get_type() == r_undefined);
-                        }
-                        return new_boolean(op1->to_number(this) == op2->to_number(this));
+            case COMPARE_LESS:
+                s1 = op1->to_number(this);
+                s2 = op2->to_number(this);
+                return new_boolean(s1 < s2);
+            case COMPARE_LESS_EQUAL:
+                s1 = op1->to_number(this);
+                s2 = op2->to_number(this);
+                return new_boolean(s1 <= s2);
+            case COMPARE_GREATER:
+                s1 = op1->to_number(this);
+                s2 = op2->to_number(this);
+                return new_boolean(s1 > s2);
+            case COMPARE_GREATER_EQUAL:
+                s1 = op1->to_number(this);
+                s2 = op2->to_number(this);
+                return new_boolean(s1 >= s2);
+            case COMPARE_EQUAL: {
+                if (op1->get_type() != op2->get_type()) {
+                    if (op1->get_type() == r_null) {
+                        return new_boolean(op2->get_type() == r_undefined);
                     }
-                    switch (op1->get_type()) {
-                        case r_string:
-                            return new_boolean(JS_STR(op1) == JS_STR(op2));
-                        case r_number:
-                            return new_boolean(JS_NUM(op1) == JS_NUM(op2));
-                        default:
-                            return new_boolean(op1 == op2);
+                    if (op2->get_type() == r_null) {
+                        return new_boolean(op1->get_type() == r_undefined);
                     }
+                    return new_boolean(op1->to_number(this) == op2->to_number(this));
                 }
-                case COMPARE_NOT_EQUAL: {
-                    if (op1->get_type() != op2->get_type()) {
-                        if (op1->get_type() == r_null) {
-                            return new_boolean(!(op2->get_type() == r_undefined));
-                        }
-                        if (op2->get_type() == r_null) {
-                            return new_boolean(!(op1->get_type() == r_undefined));
-                        }
-                        return new_boolean(op1->to_number(this) != op2->to_number(this));
-                    }
-                    switch (op1->get_type()) {
-                        case r_string:
-                            return new_boolean(JS_STR(op1) != JS_STR(op2));
-                        case r_number:
-                            return new_boolean(JS_NUM(op1) != JS_NUM(op2));
-                        default:
-                            return new_boolean(op1 != op2);
-                    }
-                }
-                case COMPARE_FEQUAL: {
-                    if (_op1->get_type() != _op2->get_type()) {
-                        return new_boolean(false);
-                    }
-                    switch (op1->get_type()) {
-                        case r_string:
-                            return new_boolean(JS_STR(op1) == JS_STR(op2));
-                        case r_number:
-                            return new_boolean(JS_NUM(op1) == JS_NUM(op2));
-                        default:
-                            return new_boolean(op1 == op2);
-                    }
-                }
-                case COMPARE_FNOT_EQUAL: {
-                    if (_op1->get_type() != _op2->get_type()) {
-                        return new_boolean(true);
-                    }
-                    switch (op1->get_type()) {
-                        case r_string:
-                            return new_boolean(JS_STR(op1) != JS_STR(op2));
-                        case r_number:
-                            return new_boolean(JS_NUM(op1) != JS_NUM(op2));
-                        default:
-                            return new_boolean(op1 != op2);
-                    }
-                }
-                case BINARY_POWER:
-                    s1 = op1->to_number(this);
-                    s2 = op2->to_number(this);
-                    if (s2 == 0)
-                        return new_number(1.0);
-                    if ((s1 == 1.0 || s1 == -1.0) && std::isinf(s2))
-                        return new_number(NAN);
-                    return new_number(pow(s1, s2));
-                case BINARY_MULTIPLY:
-                    s1 = op1->to_number(this);
-                    s2 = op2->to_number(this);
-                    return new_number(s1 * s2);
-                case BINARY_MODULO:
-                    s1 = op1->to_number(this);
-                    s2 = op2->to_number(this);
-                    if (std::isinf(s1) || s2 == 0)
-                        return new_number(NAN);
-                    if (std::isinf(s2))
-                        return new_number(s1);
-                    if (s1 == 0)
-                        return new_number(std::isnan(s2) ? NAN : s1);
-                    return new_number(fmod(s1, s2));
-                case BINARY_ADD:
-                    s1 = op1->to_number(this);
-                    s2 = op2->to_number(this);
-                    return new_number(s1 + s2);
-                case BINARY_SUBTRACT:
-                    s1 = op1->to_number(this);
-                    s2 = op2->to_number(this);
-                    return new_number(s1 - s2);
-                case BINARY_TRUE_DIVIDE:
-                    s1 = op1->to_number(this);
-                    s2 = op2->to_number(this);
-                    return new_number(s1 / s2);
-                case BINARY_LSHIFT: {
-                    s1 = op1->to_number(this);
-                    s2 = op2->to_number(this);
-                    if (s2 == 0.0)
-                        return new_number(fix(s1) == 0.0 ? 0.0 : fix(s1));
-                    auto a = int(fix(s1));
-                    auto b = fix(s2);
-                    auto c = b > 0 ? (uint32_t(b) % 32) : uint32_t(int(fmod(b, 32)) + 32);
-                    return new_number(double(int(a << c)));
-                }
-                case BINARY_RSHIFT: {
-                    s1 = op1->to_number(this);
-                    s2 = op2->to_number(this);
-                    if (s2 == 0.0)
-                        return new_number(fix(s1) == 0.0 ? 0.0 : fix(s1));
-                    auto a = int(fix(s1));
-                    auto b = fix(s2);
-                    auto c = b > 0 ? (uint32_t(b) % 32) : uint32_t(int(fmod(b, 32)) + 32);
-                    return new_number(double(int(a >> c)));
-                }
-                case BINARY_URSHIFT: {
-                    s1 = op1->to_number(this);
-                    s2 = op2->to_number(this);
-                    if (s2 == 0.0)
-                        return new_number(fix(s1) == 0.0 ? 0.0 : uint32_t(fix(s1)));
-                    auto a = uint32_t(fix(s1));
-                    auto b = fix(s2);
-                    auto c = b > 0 ? (uint32_t(b) % 32) : uint32_t(int(fmod(b, 32)) + 32);
-                    return new_number(double(uint32_t(a >> c)));
-                }
-                case BINARY_AND: {
-                    s1 = op1->to_number(this);
-                    s2 = op2->to_number(this);
-                    auto a = uint32_t(fix(s1));
-                    auto b = uint32_t(fix(s2));
-                    return new_number(double(int(a & b)));
-                }
-                case BINARY_XOR: {
-                    s1 = op1->to_number(this);
-                    s2 = op2->to_number(this);
-                    auto a = uint32_t(fix(s1));
-                    auto b = uint32_t(fix(s2));
-                    return new_number(double(int(a ^ b)));
-                }
-                case BINARY_OR: {
-                    s1 = op1->to_number(this);
-                    s2 = op2->to_number(this);
-                    auto a = uint32_t(fix(s1));
-                    auto b = uint32_t(fix(s2));
-                    return new_number(double(int(a | b)));
-                }
+                switch (op1->get_type()) {
+                case r_string:
+                    return new_boolean(JS_STR(op1) == JS_STR(op2));
+                case r_number:
+                    return new_boolean(JS_NUM(op1) == JS_NUM(op2));
                 default:
-                    assert(!"invalid binop type");
-                    break;
+                    return new_boolean(op1 == op2);
+                }
+            }
+            case COMPARE_NOT_EQUAL: {
+                if (op1->get_type() != op2->get_type()) {
+                    if (op1->get_type() == r_null) {
+                        return new_boolean(!(op2->get_type() == r_undefined));
+                    }
+                    if (op2->get_type() == r_null) {
+                        return new_boolean(!(op1->get_type() == r_undefined));
+                    }
+                    return new_boolean(op1->to_number(this) != op2->to_number(this));
+                }
+                switch (op1->get_type()) {
+                case r_string:
+                    return new_boolean(JS_STR(op1) != JS_STR(op2));
+                case r_number:
+                    return new_boolean(JS_NUM(op1) != JS_NUM(op2));
+                default:
+                    return new_boolean(op1 != op2);
+                }
+            }
+            case COMPARE_FEQUAL: {
+                if (_op1->get_type() != _op2->get_type()) {
+                    return new_boolean(false);
+                }
+                switch (op1->get_type()) {
+                case r_string:
+                    return new_boolean(JS_STR(op1) == JS_STR(op2));
+                case r_number:
+                    return new_boolean(JS_NUM(op1) == JS_NUM(op2));
+                default:
+                    return new_boolean(op1 == op2);
+                }
+            }
+            case COMPARE_FNOT_EQUAL: {
+                if (_op1->get_type() != _op2->get_type()) {
+                    return new_boolean(true);
+                }
+                switch (op1->get_type()) {
+                case r_string:
+                    return new_boolean(JS_STR(op1) != JS_STR(op2));
+                case r_number:
+                    return new_boolean(JS_NUM(op1) != JS_NUM(op2));
+                default:
+                    return new_boolean(op1 != op2);
+                }
+            }
+            case BINARY_POWER:
+                s1 = op1->to_number(this);
+                s2 = op2->to_number(this);
+                if (s2 == 0)
+                    return new_number(1.0);
+                if ((s1 == 1.0 || s1 == -1.0) && std::isinf(s2))
+                    return new_number(NAN);
+                return new_number(pow(s1, s2));
+            case BINARY_MULTIPLY:
+                s1 = op1->to_number(this);
+                s2 = op2->to_number(this);
+                return new_number(s1 * s2);
+            case BINARY_MODULO:
+                s1 = op1->to_number(this);
+                s2 = op2->to_number(this);
+                if (std::isinf(s1) || s2 == 0)
+                    return new_number(NAN);
+                if (std::isinf(s2))
+                    return new_number(s1);
+                if (s1 == 0)
+                    return new_number(std::isnan(s2) ? NAN : s1);
+                return new_number(fmod(s1, s2));
+            case BINARY_ADD:
+                s1 = op1->to_number(this);
+                s2 = op2->to_number(this);
+                return new_number(s1 + s2);
+            case BINARY_SUBTRACT:
+                s1 = op1->to_number(this);
+                s2 = op2->to_number(this);
+                return new_number(s1 - s2);
+            case BINARY_TRUE_DIVIDE:
+                s1 = op1->to_number(this);
+                s2 = op2->to_number(this);
+                return new_number(s1 / s2);
+            case BINARY_LSHIFT: {
+                s1 = op1->to_number(this);
+                s2 = op2->to_number(this);
+                if (s2 == 0.0)
+                    return new_number(fix(s1) == 0.0 ? 0.0 : fix(s1));
+                auto a = int(fix(s1));
+                auto b = fix(s2);
+                auto c = b > 0 ? (uint32_t(b) % 32) : uint32_t(int(fmod(b, 32)) + 32);
+                return new_number(double(int(a << c)));
+            }
+            case BINARY_RSHIFT: {
+                s1 = op1->to_number(this);
+                s2 = op2->to_number(this);
+                if (s2 == 0.0)
+                    return new_number(fix(s1) == 0.0 ? 0.0 : fix(s1));
+                auto a = int(fix(s1));
+                auto b = fix(s2);
+                auto c = b > 0 ? (uint32_t(b) % 32) : uint32_t(int(fmod(b, 32)) + 32);
+                return new_number(double(int(a >> c)));
+            }
+            case BINARY_URSHIFT: {
+                s1 = op1->to_number(this);
+                s2 = op2->to_number(this);
+                if (s2 == 0.0)
+                    return new_number(fix(s1) == 0.0 ? 0.0 : uint32_t(fix(s1)));
+                auto a = uint32_t(fix(s1));
+                auto b = fix(s2);
+                auto c = b > 0 ? (uint32_t(b) % 32) : uint32_t(int(fmod(b, 32)) + 32);
+                return new_number(double(uint32_t(a >> c)));
+            }
+            case BINARY_AND: {
+                s1 = op1->to_number(this);
+                s2 = op2->to_number(this);
+                auto a = uint32_t(fix(s1));
+                auto b = uint32_t(fix(s2));
+                return new_number(double(int(a & b)));
+            }
+            case BINARY_XOR: {
+                s1 = op1->to_number(this);
+                s2 = op2->to_number(this);
+                auto a = uint32_t(fix(s1));
+                auto b = uint32_t(fix(s2));
+                return new_number(double(int(a ^ b)));
+            }
+            case BINARY_OR: {
+                s1 = op1->to_number(this);
+                s2 = op2->to_number(this);
+                auto a = uint32_t(fix(s1));
+                auto b = uint32_t(fix(s2));
+                return new_number(double(int(a | b)));
+            }
+            default:
+                assert(!"invalid binop type");
+                break;
             }
         }
         assert(!"invalid binop type");
         return new_number(NAN);
     }
 
-    void cjsruntime::print(const js_value::ref &value, int level, std::ostream &os) {
+    void cjsruntime::print(const js_value::ref& value, int level, std::ostream& os) {
         if (value == nullptr) {
             os << "undefined" << std::endl;
             return;
@@ -2350,60 +2405,62 @@ namespace clib {
         auto type = value->get_type();
         os << std::setfill(' ') << std::setw(level) << "";
         switch (type) {
-            case r_number: {
-                auto n = std::dynamic_pointer_cast<jsv_number>(value);
-                os << "number: " << std::fixed << n->number << std::endl;
+        case r_number: {
+            auto n = std::dynamic_pointer_cast<jsv_number>(value);
+            os << "number: " << std::fixed << n->number << std::endl;
+        }
+                     break;
+        case r_string: {
+            auto n = std::dynamic_pointer_cast<jsv_string>(value);
+            os << "string: " << n->str << std::endl;
+        }
+                     break;
+        case r_boolean: {
+            auto n = std::dynamic_pointer_cast<jsv_boolean>(value);
+            os << "boolean: " << std::boolalpha << n->b << std::endl;
+        }
+                      break;
+        case r_object: {
+            auto n = std::dynamic_pointer_cast<jsv_object>(value);
+            if (!n->special.empty()) {
+                os << "object: [[primitive]] " << n->to_string(nullptr, 0) << std::endl;
             }
-                break;
-            case r_string: {
-                auto n = std::dynamic_pointer_cast<jsv_string>(value);
-                os << "string: " << n->str << std::endl;
-            }
-                break;
-            case r_boolean: {
-                auto n = std::dynamic_pointer_cast<jsv_boolean>(value);
-                os << "boolean: " << std::boolalpha << n->b << std::endl;
-            }
-                break;
-            case r_object: {
-                auto n = std::dynamic_pointer_cast<jsv_object>(value);
-                if (!n->special.empty()) {
-                    os << "object: [[primitive]] " << n->to_string(nullptr, 0) << std::endl;
-                } else {
-                    os << "object: " << std::endl;
-                    for (const auto &s : n->obj) {
-                        os << std::setfill(' ') << std::setw(level) << "";
-                        os << s.first << ": " << std::endl;
-                        print(s.second.lock(), level + 1, os);
-                    }
+            else {
+                os << "object: " << std::endl;
+                for (const auto& s : n->get_keys()) {
+                    os << std::setfill(' ') << std::setw(level) << "";
+                    os << s << ": " << std::endl;
+                    print(n->get(s), level + 1, os);
                 }
             }
-                break;
-            case r_function: {
-                auto n = std::dynamic_pointer_cast<jsv_function>(value);
-                if (n->builtin)
-                    os << "function: builtin " << n->name << std::endl;
-                else if (n->code) {
-                    os << "function: " << n->code->debugName << " ";
-                    os << n->code->text << std::endl;;
-                    if (n->closure.lock()) {
-                        print(n->closure.lock(), level + 1, os);
-                    }
-                } else {
-                    os << "function: (cleaned) " << n->name << std::endl;
+        }
+                     break;
+        case r_function: {
+            auto n = std::dynamic_pointer_cast<jsv_function>(value);
+            if (n->builtin)
+                os << "function: builtin " << n->name << std::endl;
+            else if (n->code) {
+                os << "function: " << n->code->debugName << " ";
+                os << n->code->text << std::endl;;
+                if (n->closure.lock()) {
+                    print(n->closure.lock(), level + 1, os);
                 }
             }
-                break;
-            case r_null: {
-                os << "null" << std::endl;
+            else {
+                os << "function: (cleaned) " << n->name << std::endl;
             }
-                break;
-            case r_undefined: {
-                os << "undefined" << std::endl;
-            }
-                break;
-            default:
-                break;
+        }
+                       break;
+        case r_null: {
+            os << "null" << std::endl;
+        }
+                   break;
+        case r_undefined: {
+            os << "undefined" << std::endl;
+        }
+                        break;
+        default:
+            break;
         }
     }
 }

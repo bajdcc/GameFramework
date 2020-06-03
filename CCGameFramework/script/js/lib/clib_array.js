@@ -24,7 +24,7 @@ Array.prototype.slice = function (n) {
 Array.prototype.concat = function (...args) {
     var _this = this;
     var unbox = (arr, o) => {
-        if (o === null || typeof o === "undefined")
+        if (o === null || o === undefined)
             return;
         switch (typeof o) {
             case "number":

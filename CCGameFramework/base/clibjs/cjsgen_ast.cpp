@@ -1464,8 +1464,10 @@ namespace clib {
         gen.enter(sp_try, finally_body);
         try_body->gen_rvalue(gen);
         gen.leave();
-        gen.emit(nullptr, POP_FINALLY);
+        gen.emit(nullptr, EXIT_FINALLY);
         if (catch_body) {
+            auto L2 = gen.code_length();
+            gen.emit(nullptr, JUMP_FORWARD, 0);
             gen.edit(L1, 1, gen.code_length() - L1);
             gen.enter(sp_catch, finally_body);
             if (var) {
@@ -1476,7 +1478,9 @@ namespace clib {
             // CATCH
             catch_body->gen_rvalue(gen);
             gen.leave();
-            gen.emit(nullptr, POP_FINALLY);
+            gen.edit(L2, 1, gen.code_length() - L2);
+            if (finally_body)
+                gen.emit(nullptr, EXIT_FINALLY);
         }
         // FINALLY
         if (finally_body) {

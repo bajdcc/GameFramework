@@ -99,7 +99,7 @@
     <PostBuildEvent>
       <Command>md "$(TargetDir)script"
 md "$(TargetDir)img"
-xcopy /r /y /e /d "$(ProjectDir)script" "$(TargetDir)script"
+xcopy /r /y /e /d /EXCLUDE:$(ProjectDir)script\exclude.txt "$(ProjectDir)script" "$(TargetDir)script"
 xcopy /r /y /e /d "$(ProjectDir)dll" "$(TargetDir)"
 xcopy /r /y /e /d "$(ProjectDir)img" "$(TargetDir)img"</Command>
     </PostBuildEvent>
@@ -121,7 +121,7 @@ xcopy /r /y /e /d "$(ProjectDir)img" "$(TargetDir)img"</Command>
     <PostBuildEvent>
       <Command>md "$(TargetDir)script"
 md "$(TargetDir)img"
-xcopy /r /y /e /d "$(ProjectDir)script" "$(TargetDir)script"
+xcopy /r /y /e /d /EXCLUDE:$(ProjectDir)script\exclude.txt "$(ProjectDir)script" "$(TargetDir)script"
 xcopy /r /y /e /d "$(ProjectDir)dll" "$(TargetDir)"
 xcopy /r /y /e /d "$(ProjectDir)img" "$(TargetDir)img"</Command>
     </PostBuildEvent>
@@ -148,7 +148,7 @@ xcopy /r /y /e /d "$(ProjectDir)img" "$(TargetDir)img"</Command>
     <PostBuildEvent>
       <Command>md "$(TargetDir)script"
 md "$(TargetDir)img"
-xcopy /r /y /e /d "$(ProjectDir)script" "$(TargetDir)script"
+xcopy /r /y /e /d /EXCLUDE:$(ProjectDir)script\exclude.txt "$(ProjectDir)script" "$(TargetDir)script"
 xcopy /r /y /e /d "$(ProjectDir)dll" "$(TargetDir)"
 xcopy /r /y /e /d "$(ProjectDir)img" "$(TargetDir)img"</Command>
     </PostBuildEvent>
@@ -174,7 +174,7 @@ xcopy /r /y /e /d "$(ProjectDir)img" "$(TargetDir)img"</Command>
     <PostBuildEvent>
       <Command>md "$(TargetDir)script"
 md "$(TargetDir)img"
-xcopy /r /y /e /d "$(ProjectDir)script" "$(TargetDir)script"
+xcopy /r /y /e /d /EXCLUDE:$(ProjectDir)script\exclude.txt "$(ProjectDir)script" "$(TargetDir)script"
 xcopy /r /y /e /d "$(ProjectDir)dll" "$(TargetDir)"
 xcopy /r /y /e /d "$(ProjectDir)img" "$(TargetDir)img"</Command>
     </PostBuildEvent>
@@ -808,11 +808,14 @@ xcopy /r /y /e /d "$(ProjectDir)img" "$(TargetDir)img"</Command>
     <None Include="script\js\lib\clib_array.js" />
     <None Include="script\js\lib\clib_error.js" />
     <None Include="script\js\lib\clib_function.js" />
+    <None Include="script\js\lib\clib_JSON.js" />
+    <None Include="script\js\lib\clib_object.js" />
     <None Include="script\js\src\main.js" />
     <None Include="script\js\src\test_1.js" />
     <None Include="script\js\src\test_2.js" />
     <None Include="script\js\src\test_3.js" />
     <None Include="script\js\src\test_4.js" />
+    <None Include="script\js\src\test_5.js" />
     <None Include="script\vfs\.gitignore" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

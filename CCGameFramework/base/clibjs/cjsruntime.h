@@ -20,10 +20,11 @@
 #define JS_STR(op) (std::dynamic_pointer_cast<jsv_string>(op)->str)
 #define JS_STR2NUM(op, d) std::dynamic_pointer_cast<jsv_string>(op)->to_number(d)
 #define JS_STRF(op) (std::dynamic_pointer_cast<jsv_function>(op)->code->text)
-#define JS_OBJ(op) (std::dynamic_pointer_cast<jsv_object>(op)->obj)
 #define JS_O(op) (std::dynamic_pointer_cast<jsv_object>(op))
+#define JS_OBJ(op) JS_O(op)
 #define JS_FUN(op) (std::dynamic_pointer_cast<jsv_function>(op))
 #define JS_V(op) (std::dynamic_pointer_cast<js_value>(op))
+#define JS_RE(op) (std::dynamic_pointer_cast<jsv_regexp>(op))
 
 namespace clib {
 
@@ -51,6 +52,8 @@ namespace clib {
 
     class cjs_function_info;
 
+    class jsv_regexp;
+
     class js_value_new {
     public:
         virtual std::shared_ptr<jsv_number> new_number(double n) = 0;
@@ -63,6 +66,7 @@ namespace clib {
         virtual std::shared_ptr<jsv_undefined> new_undefined() = 0;
         virtual std::shared_ptr<cjs_function> new_func(const std::shared_ptr<cjs_function_info> &code) = 0;
         virtual std::shared_ptr<jsv_object> new_array() = 0;
+        virtual std::shared_ptr<jsv_regexp> new_regexp() = 0;
         virtual std::shared_ptr<jsv_object> new_error(int) = 0;
         virtual int exec(const std::string &, const std::string &) = 0;
         virtual std::string get_stacktrace() const = 0;
@@ -176,14 +180,21 @@ namespace clib {
         js_value::ref unary_op(js_value_new &n, int code) override;
         bool to_bool() const override;
         void mark(int n) override;
-        js_value::ref get(const std::string &name) const;
+        js_value::ref gets(const std::string &name) const;
         bool is_primitive() const override;
         js_value::ref to_primitive(js_value_new &n, primitive_t, int *) override;
         std::string to_string(js_value_new *n, int hint) const override;
         double to_number(js_value_new *n) const override;
         ref clear();
-        std::unordered_map<std::string, js_value::weak_ref> obj;
         std::unordered_map<std::string, js_value::weak_ref> special;
+        const std::vector<std::string>& get_keys() const;
+        js_value::ref get(const std::string&) const;
+        void add(const std::string&, const js_value::weak_ref&);
+        void remove(const std::string&);
+        void copy_from(const jsv_object::ref&);
+    private:
+        std::unordered_map<std::string, js_value::weak_ref> obj;
+        std::vector<std::string> keys;
     };
 
     class jsv_null : public js_value {
@@ -263,6 +274,33 @@ namespace clib {
         std::vector<std::string> closure;
     };
 
+    class jsv_regexp : public jsv_object {
+    public:
+        using ref = std::shared_ptr<jsv_regexp>;
+        using weak_ref = std::weak_ptr<jsv_regexp>;
+        jsv_regexp() = default;
+        js_runtime_t get_type() override;
+        std::string to_string(js_value_new* n, int hint) const override;
+        ref clear2();
+        void init(const std::string& str, bool escape = false);
+        void init(const std::string& str, const std::string& flag);
+        bool test(const std::string& str);
+        std::string str_origin;
+        std::string str;
+        std::regex re_match;
+        std::regex re_test;
+        std::string error;
+    private:
+        enum flag_t {
+            _i = 1,
+            _g = 2,
+            _m = 4,
+        };
+        bool tested{ false };
+        int flag{ 0 };
+        static std::string DEFAULT_VALUE;
+    };
+
     struct sym_try_t {
         using ref = std::shared_ptr<sym_try_t>;
         size_t stack_size{0};
@@ -304,6 +342,7 @@ namespace clib {
         std::vector<jsv_boolean::ref> reuse_booleans;
         std::vector<jsv_object::ref> reuse_objects;
         std::vector<jsv_function::ref> reuse_functions;
+        std::vector<jsv_regexp::ref> reuse_regexes;
     };
 
     class cjsruntime : public js_value_new, public csemantic {
@@ -330,6 +369,7 @@ namespace clib {
         jsv_undefined::ref new_undefined() override;
         cjs_function::ref new_func(const cjs_function_info::ref &code) override;
         jsv_object::ref new_array() override;
+        jsv_regexp::ref new_regexp() override;
         jsv_object::ref new_error(int) override;
         int exec(const std::string &, const std::string &) override;
         std::string get_stacktrace() const override;
@@ -386,6 +426,7 @@ namespace clib {
         jsv_function::ref _new_function(jsv_object::ref proto, uint32_t attr = 0U);
         jsv_null::ref _new_null(uint32_t attr = 0U);
         jsv_undefined::ref _new_undefined(uint32_t attr = 0U);
+        jsv_regexp::ref _new_regex(uint32_t attr = 0U);
 
         static void print(const js_value::ref &value, int level, std::ostream &os);
 
@@ -439,6 +480,7 @@ namespace clib {
             jsv_object::ref _proto_object;
             jsv_function::ref _proto_object_hasOwnProperty;
             jsv_function::ref _proto_object_toString;
+            jsv_function::ref _proto_object_valueOf;
             jsv_object::ref _proto_string;
             jsv_object::ref _proto_root;
             // console
@@ -459,6 +501,10 @@ namespace clib {
             // array
             jsv_object::ref _proto_array;
             jsv_function::ref f_array;
+            // regexp
+            jsv_object::ref _proto_regexp;
+            jsv_function::ref f_regexp;
+            jsv_function::ref _proto_regexp_test;
             // error
             jsv_object::ref _proto_error;
             jsv_function::ref f_error;

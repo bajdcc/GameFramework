@@ -1247,5 +1247,8 @@
     <None Include="script\js\lib\clib_array.js" />
     <None Include="script\js\lib\clib_error.js" />
     <None Include="script\js\lib\clib_function.js" />
+    <None Include="script\js\src\test_5.js" />
+    <None Include="script\js\lib\clib_JSON.js" />
+    <None Include="script\js\lib\clib_object.js" />
   </ItemGroup>
 </Project>

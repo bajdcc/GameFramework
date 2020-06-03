@@ -651,6 +651,8 @@ namespace clib {
         void dump() const;
         void dump(js_sym_code_t::ref, bool print) const;
 
+        js_ast_node* conv2str(js_ast_node*);
+
     private:
         const std::string *text{nullptr};
         std::string filename;
@@ -659,6 +661,7 @@ namespace clib {
         std::vector<std::vector<js_sym_t::ref>> tmp;
         std::vector<js_sym_code_t::ref> codes;
         std::vector<js_sym_code_t::ref> funcs;
+        std::vector<std::string> reserveWords;
     };
 }
 

@@ -36,6 +36,7 @@ namespace clib {
                 std::make_tuple(K_DEFAULT, "default"),
                 std::make_tuple(K_CASE, "case"),
                 std::make_tuple(K_NULL, "null"),
+                std::make_tuple(K_UNDEFINED, "undefined"),
                 std::make_tuple(K_TRUE, "true"),
                 std::make_tuple(K_FALSE, "false"),
                 std::make_tuple(K_INSTANCEOF, "instanceof"),
@@ -524,7 +525,7 @@ namespace clib {
                     auto j = i + 1;
                     if (c1 == '/') { // '//'
                         // 寻找第一个换行符
-                        for (++j; text[j] != '\n' && text[j] != '\r'; j++);
+                        for (++j; text[j] != '\n' && text[j] != '\r' && text[j] != '\0'; j++);
                         auto u = alloc_unit(line, column, i, j);
                         u.t = COMMENT;
                         us.push_back(u);
@@ -537,6 +538,8 @@ namespace clib {
                         auto newline = 0;
                         for (++j;;) {
                             if (prev == '*' && text[j] == '/')
+                                break;
+                            if (text[j] == '\0')
                                 break;
                             prev = text[j++];
                             if (prev == '\n') {
