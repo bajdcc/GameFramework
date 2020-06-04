@@ -271,7 +271,6 @@ namespace clib {
                     ss << " ";
             }
             ss << std::endl;
-            auto s = ss.str();
             cjsgui::singleton().put_string(ss.str());
             func->stack.push_back(js.new_undefined());
             return 0;
@@ -288,7 +287,6 @@ namespace clib {
                     ss << " ";
             }
             ss << std::endl;
-            auto s = ss.str();
             cjsgui::singleton().put_string("\033FFF0000\033");
             cjsgui::singleton().put_string(ss.str());
             cjsgui::singleton().put_string("\033S4\033");
@@ -491,7 +489,7 @@ namespace clib {
             if (!regexp->error.empty()) {
                 std::stringstream ss;
                 ss << "throw new SyntaxError('Invalid regular expression: " << jsv_string::convert(regexp->str) << ": " << jsv_string::convert(regexp->error) << "')";
-                return js.exec("<regex::error>", ss.str());
+                return js.exec("<regex::error>", ss.str(), true);
             }
             func->stack.push_back(regexp);
             return 0;
@@ -555,6 +553,7 @@ namespace clib {
         permanents.f_error->name = "Error";
         permanents.f_error->builtin = [](auto& func, auto& _this, auto& args, auto& js, auto attr) {
             auto err = js.new_error(0);
+            err->add("name", js.new_string("Error"));
             if (!args.empty()) {
                 err->add("message", js.new_string(args.front().lock()->to_string(&js, 0)));
             }

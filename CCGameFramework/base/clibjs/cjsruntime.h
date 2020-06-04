@@ -17,6 +17,7 @@
 
 #define JS_BOOL(op) (std::dynamic_pointer_cast<jsv_boolean>(op)->b)
 #define JS_NUM(op) (std::dynamic_pointer_cast<jsv_number>(op)->number)
+#define JS_S(op) (std::dynamic_pointer_cast<jsv_string>(op)
 #define JS_STR(op) (std::dynamic_pointer_cast<jsv_string>(op)->str)
 #define JS_STR2NUM(op, d) std::dynamic_pointer_cast<jsv_string>(op)->to_number(d)
 #define JS_STRF(op) (std::dynamic_pointer_cast<jsv_function>(op)->code->text)
@@ -68,7 +69,7 @@ namespace clib {
         virtual std::shared_ptr<jsv_object> new_array() = 0;
         virtual std::shared_ptr<jsv_regexp> new_regexp() = 0;
         virtual std::shared_ptr<jsv_object> new_error(int) = 0;
-        virtual int exec(const std::string &, const std::string &) = 0;
+        virtual int exec(const std::string &, const std::string &, bool error = false) = 0;
         virtual std::string get_stacktrace() const = 0;
         virtual bool set_builtin(const std::shared_ptr<jsv_object> &obj) = 0;
         virtual bool get_file(std::string &filename, std::string &content) const = 0;
@@ -146,6 +147,7 @@ namespace clib {
         int to_number(double &d);
         static int to_number(const std::string &s, double &d);
         static std::string convert(const std::string &_str);
+        js_value::ref get(js_value_new* n, const std::string&) const;
         ref clear();
         std::string str;
         double number{0};
@@ -373,7 +375,7 @@ namespace clib {
         jsv_object::ref new_array() override;
         jsv_regexp::ref new_regexp() override;
         jsv_object::ref new_error(int) override;
-        int exec(const std::string &, const std::string &) override;
+        int exec(const std::string &, const std::string &, bool error = false) override;
         std::string get_stacktrace() const override;
         bool set_builtin(const std::shared_ptr<jsv_object> &obj) override;
         bool get_file(std::string &filename, std::string &content) const override;
@@ -518,6 +520,9 @@ namespace clib {
             // stack
             cjs_function::ref default_stack;
         } permanents;
+        struct _tools_t {
+            std::regex stacktrace{ R"(\(([^:]+):\d+:\d+\)(.*))", std::regex::ECMAScript | std::regex::optimize };
+        } tools;
         cjs_runtime_reuse reuse;
         struct timeout_t {
             bool once{true};

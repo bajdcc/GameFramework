@@ -121,7 +121,7 @@ namespace clib {
 
     int cjsruntime::eval(cjs_code_result::ref code, const std::string& _path) {
         if (code->code->codes.empty()) {
-            return exec(jsv_string::convert(_path), "throw new SyntaxError('Compile error')");
+            return exec(jsv_string::convert(_path), "throw new SyntaxError('Compile error')", true);
         }
         if (_path.empty() || _path[0] == '<') {
             paths.emplace_back(ROOT_DIR);
@@ -198,7 +198,7 @@ namespace clib {
 #if DUMP_STEP && SHOW_EXTRA
                 dump_step2(c);
 #endif
-                if (gc_period++ >= GC_PERIOD) {
+                if (top && gc_period++ >= GC_PERIOD) {
                     gc_period = 0;
                     gc();
                 }
@@ -708,17 +708,21 @@ namespace clib {
                 std::stringstream ss;
                 ss << "throw new TypeError('Cannot read property \\'" << jsv_string::convert(key) << "\\' of undefined')";
                 auto _stack_size = stack.size();
-                auto r = exec("<load_property::error>", ss.str());
+                auto r = exec("<load_property::error>", ss.str(), true);
                 if (r != 0)
                     return r;
                 return call_internal(false, _stack_size);
             }
             if (!obj->is_primitive()) {
-                auto value = JS_O(obj)->get(key);
+                auto value = JS_O(obj)->gets(key);
                 if (value) {
                     push(value);
                     break;
                 }
+            }
+            else if (obj->get_type() == r_string) {
+                push(JS_S(obj)->get(this, key)));
+                break;
             }
             push(permanents._undefined);
         }
@@ -753,10 +757,9 @@ namespace clib {
         }
                          break;
         case GET_ITER: {
-            auto obj = top().lock();
+            auto obj = pop().lock();
             if (!obj->is_primitive()) {
                 auto o = JS_OBJ(obj);
-                pop();
                 auto arr = new_array();
                 if (obj->__proto__.lock() != permanents._proto_array) {
                     auto ar = o->get_keys();
@@ -766,7 +769,6 @@ namespace clib {
                         arr->add(ss.str(), new_string(ar[i]));
                     }
                     arr->add("length", new_number(ar.size()));
-                    push(arr);
                 }
                 else {
                     auto len = o->get("length");
@@ -793,12 +795,26 @@ namespace clib {
                     else {
                         arr->add("length", new_number(0.0));
                     }
-                    push(arr);
                 }
+                push(arr);
+                push(new_number(0.0));
+            }
+            else if (obj->get_type() == r_string) {
+                auto arr = new_array();
+                auto s = obj->to_string(this, 0);
+                std::stringstream ss;
+                for (size_t i = 0; i < s.size(); i++) {
+                    ss.str("");
+                    ss << i;
+                    arr->add(ss.str(), new_number(i));
+                }
+                arr->add("length", new_number(s.size()));
+                push(arr);
                 push(new_number(0.0));
             }
             else {
-                assert(!"invalid iter");
+                push(new_array());
+                push(new_number(0.0));
             }
         }
                      break;
@@ -1045,7 +1061,7 @@ namespace clib {
                 std::stringstream ss;
                 ss << "throw new ReferenceError('" << jsv_string::convert(name) << " is not defined')";
                 auto _stack_size = stack.size();
-                auto r = exec("<load_global::error>", ss.str());
+                auto r = exec("<load_global::error>", ss.str(), true);
                 if (r != 0)
                     return r;
                 return call_internal(false, _stack_size);
@@ -1103,7 +1119,7 @@ namespace clib {
                 std::stringstream ss;
                 ss << "throw new TypeError('" << jsv_string::convert(x) << " is not a function')";
                 auto _stack_size = stack.size();
-                auto r = exec("<call_function::error>", ss.str());
+                auto r = exec("<call_function::error>", ss.str(), true);
                 if (r != 0)
                     return r;
                 return call_internal(false, _stack_size);
@@ -1223,7 +1239,7 @@ namespace clib {
             auto obj = top().lock();
             if (!obj->is_primitive()) {
                 const auto o = JS_OBJ(obj);
-                auto f = o->get(key);
+                auto f = o->gets(key);
                 if (f) {
                     if (f->get_type() == r_function)
                         push(f);
@@ -1278,7 +1294,7 @@ namespace clib {
                 std::stringstream ss;
                 ss << "throw new TypeError('" << jsv_string::convert(x) << " is not a function')";
                 auto _stack_size = stack.size();
-                auto r = exec("<call_method::error>", ss.str());
+                auto r = exec("<call_method::error>", ss.str(), true);
                 if (r != 0)
                     return r;
                 return call_internal(false, _stack_size);
@@ -1615,7 +1631,7 @@ namespace clib {
         return err;
     }
 
-    int cjsruntime::exec(const std::string& filename, const std::string& input) {
+    int cjsruntime::exec(const std::string& filename, const std::string& input, bool error) {
         if (input.empty())
             return 0;
         auto last = std::chrono::system_clock::now();
@@ -1624,13 +1640,15 @@ namespace clib {
         std::string error_string;
         std::string code_name;
         cjs_code_result::ref code;
-        auto f = caches.find(filename);
-        if (f != caches.end()) {
-            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - last);
-            stat.Format(L"快速加载：%S，耗时：%lldms", filename.c_str(), duration.count());
-            cjsgui::singleton().add_stat(stat);
-            caches.insert({ filename, code });
-            return eval(f->second, filename);
+        if (!error) {
+            auto f = caches.find(filename);
+            if (f != caches.end()) {
+                auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - last);
+                stat.Format(L"快速加载：%S，耗时：%lldms", filename.c_str(), duration.count());
+                cjsgui::singleton().add_stat(stat);
+                caches.insert({ filename, code });
+                return eval(f->second, filename);
+            }
         }
         auto needCache = false;
         if (!filename.empty() && (filename[0] == '<' || filename[0] == '(')) {
@@ -1639,11 +1657,13 @@ namespace clib {
                 needCache = true;
         }
         else {
-            code = load_cache(filename);
-            needCache = true;
-            if (code) {
-                caches.insert({ filename, code });
-                return eval(std::move(code), filename);
+            if (!error) {
+                code = load_cache(filename);
+                needCache = true;
+                if (code) {
+                    caches.insert({ filename, code });
+                    return eval(std::move(code), filename);
+                }
             }
             code_name = "(" + filename + ":1:1) <entry>";
         }
@@ -1651,7 +1671,7 @@ namespace clib {
             if (p->parse(input, error_string, this) == nullptr) {
                 std::stringstream ss;
                 ss << "throw new SyntaxError('" << jsv_string::convert(error_string) << "')";
-                return exec(code_name, ss.str());
+                return exec(code_name, ss.str(), true);
             }
 #if LOG_AST
             cjsast::print(p->root(), 0, input, std::cout);
@@ -1667,9 +1687,10 @@ namespace clib {
             code = g->get_code();
             assert(code);
             code->code->debugName = code_name;
-            save_cache(filename, code);
-            if (needCache)
+            if (needCache) {
+                save_cache(filename, code);
                 caches.insert({ filename, code });
+            }
             g = nullptr;
         }
         catch (const clib::cjs_exception & e) {
@@ -1677,7 +1698,7 @@ namespace clib {
             cjsgui::singleton().add_stat(stat);
             std::stringstream ss;
             ss << "throw new SyntaxError('" << jsv_string::convert(e.message()) << "')";
-            return exec(code_name, ss.str());
+            return exec(code_name, ss.str(), true);
         }
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - last);
         stat.Format(L"编译：%S，耗时：%lldms", filename.c_str(), duration.count());
@@ -1688,14 +1709,13 @@ namespace clib {
     std::string cjsruntime::get_stacktrace() const {
         std::stringstream ss, sx;
         auto j = stack.size();
-        std::regex r(R"(\(([^:]+):\d+:\d+\)(.*))");
         for (auto i = stack.rbegin(); i != stack.rend(); i++) {
             ss << j-- << ": ";
             if ((*i)->pc < (int)(*i)->info->codes.size()) {
                 sx.str("");
                 const auto& c = (*i)->info->codes[(*i)->pc];
                 sx << "($1:" << c.line << ":" << c.column << ")$2";
-                ss << std::regex_replace((*i)->name, r, sx.str());
+                ss << std::regex_replace((*i)->name, tools.stacktrace, sx.str());
             }
             else {
                 ss << (*i)->name;

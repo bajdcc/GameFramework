@@ -29,6 +29,13 @@ void WindowMsgLoop::Run()
     WSADATA wsaData;
     wVersionRequested = MAKEWORD(2, 2);
     WSAStartup(wVersionRequested, &wsaData);
+    {
+        std::ofstream ofs1("stdout.log", std::ios_base::trunc);
+        std::ofstream ofs2("stderr.log", std::ios_base::trunc);
+    }
+    FILE* s1, * s2;
+    freopen_s(&s1, "stdout.log", "w", stdout);
+    freopen_s(&s2, "stderr.log", "w", stderr);
 
     struct timeval tv;
     evtimer_assign(&msgtimer, evbase, &msg_timer, this);
@@ -37,6 +44,9 @@ void WindowMsgLoop::Run()
     tv.tv_usec = 10;
     evtimer_add(&msgtimer, &tv);
     event_base_dispatch(evbase);
+
+    fclose(s1);
+    fclose(s2);
 
     WSACleanup();
 }

@@ -1,4 +1,4 @@
-Array.prototype.push = function (...args) {
+Array.prototype.push = function(...args) {
     var len = this.length || 0;
     for (var i in args) {
         if (args.hasOwnProperty(i))
@@ -7,7 +7,7 @@ Array.prototype.push = function (...args) {
     this.length = len;
     return this.length;
 };
-Array.prototype.slice = function (n) {
+Array.prototype.slice = function(n) {
     n = n || 0;
     var len = this.length || 0;
     if (len <= n)
@@ -21,7 +21,7 @@ Array.prototype.slice = function (n) {
     arr.length = j;
     return arr;
 };
-Array.prototype.concat = function (...args) {
+Array.prototype.concat = function(...args) {
     var _this = this;
     var unbox = (arr, o) => {
         if (o === null || o === undefined)
@@ -56,7 +56,7 @@ Array.prototype.concat = function (...args) {
     }
     return arr;
 };
-Array.prototype.map = function (f) {
+Array.prototype.map = function(f) {
     var arr = Array(this.length);
     var _this = this instanceof Array ? this : [...this];
     for (var i in _this) {
@@ -64,7 +64,7 @@ Array.prototype.map = function (f) {
     }
     return arr;
 };
-Array.prototype.filter = function (f) {
+Array.prototype.filter = function(f) {
     var arr = Array();
     var _this = this instanceof Array ? this : [...this];
     for (var i in _this) {
@@ -73,7 +73,7 @@ Array.prototype.filter = function (f) {
     }
     return arr;
 };
-Array.prototype.reduce = function (f, init) {
+Array.prototype.reduce = function(f, init) {
     var _this = this instanceof Array ? this : [...this];
     if (!_this.length)
         return init;
@@ -99,7 +99,7 @@ Array.prototype.reduce = function (f, init) {
         return acc;
     }
 };
-Array.prototype.fill = function (init) {
+Array.prototype.fill = function(init) {
     var _this = this instanceof Array ? this : [...this];
     if (!_this.length)
         return _this;
@@ -109,11 +109,11 @@ Array.prototype.fill = function (init) {
     }
     return _this;
 };
-Array.prototype.join = function (s) {
+Array.prototype.join = function(s) {
     var str = this.reduce((a, b) => a + s + b);
     return typeof str !== "undefined" ? ("" + str) : "";
 };
-Array.prototype.toString = function (hint) {
+Array.prototype.toString = function(hint) {
     if (!hint)
         return "" + this.join(",");
     return "[" + this.map(x => typeof x === "object" ? x.toString(hint) : x).join(", ") + "]";

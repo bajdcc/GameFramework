@@ -398,6 +398,23 @@ namespace clib {
         return ss.str();
     }
 
+    js_value::ref jsv_string::get(js_value_new* n, const std::string& key) const
+    {
+        static std::regex re_number{ R"(\d+)", std::regex::ECMAScript | std::regex::optimize };
+        if (std::regex_match(key, re_number)) {
+            std::stringstream ss;
+            ss << key;
+            size_t idx;
+            ss >> idx;
+            if (idx < str.length()) {
+                return n->new_string(str.substr(idx, 1));
+            }
+        }
+        if (key == "length")
+            return n->new_number(str.length());
+        return n->new_undefined();
+    }
+
     // ----------------------------------
 
     std::string jsv_object::_str = "[object Object]";
@@ -535,20 +552,23 @@ namespace clib {
                 return f->second.lock()->to_string(n, 0);
             }
         }
-        auto value = gets("toString");
-        if (value && value->get_type() == r_function) {
-            auto f = JS_FUN(value);
-            if (!f->builtin) {
-                std::vector<js_value::weak_ref> args;
-                args.push_back(n->new_number(hint));
-                js_value::weak_ref _this = std::const_pointer_cast<js_value>(shared_from_this());
-                return n->fast_api(f, _this, args, 0)->to_string(n, 0);
+        auto type = get("__type__");
+        if (!(type && type->attr & at_const)) {
+            auto value = gets("toString");
+            if (value && value->get_type() == r_function) {
+                auto f = JS_FUN(value);
+                if (!f->builtin) {
+                    std::vector<js_value::weak_ref> args;
+                    args.push_back(n->new_number(hint));
+                    js_value::weak_ref _this = std::const_pointer_cast<js_value>(shared_from_this());
+                    return n->fast_api(f, _this, args, 0)->to_string(n, 0);
+                }
             }
         }
-        value = get("__type__");
-        if (value) {
+        auto v = get("__type__");
+        if (v) {
             std::stringstream ss;
-            ss << "[object " << value->to_string(n, 0) << "]";
+            ss << "[object " << v->to_string(n, 0) << "]";
             return ss.str();
         }
         return _str;
