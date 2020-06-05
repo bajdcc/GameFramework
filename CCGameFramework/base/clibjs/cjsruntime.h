@@ -183,6 +183,7 @@ namespace clib {
         bool to_bool() const override;
         void mark(int n) override;
         js_value::ref gets(const std::string &name) const;
+        js_value::ref gets2(const std::string& name) const;
         bool is_primitive() const override;
         js_value::ref to_primitive(js_value_new &n, primitive_t, int *) override;
         std::string to_string(js_value_new *n, int hint) const override;

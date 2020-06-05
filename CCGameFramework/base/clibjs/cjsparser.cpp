@@ -453,7 +453,7 @@ namespace clib {
         propertyName = identifierName
                        | _STRING
                        | numericLiteral
-                       | (~_T_LSQUARE + singleExpression + ~_T_RSQUARE);
+                       | (_T_LSQUARE + singleExpression + _T_RSQUARE);
         functionStatement = anonymousFunction;
         anonymousFunction = functionDecl
                             | anonymousFunctionDecl

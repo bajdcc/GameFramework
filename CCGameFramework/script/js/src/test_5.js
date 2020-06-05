@@ -21,5 +21,5 @@ var obj = {
         return key + 'bar';
     }
 };
-JSON.stringify(obj); // '"bar"'
-JSON.stringify({ x: obj }); // '{"x":"xbar"}'
+console.log(JSON.stringify(obj)); // '"bar"'
+console.log(JSON.stringify({ x: obj })); // '{"x":"xbar"}'

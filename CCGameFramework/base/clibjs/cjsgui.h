@@ -182,8 +182,7 @@ namespace clib {
         bool cycle_set{ false };
         bool entered{ false };
         std::chrono::time_point<std::chrono::system_clock> last_time{ std::chrono::system_clock::now() };
-        int stat_n{ 0 };
-        std::list<CString> stat_s;
+        std::list<std::tuple<CString, int>> stat_s;
 
     public:
         global_input_t* get_screen_interrupt();

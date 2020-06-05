@@ -123,6 +123,7 @@ namespace clib {
         js_symbol_t get_type() const override;
         std::string to_string() const override;
         int gen_lvalue(ijsgen &gen) override;
+        int gen_lvalue_decl(ijsgen& gen, bool check = false);
         int gen_rvalue(ijsgen &gen) override;
         enum class_t {
             local,
@@ -337,6 +338,7 @@ namespace clib {
         js_symbol_t get_type() const override;
         std::string to_string() const override;
         int gen_rvalue(ijsgen &gen) override;
+        int gen_rvalue_decl(ijsgen& gen);
         int set_parent(js_sym_t::ref node) override;
         std::vector<js_sym_id_t::ref> vars;
     };

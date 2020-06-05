@@ -167,7 +167,7 @@ namespace clib {
     }
 
     std::string jsv_number::to_string(js_value_new *n, int hint) const {
-        if (hint == 1 && number == 0.0)
+        if (hint >= 1 && number == 0.0)
             return "0";
         return number_to_string(number);
     }
@@ -486,6 +486,36 @@ namespace clib {
         return nullptr;
     }
 
+    js_value::ref jsv_object::gets2(const std::string& key) const {
+        auto f = obj.find(key);
+        if (f != obj.end()) {
+            return f->second.lock();
+        }
+        if (key == "__proto__") {
+            auto p = __proto__.lock();
+            return p ? p : nullptr;
+        }
+        auto proto = __proto__.lock();
+        if (!proto || proto->get_type() == r_undefined) {
+            return nullptr; // type error
+        }
+        auto p = proto;
+        while (p) {
+            assert(!p->is_primitive());
+            auto pp = JS_OBJ(p);
+            auto t = pp->get("__type__");
+            if (t && t->get_type() == r_string && JS_STR(t) == "Object") {
+                break;
+            }
+            auto o = pp->get(key);
+            if (o) {
+                return o;
+            }
+            p = p->__proto__.lock();
+        }
+        return nullptr;
+    }
+
     bool jsv_object::is_primitive() const {
         return false;
     }
@@ -552,11 +582,10 @@ namespace clib {
                 return f->second.lock()->to_string(n, 0);
             }
         }
-        auto type = get("__type__");
-        if (!(type && type->attr & at_const)) {
-            auto value = gets("toString");
-            if (value && value->get_type() == r_function) {
-                auto f = JS_FUN(value);
+        if (hint != 2) {
+            auto str = gets2("toString");
+            if (str && str->get_type() == r_function && (!(str->attr & at_const))) {
+                auto f = JS_FUN(str);
                 if (!f->builtin) {
                     std::vector<js_value::weak_ref> args;
                     args.push_back(n->new_number(hint));
@@ -565,10 +594,10 @@ namespace clib {
                 }
             }
         }
-        auto v = get("__type__");
-        if (v) {
+        auto type = gets("__type__");
+        if (type) {
             std::stringstream ss;
-            ss << "[object " << v->to_string(n, 0) << "]";
+            ss << "[object " << type->to_string(n, 0) << "]";
             return ss.str();
         }
         return _str;

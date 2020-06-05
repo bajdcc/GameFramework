@@ -181,33 +181,42 @@ namespace clib {
     }
 
     int js_sym_var_t::gen_lvalue(ijsgen &gen) {
+        return gen_lvalue_decl(gen);
+    }
+
+    int js_sym_var_t::gen_lvalue_decl(ijsgen& gen, bool check)
+    {
         switch (node->flag) {
-            case a_literal:
-                if (clazz == local) {
-                    gen.emit(this, STORE_NAME, gen.load_string(node->data._string, cjs_consts::get_string_t::gs_name));
-                    if (parent.lock()->get_type() == s_id) {
-                        if (gen.get_var(node->data._string, sq_local) != nullptr)
-                            gen.error(this, "id conflict");
-                        gen.add_var(node->data._string, shared_from_this());
-                    }
-                } else if (clazz == fast) {
-                    gen.emit(this, STORE_FAST, gen.load_string(node->data._string, cjs_consts::get_string_t::gs_name));
-                    if (parent.lock()->get_type() == s_id) {
-                        if (gen.get_var(node->data._string, sq_local) != nullptr)
-                            gen.error(this, "id conflict");
-                        gen.add_var(node->data._string, shared_from_this());
-                    }
-                } else if (clazz == global) {
-                    gen.emit(this, STORE_GLOBAL, gen.load_string(node->data._string, cjs_consts::get_string_t::gs_global));
-                } else if (clazz == closure) {
-                    gen.emit(this, STORE_DEREF, gen.load_string(node->data._string, cjs_consts::get_string_t::gs_deref));
-                } else {
-                    gen.error(this, "unsupported class type");
+        case a_literal:
+            if (clazz == local) {
+                gen.emit(this, STORE_NAME, gen.load_string(node->data._string, cjs_consts::get_string_t::gs_name));
+                if (parent.lock()->get_type() == s_id) {
+                    if (check && gen.get_var(node->data._string, sq_local) != nullptr)
+                        gen.error(this, "id conflict");
+                    gen.add_var(node->data._string, shared_from_this());
                 }
-                break;
-            default:
-                gen.error(this, "unsupported var type");
-                break;
+            }
+            else if (clazz == fast) {
+                gen.emit(this, STORE_FAST, gen.load_string(node->data._string, cjs_consts::get_string_t::gs_name));
+                if (parent.lock()->get_type() == s_id) {
+                    if (check && gen.get_var(node->data._string, sq_local) != nullptr)
+                        gen.error(this, "id conflict");
+                    gen.add_var(node->data._string, shared_from_this());
+                }
+            }
+            else if (clazz == global) {
+                gen.emit(this, STORE_GLOBAL, gen.load_string(node->data._string, cjs_consts::get_string_t::gs_global));
+            }
+            else if (clazz == closure) {
+                gen.emit(this, STORE_DEREF, gen.load_string(node->data._string, cjs_consts::get_string_t::gs_deref));
+            }
+            else {
+                gen.error(this, "unsupported class type");
+            }
+            break;
+        default:
+            gen.error(this, "unsupported var type");
+            break;
         }
         return can_be_lvalue;
     }
@@ -939,18 +948,18 @@ namespace clib {
 
     int js_sym_object_t::gen_rvalue(ijsgen &gen) {
         if (rests.empty()) {
-            for (const auto &s : pairs) {
-                s->gen_rvalue(gen);
+            for (auto k = pairs.rbegin(); k != pairs.rend(); k++) {
+                (*k)->gen_rvalue(gen);
             }
             gen.emit(this, BUILD_MAP, pairs.size());
         } else {
             gen.emit(this, REST_ARGUMENT);
-            auto i = 0, j = 0;
-            for (const auto &s : is_pair) {
-                if (s)
-                    pairs[i++]->gen_rvalue(gen);
+            auto i = ((int)pairs.size()) - 1, j = ((int)rests.size()) - 1;
+            for (auto k = is_pair.rbegin(); k != is_pair.rend(); k++) {
+                if (*k)
+                    pairs[i--]->gen_rvalue(gen);
                 else {
-                    rests[j++]->gen_rvalue(gen);
+                    rests[j--]->gen_rvalue(gen);
                     gen.emit(this, UNPACK_EX);
                 }
             }
@@ -1087,6 +1096,15 @@ namespace clib {
     int js_sym_stmt_var_t::gen_rvalue(ijsgen &gen) {
         for (const auto &s : vars) {
             s->gen_rvalue(gen);
+            gen.emit(s.get(), POP_TOP);
+        }
+        return js_sym_stmt_t::gen_rvalue(gen);
+    }
+
+    int js_sym_stmt_var_t::gen_rvalue_decl(ijsgen& gen)
+    {
+        for (const auto& s : vars) {
+            s->gen_rvalue_decl(gen);
             gen.emit(s.get(), POP_TOP);
         }
         return js_sym_stmt_t::gen_rvalue(gen);
@@ -1384,20 +1402,6 @@ namespace clib {
     }
 
     int js_sym_case_t::gen_rvalue(ijsgen &gen) {
-        if (exp) {
-            exp->gen_rvalue(gen);
-            gen.emit(this, COMPARE_FEQUAL);
-            auto idx = gen.code_length();
-            gen.emit(this, POP_JUMP_IF_FALSE, 0);
-            for (const auto &s : stmts) {
-                s->gen_rvalue(gen);
-            }
-            gen.edit(idx, 1, gen.code_length());
-        } else {
-            for (const auto &s : stmts) {
-                s->gen_rvalue(gen);
-            }
-        }
         return js_sym_t::gen_rvalue(gen);
     }
 
@@ -1423,11 +1427,43 @@ namespace clib {
     int js_sym_stmt_switch_t::gen_rvalue(ijsgen &gen) {
         gen.enter(sp_switch);
         exp->gen_rvalue(gen);
+        size_t i = 0;
+        auto L = 0;
+        auto def = false;
         for (const auto &s : cases) {
-            gen.emit(nullptr, DUP_TOP);
-            s->gen_rvalue(gen);
+            if (s->exp) {
+                gen.emit(nullptr, DUP_TOP);
+                s->exp->gen_rvalue(gen);
+                gen.emit(this, COMPARE_FEQUAL);
+                auto idx = gen.code_length();
+                gen.emit(this, POP_JUMP_IF_FALSE, 0);
+                if (L > 0)
+                    gen.edit(L, 1, gen.code_length() - L);
+                for (const auto& s : s->stmts) {
+                    s->gen_rvalue(gen);
+                }
+                if (i + 1 < cases.size()) {
+                    L = gen.code_length();
+                    gen.emit(nullptr, JUMP_FORWARD, 0);
+                }
+                gen.edit(idx, 1, gen.code_length());
+            }
+            else {
+                def = true;
+                gen.emit(nullptr, POP_TOP);
+                if (L > 0)
+                    gen.edit(L, 1, gen.code_length());
+                for (const auto& s : s->stmts) {
+                    s->gen_rvalue(gen);
+                }
+                if (i + 1 < cases.size()) {
+                    L = gen.code_length();
+                    gen.emit(nullptr, JUMP_FORWARD, 0);
+                }
+            }
         }
-        gen.emit(nullptr, POP_TOP);
+        if (!def)
+            gen.emit(nullptr, POP_TOP);
         auto j_break = gen.code_length();
         const auto &re = gen.get_rewrites();
         for (const auto &s : re) {
@@ -1526,21 +1562,19 @@ namespace clib {
                     if (c.front()->get_type() == s_code) {
                         func_stmts.push_back(s);
                         continue;
-                    } else {
-                        if (c.front()->get_type() == s_id) {
-                            var_decls.push_back(s);
-                            continue;
-                        }
                     }
                 }
             }
+            else if (s->get_type() == s_statement_var) {
+                var_decls.push_back(s);
+            }
             others.push_back(s);
         }
-        for (const auto &s : func_stmts) {
-            s->gen_rvalue(gen);
+        for (const auto& s : var_decls) {
+            std::dynamic_pointer_cast<js_sym_stmt_var_t>(s)->gen_rvalue_decl(gen);
         }
-        for (const auto &s : var_decls) {
-            std::dynamic_pointer_cast<js_sym_id_t>(s)->gen_rvalue_decl(gen);
+        for (const auto& s : func_stmts) {
+            s->gen_rvalue(gen);
         }
         for (const auto &s : others) {
             s->gen_rvalue(gen);

@@ -14,9 +14,6 @@
 #include "cjsgen.h"
 #include "cjsgui.h"
 
-#define LOG_AST 0
-#define LOG_FILE 0
-#define LOG_FILENAME "js_output.log"
 #define LIBRARY_FILE R"(lib/clib.js)"
 
 #define STAT_DELAY_N 60

@@ -241,8 +241,7 @@ sys.builtin(JSON);
 
         // If the value has a toJSON method, call it to obtain a replacement value.
 
-        if (
-            value &&
+        if (value &&
             typeof value === "object" &&
             typeof value.toJSON === "function"
         ) {
@@ -266,7 +265,7 @@ sys.builtin(JSON);
 
                 // JSON numbers must be finite. Encode non-finite numbers as null.
 
-                return (isFinite(value)) ?
+                return (true || (isFinite(value))) ?
                     String(value) :
                     "null";
 
@@ -304,7 +303,7 @@ sys.builtin(JSON);
                     // for non-JSON values.
 
                     length = value.length;
-                    for (i = 0; i < length; i += 1) {
+                    for (i = 0; i < length; i++) {
                         partial[i] = str(i, value) || "null";
                     }
 
@@ -331,7 +330,7 @@ sys.builtin(JSON);
 
                 if (rep && typeof rep === "object") {
                     length = rep.length;
-                    for (i = 0; i < length; i += 1) {
+                    for (i = 0; i < length; i++) {
                         if (typeof rep[i] === "string") {
                             k = rep[i];
                             v = str(k, value);
@@ -403,7 +402,7 @@ sys.builtin(JSON);
             // many spaces.
 
             if (typeof space === "number") {
-                for (i = 0; i < space; i += 1) {
+                for (i = 0; i < space; i++) {
                     indent += " ";
                 }
 

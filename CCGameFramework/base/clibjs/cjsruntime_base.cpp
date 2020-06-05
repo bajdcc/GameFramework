@@ -79,7 +79,7 @@ namespace clib {
         permanents._proto_object_toString->add("length", _int_0);
         permanents._proto_object_toString->name = "toString";
         permanents._proto_object_toString->builtin = [](auto& func, auto& _this, auto& args, auto& js, auto attr) {
-            func->stack.push_back(js.new_string(_this.lock()->to_string(&js, 0)));
+            func->stack.push_back(js.new_string(_this.lock()->to_string(&js, 2)));
             return 0;
         };
         permanents._proto_object->add(permanents._proto_object_toString->name, permanents._proto_object_toString);

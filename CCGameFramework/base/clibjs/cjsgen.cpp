@@ -16,7 +16,7 @@
 #define DEBUG_MODE 0
 #define PRINT_CODE 1
 #define DUMP_CODE 1
-#define PRINT_AST 0
+#define PRINT_AST 1
 
 #define AST_IS_KEYWORD(node) ((node)->flag == a_keyword)
 #define AST_IS_KEYWORD_K(node, k) ((node)->data._keyword == (k))
@@ -945,6 +945,20 @@ namespace clib {
                 }
             }
                 break;
+            case c_propertyName: {
+                if (!asts.empty() && AST_IS_OP_N(asts.front(), T_LSQUARE)) {
+                    copy_info(tmps.front(), asts.front());
+                    tmps.front()->end = asts.back()->end;
+                    asts.clear();
+                }
+                else if (tmps.empty() && !asts.empty()) {
+                    if (asts.front()->flag == a_literal)
+                        asts.front()->flag = a_string;
+                    tmps.push_back(primary_node(asts.front()));
+                    asts.clear();
+                }
+            }
+                               break;
             case c_propertyExpressionAssignment: {
                 auto p = std::make_shared<js_sym_object_pair_t>();
                 if (tmps.size() == 2) {
@@ -953,21 +967,7 @@ namespace clib {
                     p->key = to_exp(tmps.front());
                     p->value = to_exp(tmps.back());
                 } else {
-                    if (tmps.front()->get_type() == s_var_id) {
-                        auto id = std::dynamic_pointer_cast<js_sym_var_id_t>(tmps.front());
-                        id->node->flag = a_string;
-                        auto new_id = std::make_shared<js_sym_var_t>(id->node);
-                        copy_info(new_id, tmps.front());
-                        tmps.front() = new_id;
-                    }
-                    copy_info(p, asts.front());
-                    p->end = tmps.back()->end;
-                    if (AST_IS_ID(asts.front())) {
-                        asts.front()->flag = a_string;
-                    }
-                    p->key = to_exp(primary_node(asts.front()));
-                    copy_info(p->key, asts.front());
-                    p->value = to_exp(tmps.back());
+                    assert(!"invalid property");
                 }
                 asts.clear();
                 tmps.clear();

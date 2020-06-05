@@ -18,7 +18,7 @@
 #include "cjsgui.h"
 #include "cjs.h"
 
-#define BINARY_VERBOSE 1
+#define BINARY_VERBOSE 0
 #if BINARY_VERBOSE
 #define BINARY_EXT ".json.bin"
 #else
@@ -2445,12 +2445,21 @@ namespace clib {
         return new_number(NAN);
     }
 
+    static std::string js_limit_string(const std::string& s, uint len) {
+        if (s.length() <= len) {
+            return s;
+        }
+        else {
+            return s.substr(0, __max(0, len - 3)) + "...";
+        }
+    }
+
     void cjsruntime::print(const js_value::ref& value, int level, std::ostream& os) {
         if (value == nullptr) {
             os << "undefined" << std::endl;
             return;
         }
-        if (level > 10) {
+        if (level > 4) {
             os << "too many lines" << std::endl;
             return;
         }
@@ -2480,9 +2489,12 @@ namespace clib {
             else {
                 os << "object: " << std::endl;
                 for (const auto& s : n->get_keys()) {
+                    auto value = n->get(s);
+                    if (value->get_type() == r_undefined)
+                        continue;
                     os << std::setfill(' ') << std::setw(level) << "";
                     os << s << ": " << std::endl;
-                    print(n->get(s), level + 1, os);
+                    print(value, level + 1, os);
                 }
             }
         }
@@ -2493,10 +2505,10 @@ namespace clib {
                 os << "function: builtin " << n->name << std::endl;
             else if (n->code) {
                 os << "function: " << n->code->debugName << " ";
-                os << n->code->text << std::endl;;
-                if (n->closure.lock()) {
-                    print(n->closure.lock(), level + 1, os);
-                }
+                os << js_limit_string(n->code->text, 50) << std::endl;;
+                //if (n->closure.lock()) {
+                //    print(n->closure.lock(), level + 1, os);
+                //}
             }
             else {
                 os << "function: (cleaned) " << n->name << std::endl;
@@ -2505,6 +2517,11 @@ namespace clib {
                        break;
         case r_null: {
             os << "null" << std::endl;
+        }
+                   break;
+        case r_regex: {
+            auto n = std::dynamic_pointer_cast<jsv_regexp>(value);
+            os << "regex: " << n->str_origin << std::endl;
         }
                    break;
         case r_undefined: {

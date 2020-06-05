@@ -21,7 +21,7 @@
 #endif
 #define REPORT_ERROR_FILE "js_runtime.log"
 #define REPORT_STAT 1
-#define REPORT_STAT_FILE "stat.log"
+#define REPORT_STAT_FILE "js_stat.log"
 #define STAT_DELAY_N 50
 #define STAT_MAX_N 10
 
@@ -883,25 +883,19 @@ namespace clib {
         case D_MEM:
             break;
         case D_STAT: {
-            if (stat_n > 0) {
-                (*const_cast<int*>(&stat_n))--;
-                if (stat_s.empty()) {
-                    (*const_cast<int*>(&stat_n)) = 0;
-                }
-                else {
-                    ss << (wchar_t)(L'0' + stat_s.size());
-                    for (const auto& s : stat_s) {
-                        ss << s.GetString() << std::endl;
+            auto& stat = *const_cast<std::list<std::tuple<CString, int>>*>(&stat_s);
+            if (!stat_s.empty()) {
+                ss << (wchar_t)(L'0' + stat_s.size());
+                for (auto i = stat.begin(); i != stat.end();) {
+                    ss << std::get<0>(*i).GetBuffer(0) << std::endl;
+                    if (std::get<1>(*i) <= 1) {
+                        i = stat.erase(i);
+                    }
+                    else {
+                        std::get<1>(*i) = std::get<1>(*i) - 1;
+                        i++;
                     }
                 }
-            }
-            else {
-                if (!stat_s.empty()) {
-                    while (!stat_s.empty()) {
-                        const_cast<std::list<CString>*>(&stat_s)->pop_back();
-                    }
-                }
-                return L"";
             }
         }
                    break;
@@ -914,10 +908,9 @@ namespace clib {
     void cjsgui::add_stat(const CString& s, bool show)
     {
         if (show) {
-            stat_n = STAT_DELAY_N;
             if (stat_s.size() >= STAT_MAX_N)
                 stat_s.pop_front();
-            stat_s.push_back(s);
+            stat_s.push_back({ s, STAT_DELAY_N });
         }
 #if REPORT_STAT
         {
