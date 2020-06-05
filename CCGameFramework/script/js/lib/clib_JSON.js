@@ -196,17 +196,16 @@ sys.builtin(JSON);
                 )
                 : null;
         };
-
-        Boolean.prototype.toJSON = this_value;
-        Number.prototype.toJSON = this_value;
-        String.prototype.toJSON = this_value;
     }*/
+
+    Boolean.prototype.toJSON = this_value;
+    Number.prototype.toJSON = this_value;
+    String.prototype.toJSON = this_value;
 
     var gap;
     var indent;
     var meta;
     var rep;
-
 
     function quote(string) {
 

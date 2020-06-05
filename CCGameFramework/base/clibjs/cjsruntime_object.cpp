@@ -400,12 +400,8 @@ namespace clib {
 
     js_value::ref jsv_string::get(js_value_new* n, const std::string& key) const
     {
-        static std::regex re_number{ R"(\d+)", std::regex::ECMAScript | std::regex::optimize };
-        if (std::regex_match(key, re_number)) {
-            std::stringstream ss;
-            ss << key;
-            size_t idx;
-            ss >> idx;
+        size_t idx{ 0 };
+        if (string_to_index(key, idx)) {
             if (idx < str.length()) {
                 return n->new_string(str.substr(idx, 1));
             }
@@ -413,6 +409,18 @@ namespace clib {
         if (key == "length")
             return n->new_number(str.length());
         return n->new_undefined();
+    }
+
+    bool jsv_string::string_to_index(const std::string& s, size_t& idx)
+    {
+        static std::regex re_number{ R"(\d+)", std::regex::ECMAScript | std::regex::optimize };
+        if (std::regex_match(s, re_number)) {
+            std::stringstream ss;
+            ss << s;
+            ss >> idx;
+            return true;
+        }
+        return false;
     }
 
     // ----------------------------------

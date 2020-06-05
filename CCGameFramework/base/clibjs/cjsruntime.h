@@ -148,6 +148,7 @@ namespace clib {
         static int to_number(const std::string &s, double &d);
         static std::string convert(const std::string &_str);
         js_value::ref get(js_value_new* n, const std::string&) const;
+        static bool string_to_index(const std::string&, size_t&);
         ref clear();
         std::string str;
         double number{0};

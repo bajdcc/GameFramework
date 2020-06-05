@@ -751,6 +751,19 @@ namespace clib {
                 if (f && (readonly && (f->attr & js_value::at_readonly))) {
                     break;
                 }
+                if (o->__proto__.lock() == permanents._proto_array) {
+                    auto len = o->get("length");
+                    if (len->get_type() == r_number) {
+                        size_t idx{ 0 };
+                        if (jsv_string::string_to_index(key, idx)) {
+                            auto d = (double)idx;
+                            auto l = JS_NUM(len);
+                            if (d >= l) {
+                                o->add("length", new_number(d + 1));
+                            }
+                        }
+                    }
+                }
                 o->add(key, std::move(value));
                 break;
             }
