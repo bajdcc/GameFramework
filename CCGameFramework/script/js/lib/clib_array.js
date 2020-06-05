@@ -60,7 +60,7 @@ Array.prototype.map = function(f) {
     var arr = Array(this.length);
     var _this = this instanceof Array ? this : [...this];
     for (var i in _this) {
-        arr[i] = f(_this[i]);
+        arr[i] = f(_this[i], i);
     }
     return arr;
 };
@@ -113,9 +113,32 @@ Array.prototype.join = function(s) {
     var str = this.reduce((a, b) => a + s + b);
     return typeof str !== "undefined" ? ("" + str) : "";
 };
-Array.prototype.toString = function(hint) {
-    if (!hint)
-        return "" + this.join(",");
-    return "[" + this.map(x => typeof x === "object" ? x.toString(hint) : x).join(", ") + "]";
-};
+(function() {
+    function quote(string) {
+        return "\"" + string + "\"";
+    }
+
+    function str(key, holder) {
+        var value = holder[key].valueOf();
+        switch (typeof value) {
+            case "string":
+                return quote(value);
+            case "number":
+            case "boolean":
+            case "null":
+                return String(value);
+            case "object":
+                if (!value) {
+                    return "null";
+                }
+                if (Object.prototype.toString.apply(value) === "[object Array]") {
+                    return "[" + value.map((_, i) => str(i, value) || "null").join(",") + "]";
+                }
+                return "{...}";
+        }
+    }
+    Array.prototype.toString = function(hint) {
+        return str("", { "": this });
+    };
+}());
 return;

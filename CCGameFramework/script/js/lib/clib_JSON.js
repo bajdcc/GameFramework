@@ -235,7 +235,6 @@ sys.builtin(JSON);
         var v; // The member value.
         var length;
         var mind = gap;
-        var partial;
         var value = holder[key];
 
         // If the value has a toJSON method, call it to obtain a replacement value.
@@ -292,7 +291,7 @@ sys.builtin(JSON);
                 // Make an array to hold the partial results of stringifying this object value.
 
                 gap += indent;
-                partial = [];
+                var partial = [];
 
                 // Is the value an array?
 
@@ -301,10 +300,7 @@ sys.builtin(JSON);
                     // The value is an array. Stringify every element. Use null as a placeholder
                     // for non-JSON values.
 
-                    length = value.length;
-                    for (i = 0; i < length; i++) {
-                        partial[i] = str(i, value) || "null";
-                    }
+                    partial = value.map((_, i) => str(i, value) || "null");
 
                     // Join all of the elements together, separated with commas, and wrap them in
                     // brackets.
