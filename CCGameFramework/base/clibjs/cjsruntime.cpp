@@ -353,6 +353,18 @@ namespace clib {
             push(new_undefined());
         }
                               break;
+        case API_eval: {
+            if (args.empty()) {
+                push(new_undefined());
+                break;
+            }
+            auto code = args.front().lock()->to_string(this, 0, &r);
+            if (r != 0)
+                return r;
+            current_stack->pc++;
+            return exec("<eval>", code, true);
+        }
+                              break;
         default:
             break;
         }
@@ -1162,8 +1174,8 @@ namespace clib {
             while (m-- > 0) {
                 args[m] = pop();
             }
-            auto f = pop();
-            if (f.lock()->get_type() != r_function) {
+            auto f = pop().lock();
+            if (f->get_type() != r_function) {
                 auto x = current_stack->info->debugs.at(code.op2);
                 std::stringstream ss;
                 ss << "throw new TypeError('" << jsv_string::convert(x) << " is not a function')";
@@ -1173,7 +1185,7 @@ namespace clib {
                     return r;
                 return call_internal(false, _stack_size);
             }
-            auto func = JS_FUN(f.lock());
+            auto func = JS_FUN(f);
             js_value::weak_ref _this = JS_V(stack.front()->envs.lock());
             auto r = call_api(func, _this, args, jsv_function::at_fast);
             if (r != 0)

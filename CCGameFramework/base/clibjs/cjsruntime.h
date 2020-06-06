@@ -79,6 +79,7 @@ namespace clib {
             API_setInterval,
             API_clearTimeout,
             API_clearInterval,
+            API_eval,
         };
         virtual int call_api(int, std::weak_ptr<js_value> &,
                              std::vector<std::weak_ptr<js_value>> &, uint32_t) = 0;
@@ -499,6 +500,7 @@ namespace clib {
             jsv_object::ref sys;
             jsv_function::ref sys_exec_file;
             jsv_function::ref sys_builtin;
+            jsv_function::ref sys_eval;
             // function
             jsv_function::ref f_number;
             jsv_function::ref f_boolean;

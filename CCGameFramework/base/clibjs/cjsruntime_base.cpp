@@ -374,6 +374,13 @@ namespace clib {
             return 0;
         };
         permanents.sys->add(permanents.sys_builtin->name, permanents.sys_builtin);
+        permanents.sys_eval = _new_function(nullptr, js_value::at_const | js_value::at_readonly);
+        permanents.sys_eval->add("length", _int_1);
+        permanents.sys_eval->name = "eval";
+        permanents.sys_eval->builtin = [](auto& func, auto& _this, auto& args, auto& js, auto attr) {
+            return js.call_api(API_eval, _this, args, 0);
+        };
+        permanents.sys->add(permanents.sys_eval->name, permanents.sys_eval);
         permanents.global_env->add("sys", permanents.sys);
         // number
         permanents.f_number = _new_function(permanents._proto_number, js_value::at_const | js_value::at_readonly);
