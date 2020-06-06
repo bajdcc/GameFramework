@@ -13,6 +13,8 @@
 #include <fstream>
 #include <utility>
 #include <regex>
+#include <nlohmann_json\json.h>
+#include <zlib\zlib.h>
 #include "cjsruntime.h"
 #include "cjsast.h"
 #include "cjsgui.h"
@@ -40,8 +42,6 @@
 #include <unistd.h>
 #define cjs_sleep(n) sleep(n / 1000)
 #endif
-
-#include <base\nlohmann_json\json.h>
 
 namespace nlohmann {
     template<>
@@ -1949,9 +1949,33 @@ namespace clib {
         std::vector<uint8_t> data;
         data.resize((size_t)size);
         p->sgetn((char*)data.data(), size);
-        auto bson = json::from_bson(data);
-        cjs_code_result::ref result = bson;
+        if (data.size() < 12)
+            return nullptr;
+        cjs_code_result::ref result;
+        if (strncmp((const char*)data.data(), "CCJS", 4) == 0) {
+            CString stat;
+            if (strncmp((const char*)data.data() + 4, "BSON", 4) == 0) {
+                auto size2 = *((uLongf*)(data.data() + 8));
+                if (size2 != data.size() - 12)
+                    return nullptr;
+                data.erase(data.begin(), data.begin() + 12);
+                auto bson = json::from_bson(data);
+                result = bson;
+            }
+            else if (strncmp((const char*)data.data() + 4, "ZLIB", 4) == 0) {
+                auto size2 = *((uLongf*)(data.data() + 8));
+                uLongf newsize = size2;
+                std::vector<byte> newdata(size2);
+                auto r = uncompress(newdata.data(), &newsize, data.data() + 12, data.size() - 12);
+                if (r == Z_OK && newsize == size2) {
+                    auto bson = json::from_bson(newdata);
+                    result = bson;
+                }
+            }
+        }
 #endif
+        if (!result)
+            return nullptr;
         std::vector<js_sym_code_t::ref> funcs;
         funcs.push_back(result->code);
         std::copy(result->funcs.begin(), result->funcs.end(), std::back_inserter(funcs));
@@ -1982,8 +2006,22 @@ namespace clib {
         ofs << j.dump(2);
 #else
         std::ofstream ofs(json_name, std::ios::binary);
-        auto bson = json::to_bson(j);
-        ofs.write((const char*)bson.data(), bson.size());
+        auto data = json::to_bson(j);
+        std::vector<byte> output(compressBound(data.size()));
+        uLongf size;
+        auto r = compress(output.data(), &size, data.data(), data.size());
+        if (r == Z_OK) {
+            ofs.write("CCJSZLIB", 8);
+            auto size2 = data.size();
+            ofs.write((const char*)&size2, 4);
+            ofs.write((const char*)output.data(), size);
+        }
+        else {
+            ofs.write("CCJSBSON", 8);
+            size = data.size();
+            ofs.write((const char*)&size, 4);
+            ofs.write((const char*)data.data(), data.size());
+        }
 #endif
     }
 
