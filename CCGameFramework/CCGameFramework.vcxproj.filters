@@ -1250,5 +1250,6 @@
     <None Include="script\js\src\test_5.js" />
     <None Include="script\js\lib\clib_JSON.js" />
     <None Include="script\js\lib\clib_object.js" />
+    <None Include="script\js\lib\clib_global.js" />
   </ItemGroup>
 </Project>

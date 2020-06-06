@@ -33,7 +33,7 @@ namespace clib {
         return r_number;
     }
 
-    js_value::ref jsv_number::unary_op(js_value_new &n, int code) {
+    js_value::ref jsv_number::unary_op(js_value_new &n, int code, int* r) {
         switch (code) {
             case UNARY_POSITIVE:
                 return shared_from_this();
@@ -166,13 +166,13 @@ namespace clib {
         return n_digits;
     }
 
-    std::string jsv_number::to_string(js_value_new *n, int hint) const {
+    std::string jsv_number::to_string(js_value_new *n, int hint, int* r) const {
         if (hint >= 1 && number == 0.0)
             return "0";
         return number_to_string(number);
     }
 
-    double jsv_number::to_number(js_value_new *n) const {
+    double jsv_number::to_number(js_value_new *n, int* r) const {
         return number;
     }
 
@@ -253,7 +253,7 @@ namespace clib {
         return r_string;
     }
 
-    js_value::ref jsv_string::unary_op(js_value_new &n, int code) {
+    js_value::ref jsv_string::unary_op(js_value_new &n, int code, int* r) {
         switch (code) {
             case UNARY_POSITIVE: {
                 if (!calc_number)
@@ -307,14 +307,14 @@ namespace clib {
         marked = n;
     }
 
-    std::string jsv_string::to_string(js_value_new *n, int hint) const {
+    std::string jsv_string::to_string(js_value_new *n, int hint, int* r) const {
         return str;
     }
 
-    double jsv_string::to_number(js_value_new *n) const {
+    double jsv_string::to_number(js_value_new *n, int* r) const {
         if (!n)
             return 0;
-        auto s = to_string(n, 0);
+        auto s = to_string(n, 0, r);
         double d;
         switch (to_number(s, d)) {
             case 0:
@@ -431,12 +431,12 @@ namespace clib {
         return r_object;
     }
 
-    js_value::ref jsv_object::unary_op(js_value_new &n, int code) {
+    js_value::ref jsv_object::unary_op(js_value_new &n, int code, int* r) {
         switch (code) {
             case UNARY_POSITIVE:
-                return n.new_number(to_number(&n));
+                return n.new_number(to_number(&n, r));
             case UNARY_NEGATIVE:
-                return n.new_number(-to_number(&n));
+                return n.new_number(-to_number(&n, r));
             case UNARY_NOT:
                 return n.new_boolean(false);
             case UNARY_INVERT:
@@ -578,7 +578,7 @@ namespace clib {
         return nullptr;
     }
 
-    std::string jsv_object::to_string(js_value_new *n, int hint) const {
+    std::string jsv_object::to_string(js_value_new *n, int hint, int* r) const {
         if (!n) {
             if (attr & at_readonly)
                 return "builtin";
@@ -587,7 +587,7 @@ namespace clib {
         if (!special.empty()) {
             auto f = special.find("PrimitiveValue");
             if (f != special.end()) {
-                return f->second.lock()->to_string(n, 0);
+                return f->second.lock()->to_string(n, 0, r);
             }
         }
         if (hint != 2) {
@@ -598,21 +598,24 @@ namespace clib {
                     std::vector<js_value::weak_ref> args;
                     args.push_back(n->new_number(hint));
                     js_value::weak_ref _this = std::const_pointer_cast<js_value>(shared_from_this());
-                    return n->fast_api(f, _this, args, 0)->to_string(n, 0);
+                    auto o = n->fast_api(f, _this, args, 0, r);
+                    if (*r != 0)
+                        return "";
+                    return o->to_string(n, 0, r);
                 }
             }
         }
         auto type = gets("__type__");
         if (type) {
             std::stringstream ss;
-            ss << "[object " << type->to_string(n, 0) << "]";
+            ss << "[object " << type->to_string(n, 0, r) << "]";
             return ss.str();
         }
         return _str;
     }
 
-    double jsv_object::to_number(js_value_new *n) const {
-        auto s = to_string(n, 0);
+    double jsv_object::to_number(js_value_new *n, int* r) const {
+        auto s = to_string(n, 0, r);
         auto d = 0.0;
         switch (jsv_string::to_number(s, d)) {
             case 0:
@@ -685,7 +688,7 @@ namespace clib {
         return r_function;
     }
 
-    js_value::ref jsv_function::unary_op(js_value_new &n, int code) {
+    js_value::ref jsv_function::unary_op(js_value_new &n, int code, int* r) {
         switch (code) {
             case UNARY_POSITIVE:
                 return n.new_number(NAN);
@@ -720,13 +723,13 @@ namespace clib {
         }
     }
 
-    std::string jsv_function::to_string(js_value_new *n, int hint) const {
+    std::string jsv_function::to_string(js_value_new *n, int hint, int* r) const {
         if (builtin || attr & at_readonly)
             return name;
         return code ? code->text : "builtin";
     }
 
-    double jsv_function::to_number(js_value_new *n) const {
+    double jsv_function::to_number(js_value_new *n, int* r) const {
         return NAN;
     }
 
@@ -866,7 +869,7 @@ namespace clib {
         return r_regex;
     }
 
-    std::string jsv_regexp::to_string(js_value_new* n, int hint) const
+    std::string jsv_regexp::to_string(js_value_new* n, int hint, int* r) const
     {
         return str;
     }
@@ -1023,7 +1026,7 @@ namespace clib {
         return r_boolean;
     }
 
-    js_value::ref jsv_boolean::unary_op(js_value_new &n, int code) {
+    js_value::ref jsv_boolean::unary_op(js_value_new &n, int code, int* r) {
         switch (code) {
             case UNARY_POSITIVE:
                 return n.new_number(b ? 1.0 : 0.0);
@@ -1052,11 +1055,11 @@ namespace clib {
     void jsv_boolean::mark(int n) {
     }
 
-    std::string jsv_boolean::to_string(js_value_new *n, int hint) const {
+    std::string jsv_boolean::to_string(js_value_new *n, int hint, int* r) const {
         return b ? _str_t : _str_f;
     }
 
-    double jsv_boolean::to_number(js_value_new *n) const {
+    double jsv_boolean::to_number(js_value_new *n, int* r) const {
         return b ? 1.0 : 0.0;
     }
 
@@ -1068,7 +1071,7 @@ namespace clib {
         return r_null;
     }
 
-    js_value::ref jsv_null::unary_op(js_value_new &n, int code) {
+    js_value::ref jsv_null::unary_op(js_value_new &n, int code, int* r) {
         switch (code) {
             case UNARY_POSITIVE:
                 return n.new_number(0.0);
@@ -1097,11 +1100,11 @@ namespace clib {
     void jsv_null::mark(int n) {
     }
 
-    std::string jsv_null::to_string(js_value_new *n, int hint) const {
+    std::string jsv_null::to_string(js_value_new *n, int hint, int* r) const {
         return _str;
     }
 
-    double jsv_null::to_number(js_value_new *n) const {
+    double jsv_null::to_number(js_value_new *n, int* r) const {
         return 0;
     }
 
@@ -1113,7 +1116,7 @@ namespace clib {
         return r_undefined;
     }
 
-    js_value::ref jsv_undefined::unary_op(js_value_new &n, int code) {
+    js_value::ref jsv_undefined::unary_op(js_value_new &n, int code, int* r) {
         switch (code) {
             case UNARY_POSITIVE:
                 return n.new_number(NAN);
@@ -1142,11 +1145,11 @@ namespace clib {
     void jsv_undefined::mark(int n) {
     }
 
-    std::string jsv_undefined::to_string(js_value_new *n, int hint) const {
+    std::string jsv_undefined::to_string(js_value_new *n, int hint, int* r) const {
         return _str;
     }
 
-    double jsv_undefined::to_number(js_value_new *n) const {
+    double jsv_undefined::to_number(js_value_new *n, int* r) const {
         return NAN;
     }
 }

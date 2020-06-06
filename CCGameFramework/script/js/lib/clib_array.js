@@ -113,6 +113,9 @@ Array.prototype.join = function(s) {
     var str = this.reduce((a, b) => a + s + b);
     return typeof str !== "undefined" ? ("" + str) : "";
 };
+Array.isArray = function(arr) {
+    return Object.prototype.toString.call(arr) == "[object Array]";
+};
 (function() {
     function quote(string) {
         return "\"" + string + "\"";
@@ -131,7 +134,7 @@ Array.prototype.join = function(s) {
                 if (!value) {
                     return "null";
                 }
-                if (Object.prototype.toString.apply(value) === "[object Array]") {
+                if (Array.isArray(value)) {
                     return "[" + value.map((_, i) => str(i, value) || "null").join(",") + "]";
                 }
                 return "{...}";

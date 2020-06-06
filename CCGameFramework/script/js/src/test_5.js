@@ -23,3 +23,4 @@ var obj = {
 };
 console.log(JSON.stringify(obj)); // '"bar"'
 console.log(JSON.stringify({ x: obj })); // '{"x":"xbar"}'
+console.log(JSON.parse('{"result":true, "count":42}'));

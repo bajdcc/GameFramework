@@ -70,8 +70,9 @@ namespace clib {
                 return 0;
             }
             const auto& obj = JS_OBJ(f);
-            func->stack.push_back(js.new_boolean(obj->get(args.front().lock()->to_string(&js, 0)) != nullptr));
-            return 0;
+            auto r = 0;
+            func->stack.push_back(js.new_boolean(obj->get(args.front().lock()->to_string(&js, 0, &r)) != nullptr));
+            return r;
         };
         permanents._proto_object->add(permanents._proto_object_hasOwnProperty->name, permanents._proto_object_hasOwnProperty);
         permanents._proto_object->add("__type__", _new_string("Object", js_value::at_const | js_value::at_refs));
@@ -79,8 +80,9 @@ namespace clib {
         permanents._proto_object_toString->add("length", _int_0);
         permanents._proto_object_toString->name = "toString";
         permanents._proto_object_toString->builtin = [](auto& func, auto& _this, auto& args, auto& js, auto attr) {
-            func->stack.push_back(js.new_string(_this.lock()->to_string(&js, 2)));
-            return 0;
+            auto r = 0;
+            func->stack.push_back(js.new_string(_this.lock()->to_string(&js, 2, &r)));
+            return r;
         };
         permanents._proto_object->add(permanents._proto_object_toString->name, permanents._proto_object_toString);
         permanents._proto_object_valueOf = _new_function(nullptr, js_value::at_const | js_value::at_readonly);
@@ -133,9 +135,12 @@ namespace clib {
             }
             auto fun = JS_FUN(f);
             auto __this = __args.empty() ? _this : __args.front();
+            auto r = 0;
             auto args = __args.size() > 1 ?
-                to_array(__args[1].lock()) :
+                to_array(__args[1].lock(), &r) :
                 std::vector<js_value::weak_ref>();
+            if (r != 0)
+                return 0;
             return js.call_api(fun, __this, args, jsv_function::at_fast);
         };
         permanents._proto_function->add(permanents._proto_function_apply->name, permanents._proto_function_apply);
@@ -150,13 +155,16 @@ namespace clib {
                 func->stack.push_back(_this);
                 return 0;
             }
-            auto origin = f->to_string(&js, 0);
+            auto r = 0;
+            auto origin = f->to_string(&js, 0, &r);
+            if (r != 0)
+                return r;
             auto re = __args[0].lock();
             auto _replacer = __args[1].lock();
             if (re->get_type() == r_regex) {
                 if (_replacer->get_type() != r_function) {
-                    func->stack.push_back(js.new_string(JS_RE(re)->replace(origin, _replacer->to_string(&js, 0))));
-                    return 0;
+                    func->stack.push_back(js.new_string(JS_RE(re)->replace(origin, _replacer->to_string(&js, 0, &r))));
+                    return r;
                 }
                 else {
                     auto rep = JS_FUN(_replacer);
@@ -174,7 +182,9 @@ namespace clib {
                             auto v = js.fast_api(rep, _this, args, 0, &r);
                             if (r != 0)
                                 return r;
-                            str = v->to_string(&js, 0);
+                            str = v->to_string(&js, 0, &r);
+                            if (r != 0)
+                                return r;
                         }
                     }
                     std::stringstream ss;
@@ -187,20 +197,29 @@ namespace clib {
             }
             else {
                 if (_replacer->get_type() != r_function) {
-                    auto str_replacer = _replacer->to_string(&js, 0);
-                    func->stack.push_back(js.new_string(jsv_regexp::replace(origin, re->to_string(&js, 0), str_replacer)));
+                    auto str_replacer = _replacer->to_string(&js, 0, &r);
+                    if (r != 0)
+                        return r;
+                    auto a = re->to_string(&js, 0, &r);
+                    if (r != 0)
+                        return r;
+                    func->stack.push_back(js.new_string(jsv_regexp::replace(origin, a, str_replacer)));
                     return 0;
                 }
                 else {
                     auto rep = JS_FUN(_replacer);
-                    auto pat = re->to_string(&js, 0);
+                    auto pat = re->to_string(&js, 0, &r);
+                    if (r != 0)
+                        return r;
                     auto r = 0;
                     std::vector<js_value::weak_ref> args;
                     args.push_back(js.new_string(pat));
                     auto v = js.fast_api(rep, _this, args, 0, &r);
                     if (r != 0)
                         return r;
-                    auto v2 = v->to_string(&js, 0);
+                    auto v2 = v->to_string(&js, 0, &r);
+                    if (r != 0)
+                        return r;
                     func->stack.push_back(js.new_string(jsv_regexp::replace(origin, pat, v2)));
                     return 0;
                 }
@@ -241,19 +260,30 @@ namespace clib {
             char buf[128];
             auto t = _this.lock();
             assert(t);
-            auto type = t->unary_op(js, UNARY_TYPEOF)->to_string(&js, 0);
+            auto r = 0;
+            auto t1 = t->unary_op(js, UNARY_TYPEOF, &r);
+            if (r != 0)
+                return r;
+            auto type = t1->to_string(&js, 0, &r);
+            if (r != 0)
+                return r;
             auto proto = t->__proto__.lock();
             auto p = std::string("none");
             if (proto->get_type() == r_object) {
                 const auto& o = JS_OBJ(proto);
                 auto of = o->get("__type__");
                 if (of) {
-                    p = of->to_string(&js, 0);
+                    p = of->to_string(&js, 0, &r);
+                    if (r != 0)
+                        return r;
                 }
             }
+            auto t2 = t->to_string(&js, 0, &r);
+            if (r != 0)
+                return r;
             snprintf(buf, sizeof(buf),
                 "Str: %s, Type: %s, Proto: %s, Ptr: %p",
-                t->to_string(&js, 0).c_str(), type.c_str(), p.c_str(), t.get());
+                t2.c_str(), type.c_str(), p.c_str(), t.get());
             func->stack.push_back(js.new_string(buf));
             return 0;
         };
@@ -265,8 +295,11 @@ namespace clib {
         permanents.console_log->name = "log";
         permanents.console_log->builtin = [](auto& func, auto& _this, auto& args, auto& js, auto attr) {
             std::stringstream ss;
+            auto r = 0;
             for (size_t i = 0; i < args.size(); i++) {
-                ss << args[i].lock()->to_string(&js, 1);
+                ss << args[i].lock()->to_string(&js, 1, &r);
+                if (r != 0)
+                    return r;
                 if (i + 1 < args.size())
                     ss << " ";
             }
@@ -281,8 +314,11 @@ namespace clib {
         permanents.console_error->name = "error";
         permanents.console_error->builtin = [](auto& func, auto& _this, auto& args, auto& js, auto attr) {
             std::stringstream ss;
+            auto r = 0;
             for (size_t i = 0; i < args.size(); i++) {
-                ss << args[i].lock()->to_string(&js, 1);
+                ss << args[i].lock()->to_string(&js, 1, &r);
+                if (r != 0)
+                    return r;
                 if (i + 1 < args.size())
                     ss << " ";
             }
@@ -313,7 +349,10 @@ namespace clib {
                 func->stack.push_back(js.new_undefined());
                 return 0;
             }
-            auto filename = args.front().lock()->to_string(&js, 0);
+            auto r = 0;
+            auto filename = args.front().lock()->to_string(&js, 0, &r);
+            if (r != 0)
+                return r;
             std::string content;
             if (js.get_file(filename, content)) {
                 func->pc++;
@@ -410,7 +449,10 @@ namespace clib {
                 pri = js.new_string("");
             }
             else {
-                pri = js.new_string(args.front().lock()->to_string(&js, 0));
+                auto r = 0;
+                pri = js.new_string(args.front().lock()->to_string(&js, 0, &r));
+                if (r != 0)
+                    return r;
             }
             if (attr & jsv_function::at_new_function) {
                 pri = js.new_object_box(pri);
@@ -477,15 +519,18 @@ namespace clib {
         permanents.f_regexp->name = "RegExp";
         permanents.f_regexp->builtin = [](auto& func, auto& _this, auto& args, auto& js, auto attr) {
             auto regexp = js.new_regexp();
+            auto r = 0;
             if (args.empty()) {
                 regexp->init("");
             }
             else if (args.size() == 1) {
-                regexp->init(args.front().lock()->to_string(&js, 0));
+                regexp->init(args.front().lock()->to_string(&js, 0, &r));
             }
             else if (args.size() >= 2) {
-                regexp->init(args.front().lock()->to_string(&js, 0), args[1].lock()->to_string(&js, 0));
+                regexp->init(args.front().lock()->to_string(&js, 0, &r), args[1].lock()->to_string(&js, 0, &r));
             }
+            if (r != 0)
+                return r;
             if (!regexp->error.empty()) {
                 std::stringstream ss;
                 ss << "throw new SyntaxError('Invalid regular expression: " << jsv_string::convert(regexp->str) << ": " << jsv_string::convert(regexp->error) << "')";
@@ -503,7 +548,10 @@ namespace clib {
                 func->stack.push_back(js.new_boolean(false));
                 return 0;
             }
-            auto str = args.front().lock()->to_string(&js, 0);
+            auto r = 0;
+            auto str = args.front().lock()->to_string(&js, 0, &r);
+            if (r != 0)
+                return r;
             auto t = _this.lock();
             if (t->get_type() != r_regex) {
                 func->stack.push_back(js.new_boolean(false));
@@ -555,7 +603,10 @@ namespace clib {
             auto err = js.new_error(0);
             err->add("name", js.new_string("Error"));
             if (!args.empty()) {
-                err->add("message", js.new_string(args.front().lock()->to_string(&js, 0)));
+                auto r = 0;
+                err->add("message", js.new_string(args.front().lock()->to_string(&js, 0, &r)));
+                if (r != 0)
+                    return r;
             }
             err->add("stack", js.new_string(js.get_stacktrace()));
             func->stack.push_back(err);

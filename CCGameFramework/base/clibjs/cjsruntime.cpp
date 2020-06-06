@@ -31,6 +31,7 @@
 #define DUMP_CLOSURE 0
 #define DUMP_GC 0
 #define SHOW_EXTRA 1
+#define STACK_MAX 256
 #define GC_PERIOD 128
 
 #if defined(WIN32) || defined(WIN64)
@@ -196,7 +197,7 @@ namespace clib {
                 r = run(c);
                 permanents.cycles++;
 #if DUMP_STEP && SHOW_EXTRA
-                dump_step2(c);
+                dump_step2(c, &r);
 #endif
                 if (top && gc_period++ >= GC_PERIOD) {
                     gc_period = 0;
@@ -293,7 +294,10 @@ namespace clib {
                 if (obj) {
                     cjsgui::singleton().put_string("\033FFF0000\033");
                     cjsgui::singleton().put_string("Uncaught ");
-                    cjsgui::singleton().put_string(obj->to_string(this, 1));
+                    auto r = 0;
+                    cjsgui::singleton().put_string(obj->to_string(this, 1, &r));
+                    if (r != 0)
+                        return r;
                     cjsgui::singleton().put_string("\033S4\033");
                     cjsgui::singleton().put_char('\n');
                 }
@@ -307,6 +311,7 @@ namespace clib {
 
     int cjsruntime::call_api(int type, js_value::weak_ref& _this,
         std::vector<js_value::weak_ref>& args, uint32_t attr) {
+        auto r = 0;
         switch ((js_value_new::api) type) {
         case API_none:
             break;
@@ -324,9 +329,14 @@ namespace clib {
             auto arg_n = 1;
             auto time = 0;
             if (args.size() > 1) {
-                time = (int)args[1].lock()->to_number(this);
+                auto r = 0;
+                time = (int)args[1].lock()->to_number(this, &r);
+                if (r != 0)
+                    return r;
                 arg_n++;
             }
+            if (r != 0)
+                return r;
             std::vector<js_value::weak_ref> _args(args.begin() + arg_n, args.end());
             push(new_number(api_setTimeout(time, JS_FUN(arg), _args, attr, type == API_setTimeout)));
         }
@@ -337,7 +347,9 @@ namespace clib {
                 push(new_undefined());
                 break;
             }
-            api_clearTimeout(args.front().lock()->to_number(this));
+            api_clearTimeout(args.front().lock()->to_number(this, &r));
+            if (r != 0)
+                return r;
             push(new_undefined());
         }
                               break;
@@ -357,6 +369,15 @@ namespace clib {
         }
         if (func->builtin)
             return func->builtin(current_stack, _this, args, *this, attr);
+        if (stack.size() > STACK_MAX) {
+            std::stringstream ss;
+            ss << "throw new RangeError('Maximum call stack size exceeded')";
+            auto _stack_size = stack.size();
+            auto r = exec("<max_stack::error>", ss.str(), true);
+            if (r != 0)
+                return r;
+            return call_internal(false, _stack_size);
+        }
         auto _new_stack = new_stack(func->code);
         stack.push_back(_new_stack);
         auto env = _new_stack->envs.lock();
@@ -619,7 +640,10 @@ namespace clib {
         case UNARY_NEW:
         case UNARY_TYPEOF: {
             auto op1 = pop().lock();
-            auto result = op1->unary_op(*this, code.code);
+            auto r = 0;
+            auto result = op1->unary_op(*this, code.code, &r);
+            if (r != 0)
+                return r;
             assert(result);
             push(result);
         }
@@ -627,7 +651,10 @@ namespace clib {
         case UNARY_DELETE: {
             auto n = code.op1;
             if (n >= -1) {
-                auto key = n >= 0 ? current_stack->info->names.at(code.op1) : pop().lock()->to_string(this, 0);
+                auto r = 0;
+                auto key = n >= 0 ? current_stack->info->names.at(code.op1) : pop().lock()->to_string(this, 0, &r);
+                if (r != 0)
+                    return r;
                 auto obj = pop().lock();
                 if (!obj->is_primitive()) {
                     auto f = JS_OBJ(obj)->get(key);
@@ -700,9 +727,12 @@ namespace clib {
                       break;
         case LOAD_ATTR:
         case BINARY_SUBSCR: {
+            auto r = 0;
             auto key = code.code == LOAD_ATTR ?
                 current_stack->info->names.at(code.op1) :
-                pop().lock()->to_string(this, 0);
+                pop().lock()->to_string(this, 0, &r);
+            if (r != 0)
+                return r;
             auto obj = pop().lock();
             if (obj->get_type() == r_undefined) {
                 std::stringstream ss;
@@ -742,7 +772,10 @@ namespace clib {
         }
                        break;
         case STORE_SUBSCR: {
-            auto key = pop().lock()->to_string(this, 0);
+            auto r = 0;
+            auto key = pop().lock()->to_string(this, 0, &r);
+            if (r != 0)
+                return r;
             auto obj = pop().lock();
             auto value = top();
             auto o = JS_OBJ(obj);
@@ -814,7 +847,10 @@ namespace clib {
             }
             else if (obj->get_type() == r_string) {
                 auto arr = new_array();
-                auto s = obj->to_string(this, 0);
+                auto r = 0;
+                auto s = obj->to_string(this, 0, &r);
+                if (r != 0)
+                    return r;
                 std::stringstream ss;
                 for (size_t i = 0; i < s.size(); i++) {
                     ss.str("");
@@ -1440,7 +1476,7 @@ namespace clib {
         fprintf(stdout, "R [%04d] %s\n", current_stack->pc, c.desc.c_str());
     }
 
-    void cjsruntime::dump_step2(const cjs_code& c) const {
+    void cjsruntime::dump_step2(const cjs_code& c, int* r) const {
         if (!stack.empty() && !stack.front()->stack.empty())
             std::cout << std::setfill('=') << std::setw(60) << "" << std::endl;
         for (auto s = stack.rbegin(); s != stack.rend(); s++) {
@@ -1466,9 +1502,12 @@ namespace clib {
                 std::cout << std::setfill('-') << std::setw(60) << "" << std::endl;
                 for (const auto& e : env) {
                     auto o = _env->get(e);
+                    auto a = o->to_string(nullptr, 0, r);
+                    if (*r != 0)
+                        return;
                     fprintf(stdout, " Env | [%p] \"%.100s\" '%.100s' ",
                         o.get(), e.c_str(),
-                        o->to_string(nullptr, 0).c_str());
+                        a.c_str());
                     if (o == permanents.global_env)
                         fprintf(stdout, "<global env>\n");
                     else if (o->attr & js_value::at_readonly)
@@ -1485,9 +1524,12 @@ namespace clib {
                 std::cout << std::setfill('-') << std::setw(60) << "" << std::endl;
                 for (const auto& e : cl) {
                     auto o = _cl->get(e);
+                    auto a = o->to_string(nullptr, 1, r);
+                    if (*r != 0)
+                        return;
                     fprintf(stdout, " Clo | [%p] \"%.100s\" '%.100s' ",
                         o.get(), e.c_str(),
-                        o->to_string(nullptr, 1).c_str());
+                        a.c_str());
                     print(o, 0, std::cout);
                 }
             }
@@ -1812,7 +1854,7 @@ namespace clib {
         return false;
     }
 
-    std::vector<js_value::weak_ref> cjsruntime::to_array(const js_value::ref& f) {
+    std::vector<js_value::weak_ref> cjsruntime::to_array(const js_value::ref& f, int* r) {
         std::vector<std::weak_ptr<js_value>> ret;
         if (f->get_type() != r_object) {
             return ret;
@@ -1828,6 +1870,8 @@ namespace clib {
             if (!(std::isinf(d) && std::isnan(d)))
                 length = (int)std::floor(d);
         }
+        if (*r != 0)
+            return ret;
         for (auto i = 0; i < length; i++) {
             std::stringstream ss;
             ss << i;
@@ -2281,8 +2325,12 @@ namespace clib {
         }
         auto op1 = _op1->to_primitive(*this, js_value::conv_default, r);
         assert(op1);
+        if (*r != 0)
+            return permanents._undefined;
         auto op2 = _op2->to_primitive(*this, js_value::conv_default, r);
         assert(op2);
+        if (*r != 0)
+            return permanents._undefined;
         if (code == BINARY_ADD) {
             if (op1->get_type() == r_string || op2->get_type() == r_string)
                 conv = js_value::conv_string;
@@ -2301,8 +2349,12 @@ namespace clib {
             }
         }
         if (conv == js_value::conv_string) {
-            auto s1 = op1->to_string(this, op1->get_type() == r_number ? 1 : 0);
-            auto s2 = op2->to_string(this, op2->get_type() == r_number ? 1 : 0);
+            auto s1 = op1->to_string(this, op1->get_type() == r_number ? 1 : 0, r);
+            if (*r != 0)
+                return permanents._undefined;
+            auto s2 = op2->to_string(this, op2->get_type() == r_number ? 1 : 0, r);
+            if (*r != 0)
+                return permanents._undefined;
             switch (code) {
             case COMPARE_LESS:
                 return new_boolean(s1 < s2);
@@ -2323,20 +2375,36 @@ namespace clib {
             double s1, s2;
             switch (code) {
             case COMPARE_LESS:
-                s1 = op1->to_number(this);
-                s2 = op2->to_number(this);
+                s1 = op1->to_number(this, r);
+                if (*r != 0)
+                    return permanents._undefined;
+                s2 = op2->to_number(this, r);
+                if (*r != 0)
+                    return permanents._undefined;
                 return new_boolean(s1 < s2);
             case COMPARE_LESS_EQUAL:
-                s1 = op1->to_number(this);
-                s2 = op2->to_number(this);
+                s1 = op1->to_number(this, r);
+                if (*r != 0)
+                    return permanents._undefined;
+                s2 = op2->to_number(this, r);
+                if (*r != 0)
+                    return permanents._undefined;
                 return new_boolean(s1 <= s2);
             case COMPARE_GREATER:
-                s1 = op1->to_number(this);
-                s2 = op2->to_number(this);
+                s1 = op1->to_number(this, r);
+                if (*r != 0)
+                    return permanents._undefined;
+                s2 = op2->to_number(this, r);
+                if (*r != 0)
+                    return permanents._undefined;
                 return new_boolean(s1 > s2);
             case COMPARE_GREATER_EQUAL:
-                s1 = op1->to_number(this);
-                s2 = op2->to_number(this);
+                s1 = op1->to_number(this, r);
+                if (*r != 0)
+                    return permanents._undefined;
+                s2 = op2->to_number(this, r);
+                if (*r != 0)
+                    return permanents._undefined;
                 return new_boolean(s1 >= s2);
             case COMPARE_EQUAL: {
                 if (op1->get_type() != op2->get_type()) {
@@ -2346,7 +2414,13 @@ namespace clib {
                     if (op2->get_type() == r_null) {
                         return new_boolean(op1->get_type() == r_undefined);
                     }
-                    return new_boolean(op1->to_number(this) == op2->to_number(this));
+                    auto a = op1->to_number(this, r);
+                    if (*r != 0)
+                        return permanents._undefined;
+                    auto b = op2->to_number(this, r);
+                    if (*r != 0)
+                        return permanents._undefined;
+                    return new_boolean(a == b);
                 }
                 switch (op1->get_type()) {
                 case r_string:
@@ -2365,7 +2439,13 @@ namespace clib {
                     if (op2->get_type() == r_null) {
                         return new_boolean(!(op1->get_type() == r_undefined));
                     }
-                    return new_boolean(op1->to_number(this) != op2->to_number(this));
+                    auto a = op1->to_number(this, r);
+                    if (*r != 0)
+                        return permanents._undefined;
+                    auto b = op2->to_number(this, r);
+                    if (*r != 0)
+                        return permanents._undefined;
+                    return new_boolean(a != b);
                 }
                 switch (op1->get_type()) {
                 case r_string:
@@ -2403,20 +2483,20 @@ namespace clib {
                 }
             }
             case BINARY_POWER:
-                s1 = op1->to_number(this);
-                s2 = op2->to_number(this);
+                s1 = op1->to_number(this, r);
+                s2 = op2->to_number(this, r);
                 if (s2 == 0)
                     return new_number(1.0);
                 if ((s1 == 1.0 || s1 == -1.0) && std::isinf(s2))
                     return new_number(NAN);
                 return new_number(pow(s1, s2));
             case BINARY_MULTIPLY:
-                s1 = op1->to_number(this);
-                s2 = op2->to_number(this);
+                s1 = op1->to_number(this, r);
+                s2 = op2->to_number(this, r);
                 return new_number(s1 * s2);
             case BINARY_MODULO:
-                s1 = op1->to_number(this);
-                s2 = op2->to_number(this);
+                s1 = op1->to_number(this, r);
+                s2 = op2->to_number(this, r);
                 if (std::isinf(s1) || s2 == 0)
                     return new_number(NAN);
                 if (std::isinf(s2))
@@ -2425,20 +2505,20 @@ namespace clib {
                     return new_number(std::isnan(s2) ? NAN : s1);
                 return new_number(fmod(s1, s2));
             case BINARY_ADD:
-                s1 = op1->to_number(this);
-                s2 = op2->to_number(this);
+                s1 = op1->to_number(this, r);
+                s2 = op2->to_number(this, r);
                 return new_number(s1 + s2);
             case BINARY_SUBTRACT:
-                s1 = op1->to_number(this);
-                s2 = op2->to_number(this);
+                s1 = op1->to_number(this, r);
+                s2 = op2->to_number(this, r);
                 return new_number(s1 - s2);
             case BINARY_TRUE_DIVIDE:
-                s1 = op1->to_number(this);
-                s2 = op2->to_number(this);
+                s1 = op1->to_number(this, r);
+                s2 = op2->to_number(this, r);
                 return new_number(s1 / s2);
             case BINARY_LSHIFT: {
-                s1 = op1->to_number(this);
-                s2 = op2->to_number(this);
+                s1 = op1->to_number(this, r);
+                s2 = op2->to_number(this, r);
                 if (s2 == 0.0)
                     return new_number(fix(s1) == 0.0 ? 0.0 : fix(s1));
                 auto a = int(fix(s1));
@@ -2447,8 +2527,8 @@ namespace clib {
                 return new_number(double(int(a << c)));
             }
             case BINARY_RSHIFT: {
-                s1 = op1->to_number(this);
-                s2 = op2->to_number(this);
+                s1 = op1->to_number(this, r);
+                s2 = op2->to_number(this, r);
                 if (s2 == 0.0)
                     return new_number(fix(s1) == 0.0 ? 0.0 : fix(s1));
                 auto a = int(fix(s1));
@@ -2457,8 +2537,8 @@ namespace clib {
                 return new_number(double(int(a >> c)));
             }
             case BINARY_URSHIFT: {
-                s1 = op1->to_number(this);
-                s2 = op2->to_number(this);
+                s1 = op1->to_number(this, r);
+                s2 = op2->to_number(this, r);
                 if (s2 == 0.0)
                     return new_number(fix(s1) == 0.0 ? 0.0 : uint32_t(fix(s1)));
                 auto a = uint32_t(fix(s1));
@@ -2467,22 +2547,22 @@ namespace clib {
                 return new_number(double(uint32_t(a >> c)));
             }
             case BINARY_AND: {
-                s1 = op1->to_number(this);
-                s2 = op2->to_number(this);
+                s1 = op1->to_number(this, r);
+                s2 = op2->to_number(this, r);
                 auto a = uint32_t(fix(s1));
                 auto b = uint32_t(fix(s2));
                 return new_number(double(int(a & b)));
             }
             case BINARY_XOR: {
-                s1 = op1->to_number(this);
-                s2 = op2->to_number(this);
+                s1 = op1->to_number(this, r);
+                s2 = op2->to_number(this, r);
                 auto a = uint32_t(fix(s1));
                 auto b = uint32_t(fix(s2));
                 return new_number(double(int(a ^ b)));
             }
             case BINARY_OR: {
-                s1 = op1->to_number(this);
-                s2 = op2->to_number(this);
+                s1 = op1->to_number(this, r);
+                s2 = op2->to_number(this, r);
                 auto a = uint32_t(fix(s1));
                 auto b = uint32_t(fix(s2));
                 return new_number(double(int(a | b)));
@@ -2535,13 +2615,15 @@ namespace clib {
         case r_object: {
             auto n = std::dynamic_pointer_cast<jsv_object>(value);
             if (!n->special.empty()) {
-                os << "object: [[primitive]] " << n->to_string(nullptr, 0) << std::endl;
+                auto r = 0;
+                os << "object: [[primitive]] " << n->to_string(nullptr, 0, &r) << std::endl;
+                assert(r);
             }
             else {
                 os << "object: " << std::endl;
                 for (const auto& s : n->get_keys()) {
                     auto value = n->get(s);
-                    if (value->get_type() == r_undefined)
+                    if (value || value->get_type() == r_undefined)
                         continue;
                     os << std::setfill(' ') << std::setw(level) << "";
                     os << s << ": " << std::endl;

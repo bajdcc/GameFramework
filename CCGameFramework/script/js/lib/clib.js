@@ -1,5 +1,6 @@
 window = this;
 
+sys.exec_file("clib_global.js");
 sys.exec_file("clib_error.js");
 sys.exec_file("clib_function.js");
 sys.exec_file("clib_array.js");

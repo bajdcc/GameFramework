@@ -104,13 +104,13 @@ namespace clib {
         using ref = std::shared_ptr<js_value>;
         using weak_ref = std::weak_ptr<js_value>;
         virtual js_runtime_t get_type() = 0;
-        virtual js_value::ref unary_op(js_value_new &n, int code) = 0;
+        virtual js_value::ref unary_op(js_value_new &n, int code, int *) = 0;
         virtual bool to_bool() const = 0;
         virtual void mark(int n) = 0;
         virtual bool is_primitive() const;
         virtual js_value::ref to_primitive(js_value_new &n, primitive_t, int *);
-        virtual std::string to_string(js_value_new *n, int hint) const = 0;
-        virtual double to_number(js_value_new *n) const = 0;
+        virtual std::string to_string(js_value_new *n, int hint, int*) const = 0;
+        virtual double to_number(js_value_new *n, int *) const = 0;
         uint8_t marked{0};
         uint8_t attr{0};
         uint8_t reserved1{0};
@@ -124,11 +124,11 @@ namespace clib {
         using weak_ref = std::weak_ptr<jsv_number>;
         explicit jsv_number(double n);
         js_runtime_t get_type() override;
-        js_value::ref unary_op(js_value_new &n, int code) override;
+        js_value::ref unary_op(js_value_new &n, int code, int *) override;
         bool to_bool() const override;
         void mark(int n) override;
-        std::string to_string(js_value_new *n, int hint) const override;
-        double to_number(js_value_new *n) const override;
+        std::string to_string(js_value_new *n, int hint, int*) const override;
+        double to_number(js_value_new *n, int *) const override;
         static std::string number_to_string(double d);
         double number;
     };
@@ -139,11 +139,11 @@ namespace clib {
         using weak_ref = std::weak_ptr<jsv_string>;
         explicit jsv_string(std::string s);
         js_runtime_t get_type() override;
-        js_value::ref unary_op(js_value_new &n, int code) override;
+        js_value::ref unary_op(js_value_new &n, int code, int *) override;
         bool to_bool() const override;
         void mark(int n) override;
-        std::string to_string(js_value_new *n, int hint) const override;
-        double to_number(js_value_new *n) const override;
+        std::string to_string(js_value_new *n, int hint, int*) const override;
+        double to_number(js_value_new *n, int *) const override;
         int to_number(double &d);
         static int to_number(const std::string &s, double &d);
         static std::string convert(const std::string &_str);
@@ -166,11 +166,11 @@ namespace clib {
         using weak_ref = std::weak_ptr<jsv_boolean>;
         explicit jsv_boolean(bool flag);
         js_runtime_t get_type() override;
-        js_value::ref unary_op(js_value_new &n, int code) override;
+        js_value::ref unary_op(js_value_new &n, int code, int *) override;
         bool to_bool() const override;
         void mark(int n) override;
-        std::string to_string(js_value_new *n, int hint) const override;
-        double to_number(js_value_new *n) const override;
+        std::string to_string(js_value_new *n, int hint, int*) const override;
+        double to_number(js_value_new *n, int *) const override;
         bool b{false};
     };
 
@@ -180,15 +180,15 @@ namespace clib {
         using ref = std::shared_ptr<jsv_object>;
         using weak_ref = std::weak_ptr<jsv_object>;
         js_runtime_t get_type() override;
-        js_value::ref unary_op(js_value_new &n, int code) override;
+        js_value::ref unary_op(js_value_new &n, int code, int *) override;
         bool to_bool() const override;
         void mark(int n) override;
         js_value::ref gets(const std::string &name) const;
         js_value::ref gets2(const std::string& name) const;
         bool is_primitive() const override;
         js_value::ref to_primitive(js_value_new &n, primitive_t, int *) override;
-        std::string to_string(js_value_new *n, int hint) const override;
-        double to_number(js_value_new *n) const override;
+        std::string to_string(js_value_new *n, int hint, int*) const override;
+        double to_number(js_value_new *n, int *) const override;
         ref clear();
         std::unordered_map<std::string, js_value::weak_ref> special;
         const std::vector<std::string>& get_keys() const;
@@ -207,11 +207,11 @@ namespace clib {
         using ref = std::shared_ptr<jsv_null>;
         using weak_ref = std::weak_ptr<jsv_null>;
         js_runtime_t get_type() override;
-        js_value::ref unary_op(js_value_new &n, int code) override;
+        js_value::ref unary_op(js_value_new &n, int code, int *) override;
         bool to_bool() const override;
         void mark(int n) override;
-        std::string to_string(js_value_new *n, int hint) const override;
-        double to_number(js_value_new *n) const override;
+        std::string to_string(js_value_new *n, int hint, int*) const override;
+        double to_number(js_value_new *n, int *) const override;
     };
 
     class jsv_undefined : public js_value {
@@ -220,11 +220,11 @@ namespace clib {
         using ref = std::shared_ptr<jsv_undefined>;
         using weak_ref = std::weak_ptr<jsv_undefined>;
         js_runtime_t get_type() override;
-        js_value::ref unary_op(js_value_new &n, int code) override;
+        js_value::ref unary_op(js_value_new &n, int code, int *) override;
         bool to_bool() const override;
         void mark(int n) override;
-        std::string to_string(js_value_new *n, int hint) const override;
-        double to_number(js_value_new *n) const override;
+        std::string to_string(js_value_new *n, int hint, int*) const override;
+        double to_number(js_value_new *n, int *) const override;
     };
 
     class cjs_function_info;
@@ -242,11 +242,11 @@ namespace clib {
         jsv_function() = default;
         explicit jsv_function(const js_sym_code_t::ref &c, js_value_new &n);
         js_runtime_t get_type() override;
-        js_value::ref unary_op(js_value_new &n, int code) override;
+        js_value::ref unary_op(js_value_new &n, int code, int *) override;
         bool to_bool() const override;
         void mark(int n) override;
-        std::string to_string(js_value_new *n, int hint) const override;
-        double to_number(js_value_new *n) const override;
+        std::string to_string(js_value_new *n, int hint, int*) const override;
+        double to_number(js_value_new *n, int *) const override;
         ref clear2();
         std::shared_ptr<cjs_function_info> code;
         std::function<int(std::shared_ptr<cjs_function> &, js_value::weak_ref &_this, std::vector<js_value::weak_ref> &, js_value_new &, uint32_t attr)> builtin;
@@ -285,7 +285,7 @@ namespace clib {
         using weak_ref = std::weak_ptr<jsv_regexp>;
         jsv_regexp() = default;
         js_runtime_t get_type() override;
-        std::string to_string(js_value_new* n, int hint) const override;
+        std::string to_string(js_value_new* n, int hint, int *) const override;
         ref clear2();
         void init(const std::string& str, bool escape = false);
         void init(const std::string& str, const std::string& flag);
@@ -389,7 +389,7 @@ namespace clib {
                                std::vector<js_value::weak_ref> &args, uint32_t attr, int * = nullptr) override;
 
         static bool to_number(const js_value::ref &, double &);
-        static std::vector<js_value::weak_ref> to_array(const js_value::ref &);
+        static std::vector<js_value::weak_ref> to_array(const js_value::ref &, int *);
         int get_state() const;
         void set_state(int);
 
@@ -415,7 +415,7 @@ namespace clib {
 
         js_value::ref register_value(const js_value::ref &value);
         void dump_step(const cjs_code &code) const;
-        void dump_step2(const cjs_code &code) const;
+        void dump_step2(const cjs_code &code, int *) const;
         void dump_step3() const;
 
         void reuse_value(const js_value::ref &);
