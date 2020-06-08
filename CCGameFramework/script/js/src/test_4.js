@@ -1,4 +1,4 @@
-console.error((function () {
+console.error((function() {
     try {
         throw new Error("error");
         return 1;
@@ -7,7 +7,7 @@ console.error((function () {
     }
     return 2;
 })());
-console.log((function () {
+console.log((function() {
     try {
         throw 2;
     } catch (e) {
@@ -17,7 +17,7 @@ console.log((function () {
     }
     return 3;
 })());
-console.log((function () {
+console.log((function() {
     try {
         throw new Error("error");
         return 1;
@@ -26,7 +26,7 @@ console.log((function () {
     }
     return 3;
 })());
-console.log((function () {
+console.log((function() {
     try {
         return 1;
     } finally {
@@ -34,7 +34,7 @@ console.log((function () {
     }
     return 3;
 })());
-console.log((function () {
+console.log((function() {
     var s = 0;
     for (var i = 0; i < 2; i++) {
         try {
@@ -48,7 +48,7 @@ console.log((function () {
     }
     return s;
 })());
-console.log((function () {
+console.log((function() {
     var s = 0;
     switch (1) {
         case 1:
@@ -63,7 +63,7 @@ console.log((function () {
     }
     return s;
 })());
-console.log((function () {
+console.log((function() {
     try {
         try {
             throw new Error("error");
@@ -78,9 +78,17 @@ console.log((function () {
         return 5;
     }
 })());
-setTimeout(function () {
+setTimeout(function() {
     try {
         undefined_error;
+    } catch (e) {
+        console.error(e);
+    }
+});
+setTimeout(function() {
+    try {
+        function a() { a(); }
+        a();
     } catch (e) {
         console.error(e);
     }

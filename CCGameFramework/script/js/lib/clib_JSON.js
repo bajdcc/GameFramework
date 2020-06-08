@@ -263,7 +263,7 @@ sys.builtin(JSON);
 
                 // JSON numbers must be finite. Encode non-finite numbers as null.
 
-                return (true || (isFinite(value))) ?
+                return Number.isFinite(value) ?
                     String(value) :
                     "null";
 

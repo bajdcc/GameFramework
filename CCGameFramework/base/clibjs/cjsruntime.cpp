@@ -254,6 +254,8 @@ namespace clib {
                         current_stack->trys.pop_back();
                         trys = nullptr;
                     }
+                    if (tools.stackoverflow)
+                        tools.stackoverflow = false;
                     continue;
                 }
                 has_throw = true;
@@ -381,8 +383,9 @@ namespace clib {
         }
         if (func->builtin)
             return func->builtin(current_stack, _this, args, *this, attr);
-        if (stack.size() > STACK_MAX) {
+        if (stack.size() > STACK_MAX && !tools.stackoverflow) {
             std::stringstream ss;
+            tools.stackoverflow = true;
             ss << "throw new RangeError('Maximum call stack size exceeded')";
             auto _stack_size = stack.size();
             auto r = exec("<max_stack::error>", ss.str(), true);
@@ -1142,10 +1145,14 @@ namespace clib {
         }
                   return 9;
         case POP_FINALLY:
+            if (tools.stackoverflow)
+                tools.stackoverflow = false;
             return 9;
         case EXIT_FINALLY:
             assert(!current_stack->trys.empty());
             current_stack->trys.pop_back();
+            if (tools.stackoverflow)
+                tools.stackoverflow = false;
             break;
         case LOAD_FAST: {
             auto op = code.op1;
@@ -1776,7 +1783,8 @@ namespace clib {
     std::string cjsruntime::get_stacktrace() const {
         std::stringstream ss, sx;
         auto j = stack.size();
-        for (auto i = stack.rbegin(); i != stack.rend(); i++) {
+        auto k = 0;
+        for (auto i = stack.rbegin(); i != stack.rend() && k < 10; i++, k++) {
             ss << j-- << ": ";
             if ((*i)->pc < (int)(*i)->info->codes.size()) {
                 sx.str("");

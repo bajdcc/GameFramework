@@ -525,6 +525,7 @@ namespace clib {
             cjs_function::ref default_stack;
         } permanents;
         struct _tools_t {
+            bool stackoverflow{ false };
             std::regex stacktrace{ R"(\(([^:]+):\d+:\d+\)(.*))", std::regex::ECMAScript | std::regex::optimize };
         } tools;
         cjs_runtime_reuse reuse;

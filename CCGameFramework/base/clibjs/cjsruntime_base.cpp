@@ -393,12 +393,17 @@ namespace clib {
             }
             else {
                 auto n = args.front().lock();
-                double d = 0.0;
-                if (to_number(n, d)) {
-                    pri = js.new_number(d);
+                if (n->get_type() == r_number) {
+                    pri = n;
                 }
                 else {
-                    pri = js.new_number(NAN);
+                    double d = 0.0;
+                    if (to_number(n, d)) {
+                        pri = js.new_number(d);
+                    }
+                    else {
+                        pri = js.new_number(NAN);
+                    }
                 }
             }
             if (attr & jsv_function::at_new_function) {
@@ -434,13 +439,16 @@ namespace clib {
         permanents.f_object->builtin = [](auto& func, auto& _this, auto& args, auto& js, auto attr) {
             js_value::ref pri;
             if (args.empty()) {
-                pri = js.new_boolean(false);
+                pri = js.new_object();
             }
             else {
-                pri = js.new_boolean(args.front().lock()->to_bool());
-            }
-            if (attr & jsv_function::at_new_function) {
-                pri = js.new_object_box(pri);
+                auto n = args.front().lock();
+                if (n->is_primitive()) {
+                    pri = js.new_object_box(n);
+                }
+                else {
+                    pri = n;
+                }
             }
             func->stack.push_back(pri);
             return 0;
@@ -457,9 +465,15 @@ namespace clib {
             }
             else {
                 auto r = 0;
-                pri = js.new_string(args.front().lock()->to_string(&js, 0, &r));
-                if (r != 0)
-                    return r;
+                auto n = args.front().lock();
+                if (n->get_type() == r_string) {
+                    pri = n;
+                }
+                else {
+                    pri = js.new_string(args.front().lock()->to_string(&js, 0, &r));
+                    if (r != 0)
+                        return r;
+                }
             }
             if (attr & jsv_function::at_new_function) {
                 pri = js.new_object_box(pri);
@@ -473,18 +487,22 @@ namespace clib {
         permanents.f_function->add("length", _int_1);
         permanents.f_function->name = "Function";
         permanents.f_function->builtin = [](auto& func, auto& _this, auto& args, auto& js, auto attr) {
-            js_value::ref pri;
+            std::vector<js_value::weak_ref> _args;
             if (args.empty()) {
-                pri = js.new_boolean(false);
+                _args.push_back(js.new_string("(function anonymous() {})"));
+                return js.call_api(API_eval, _this, _args, 0);
             }
             else {
-                pri = js.new_boolean(args.front().lock()->to_bool());
+                auto n = args.front().lock();
+                auto r = 0;
+                auto s = n->to_string(&js, 0, &r);
+                if (r != 0)
+                    return r;
+                std::stringstream ss;
+                ss << "(function anonymous() { " << s << " })";
+                _args.push_back(js.new_string(ss.str()));
+                return js.call_api(API_eval, _this, _args, 0);
             }
-            if (attr & jsv_function::at_new_function) {
-                pri = js.new_object_box(pri);
-            }
-            func->stack.push_back(pri);
-            return 0;
         };
         permanents.global_env->add(permanents.f_function->name, permanents.f_function);
         // array
