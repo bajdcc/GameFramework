@@ -1249,6 +1249,7 @@ namespace clib {
             case c_bitOrExpression:
             case c_logicalAndExpression:
             case c_logicalOrExpression:
+            case c_inExpression:
             case c_ternaryExpression: {
                 size_t tmp_i = 0;
                 auto exp1 = to_exp(tmps[tmp_i++]);

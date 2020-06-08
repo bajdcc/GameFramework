@@ -648,6 +648,21 @@ namespace clib {
             push(new_boolean(!failed));
         }
                         break;
+        case OBJECT_IN: {
+            auto op2 = pop().lock();
+            auto op1 = pop().lock();
+            if (op2->is_primitive()) {
+                push(new_boolean(false));
+                break;
+            }
+            auto r = 0;
+            auto o1 = op1->to_string(this, 0, &r);
+            if (r != 0)
+                return r;
+            auto o = JS_O(op2);
+            push(new_boolean(o->exists(o1)));
+        }
+                      break;
         case UNARY_POSITIVE:
         case UNARY_NEGATIVE:
         case UNARY_NOT:

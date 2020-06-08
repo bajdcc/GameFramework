@@ -494,6 +494,31 @@ namespace clib {
         return nullptr;
     }
 
+    bool jsv_object::exists(const std::string& key) const {
+        auto f = obj.find(key);
+        if (f != obj.end()) {
+            return true;
+        }
+        if (key == "__proto__") {
+            auto p = __proto__.lock();
+            return p != nullptr;
+        }
+        auto proto = __proto__.lock();
+        if (!proto || proto->get_type() == r_undefined) {
+            return false; // type error
+        }
+        auto p = proto;
+        while (p) {
+            assert(!p->is_primitive());
+            auto o = JS_OBJ(p)->get(key);
+            if (o) {
+                return true;
+            }
+            p = p->__proto__.lock();
+        }
+        return false;
+    }
+
     js_value::ref jsv_object::gets2(const std::string& key) const {
         auto f = obj.find(key);
         if (f != obj.end()) {

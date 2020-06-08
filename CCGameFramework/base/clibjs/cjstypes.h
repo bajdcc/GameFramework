@@ -307,6 +307,7 @@ namespace clib {
             DUP_TOP,
             NOP,
             INSTANCE_OF,
+            OBJECT_IN,
             UNARY_POSITIVE,
             UNARY_NEGATIVE,
             UNARY_NOT,

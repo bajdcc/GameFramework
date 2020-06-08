@@ -493,7 +493,11 @@ namespace clib {
             exp2->gen_rvalue(gen);
             if (op->data._keyword == K_INSTANCEOF) {
                 gen.emit(this, INSTANCE_OF);
-            } else {
+            }
+            else if (op->data._keyword == K_IN) {
+                gen.emit(this, OBJECT_IN);
+            }
+            else {
                 gen.error(this, "unsupported binop");
             }
             return 0;
