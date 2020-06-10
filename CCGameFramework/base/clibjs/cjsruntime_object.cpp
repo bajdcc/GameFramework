@@ -335,6 +335,7 @@ namespace clib {
             number = 0.0;
             number_state = 0;
             calc_number = false;
+            wstr.clear();
         }
         return std::dynamic_pointer_cast<jsv_string>(shared_from_this());
     }
@@ -420,6 +421,12 @@ namespace clib {
     int jsv_string::get_length() const
     {
         return (int)wstr.length();
+    }
+
+    void jsv_string::init(const std::string& s)
+    {
+        str = s;
+        wstr = CString(CStringA(s.c_str())).GetBuffer(0);
     }
 
     bool jsv_string::string_to_index(const std::string& s, size_t& idx)

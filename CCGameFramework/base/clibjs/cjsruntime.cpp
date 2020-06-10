@@ -1711,7 +1711,7 @@ namespace clib {
         }
         auto r = reuse.reuse_strings.back();
         register_value(r);
-        r->str = s;
+        r->init(s);
         r->__proto__ = permanents._proto_string;
         reuse.reuse_strings.pop_back();
         return std::move(r);
