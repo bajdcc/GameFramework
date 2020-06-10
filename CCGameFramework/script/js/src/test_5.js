@@ -27,3 +27,4 @@ console.log(JSON.stringify(JSON.parse('{"result":true, "count":42}')));
 console.log(Function('return 4')());
 console.log('log' in console);
 console.log('slice' in []);
+console.log(JSON.stringify("\"'\n\7")); // "\"'\n\u0007"

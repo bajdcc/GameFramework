@@ -7,19 +7,25 @@ Array.prototype.push = function(...args) {
     this.length = len;
     return this.length;
 };
-Array.prototype.slice = function(n) {
-    n = n || 0;
-    var len = this.length || 0;
-    if (len <= n)
-        return Array();
-    var arr = Array();
-    var j = 0;
-    for (var i = n; i < len; i++) {
-        if (this.hasOwnProperty(i))
-            arr[j++] = this[i];
+Array.prototype.slice = function(begin, end) {
+    end = (typeof end !== 'undefined') ? end : this.length;
+    var i, cloned = [],
+        size, len = this.length;
+    var start = begin || 0;
+    start = (start >= 0) ? start : Math.max(0, len + start);
+    var upTo = (typeof end == 'number') ? Math.min(end, len) : len;
+    if (end < 0) {
+        upTo = len + end;
     }
-    arr.length = j;
-    return arr;
+    size = upTo - start;
+    if (size > 0) {
+        cloned = new Array(size);
+        for (i = 0; i < size; i++) {
+            if (this.hasOwnProperty(start + i))
+                cloned[i] = this[start + i];
+        }
+    }
+    return cloned;
 };
 Array.prototype.concat = function(...args) {
     var _this = this;

@@ -617,6 +617,24 @@ namespace clib {
         return nullptr;
     }
 
+    void cjsruntime::convert_utf8_to_gbk(std::string& str)
+    {
+        // UTF-8 to GBK
+        int len = MultiByteToWideChar(CP_UTF8, 0, (LPCCH)str.c_str(), -1, NULL, 0);
+        wchar_t* wszGBK = new wchar_t[len];
+        memset(wszGBK, 0, len);
+        MultiByteToWideChar(CP_UTF8, 0, (LPCCH)str.c_str(), -1, wszGBK, len);
+
+        len = WideCharToMultiByte(CP_ACP, 0, wszGBK, -1, NULL, 0, NULL, NULL);
+        char* szGBK = new char[len + 1];
+        memset(szGBK, 0, len + 1);
+        WideCharToMultiByte(CP_ACP, 0, wszGBK, -1, szGBK, len, NULL, NULL);
+
+        str = szGBK;
+        delete[] szGBK;
+        delete[] wszGBK;
+    }
+
     void cjsruntime::set_readonly(bool flag) {
         readonly = flag;
     }
@@ -854,7 +872,7 @@ namespace clib {
                 }
             }
             else if (obj->get_type() == r_string) {
-                push(JS_S(obj)->get(this, key)));
+                push(JS_S(obj)->get(this, key));
                 break;
             }
             push(permanents._undefined);
@@ -951,16 +969,16 @@ namespace clib {
             else if (obj->get_type() == r_string) {
                 auto arr = new_array();
                 auto r = 0;
-                auto s = obj->to_string(this, 0, &r);
+                auto len = JS_S(obj)->get_length();
                 if (r != 0)
                     return r;
                 std::stringstream ss;
-                for (size_t i = 0; i < s.size(); i++) {
+                for (auto i = 0; i < len; i++) {
                     ss.str("");
                     ss << i;
                     arr->add(ss.str(), new_number(i));
                 }
-                arr->add("length", new_number(s.size()));
+                arr->add("length", new_number(len));
                 push(arr);
                 push(new_number(0.0));
             }
@@ -1906,6 +1924,7 @@ namespace clib {
             std::stringstream buffer;
             buffer << file.rdbuf();
             content = buffer.str();
+            cjsruntime::convert_utf8_to_gbk(content);
             return true;
         }
         return false;

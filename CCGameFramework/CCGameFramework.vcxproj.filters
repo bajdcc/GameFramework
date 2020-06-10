@@ -1276,5 +1276,7 @@
     <None Include="script\js\lib\clib_object.js" />
     <None Include="script\js\lib\clib_global.js" />
     <None Include="script\js\src\test_6.js" />
+    <None Include="script\js\lib\clib_string.js" />
+    <None Include="script\js\lib\clib_math.js" />
   </ItemGroup>
 </Project>

@@ -245,7 +245,7 @@ namespace clib {
 
     // ----------------------------------
 
-    jsv_string::jsv_string(std::string s) : str(std::move(s)) {
+    jsv_string::jsv_string(std::string s) : str(s), wstr(CString(CStringA(s.c_str())).GetBuffer(0)) {
 
     }
 
@@ -402,13 +402,24 @@ namespace clib {
     {
         size_t idx{ 0 };
         if (string_to_index(key, idx)) {
-            if (idx < str.length()) {
-                return n->new_string(str.substr(idx, 1));
+            if (idx < wstr.length()) {
+                auto ansi = CStringA(wstr.substr(idx, 1).c_str());
+                return n->new_string(ansi.GetBuffer(0));
             }
         }
         if (key == "length")
-            return n->new_number(str.length());
+            return n->new_number(wstr.length());
+        if (key == "charCode") {
+            if (wstr.empty())
+                return n->new_number(NAN);
+            return n->new_number((int)wstr[0]);
+        }
         return n->new_undefined();
+    }
+
+    int jsv_string::get_length() const
+    {
+        return (int)wstr.length();
     }
 
     bool jsv_string::string_to_index(const std::string& s, size_t& idx)
@@ -910,7 +921,7 @@ namespace clib {
         str_origin.clear();
         str.clear();
         error.clear();
-        std::swap(re, std::regex());
+        std::swap(re, std::wregex());
         return std::dynamic_pointer_cast<jsv_regexp>(shared_from_this());
     }
 
@@ -947,7 +958,8 @@ namespace clib {
             this->str = "/" + s + "/";
         }
         try {
-            re = std::regex(str_origin, f);
+            CString w(CStringA(str_origin.c_str()));
+            re = std::wregex(w.GetBuffer(0), f);
         }
         catch (const std::exception & e) {
             error = e.what();
@@ -974,7 +986,8 @@ namespace clib {
         this->str_origin = s;
         this->str = "/" + s + "/" + flag;
         try {
-            re = std::regex(str_origin, f);
+            CString w(CStringA(str_origin.c_str()));
+            re = std::wregex(w.GetBuffer(0), f);
         }
         catch (const std::exception & e) {
             error = e.what();
@@ -983,48 +996,61 @@ namespace clib {
 
     bool jsv_regexp::test(const std::string& str)
     {
-        return std::regex_search(str, re);
+        auto s = CString(CStringA(str.c_str()));
+        return std::regex_search(s.GetBuffer(0), re);
     }
 
     std::string jsv_regexp::replace(const std::string& origin, const std::string& replacer)
     {
-        return std::regex_replace(origin, re, replacer,
+        auto s = CString(CStringA(origin.c_str()));
+        auto rep = CString(CStringA(replacer.c_str()));
+        auto r = std::regex_replace(s.GetBuffer(0), re, rep.GetBuffer(0),
             flag & _g ? std::regex_constants::match_any : std::regex_constants::match_default);
+        return CStringA(CString(r.c_str())).GetBuffer(0);
     }
 
     bool jsv_regexp::match(const std::string& origin, std::vector<std::tuple<std::string, bool>>& matches)
     {
+        auto o = std::wstring(CString(CStringA(origin.c_str())));
         if (flag & _g) {
-            std::sregex_iterator iter(origin.begin(), origin.end(), re);
-            std::sregex_iterator end;
-            std::sregex_iterator prev;
+            std::wsregex_iterator iter(o.begin(), o.end(), re);
+            std::wsregex_iterator end;
+            std::wsregex_iterator prev;
             while (iter != end) {
                 auto s = iter->prefix().str();
                 if (!s.empty()) {
-                    matches.push_back({ s, false });
+                    auto s2 = CStringA(CString(s.c_str()));
+                    matches.push_back({ s2.GetBuffer(0), false });
                 }
-                matches.push_back({ iter->str(), true });
+                s = iter->str();
+                auto s3 = CStringA(CString(s.c_str()));
+                matches.push_back({ s3.GetBuffer(0), true });
                 prev = iter;
                 ++iter;
             }
             if (prev != end) {
                 auto s = prev->suffix().str();
+                auto s2 = CStringA(CString(s.c_str()));
                 if (!s.empty())
-                    matches.push_back({ s, false });
+                    matches.push_back({ s2.GetBuffer(0), false });
             }
             return true;
         }
         else {
-            std::smatch sm;
-            if (std::regex_search(origin, sm, re)) {
+            std::wsmatch sm;
+            if (std::regex_search(o, sm, re)) {
                 auto s = sm.prefix().str();
                 if (!s.empty()) {
-                    matches.push_back({ s, false });
+                    auto s2 = CStringA(CString(s.c_str()));
+                    matches.push_back({ s2.GetBuffer(0), false });
                 }
-                matches.push_back({ sm.str(), true });
+                s = sm.str();
+                auto s3 = CStringA(CString(s.c_str()));
+                matches.push_back({ s3.GetBuffer(0), true });
                 s = sm.suffix().str();
                 if (!s.empty()) {
-                    matches.push_back({ s, false });
+                    auto s2 = CStringA(CString(s.c_str()));
+                    matches.push_back({ s2.GetBuffer(0), false });
                 }
                 return true;
             }
@@ -1034,12 +1060,15 @@ namespace clib {
 
     std::string jsv_regexp::replace(const std::string& origin, const std::string& pat, const std::string& replacer)
     {
-        size_t start_pos = origin.find(pat);
-        if (start_pos == std::string::npos)
+        auto o = std::wstring(CString(CStringA(origin.c_str())).GetBuffer(0));
+        auto p = std::wstring(CString(CStringA(pat.c_str())).GetBuffer(0));
+        size_t start_pos = o.find(p);
+        if (start_pos == std::wstring::npos)
             return origin;
-        auto dst = origin;
-        dst.replace(start_pos, pat.length(), replacer);
-        return dst;
+        auto dst = o;
+        auto r = std::wstring(CString(CStringA(replacer.c_str())).GetBuffer(0));
+        dst.replace(start_pos, p.length(), r);
+        return CStringA(CString(dst.c_str())).GetBuffer(0);
     }
 
     // ----------------------------------

@@ -7,8 +7,6 @@
 #include "cjsruntime.h"
 #include "cjsgui.h"
 
-#include "parser2d/cnet.h"
-
 #include "restclient-cpp/connection.h"
 #include "restclient-cpp/restclient.h"
 
@@ -62,8 +60,8 @@ namespace clib {
         if (f != r.headers.end()) {
             std::regex re(R"(charset=utf-8)", std::regex::ECMAScript | std::regex::icase);
             if (std::regex_search(f->second, re)) {
-                auto as = CStringA(clib::cnet::Utf8ToStringT(r.body.c_str()));
-                r.body = string_t(as.GetBuffer(0));
+                CStringA(r.body.c_str());
+                cjsruntime::convert_utf8_to_gbk(r.body);
             }
         }
         delete hs;

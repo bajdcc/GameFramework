@@ -18,7 +18,7 @@
 
 #define JS_BOOL(op) (std::dynamic_pointer_cast<jsv_boolean>(op)->b)
 #define JS_NUM(op) (std::dynamic_pointer_cast<jsv_number>(op)->number)
-#define JS_S(op) (std::dynamic_pointer_cast<jsv_string>(op)
+#define JS_S(op) (std::dynamic_pointer_cast<jsv_string>(op))
 #define JS_STR(op) (std::dynamic_pointer_cast<jsv_string>(op)->str)
 #define JS_STR2NUM(op, d) std::dynamic_pointer_cast<jsv_string>(op)->to_number(d)
 #define JS_STRF(op) (std::dynamic_pointer_cast<jsv_function>(op)->code->text)
@@ -151,9 +151,11 @@ namespace clib {
         static int to_number(const std::string &s, double &d);
         static std::string convert(const std::string &_str);
         js_value::ref get(js_value_new* n, const std::string&) const;
+        int get_length() const;
         static bool string_to_index(const std::string&, size_t&);
         ref clear();
         std::string str;
+        std::wstring wstr;
         double number{0};
         int number_state{0};
         bool calc_number{false};
@@ -300,7 +302,7 @@ namespace clib {
         static std::string replace(const std::string& origin, const std::string& pat, const std::string& replacer);
         std::string str_origin;
         std::string str;
-        std::regex re;
+        std::wregex re;
         std::string error;
     private:
         enum flag_t {
@@ -405,6 +407,8 @@ namespace clib {
         void error_handler(int, const std::vector<js_pda_trans>&, int&) override;
         cjs_code_result::ref load_cache(const std::string& filename);
         void save_cache(const std::string& filename, cjs_code_result::ref) const;
+
+        static void convert_utf8_to_gbk(std::string& str);
 
     private:
         int run(const cjs_code &code);
