@@ -27,6 +27,11 @@ namespace clib {
         init_lib();
     }
 
+    cjs::~cjs()
+    {
+        rt.destroy();
+    }
+
     void cjs::add_stat(const CString& s, bool show)
     {
         {

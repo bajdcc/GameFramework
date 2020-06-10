@@ -101,6 +101,8 @@ namespace clib {
 
     std::unordered_map<std::string, cjs_code_result::ref> cjsruntime::caches;
 
+    cjsruntime::http_tools cjsruntime::global_http;
+
     std::string js_trim(std::string s) {
         if (s.empty()) {
             return s;
@@ -367,6 +369,76 @@ namespace clib {
             return exec("<eval>", code, true);
         }
                               break;
+        case API_http: {
+            if (args.empty()) {
+                push(new_undefined());
+                break;
+            }
+            auto obj = args.front().lock();
+            if (obj->is_primitive()) {
+                push(new_string("missing args"));
+                break;
+            }
+            auto code = JS_O(obj);
+            auto http = std::make_shared<http_struct>();
+            auto r = 0;
+            // url
+            auto v = code->get("url");
+            if (!v) {
+                push(new_string("missing url"));
+                break;
+            }
+            http->url = v->to_string(this, 0, &r);
+            if (r != 0)
+                return r;
+            // method
+            v = code->get("method");
+            if (!v) {
+                http->method = "get";
+            }
+            else {
+                http->method = v->to_string(this, 0, &r);
+                transform(http->method.begin(), http->method.end(), http->method.begin(), ::toupper);
+                if (r != 0)
+                    return r;
+                auto m = tools.http_method_map.find(http->method);
+                if (m == tools.http_method_map.end()) {
+                    push(new_string("invalid method: " + http->method));
+                    break;
+                }
+                http->method_type = m->second;
+            }
+            // headers
+            v = code->get("headers");
+            if (v && !v->is_primitive()) {
+                auto headers = JS_O(v);
+                auto o = headers->get_obj();
+                for (const auto& x : o) {
+                    const auto& key = x.first;
+                    const auto& value = x.second;
+                    auto _v = value.lock()->to_string(this, 0, &r);
+                    if (r != 0)
+                        return r;
+                    http->headers.push_back({ key, _v });
+                }
+            }
+            // payload
+            v = code->get("payload");
+            if (v) {
+                http->payload = v->to_string(this, 0, &r);
+                if (r != 0)
+                    return r;
+            }
+            // callback
+            v = code->get("callback");
+            if (v && v->get_type() == r_function) {
+                http->callback = JS_FUN(v);
+            }
+            // last
+            global_http.caches.emplace_back(http);
+            push(new_boolean(true));
+        }
+                     break;
         default:
             break;
         }
@@ -567,6 +639,7 @@ namespace clib {
                 permanents.state = 1;
             }
             eval_timeout();
+            eval_http();
         }
         return result;
     }
@@ -2173,6 +2246,7 @@ namespace clib {
     void cjsruntime::delete_stack(const cjs_function::ref& f) {
         if (f == permanents.default_stack) {
             f->name = "<default>";
+            f->pc = 0;
             f->ret_value.reset();
             return;
         }
@@ -2211,6 +2285,10 @@ namespace clib {
             for (const auto& s2 : s.second->args) {
                 s2.lock()->mark(6);
             }
+        }
+        for (const auto& s : global_http.caches) {
+            if (s->callback)
+                s->callback->mark(8);
         }
 #if DUMP_STEP && DUMP_GC
         dump_step3();

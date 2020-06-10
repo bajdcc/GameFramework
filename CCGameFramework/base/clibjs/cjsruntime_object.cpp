@@ -668,6 +668,11 @@ namespace clib {
         return keys;
     }
 
+    const std::unordered_map<std::string, js_value::weak_ref>& jsv_object::get_obj() const
+    {
+        return obj;
+    }
+
     js_value::ref jsv_object::get(const std::string& key) const
     {
         auto f = obj.find(key);

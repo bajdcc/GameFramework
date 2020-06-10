@@ -4,6 +4,7 @@
 #include <lua_ext/ext.h>
 #include <event2/event.h>
 #include <curl/curl.h>
+#include <restclient-cpp/restclient.h>
 #include <cassert>
 
 #define REPORT_ERROR 1
@@ -111,7 +112,7 @@ Window::Window(HWND parent, CString className, CString windowTitle, HINSTANCE hI
 {
     window = this;
     winMsgLoop.SetEventBase(evbase);
-    curl_global_init(CURL_GLOBAL_ALL);
+    RestClient::init();
     DWORD exStyle = WS_EX_APPWINDOW | WS_EX_CONTROLPARENT;
     DWORD style = WS_VISIBLE | WS_BORDER | WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
     CreateWindowEx(exStyle, className, windowTitle, style,
@@ -126,7 +127,7 @@ Window::~Window()
     DestroyWindow(handle);
     lua_close(L);
     event_base_free(evbase);
-    curl_global_cleanup();
+    RestClient::disable();
 }
 
 void Window::Init()

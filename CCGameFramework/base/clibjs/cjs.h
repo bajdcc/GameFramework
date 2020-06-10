@@ -15,7 +15,7 @@ namespace clib {
     class cjs {
     public:
         cjs();
-        ~cjs() = default;
+        ~cjs();
 
         cjs(const cjs&) = delete;
         cjs& operator=(const cjs&) = delete;

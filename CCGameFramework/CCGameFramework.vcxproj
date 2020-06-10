@@ -336,6 +336,10 @@ xcopy /r /y /e /d "$(ProjectDir)img" "$(TargetDir)img"</Command>
     <ClInclude Include="base\pthread\pthread.h" />
     <ClInclude Include="base\pthread\sched.h" />
     <ClInclude Include="base\pthread\semaphore.h" />
+    <ClInclude Include="base\restclient-cpp\connection.h" />
+    <ClInclude Include="base\restclient-cpp\helpers.h" />
+    <ClInclude Include="base\restclient-cpp\restclient.h" />
+    <ClInclude Include="base\restclient-cpp\version.h" />
     <ClInclude Include="base\utils.h" />
     <ClInclude Include="base\bochs\bx_debug\debug.h" />
     <ClInclude Include="base\bochs\gui\siminterface.h" />
@@ -444,6 +448,7 @@ xcopy /r /y /e /d "$(ProjectDir)img" "$(TargetDir)img"</Command>
     <ClCompile Include="base\clibjs\cjsparser.cpp" />
     <ClCompile Include="base\clibjs\cjsruntime.cpp" />
     <ClCompile Include="base\clibjs\cjsruntime_base.cpp" />
+    <ClCompile Include="base\clibjs\cjsruntime_http.cpp" />
     <ClCompile Include="base\clibjs\cjsruntime_object.cpp" />
     <ClCompile Include="base\clibjs\cjstypes.cpp" />
     <ClCompile Include="base\clibjs\cjsunit.cpp" />
@@ -526,6 +531,9 @@ xcopy /r /y /e /d "$(ProjectDir)img" "$(TargetDir)img"</Command>
     <ClCompile Include="base\pe2d\RenderLight.cpp" />
     <ClCompile Include="base\pe2d\RenderMaterial.cpp" />
     <ClCompile Include="base\pe2d\RenderSphere.cpp" />
+    <ClCompile Include="base\restclient-cpp\connection.cpp" />
+    <ClCompile Include="base\restclient-cpp\helpers.cpp" />
+    <ClCompile Include="base\restclient-cpp\restclient.cpp" />
     <ClCompile Include="base\utils.cpp" />
     <ClCompile Include="lua\lapi.c">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
@@ -817,6 +825,7 @@ xcopy /r /y /e /d "$(ProjectDir)img" "$(TargetDir)img"</Command>
     <None Include="script\js\src\test_3.js" />
     <None Include="script\js\src\test_4.js" />
     <None Include="script\js\src\test_5.js" />
+    <None Include="script\js\src\test_6.js" />
     <None Include="script\vfs\.gitignore" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

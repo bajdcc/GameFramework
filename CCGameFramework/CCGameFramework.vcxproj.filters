@@ -622,6 +622,18 @@
     <ClInclude Include="base\nlohmann_json\json.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="base\restclient-cpp\connection.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\restclient-cpp\helpers.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\restclient-cpp\restclient.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base\restclient-cpp\version.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -1092,6 +1104,18 @@
     <ClCompile Include="base\parser2d\types.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="base\restclient-cpp\connection.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\restclient-cpp\helpers.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\restclient-cpp\restclient.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\clibjs\cjsruntime_http.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="script\lib\core\scene.lua">
@@ -1251,5 +1275,6 @@
     <None Include="script\js\lib\clib_JSON.js" />
     <None Include="script\js\lib\clib_object.js" />
     <None Include="script\js\lib\clib_global.js" />
+    <None Include="script\js\src\test_6.js" />
   </ItemGroup>
 </Project>

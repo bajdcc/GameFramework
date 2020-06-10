@@ -12,6 +12,7 @@
 #include <map>
 #include "cjsparser.h"
 #include "cjsgen.h"
+#include <restclient-cpp\restclient.h>
 
 #define ROOT_DIR "script/js/"
 
@@ -80,6 +81,7 @@ namespace clib {
             API_clearTimeout,
             API_clearInterval,
             API_eval,
+            API_http,
         };
         virtual int call_api(int, std::weak_ptr<js_value> &,
                              std::vector<std::weak_ptr<js_value>> &, uint32_t) = 0;
@@ -194,6 +196,7 @@ namespace clib {
         ref clear();
         std::unordered_map<std::string, js_value::weak_ref> special;
         const std::vector<std::string>& get_keys() const;
+        const std::unordered_map<std::string, js_value::weak_ref>& get_obj() const;
         js_value::ref get(const std::string&) const;
         void add(const std::string&, const js_value::weak_ref&);
         void remove(const std::string&);
@@ -362,6 +365,7 @@ namespace clib {
         cjsruntime &operator=(const cjsruntime &) = delete;
 
         void init();
+        void destroy();
         int run_internal(int cycle, int& cycles);
 
         int eval(cjs_code_result::ref code, const std::string &_path);
@@ -441,6 +445,7 @@ namespace clib {
         js_value::ref binop(int code, const js_value::ref &op1, const js_value::ref &op2, int *);
 
         void eval_timeout();
+        void eval_http();
 
         double api_setTimeout(int time, const jsv_function::ref &func, std::vector<js_value::weak_ref> args, uint32_t attr, bool once);
         void api_clearTimeout(double id);
@@ -502,6 +507,7 @@ namespace clib {
             jsv_function::ref sys_exec_file;
             jsv_function::ref sys_builtin;
             jsv_function::ref sys_eval;
+            jsv_function::ref sys_http;
             // function
             jsv_function::ref f_number;
             jsv_function::ref f_boolean;
@@ -528,6 +534,7 @@ namespace clib {
         struct _tools_t {
             bool stackoverflow{ false };
             std::regex stacktrace{ R"(\(([^:]+):\d+:\d+\)(.*))", std::regex::ECMAScript | std::regex::optimize };
+            std::unordered_map<std::string, int> http_method_map;
         } tools;
         cjs_runtime_reuse reuse;
         struct timeout_t {
@@ -545,6 +552,37 @@ namespace clib {
             std::unordered_map<uint32_t, std::shared_ptr<timeout_t>> ids;
         } timeout;
         static std::unordered_map<std::string, cjs_code_result::ref> caches;
+    public:
+        enum http_method_t {
+            M_NONE,
+            M_GET,
+            M_POST,
+            M_PUT,
+            M_PATCH,
+            M_DELETE,
+            M_HEAD,
+            M_OPTIONS,
+        };
+        struct http_struct_simple {
+            std::string url;
+            std::string method;
+            int method_type{ M_NONE };
+            std::vector<std::tuple<std::string, std::string>> headers;
+            std::string payload;
+        };
+        struct http_struct : public http_struct_simple {
+            using ref = std::shared_ptr<http_struct>;
+            jsv_function::ref callback;
+            int state{ 0 };
+            std::future<RestClient::Response> fut;
+            RestClient::Response resp;
+        };
+    private:
+        struct http_tools {
+            int running_tasks{ 0 };
+            std::list<http_struct::ref> caches;
+        };
+        static http_tools global_http;
     };
 }
 

@@ -381,6 +381,13 @@ namespace clib {
             return js.call_api(API_eval, _this, args, 0);
         };
         permanents.sys->add(permanents.sys_eval->name, permanents.sys_eval);
+        permanents.sys_http = _new_function(nullptr, js_value::at_const | js_value::at_readonly);
+        permanents.sys_http->add("length", _int_1);
+        permanents.sys_http->name = "http";
+        permanents.sys_http->builtin = [](auto& func, auto& _this, auto& args, auto& js, auto attr) {
+            return js.call_api(API_http, _this, args, 0);
+        };
+        permanents.sys->add(permanents.sys_http->name, permanents.sys_http);
         permanents.global_env->add("sys", permanents.sys);
         // number
         permanents.f_number = _new_function(permanents._proto_number, js_value::at_const | js_value::at_readonly);
@@ -642,5 +649,33 @@ namespace clib {
         permanents.default_stack = std::make_shared<cjs_function>();
         permanents.default_stack->name = "<default>";
         permanents.default_stack->info = cjs_function_info::create_default();
+        // http method
+        tools.http_method_map["GET"] = M_GET;
+        tools.http_method_map["POST"] = M_POST;
+        tools.http_method_map["PUT"] = M_PUT;
+        tools.http_method_map["PATCH"] = M_PATCH;
+        tools.http_method_map["DELETE"] = M_DELETE;
+        tools.http_method_map["HEAD"] = M_HEAD;
+        tools.http_method_map["OPTIONS"] = M_OPTIONS;
+    }
+
+    void cjsruntime::destroy() {
+        using namespace std::chrono_literals;
+        while (!global_http.caches.empty()) {
+            for (auto k = global_http.caches.begin(); k != global_http.caches.end();) {
+                auto& s = *k;
+                if (s->state == 1) {
+                    if (s->fut.wait_for(10ms) == std::future_status::ready) {
+                        k = global_http.caches.erase(k);
+                    }
+                    else {
+                        k++;
+                    }
+                }
+                else {
+                    k = global_http.caches.erase(k);
+                }
+            }
+        }
     }
 }
