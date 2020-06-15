@@ -13,6 +13,7 @@
 #include "cjsparser.h"
 #include "cjsgen.h"
 #include <restclient-cpp\restclient.h>
+#include <restclient-cpp\connection.h>
 
 #define ROOT_DIR "script/js/"
 
@@ -69,6 +70,7 @@ namespace clib {
         virtual std::shared_ptr<cjs_function> new_func(const std::shared_ptr<cjs_function_info> &code) = 0;
         virtual std::shared_ptr<jsv_object> new_array() = 0;
         virtual std::shared_ptr<jsv_regexp> new_regexp() = 0;
+        virtual std::shared_ptr<jsv_object> new_buffer() = 0;
         virtual std::shared_ptr<jsv_object> new_error(int) = 0;
         virtual int exec(const std::string &, const std::string &, bool error = false) = 0;
         virtual std::string get_stacktrace() const = 0;
@@ -82,6 +84,7 @@ namespace clib {
             API_clearInterval,
             API_eval,
             API_http,
+            API_music,
         };
         virtual int call_api(int, std::weak_ptr<js_value> &,
                              std::vector<std::weak_ptr<js_value>> &, uint32_t) = 0;
@@ -189,24 +192,29 @@ namespace clib {
         js_value::ref unary_op(js_value_new &n, int code, int *) override;
         bool to_bool() const override;
         void mark(int n) override;
-        js_value::ref gets(const std::string &name) const;
+        js_value::ref gets(const std::string& name, js_value_new* = nullptr) const;
         bool exists(const std::string& name) const;
-        js_value::ref gets2(const std::string& name) const;
+        js_value::ref gets2(const std::string& name, js_value_new* = nullptr) const;
         bool is_primitive() const override;
         js_value::ref to_primitive(js_value_new &n, primitive_t, int *) override;
         std::string to_string(js_value_new *n, int hint, int*) const override;
         double to_number(js_value_new *n, int *) const override;
         ref clear();
-        std::unordered_map<std::string, js_value::weak_ref> special;
         const std::vector<std::string>& get_keys() const;
         const std::unordered_map<std::string, js_value::weak_ref>& get_obj() const;
-        js_value::ref get(const std::string&) const;
+        js_value::ref get(const std::string&, js_value_new* = nullptr) const;
+        js_value::ref get_special(const std::string&) const;
+        void add_special(const std::string&, const js_value::weak_ref&);
         void add(const std::string&, const js_value::weak_ref&);
         void remove(const std::string&);
         void copy_from(const jsv_object::ref&);
+        void set_buffer(js_value_new& n, const std::vector<char>&);
+        std::vector<char> get_buffer() const;
     private:
         std::unordered_map<std::string, js_value::weak_ref> obj;
         std::vector<std::string> keys;
+        std::shared_ptr<std::unordered_map<std::string, js_value::weak_ref>> special;
+        std::shared_ptr<std::vector<char>> binary;
     };
 
     class jsv_null : public js_value {
@@ -384,6 +392,7 @@ namespace clib {
         jsv_undefined::ref new_undefined() override;
         cjs_function::ref new_func(const cjs_function_info::ref &code) override;
         jsv_object::ref new_array() override;
+        jsv_object::ref new_buffer() override;
         jsv_regexp::ref new_regexp() override;
         jsv_object::ref new_error(int) override;
         int exec(const std::string &, const std::string &, bool error = false) override;
@@ -513,6 +522,7 @@ namespace clib {
             jsv_function::ref sys_builtin;
             jsv_function::ref sys_eval;
             jsv_function::ref sys_http;
+            jsv_function::ref sys_music;
             // function
             jsv_function::ref f_number;
             jsv_function::ref f_boolean;
@@ -522,6 +532,9 @@ namespace clib {
             // array
             jsv_object::ref _proto_array;
             jsv_function::ref f_array;
+            // buffer
+            jsv_object::ref _proto_buffer;
+            jsv_function::ref f_buffer;
             // regexp
             jsv_object::ref _proto_regexp;
             jsv_function::ref f_regexp;
@@ -575,12 +588,17 @@ namespace clib {
             std::vector<std::tuple<std::string, std::string>> headers;
             std::string payload;
         };
+        struct resp_t {
+            RestClient::Response response;
+            RestClient::Connection::RequestInfo info;
+            bool binary{ false };
+        };
         struct http_struct : public http_struct_simple {
             using ref = std::shared_ptr<http_struct>;
             jsv_function::ref callback;
             int state{ 0 };
-            std::future<RestClient::Response> fut;
-            RestClient::Response resp;
+            std::future<resp_t> fut;
+            resp_t resp;
         };
     private:
         struct http_tools {

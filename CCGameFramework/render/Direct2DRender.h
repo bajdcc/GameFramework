@@ -210,6 +210,8 @@ public:
         for (auto & child : e->GetChildren())
         {
             child->GetRenderer()->SetRenderTarget(_renderTarget);
+            if (!_renderTarget)
+                child->GetRenderer()->Finalize();
         }
         return oldRenderTarget;
     }

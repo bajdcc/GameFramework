@@ -1278,5 +1278,6 @@
     <None Include="script\js\src\test_6.js" />
     <None Include="script\js\lib\clib_string.js" />
     <None Include="script\js\lib\clib_math.js" />
+    <None Include="script\js\lib\clib_buffer.js" />
   </ItemGroup>
 </Project>

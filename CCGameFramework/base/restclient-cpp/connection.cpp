@@ -81,6 +81,11 @@ RestClient::Connection::GetInfo() {
   return ret;
 }
 
+RestClient::Connection::RequestInfo
+RestClient::Connection::GetInfo2() {
+    return lastRequest;
+}
+
 /**
  * @brief append a header to the internal map
  *

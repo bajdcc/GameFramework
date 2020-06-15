@@ -33,6 +33,7 @@
 #define SHOW_EXTRA 1
 #define STACK_MAX 256
 #define GC_PERIOD 128
+#define MAX_REUSE_SIZE 256
 
 #if defined(WIN32) || defined(WIN64)
 
@@ -313,138 +314,6 @@ namespace clib {
         return 0;
     }
 
-    int cjsruntime::call_api(int type, js_value::weak_ref& _this,
-        std::vector<js_value::weak_ref>& args, uint32_t attr) {
-        auto r = 0;
-        switch ((js_value_new::api) type) {
-        case API_none:
-            break;
-        case API_setTimeout:
-        case API_setInterval: {
-            if (args.empty()) {
-                push(new_undefined());
-                break;
-            }
-            auto arg = args.front().lock();
-            if (arg->get_type() != r_function) {
-                push(new_undefined());
-                break;
-            }
-            auto arg_n = 1;
-            auto time = 0;
-            if (args.size() > 1) {
-                auto r = 0;
-                time = (int)args[1].lock()->to_number(this, &r);
-                if (r != 0)
-                    return r;
-                arg_n++;
-            }
-            if (r != 0)
-                return r;
-            std::vector<js_value::weak_ref> _args(args.begin() + arg_n, args.end());
-            push(new_number(api_setTimeout(time, JS_FUN(arg), _args, attr, type == API_setTimeout)));
-        }
-                            break;
-        case API_clearTimeout:
-        case API_clearInterval: {
-            if (args.empty()) {
-                push(new_undefined());
-                break;
-            }
-            api_clearTimeout(args.front().lock()->to_number(this, &r));
-            if (r != 0)
-                return r;
-            push(new_undefined());
-        }
-                              break;
-        case API_eval: {
-            if (args.empty()) {
-                push(new_undefined());
-                break;
-            }
-            auto code = args.front().lock()->to_string(this, 0, &r);
-            if (r != 0)
-                return r;
-            current_stack->pc++;
-            return exec("<eval>", code, true);
-        }
-                              break;
-        case API_http: {
-            if (args.empty()) {
-                push(new_undefined());
-                break;
-            }
-            auto obj = args.front().lock();
-            if (obj->is_primitive()) {
-                push(new_string("missing args"));
-                break;
-            }
-            auto code = JS_O(obj);
-            auto http = std::make_shared<http_struct>();
-            auto r = 0;
-            // url
-            auto v = code->get("url");
-            if (!v) {
-                push(new_string("missing url"));
-                break;
-            }
-            http->url = v->to_string(this, 0, &r);
-            if (r != 0)
-                return r;
-            // method
-            v = code->get("method");
-            if (!v) {
-                http->method = "get";
-            }
-            else {
-                http->method = v->to_string(this, 0, &r);
-                transform(http->method.begin(), http->method.end(), http->method.begin(), ::toupper);
-                if (r != 0)
-                    return r;
-                auto m = tools.http_method_map.find(http->method);
-                if (m == tools.http_method_map.end()) {
-                    push(new_string("invalid method: " + http->method));
-                    break;
-                }
-                http->method_type = m->second;
-            }
-            // headers
-            v = code->get("headers");
-            if (v && !v->is_primitive()) {
-                auto headers = JS_O(v);
-                auto o = headers->get_obj();
-                for (const auto& x : o) {
-                    const auto& key = x.first;
-                    const auto& value = x.second;
-                    auto _v = value.lock()->to_string(this, 0, &r);
-                    if (r != 0)
-                        return r;
-                    http->headers.push_back({ key, _v });
-                }
-            }
-            // payload
-            v = code->get("payload");
-            if (v) {
-                http->payload = v->to_string(this, 0, &r);
-                if (r != 0)
-                    return r;
-            }
-            // callback
-            v = code->get("callback");
-            if (v && v->get_type() == r_function) {
-                http->callback = JS_FUN(v);
-            }
-            // last
-            global_http.caches.emplace_back(http);
-            push(new_boolean(true));
-        }
-                     break;
-        default:
-            break;
-        }
-        return 0;
-    }
-
     int cjsruntime::call_api(const jsv_function::ref& func, js_value::weak_ref& _this,
         std::vector<js_value::weak_ref>& args, uint32_t attr) {
         assert(_this.lock());
@@ -716,7 +585,7 @@ namespace clib {
                 push(new_boolean(false));
                 break;
             }
-            const auto& ff = JS_OBJ(op2)->get("prototype");
+            const auto& ff = JS_OBJ(op2)->get("prototype", this);
             if (!ff) {
                 push(new_boolean(false));
                 break;
@@ -778,7 +647,7 @@ namespace clib {
                     return r;
                 auto obj = pop().lock();
                 if (!obj->is_primitive()) {
-                    auto f = JS_OBJ(obj)->get(key);
+                    auto f = JS_OBJ(obj)->get(key, this);
                     if (f) {
                         if (f->attr & js_value::at_readonly) {
                             push(new_boolean(false));
@@ -865,7 +734,7 @@ namespace clib {
                 return call_internal(false, _stack_size);
             }
             if (!obj->is_primitive()) {
-                auto value = JS_O(obj)->gets(key);
+                auto value = JS_O(obj)->gets(key, this);
                 if (value) {
                     push(value);
                     break;
@@ -901,12 +770,12 @@ namespace clib {
             auto value = top();
             auto o = JS_OBJ(obj);
             if (!obj->is_primitive()) {
-                auto f = o->get(key);
+                auto f = o->get(key, this);
                 if (f && (readonly && (f->attr & js_value::at_readonly))) {
                     break;
                 }
                 if (o->__proto__.lock() == permanents._proto_array) {
-                    auto len = o->get("length");
+                    auto len = o->get("length", this);
                     if (len->get_type() == r_number) {
                         size_t idx{ 0 };
                         if (jsv_string::string_to_index(key, idx)) {
@@ -938,7 +807,7 @@ namespace clib {
                     arr->add("length", new_number(ar.size()));
                 }
                 else {
-                    auto len = o->get("length");
+                    auto len = o->get("length", this);
                     if (len) {
                         auto i = 0, j = 0;
                         if (len->get_type() == r_number) {
@@ -949,7 +818,7 @@ namespace clib {
                                 while (i < L) {
                                     ss.str("");
                                     ss << j++;
-                                    auto ff = o->get(ss.str());
+                                    auto ff = o->get(ss.str(), this);
                                     if (ff) {
                                         arr->add(ss.str(), new_string(ss.str()));
                                     }
@@ -1004,7 +873,7 @@ namespace clib {
             if (!obj->is_primitive()) {
                 const auto o = JS_OBJ(obj);
                 if (obj->__proto__.lock() == permanents._proto_array) {
-                    auto len = o->get("length");
+                    auto len = o->get("length", this);
                     if (len) {
                         if (len->get_type() == r_number) {
                             auto l = JS_NUM(len);
@@ -1012,7 +881,7 @@ namespace clib {
                                 for (auto i = 0; i < l; i++) {
                                     std::stringstream ss;
                                     ss << i;
-                                    auto ff = o->get(ss.str());
+                                    auto ff = o->get(ss.str(), this);
                                     if (ff) {
                                         push(ff);
                                     }
@@ -1035,7 +904,7 @@ namespace clib {
             auto obj = top().lock();
             assert(!obj->is_primitive() && obj->__proto__.lock() == permanents._proto_array);
             const auto o = JS_OBJ(obj);
-            auto len = o->get("length");
+            auto len = o->get("length", this);
             if (len) {
                 if (len->get_type() == r_number) {
                     auto l = JS_NUM(len);
@@ -1046,7 +915,7 @@ namespace clib {
                             while (i < l) {
                                 ss.str("");
                                 ss << i;
-                                auto ff = o->get(ss.str());
+                                auto ff = o->get(ss.str(), this);
                                 if (ff) {
                                     push(new_number(i + 1));
                                     push(ff);
@@ -1078,7 +947,7 @@ namespace clib {
                 if (obj->__proto__.lock() == permanents._proto_object) {
                     for (const auto& s : o->get_keys()) {
                         push(new_string(s));
-                        push(o->get(s));
+                        push(o->get(s, this));
                     }
                 }
             }
@@ -1091,7 +960,7 @@ namespace clib {
             auto value = top();
             if (!obj->is_primitive()) {
                 auto o = JS_OBJ(obj);
-                auto f = o->get(key);
+                auto f = o->get(key, this);
                 if (f && (readonly && (f->attr & js_value::at_readonly))) {
                     break;
                 }
@@ -1391,7 +1260,7 @@ namespace clib {
             }
             auto func = JS_FUN(f.lock());
             auto _this = new_object();
-            auto prototype = func->get("prototype");
+            auto prototype = func->get("prototype", this);
             if (!prototype || prototype->is_primitive())
                 _this->__proto__ = permanents._proto_object;
             else
@@ -1413,7 +1282,7 @@ namespace clib {
             auto obj = top().lock();
             if (!obj->is_primitive()) {
                 const auto o = JS_OBJ(obj);
-                auto f = o->gets(key);
+                auto f = o->gets(key, this);
                 if (f) {
                     if (f->get_type() == r_function)
                         push(f);
@@ -1434,7 +1303,7 @@ namespace clib {
                     push(new_undefined()); // type error
                     break;
                 }
-                const auto f = JS_OBJ(p)->get(key);
+                const auto f = JS_OBJ(p)->get(key, this);
                 if (f) {
                     if (f->get_type() == r_function) {
                         failed = false;
@@ -1500,7 +1369,7 @@ namespace clib {
     js_value::ref cjsruntime::load_fast(int op) {
         auto name = current_stack->info->names.at(op);
         auto o = current_stack->envs.lock();
-        auto L = o->get(name);
+        auto L = o->get(name, this);
         if (L) {
             return L;
         }
@@ -1511,7 +1380,7 @@ namespace clib {
         auto name = current_stack->info->names.at(op);
         for (auto i = stack.rbegin(); i != stack.rend(); i++) {
             auto o = (*i)->envs.lock();
-            auto L = o->get(name);
+            auto L = o->get(name, this);
             if (L) {
                 return L;
             }
@@ -1523,7 +1392,7 @@ namespace clib {
     js_value::ref cjsruntime::load_global(int op) {
         auto g = current_stack->info->globals.at(op);
         auto o = stack.front()->envs.lock();
-        auto G = o->get(g);
+        auto G = o->get(g, this);
         if (G) {
             return G;
         }
@@ -1533,7 +1402,7 @@ namespace clib {
     bool cjsruntime::remove_global(int op) {
         auto g = current_stack->info->globals.at(op);
         auto o = stack.front()->envs.lock();
-        auto G = o->get(g);
+        auto G = o->get(g, this);
         if (G) {
             o->remove(g);
             return true;
@@ -1544,12 +1413,12 @@ namespace clib {
     js_value::ref cjsruntime::load_closure(const std::string& name) {
         for (auto i = stack.rbegin(); i != stack.rend(); i++) {
             if ((*i)->closure.lock()) {
-                auto L = (*i)->closure.lock()->get(name);
+                auto L = (*i)->closure.lock()->get(name, this);
                 if (L) {
                     return L;
                 }
             }
-            auto L2 = (*i)->envs.lock()->get(name);
+            auto L2 = (*i)->envs.lock()->get(name, this);
             if (L2) {
                 return (*i)->envs.lock();
             }
@@ -1560,11 +1429,11 @@ namespace clib {
 
     js_value::ref cjsruntime::load_deref(const std::string& name) {
         if (current_stack->closure.lock()) {
-            auto ctx = current_stack->closure.lock()->get(name);
+            auto ctx = current_stack->closure.lock()->get(name, this);
             if (ctx) {
                 if (!ctx->is_primitive()) {
                     const auto obj = JS_OBJ(ctx);
-                    auto f2 = obj->get(name);
+                    auto f2 = obj->get(name, this);
                     if (f2) {
                         return f2;
                     }
@@ -1753,7 +1622,7 @@ namespace clib {
         default:
             break;
         }
-        obj->special.insert({ "PrimitiveValue", v });
+        obj->add_special("PrimitiveValue", v);
         return obj;
     }
 
@@ -1788,6 +1657,12 @@ namespace clib {
         auto arr = new_object();
         arr->__proto__ = permanents._proto_array;
         arr->add("length", new_number(0.0));
+        return arr;
+    }
+
+    jsv_object::ref cjsruntime::new_buffer() {
+        auto arr = new_object();
+        arr->__proto__ = permanents._proto_buffer;
         return arr;
     }
 
@@ -2326,6 +2201,18 @@ namespace clib {
             else
                 i++;
         }
+        if (reuse.reuse_numbers.size() > MAX_REUSE_SIZE)
+            reuse.reuse_numbers.resize(MAX_REUSE_SIZE);
+        if (reuse.reuse_strings.size() > MAX_REUSE_SIZE)
+            reuse.reuse_strings.resize(MAX_REUSE_SIZE);
+        if (reuse.reuse_booleans.size() > MAX_REUSE_SIZE)
+            reuse.reuse_booleans.resize(MAX_REUSE_SIZE);
+        if (reuse.reuse_objects.size() > MAX_REUSE_SIZE)
+            reuse.reuse_objects.resize(MAX_REUSE_SIZE);
+        if (reuse.reuse_functions.size() > MAX_REUSE_SIZE)
+            reuse.reuse_functions.resize(MAX_REUSE_SIZE);
+        if (reuse.reuse_regexes.size() > MAX_REUSE_SIZE)
+            reuse.reuse_regexes.resize(MAX_REUSE_SIZE);
 #if DUMP_STEP
         std::cout << std::setfill('#') << std::setw(60) << "" << std::endl;
 #endif
@@ -2746,9 +2633,10 @@ namespace clib {
                       break;
         case r_object: {
             auto n = std::dynamic_pointer_cast<jsv_object>(value);
-            if (!n->special.empty()) {
+            auto f = n->get_special("PrimitiveValue");
+            if (f) {
                 auto r = 0;
-                os << "object: [[primitive]] " << n->to_string(nullptr, 0, &r) << std::endl;
+                os << "object: [[primitive]] " << f->to_string(nullptr, 0, &r) << std::endl;
                 assert(r);
             }
             else {

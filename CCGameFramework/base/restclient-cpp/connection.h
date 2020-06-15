@@ -196,6 +196,7 @@ class Connection {
     std::string GetUserAgent();
 
     RestClient::Connection::Info GetInfo();
+    RestClient::Connection::RequestInfo GetInfo2();
 
     // set headers
     void SetHeaders(RestClient::HeaderFields headers);

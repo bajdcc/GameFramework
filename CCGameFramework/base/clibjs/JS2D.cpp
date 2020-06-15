@@ -62,6 +62,7 @@ void JS2DEngine::Initialize(std::shared_ptr<Direct2DRenderTarget> rt)
 
 void JS2DEngine::Finalize(std::shared_ptr<Direct2DRenderTarget> rt)
 {
+    reset();
 }
 
 void JS2DEngine::Reset(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget, std::shared_ptr<Direct2DRenderTarget> newRenderTarget)
@@ -96,6 +97,7 @@ void JS2DEngine::Reset(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget, st
 
 void JS2DEngine::reset()
 {
+    clib::cjsgui::singleton().reset();
     auto_fresh = 1;
     GLOBAL_STATE.gui = false;
     rt2.Release();
@@ -112,7 +114,6 @@ int JS2DEngine::SetType(cint value)
         return 1;
     }
     if (value == -101) {
-        clib::cjsgui::singleton().reset();
         reset();
         return 1;
     }

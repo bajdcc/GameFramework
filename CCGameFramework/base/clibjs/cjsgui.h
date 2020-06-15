@@ -14,6 +14,7 @@
 #include <base\clibjs\JS2D.h>
 #include <base\clibjs\cjstypes.h>
 #include <base\clibjs\cjs.h>
+#include "libzplay/libzplay.h"
 
 #define GLOBAL_STATE clib::cjsgui::singleton().get_global()
 
@@ -78,6 +79,10 @@ namespace clib {
 
         int new_screen(int n);
 
+    public:
+        int play_music(const std::string& title, const std::string& ext, const std::vector<char>& data);
+        int stop_music();
+
     private:
         void reset_ips();
         void tick();
@@ -140,6 +145,9 @@ namespace clib {
             int window_hover{ -1 };
             std::list<CString> logging;
             bool is_logging{ false };
+            libZPlay::ZPlay* zplay{ nullptr };
+            std::vector<char> zplay_data;
+            std::string zplay_title;
         } global_state;
         class screen_t {
         public:

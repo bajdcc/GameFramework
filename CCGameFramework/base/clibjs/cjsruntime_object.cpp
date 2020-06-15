@@ -12,6 +12,7 @@
 #include "cjsruntime.h"
 
 #define MAX_SAFE_INTEGER ((int64_t)((1ULL << 53U) - 1))
+#define MAX_BUFFER_SHOW_SIZE 100
 
 namespace clib {
 
@@ -481,16 +482,18 @@ namespace clib {
             if ((s.second.lock()->marked > 0 ? 1 : 0) != (n > 0 ? 1 : 0))
                 s.second.lock()->mark(n);
         }
-        for (const auto &s : special) {
-            if ((s.second.lock()->marked > 0 ? 1 : 0) != (n > 0 ? 1 : 0))
-                s.second.lock()->mark(n);
+        if (special) {
+            for (const auto& s : *special) {
+                if ((s.second.lock()->marked > 0 ? 1 : 0) != (n > 0 ? 1 : 0))
+                    s.second.lock()->mark(n);
+            }
         }
     }
 
-    js_value::ref jsv_object::gets(const std::string &key) const {
-        auto f = obj.find(key);
-        if (f != obj.end()) {
-            return f->second.lock();
+    js_value::ref jsv_object::gets(const std::string &key, js_value_new* n) const {
+        auto f = get(key, n);
+        if (f) {
+            return f;
         }
         if (key == "__proto__") {
             auto p = __proto__.lock();
@@ -513,8 +516,16 @@ namespace clib {
     }
 
     bool jsv_object::exists(const std::string& key) const {
-        auto f = obj.find(key);
-        if (f != obj.end()) {
+        if (binary && !binary->empty()) {
+            size_t idx{ 0 };
+            if (jsv_string::string_to_index(key, idx)) {
+                if (idx < binary->size()) {
+                    return true;
+                }
+            }
+        }
+        auto f = get(key);
+        if (f) {
             return true;
         }
         if (key == "__proto__") {
@@ -537,10 +548,10 @@ namespace clib {
         return false;
     }
 
-    js_value::ref jsv_object::gets2(const std::string& key) const {
-        auto f = obj.find(key);
-        if (f != obj.end()) {
-            return f->second.lock();
+    js_value::ref jsv_object::gets2(const std::string& key, js_value_new* n) const {
+        auto f = get(key, n);
+        if (f ) {
+            return f;
         }
         if (key == "__proto__") {
             auto p = __proto__.lock();
@@ -627,9 +638,9 @@ namespace clib {
                 return "builtin";
             return _str;
         }
-        if (!special.empty()) {
-            auto f = special.find("PrimitiveValue");
-            if (f != special.end()) {
+        if (special && !special->empty()) {
+            auto f = special->find("PrimitiveValue");
+            if (f != special->end()) {
                 return f->second.lock()->to_string(n, 0, r);
             }
         }
@@ -646,6 +657,22 @@ namespace clib {
                         return "";
                     return o->to_string(n, 0, r);
                 }
+            }
+            if (hint == 1 && binary) {
+                std::stringstream ss;
+                ss << "<Buffer";
+                char buf[16];
+                auto i = 0;
+                for (const auto& v : *binary) {
+                    if (i++ > MAX_BUFFER_SHOW_SIZE) {
+                        ss << "...[total: " << binary->size() << "]";
+                        break;
+                    }
+                    snprintf(buf, sizeof(buf), "%02x", (byte)v);
+                    ss << ' ' << buf;
+                }
+                ss << ">";
+                return ss.str();
             }
         }
         auto type = gets("__type__");
@@ -677,7 +704,8 @@ namespace clib {
     jsv_object::ref jsv_object::clear() {
         obj.clear();
         keys.clear();
-        special.clear();
+        special.reset();
+        binary.reset();
         return std::dynamic_pointer_cast<jsv_object>(shared_from_this());
     }
 
@@ -691,12 +719,39 @@ namespace clib {
         return obj;
     }
 
-    js_value::ref jsv_object::get(const std::string& key) const
+    js_value::ref jsv_object::get(const std::string& key, js_value_new* n) const
     {
+        if (binary && !binary->empty() && n) {
+            size_t idx{ 0 };
+            if (jsv_string::string_to_index(key, idx)) {
+                if (idx < binary->size()) {
+                    return n->new_number((byte)binary->at(idx));
+                }
+            }
+        }
         auto f = obj.find(key);
         if (f == obj.end())
             return nullptr;
         return f->second.lock();
+    }
+
+    js_value::ref jsv_object::get_special(const std::string& key) const
+    {
+        if (!special) {
+            return nullptr;
+        }
+        auto f = special->find(key);
+        if (f == special->end())
+            return nullptr;
+        return f->second.lock();
+    }
+
+    void jsv_object::add_special(const std::string& key, const js_value::weak_ref& value)
+    {
+        if (!special) {
+            special = std::make_shared<std::unordered_map<std::string, js_value::weak_ref>>();
+        }
+        (*special)[key] = value;
     }
 
     void jsv_object::add(const std::string& key, const js_value::weak_ref& value)
@@ -724,6 +779,24 @@ namespace clib {
     {
         obj = o->obj;
         keys = o->keys;
+    }
+
+    void jsv_object::set_buffer(js_value_new& n, const std::vector<char>& data)
+    {
+        if (!binary)
+            binary = std::make_shared<std::vector<char>>();
+        binary->resize(data.size());
+        std::copy(data.begin(), data.end(), binary->begin());
+        auto l = n.new_number(data.size());
+        l->attr |= js_value::at_readonly;
+        add("length", l);
+    }
+
+    std::vector<char> jsv_object::get_buffer() const
+    {
+        if (!binary)
+            return std::vector<char>();
+        return *binary;
     }
 
     // ----------------------------------

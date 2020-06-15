@@ -7,15 +7,13 @@
 #include "cjsruntime.h"
 #include "cjsgui.h"
 
-#include "restclient-cpp/connection.h"
-#include "restclient-cpp/restclient.h"
-
 #define MAX_HTTP_TASKS 6
 
 namespace clib {
 
-    static RestClient::Response js_http_request(cjsruntime::http_struct_simple* hs) {
+    static cjsruntime::resp_t js_http_request(cjsruntime::http_struct_simple* hs) {
         using namespace clib;
+        cjsruntime::resp_t r;
         auto conn = new RestClient::Connection("");
         conn->SetTimeout(5);
         conn->SetUserAgent("Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36");
@@ -26,42 +24,46 @@ namespace clib {
             headers[std::get<0>(s)] = std::get<1>(s);
         }
         conn->SetHeaders(headers);
-        RestClient::Response r;
         switch (hs->method_type) {
         case cjsruntime::M_GET:
-            r = conn->get(hs->url);
+            r.response = conn->get(hs->url);
             break;
         case cjsruntime::M_POST:
             conn->AppendHeader("Content-Type", "application/json");
-            r = conn->post(hs->url, hs->payload);
+            r.response = conn->post(hs->url, hs->payload);
             break;
         case cjsruntime::M_PUT:
             conn->AppendHeader("Content-Type", "application/json");
-            r = conn->put(hs->url, hs->payload);
+            r.response = conn->put(hs->url, hs->payload);
             break;
         case cjsruntime::M_PATCH:
             conn->AppendHeader("Content-Type", "application/json");
-            r = conn->patch(hs->url, hs->payload);
+            r.response = conn->patch(hs->url, hs->payload);
             break;
         case cjsruntime::M_DELETE:
-            r = conn->del(hs->url);
+            r.response = conn->del(hs->url);
             break;
         case cjsruntime::M_HEAD:
-            r = conn->head(hs->url);
+            r.response = conn->head(hs->url);
             break;
         case cjsruntime::M_OPTIONS:
-            r = conn->options(hs->url);
+            r.response = conn->options(hs->url);
             break;
         default:
-            r = conn->get(hs->url);
+            r.response = conn->get(hs->url);
             break;
         }
-        auto f = r.headers.find("Content-Type");
-        if (f != r.headers.end()) {
+        r.info = conn->GetInfo2();
+        auto f = r.response.headers.find("Content-Type");
+        if (f != r.response.headers.end()) {
             std::regex re(R"(charset=utf-8)", std::regex::ECMAScript | std::regex::icase);
             if (std::regex_search(f->second, re)) {
-                CStringA(r.body.c_str());
-                cjsruntime::convert_utf8_to_gbk(r.body);
+                CStringA(r.response.body.c_str());
+                cjsruntime::convert_utf8_to_gbk(r.response.body);
+            }
+            std::regex re2(R"(^(text/.+|application/json))", std::regex::ECMAScript | std::regex::icase);
+            if (!std::regex_search(f->second, re2)) {
+                r.binary = true;
             }
         }
         delete hs;
@@ -114,18 +116,35 @@ namespace clib {
                         paths.emplace_back(ROOT_DIR);
                         js_value::weak_ref env = stack.front()->envs;
                         CString str;
-                        str.Format(L"HTTP Success£º'%S', Code: %d", s->url.c_str(), s->resp.code);
+                        str.Format(L"HTTP Success£º'%S', Code: %d", s->url.c_str(), s->resp.response.code);
                         cjsgui::singleton().add_stat(str);
                         std::vector<js_value::weak_ref> args;
                         auto obj = new_object();
                         obj->add("result", new_string("success"));
-                        obj->add("code", new_number(s->resp.code));
-                        obj->add("body", new_string(s->resp.body));
+                        obj->add("code", new_number(s->resp.response.code));
+                        if (s->resp.binary) {
+                            auto buf = new_buffer();
+                            std::vector<char> v(s->resp.response.body.begin(), s->resp.response.body.end());
+                            buf->set_buffer(*this, v);
+                            obj->add("body", buf);
+                        }
+                        else
+                            obj->add("body", new_string(s->resp.response.body));
+                        obj->add("binary", new_boolean(s->resp.binary));
                         auto header = new_object();
-                        for (const auto& j : s->resp.headers) {
+                        for (const auto& j : s->resp.response.headers) {
                             header->add(j.first, new_string(j.second));
                         }
                         obj->add("headers", header);
+                        auto time = new_object();
+                        time->add("totalTime", new_number(s->resp.info.totalTime));
+                        time->add("nameLookupTime", new_number(s->resp.info.nameLookupTime));
+                        time->add("connectTime", new_number(s->resp.info.connectTime));
+                        time->add("appConnectTime", new_number(s->resp.info.appConnectTime));
+                        time->add("preTransferTime", new_number(s->resp.info.preTransferTime));
+                        time->add("startTransferTime", new_number(s->resp.info.startTransferTime));
+                        time->add("redirectTime", new_number(s->resp.info.redirectTime));
+                        obj->add("time", time);
                         args.push_back(obj);
                         call_api(callback, env, args, callback->attr | jsv_function::at_fast);
                         current_stack = stack.back();

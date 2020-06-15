@@ -814,6 +814,7 @@ xcopy /r /y /e /d "$(ProjectDir)img" "$(TargetDir)img"</Command>
   <ItemGroup>
     <None Include="script\js\lib\clib.js" />
     <None Include="script\js\lib\clib_array.js" />
+    <None Include="script\js\lib\clib_buffer.js" />
     <None Include="script\js\lib\clib_error.js" />
     <None Include="script\js\lib\clib_function.js" />
     <None Include="script\js\lib\clib_global.js" />

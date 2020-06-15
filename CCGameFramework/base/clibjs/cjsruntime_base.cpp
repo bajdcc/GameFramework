@@ -71,7 +71,7 @@ namespace clib {
             }
             const auto& obj = JS_OBJ(f);
             auto r = 0;
-            func->stack.push_back(js.new_boolean(obj->get(args.front().lock()->to_string(&js, 0, &r)) != nullptr));
+            func->stack.push_back(js.new_boolean(obj->exists(args.front().lock()->to_string(&js, 0, &r))));
             return r;
         };
         permanents._proto_object->add(permanents._proto_object_hasOwnProperty->name, permanents._proto_object_hasOwnProperty);
@@ -94,12 +94,10 @@ namespace clib {
                 return 0;
             }
             auto o = JS_OBJ(_this.lock());
-            if (!o->special.empty()) {
-                auto f = o->special.find("PrimitiveValue");
-                if (f != o->special.end()) {
-                    func->stack.push_back(f->second);
-                    return 0;
-                }
+            auto f = o->get_special("PrimitiveValue");
+            if (f) {
+                func->stack.push_back(f);
+                return 0;
             }
             func->stack.push_back(_this);
             return 0;
@@ -388,6 +386,13 @@ namespace clib {
             return js.call_api(API_http, _this, args, 0);
         };
         permanents.sys->add(permanents.sys_http->name, permanents.sys_http);
+        permanents.sys_music = _new_function(nullptr, js_value::at_const | js_value::at_readonly);
+        permanents.sys_music->add("length", _int_1);
+        permanents.sys_music->name = "music";
+        permanents.sys_music->builtin = [](auto& func, auto& _this, auto& args, auto& js, auto attr) {
+            return js.call_api(API_music, _this, args, 0);
+        };
+        permanents.sys->add(permanents.sys_music->name, permanents.sys_music);
         permanents.global_env->add("sys", permanents.sys);
         // number
         permanents.f_number = _new_function(permanents._proto_number, js_value::at_const | js_value::at_readonly);
@@ -543,6 +548,26 @@ namespace clib {
             return 0;
         };
         permanents.global_env->add(permanents.f_array->name, permanents.f_array);
+        // buffer
+        permanents._proto_buffer = _new_object(js_value::at_const | js_value::at_readonly);
+        permanents._proto_buffer->add("__type__", _new_string("Buffer", js_value::at_const | js_value::at_refs));
+        permanents._proto_buffer->__proto__ = permanents._proto_array;
+        permanents.f_buffer = _new_function(permanents._proto_buffer, js_value::at_const | js_value::at_readonly);
+        permanents.f_buffer->add("length", _int_1);
+        permanents.f_buffer->name = "Buffer";
+        permanents.f_buffer->builtin = [](auto& func, auto& _this, auto& args, auto& js, auto attr) {
+            js_value::ref pri;
+            if (args.empty()) {
+                pri = js.new_buffer();
+            }
+            else {
+                auto buf = js.new_buffer();
+                pri = buf;
+            }
+            func->stack.push_back(pri);
+            return 0;
+        };
+        permanents.global_env->add(permanents.f_buffer->name, permanents.f_buffer);
         // regexp
         permanents._proto_regexp = _new_object(js_value::at_const | js_value::at_readonly);
         permanents._proto_regexp->add("__type__", _new_string("RegExp", js_value::at_const | js_value::at_refs));
@@ -677,5 +702,201 @@ namespace clib {
                 }
             }
         }
+    }
+
+    int cjsruntime::call_api(int type, js_value::weak_ref& _this,
+        std::vector<js_value::weak_ref>& args, uint32_t attr) {
+        auto r = 0;
+        switch ((js_value_new::api) type) {
+        case API_none:
+            break;
+        case API_setTimeout:
+        case API_setInterval: {
+            if (args.empty()) {
+                push(new_undefined());
+                break;
+            }
+            auto arg = args.front().lock();
+            if (arg->get_type() != r_function) {
+                push(new_undefined());
+                break;
+            }
+            auto arg_n = 1;
+            auto time = 0;
+            if (args.size() > 1) {
+                auto r = 0;
+                time = (int)args[1].lock()->to_number(this, &r);
+                if (r != 0)
+                    return r;
+                arg_n++;
+            }
+            if (r != 0)
+                return r;
+            std::vector<js_value::weak_ref> _args(args.begin() + arg_n, args.end());
+            push(new_number(api_setTimeout(time, JS_FUN(arg), _args, attr, type == API_setTimeout)));
+        }
+                            break;
+        case API_clearTimeout:
+        case API_clearInterval: {
+            if (args.empty()) {
+                push(new_undefined());
+                break;
+            }
+            api_clearTimeout(args.front().lock()->to_number(this, &r));
+            if (r != 0)
+                return r;
+            push(new_undefined());
+        }
+                              break;
+        case API_eval: {
+            if (args.empty()) {
+                push(new_undefined());
+                break;
+            }
+            auto code = args.front().lock()->to_string(this, 0, &r);
+            if (r != 0)
+                return r;
+            current_stack->pc++;
+            return exec("<eval>", code, true);
+        }
+                     break;
+        case API_http: {
+            if (args.empty()) {
+                push(new_undefined());
+                break;
+            }
+            auto obj = args.front().lock();
+            if (obj->is_primitive()) {
+                push(new_string("missing args"));
+                break;
+            }
+            auto code = JS_O(obj);
+            auto http = std::make_shared<http_struct>();
+            auto r = 0;
+            // url
+            auto v = code->get("url", this);
+            if (!v) {
+                push(new_string("missing url"));
+                break;
+            }
+            http->url = v->to_string(this, 0, &r);
+            if (r != 0)
+                return r;
+            // method
+            v = code->get("method", this);
+            if (!v) {
+                http->method = "get";
+            }
+            else {
+                http->method = v->to_string(this, 0, &r);
+                transform(http->method.begin(), http->method.end(), http->method.begin(), ::toupper);
+                if (r != 0)
+                    return r;
+                auto m = tools.http_method_map.find(http->method);
+                if (m == tools.http_method_map.end()) {
+                    push(new_string("invalid method: " + http->method));
+                    break;
+                }
+                http->method_type = m->second;
+            }
+            // headers
+            v = code->get("headers", this);
+            if (v && !v->is_primitive()) {
+                auto headers = JS_O(v);
+                auto o = headers->get_obj();
+                for (const auto& x : o) {
+                    const auto& key = x.first;
+                    const auto& value = x.second;
+                    auto _v = value.lock()->to_string(this, 0, &r);
+                    if (r != 0)
+                        return r;
+                    http->headers.push_back({ key, _v });
+                }
+            }
+            // payload
+            v = code->get("payload", this);
+            if (v) {
+                http->payload = v->to_string(this, 0, &r);
+                if (r != 0)
+                    return r;
+            }
+            // callback
+            v = code->get("callback", this);
+            if (v && v->get_type() == r_function) {
+                http->callback = JS_FUN(v);
+            }
+            // last
+            global_http.caches.emplace_back(http);
+            push(new_boolean(true));
+        }
+                     break;
+        case API_music: {
+            if (args.empty()) {
+                push(new_undefined());
+                break;
+            }
+            auto obj = args.front().lock();
+            if (obj->is_primitive()) {
+                push(new_string("missing args"));
+                break;
+            }
+            auto code = JS_O(obj);
+            auto r = 0;
+            // method
+            auto v = code->get("method", this);
+            if (!v) {
+                push(new_string("missing method"));
+                break;
+            }
+            auto method = v->to_string(this, 0, &r);
+            if (r != 0)
+                return r;
+            if (method == "play") {
+                auto _payload = code->get("payload", this);
+                if (!_payload) {
+                    push(new_string("missing payload"));
+                    break;
+                }
+                if (_payload->is_primitive()) {
+                    push(new_string("payload must be object"));
+                    break;
+                }
+                auto payload = JS_O(_payload);
+                auto _data = payload->get("data", this);
+                if (!_data) {
+                    push(new_string("missing payload: data"));
+                    break;
+                }
+                if (_data->__proto__.lock() != permanents._proto_buffer) {
+                    push(new_string("data must be type of buffer"));
+                    break;
+                }
+                auto data = JS_O(_data)->get_buffer();
+                auto _title = payload->get("title", this);
+                std::string title;
+                if (_title) {
+                    title = _title->to_string(this, 0, &r);
+                    if (r != 0)
+                        return r;
+                }
+                auto _ext = payload->get("type", this);
+                std::string ext = "mp3";
+                if (_ext) {
+                    ext = _ext->to_string(this, 0, &r);
+                    if (r != 0)
+                        return r;
+                }
+                push(new_number(cjsgui::singleton().play_music(title, ext, data)));
+            }
+            else {
+                push(new_string("invalid method"));
+                break;
+            }
+        }
+                      break;
+        default:
+            break;
+        }
+        return 0;
     }
 }

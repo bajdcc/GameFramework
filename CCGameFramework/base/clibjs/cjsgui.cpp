@@ -75,6 +75,7 @@ namespace clib {
             reset_cycles();
             reset_ips();
         }
+        stop_music();
         running = false;
         exited = false;
     }
@@ -927,6 +928,46 @@ namespace clib {
         if (screens[n])
             return 2;
         init_screen(n);
+        return 0;
+    }
+
+    int cjsgui::play_music(const std::string& title, const std::string& ext, const std::vector<char>& data)
+    {
+        auto& zplay = global_state.zplay;
+        if (zplay) {
+            return 1; // already playing
+        }
+        zplay = libZPlay::CreateZPlay();
+        auto type = libZPlay::sfAutodetect;
+        if (ext == "mp3") {
+            type = libZPlay::sfMp3;
+        }
+        global_state.zplay_data = data;
+        auto result = zplay->OpenStream(0, 0, global_state.zplay_data.data(), global_state.zplay_data.size(), type);
+        if (result == 0) {
+            global_state.zplay_data.clear();
+            CString str;
+            str.Format(L"MUSIC Play Error：'%S'", zplay->GetError());
+            cjsgui::singleton().add_stat(str);
+            zplay->Release();
+            zplay = nullptr;
+            return 2;
+        }
+        global_state.zplay_title = title;
+        zplay->Play();
+        return 0;
+    }
+
+    int cjsgui::stop_music()
+    {
+        auto& zplay = global_state.zplay;
+        if (!zplay) {
+            return 1; // none
+        }
+        global_state.zplay->Release();
+        global_state.zplay = nullptr;
+        global_state.zplay_data.clear();
+        global_state.zplay_title.clear();
         return 0;
     }
 

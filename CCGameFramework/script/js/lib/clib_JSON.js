@@ -294,8 +294,33 @@ sys.builtin(JSON);
                 var partial = [];
 
                 // Is the value an array?
+                var type = Object.prototype.toString.apply(value);
 
                 if (Object.prototype.toString.apply(value) === "[object Array]") {
+
+                    // The value is an array. Stringify every element. Use null as a placeholder
+                    // for non-JSON values.
+
+                    partial = value.map((_, i) => str(i, value) || "null");
+
+                    // Join all of the elements together, separated with commas, and wrap them in
+                    // brackets.
+
+                    v = partial.length === 0 ?
+                        "[]" :
+                        gap ?
+                        (
+                            "[\n" +
+                            gap +
+                            partial.join(",\n" + gap) +
+                            "\n" +
+                            mind +
+                            "]"
+                        ) :
+                        "[" + partial.join(",") + "]";
+                    gap = mind;
+                    return v;
+                } else if (Object.prototype.toString.apply(value) === "[object Array]") {
 
                     // The value is an array. Stringify every element. Use null as a placeholder
                     // for non-JSON values.

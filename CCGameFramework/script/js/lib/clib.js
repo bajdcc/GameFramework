@@ -8,4 +8,5 @@ sys.exec_file("clib_array.js");
 sys.exec_file("clib_object.js");
 sys.exec_file("clib_string.js");
 sys.exec_file("clib_JSON.js");
+sys.exec_file("clib_buffer.js");
 return "library loaded";
