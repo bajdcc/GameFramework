@@ -1117,9 +1117,7 @@ namespace clib {
                 if (enc == "utf8" || enc == "utf-8") {
                     buf.push_back(0);
                     auto wstr = Utf8ToStringT(buf.data());
-                    auto s = new_string("");
-                    s->init(wstr);
-                    push(s);
+                    push(new_string(wstr));
                     break;
                 }
                 else if (enc == "base64") {

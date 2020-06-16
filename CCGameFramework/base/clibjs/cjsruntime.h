@@ -61,6 +61,7 @@ namespace clib {
     public:
         virtual std::shared_ptr<jsv_number> new_number(double n) = 0;
         virtual std::shared_ptr<jsv_string> new_string(const std::string &s) = 0;
+        virtual std::shared_ptr<jsv_string> new_string(const CString& s) = 0;
         virtual std::shared_ptr<jsv_boolean> new_boolean(bool b) = 0;
         virtual std::shared_ptr<jsv_object> new_object() = 0;
         virtual std::shared_ptr<jsv_object> new_object_box(const std::shared_ptr<js_value> &) = 0;
@@ -145,7 +146,8 @@ namespace clib {
     public:
         using ref = std::shared_ptr<jsv_string>;
         using weak_ref = std::weak_ptr<jsv_string>;
-        explicit jsv_string(std::string s);
+        explicit jsv_string(const std::string& s);
+        explicit jsv_string(const CString& s);
         js_runtime_t get_type() override;
         js_value::ref unary_op(js_value_new &n, int code, int *) override;
         bool to_bool() const override;
@@ -387,6 +389,7 @@ namespace clib {
 
         jsv_number::ref new_number(double n) override;
         jsv_string::ref new_string(const std::string &s) override;
+        jsv_string::ref new_string(const CString& s) override;
         jsv_boolean::ref new_boolean(bool b) override;
         jsv_object::ref new_object() override;
         jsv_object::ref new_object_box(const js_value::ref &) override;
@@ -450,6 +453,7 @@ namespace clib {
 
         jsv_number::ref _new_number(double n, uint32_t attr = 0U);
         jsv_string::ref _new_string(const std::string &s, uint32_t attr = 0U);
+        jsv_string::ref _new_string(const CString& s, uint32_t attr = 0U);
         jsv_boolean::ref _new_boolean(bool b, uint32_t attr = 0U);
         jsv_object::ref _new_object(uint32_t attr = 0U);
         jsv_function::ref _new_function(jsv_object::ref proto, uint32_t attr = 0U);

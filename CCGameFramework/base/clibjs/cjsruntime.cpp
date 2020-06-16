@@ -1586,6 +1586,22 @@ namespace clib {
         return std::move(r);
     }
 
+    jsv_string::ref cjsruntime::new_string(const CString& s) {
+        if (s.IsEmpty())
+            return permanents._empty;
+        if (reuse.reuse_strings.empty()) {
+            auto t = _new_string(s);
+            register_value(t);
+            return t;
+        }
+        auto r = reuse.reuse_strings.back();
+        register_value(r);
+        r->init(s);
+        r->__proto__ = permanents._proto_string;
+        reuse.reuse_strings.pop_back();
+        return std::move(r);
+    }
+
     jsv_boolean::ref cjsruntime::new_boolean(bool b) {
         if (b) return permanents._true;
         return permanents._false;
@@ -2230,6 +2246,17 @@ namespace clib {
     }
 
     jsv_string::ref cjsruntime::_new_string(const std::string& str, uint32_t attr) {
+        auto s = std::make_shared<jsv_string>(str);
+        if (attr & js_value::at_refs) {
+            attr &= (uint32_t)~js_value::at_refs;
+            permanents.refs.push_back(s);
+        }
+        if (attr > 0U) s->attr = attr;
+        s->__proto__ = permanents._proto_string;
+        return s;
+    }
+
+    jsv_string::ref cjsruntime::_new_string(const CString& str, uint32_t attr) {
         auto s = std::make_shared<jsv_string>(str);
         if (attr & js_value::at_refs) {
             attr &= (uint32_t)~js_value::at_refs;

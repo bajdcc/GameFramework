@@ -246,8 +246,12 @@ namespace clib {
 
     // ----------------------------------
 
-    jsv_string::jsv_string(std::string s) : str(s), wstr(CString(CStringA(s.c_str())).GetBuffer(0)) {
+    jsv_string::jsv_string(const std::string& s) {
+        init(s);
+    }
 
+    jsv_string::jsv_string(const CString& s) {
+        init(s);
     }
 
     js_runtime_t jsv_string::get_type() {

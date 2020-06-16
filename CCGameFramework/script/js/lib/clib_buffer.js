@@ -8,4 +8,12 @@ Buffer.prototype.toJSON = function() {
         data: arr
     };
 };
+atob = function(a) {
+    return Buffer.from(a, 'base64').toString();
+};
+sys.builtin(atob);
+btoa = function(a) {
+    return Buffer.from(a).toString('base64');
+};
+sys.builtin(btoa);
 return;

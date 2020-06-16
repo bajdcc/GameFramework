@@ -28,5 +28,7 @@ setTimeout(function() {
     console.log(Buffer.from([97, 98, 99, 100]), Buffer.from([97, 98, 0, 100]).toString());
     var b = Buffer.from("123 你好").toString('base64');
     var c = Buffer.from(b, 'base64').toString();
-    console.log(b, c);
+    var d = btoa("123 你好");
+    var e = atob(d);
+    console.log(b, c, d, e);
 }, 3000);
