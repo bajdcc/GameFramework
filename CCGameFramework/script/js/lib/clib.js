@@ -9,4 +9,5 @@ sys.exec_file("clib_object.js");
 sys.exec_file("clib_string.js");
 sys.exec_file("clib_JSON.js");
 sys.exec_file("clib_buffer.js");
+sys.exec_file("clib_event.js");
 return "library loaded";

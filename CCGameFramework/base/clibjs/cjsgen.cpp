@@ -843,8 +843,15 @@ namespace clib {
                 code->end = asts.back()->end;
                 asts.pop_back();
                 if (asts.size() >= 2 && (AST_IS_OP_N(*(asts.rbegin() + 1), T_ELLIPSIS))) {
-                    asts.erase(asts.begin() + (asts.size() - 2));
+                    std::iter_swap(asts.rbegin(), asts.rbegin() + 1);
+                    asts.pop_back();
                     code->rest = true;
+                }
+                for (const auto& a : asts) {
+                    if (AST_IS_OP_N(a, T_ELLIPSIS)) {
+                        error(a, "invalid many rest args");
+                        break;
+                    }
                 }
                 decltype(code->args) _asts;
                 std::transform(asts.begin() + 2, asts.end(),
@@ -987,8 +994,15 @@ namespace clib {
                 code->end = asts.back()->end;
                 asts.pop_back();
                 if (asts.size() >= 2 && (AST_IS_OP_N(*(asts.rbegin() + 1), T_ELLIPSIS))) {
-                    asts.erase(asts.begin() + (asts.size() - 2));
+                    std::iter_swap(asts.rbegin(), asts.rbegin() + 1);
+                    asts.pop_back();
                     code->rest = true;
+                }
+                for (const auto& a : asts) {
+                    if (AST_IS_OP_N(a, T_ELLIPSIS)) {
+                        error(a, "invalid many rest args");
+                        break;
+                    }
                 }
                 decltype(code->args) _asts;
                 std::transform(asts.begin() + 1, asts.end(),
@@ -1017,21 +1031,33 @@ namespace clib {
                 auto code = std::make_shared<js_sym_code_t>();
                 code->arrow = true;
                 copy_info(code, asts[0]);
-                code->end = tmps.back()->end;
-                if (asts.size() >= 2 && (AST_IS_OP_N(*(asts.rbegin() + 1), T_ELLIPSIS))) {
-                    asts.erase(asts.begin() + (asts.size() - 2));
-                    code->rest = true;
+                if (AST_IS_OP_N(asts.back(), T_RBRACE)) {
+                    code->end = asts.back()->end;
+                    asts.pop_back();
+                }
+                else {
+                    code->end = tmps.back()->end;
                 }
                 decltype(code->args) _asts;
                 if (AST_IS_ID(asts.front())) { // single ID
                     _asts.push_back(primary_node(asts.front()));
                     code->args_str.emplace_back(asts.front()->data._identifier);
                 } else {
+                    asts.pop_back();
                     asts.erase(asts.begin());
+                    if (asts.size() >= 2 && (AST_IS_OP_N(*(asts.rbegin() + 1), T_ELLIPSIS))) {
+                        std::iter_swap(asts.rbegin(), asts.rbegin() + 1);
+                        asts.pop_back();
+                        code->rest = true;
+                    }
                     auto i = asts.begin();
                     for (; i != asts.end(); i++) {
                         if (AST_IS_OP_N(*i, T_RPARAN)) {
                             i++;
+                            break;
+                        }
+                        if (AST_IS_OP_N(*i, T_ELLIPSIS)) {
+                            error(*i, "invalid many rest args");
                             break;
                         }
                         _asts.push_back(primary_node(*i));

@@ -119,6 +119,13 @@ Array.prototype.join = function(s) {
     var str = this.reduce((a, b) => a + s + b);
     return typeof str !== "undefined" ? ("" + str) : "";
 };
+Array.prototype.forEach = function(f) {
+    var arr = Array(this.length);
+    var _this = this instanceof Array ? this : [...this];
+    for (var i in _this) {
+        f(_this[i], i);
+    }
+};
 Array.isArray = function(arr) {
     return Object.prototype.toString.call(arr) == "[object Array]";
 };

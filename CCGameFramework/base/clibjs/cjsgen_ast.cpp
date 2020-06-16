@@ -1683,8 +1683,12 @@ namespace clib {
             gen.emit(name, LOAD_CONST, id);
             gen.emit(name, LOAD_CONST, gen.load_string(debugName, cjs_consts::get_string_t::gs_string));
             gen.emit(this, MAKE_FUNCTION, (int) flag);
-            if (parent.lock()->get_type() == s_statement_exp)
-                gen.emit(name, STORE_NAME, gen.load_string(name->data._identifier, cjs_consts::get_string_t::gs_name));
+            if (parent.lock()->get_type() == s_statement_exp) {
+                if (gen.get_func_level() == 1)
+                    gen.emit(name, STORE_GLOBAL, gen.load_string(name->data._identifier, cjs_consts::get_string_t::gs_global));
+                else
+                    gen.emit(name, STORE_NAME, gen.load_string(name->data._identifier, cjs_consts::get_string_t::gs_name));
+            }
         } else {
             gen.emit(nullptr, LOAD_CONST, id);
             gen.emit(nullptr, LOAD_CONST, gen.load_string(debugName, cjs_consts::get_string_t::gs_string));

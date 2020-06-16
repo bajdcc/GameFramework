@@ -480,6 +480,7 @@ namespace clib {
         std::vector<cjs_function::ref> reuse_stack;
         std::list<js_value::ref> objs;
         std::vector<std::string> paths;
+        std::unordered_map<std::string, std::vector<cjs_function::ref>> events;
         struct _permanents_t {
             // refs
             std::vector<js_value::ref> refs;

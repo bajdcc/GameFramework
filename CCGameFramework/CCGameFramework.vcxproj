@@ -816,6 +816,7 @@ xcopy /r /y /e /d "$(ProjectDir)img" "$(TargetDir)img"</Command>
     <None Include="script\js\lib\clib_array.js" />
     <None Include="script\js\lib\clib_buffer.js" />
     <None Include="script\js\lib\clib_error.js" />
+    <None Include="script\js\lib\clib_event.js" />
     <None Include="script\js\lib\clib_function.js" />
     <None Include="script\js\lib\clib_global.js" />
     <None Include="script\js\lib\clib_JSON.js" />
@@ -829,6 +830,7 @@ xcopy /r /y /e /d "$(ProjectDir)img" "$(TargetDir)img"</Command>
     <None Include="script\js\src\test_4.js" />
     <None Include="script\js\src\test_5.js" />
     <None Include="script\js\src\test_6.js" />
+    <None Include="script\js\src\test_7.js" />
     <None Include="script\vfs\.gitignore" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

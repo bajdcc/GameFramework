@@ -10,7 +10,7 @@ console.log(sys.http({
         }
     }
 }));
-console.log(sys.http({
+/*console.log(sys.http({
     url: "http://music.163.com/song/media/outer/url?id=569962512.mp3",
     callback: function(data) {
         if (data.result === "success" && data.code === 200) {
@@ -22,7 +22,7 @@ console.log(sys.http({
             });
         }
     }
-}));
+}));*/
 setTimeout(function() {
     console.log(Buffer.from("123 你好", 'ascii'), Buffer.from(Buffer.from("123 你好")));
     console.log(Buffer.from([97, 98, 99, 100]), Buffer.from([97, 98, 0, 100]).toString());

@@ -935,7 +935,8 @@ namespace clib {
     {
         auto& zplay = global_state.zplay;
         if (zplay) {
-            return 1; // already playing
+            stop_music();
+            //return 1; // already playing
         }
         zplay = libZPlay::CreateZPlay();
         auto type = libZPlay::sfAutodetect;
@@ -964,6 +965,7 @@ namespace clib {
         if (!zplay) {
             return 1; // none
         }
+        global_state.zplay->Stop();
         global_state.zplay->Release();
         global_state.zplay = nullptr;
         global_state.zplay_data.clear();
