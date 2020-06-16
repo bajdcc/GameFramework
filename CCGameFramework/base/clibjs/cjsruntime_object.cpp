@@ -430,6 +430,12 @@ namespace clib {
         wstr = CString(CStringA(s.c_str())).GetBuffer(0);
     }
 
+    void jsv_string::init(const CString& s)
+    {
+        str = CStringA(s).GetBuffer(0);
+        wstr = s;
+    }
+
     bool jsv_string::string_to_index(const std::string& s, size_t& idx)
     {
         static std::regex re_number{ R"(\d+)", std::regex::ECMAScript | std::regex::optimize };

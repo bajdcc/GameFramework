@@ -86,6 +86,7 @@ namespace clib {
             API_http,
             API_music,
             API_buffer_from,
+            API_buffer_toString,
         };
         virtual int call_api(int, std::weak_ptr<js_value> &,
                              std::vector<std::weak_ptr<js_value>> &, uint32_t) = 0;
@@ -157,6 +158,7 @@ namespace clib {
         js_value::ref get(js_value_new* n, const std::string&) const;
         int get_length() const;
         void init(const std::string&);
+        void init(const CString&);
         static bool string_to_index(const std::string&, size_t&);
         ref clear();
         std::string str;
@@ -535,8 +537,9 @@ namespace clib {
             jsv_function::ref f_array;
             // buffer
             jsv_object::ref _proto_buffer;
-            jsv_function::ref _proto_buffer_from;
+            jsv_function::ref _proto_buffer_toString;
             jsv_function::ref f_buffer;
+            jsv_function::ref f_buffer_from;
             // regexp
             jsv_object::ref _proto_regexp;
             jsv_function::ref f_regexp;

@@ -52,6 +52,7 @@ namespace clib {
         auto _int_0 = _new_number(0, js_value::at_const | js_value::at_refs);
         auto _int_1 = _new_number(1, js_value::at_const | js_value::at_refs);
         auto _int_2 = _new_number(1, js_value::at_const | js_value::at_refs);
+        auto _int_3 = _new_number(1, js_value::at_const | js_value::at_refs);
         auto _empty_string = _new_string("", js_value::at_const | js_value::at_refs);
         // proto
         permanents._proto_root->add("__type__", _new_string("Root", js_value::at_const | js_value::at_refs));
@@ -552,13 +553,13 @@ namespace clib {
         permanents._proto_buffer = _new_object(js_value::at_const | js_value::at_readonly);
         permanents._proto_buffer->add("__type__", _new_string("Buffer", js_value::at_const | js_value::at_refs));
         permanents._proto_buffer->__proto__ = permanents._proto_array;
-        permanents._proto_buffer_from = _new_function(nullptr, js_value::at_const | js_value::at_readonly);
-        permanents._proto_buffer_from->add("length", _int_2);
-        permanents._proto_buffer_from->name = "from";
-        permanents._proto_buffer_from->builtin = [](auto& func, auto& _this, auto& args, auto& js, auto attr) {
-            return js.call_api(API_buffer_from, _this, args, 0);
+        permanents._proto_buffer_toString = _new_function(nullptr, js_value::at_const | js_value::at_readonly);
+        permanents._proto_buffer_toString->add("length", _int_0);
+        permanents._proto_buffer_toString->name = "toString";
+        permanents._proto_buffer_toString->builtin = [](auto& func, auto& _this, auto& args, auto& js, auto attr) {
+            return js.call_api(API_buffer_toString, _this, args, 0);
         };
-        permanents._proto_object->add(permanents._proto_buffer_from->name, permanents._proto_buffer_from);
+        permanents._proto_buffer->add(permanents._proto_buffer_toString->name, permanents._proto_buffer_toString);
         permanents.f_buffer = _new_function(permanents._proto_buffer, js_value::at_const | js_value::at_readonly);
         permanents.f_buffer->add("length", _int_1);
         permanents.f_buffer->name = "Buffer";
@@ -566,6 +567,13 @@ namespace clib {
             return js.call_api(API_buffer_from, _this, args, 0);
         };
         permanents.global_env->add(permanents.f_buffer->name, permanents.f_buffer);
+        permanents.f_buffer_from = _new_function(nullptr, js_value::at_const | js_value::at_readonly);
+        permanents.f_buffer_from->add("length", _int_3);
+        permanents.f_buffer_from->name = "from";
+        permanents.f_buffer_from->builtin = [](auto& func, auto& _this, auto& args, auto& js, auto attr) {
+            return js.call_api(API_buffer_from, _this, args, 0);
+        };
+        permanents.f_buffer->add(permanents.f_buffer_from->name, permanents.f_buffer_from);
         // regexp
         permanents._proto_regexp = _new_object(js_value::at_const | js_value::at_readonly);
         permanents._proto_regexp->add("__type__", _new_string("RegExp", js_value::at_const | js_value::at_refs));
@@ -702,6 +710,95 @@ namespace clib {
         }
     }
 
+    static std::string js_base64_encode(const std::vector<char>& data)
+    {
+        static const char* base64char = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+        unsigned char current;
+        auto& bindata = data;
+        auto binlength = data.size();
+        std::string str;
+
+        for (size_t i = 0; i < binlength; i += 3)
+        {
+            current = (((byte)bindata[i]) >> 2);
+            current &= (byte)0x3F;
+            str.push_back(base64char[(int)current]);
+
+            current = ((byte)(bindata[i] << 4)) & ((byte)0x30);
+            if (i + 1 >= binlength)
+            {
+                str.push_back(base64char[(int)current]);
+                str.push_back('=');
+                str.push_back('=');
+                break;
+            }
+            current |= ((byte)(bindata[i + 1] >> 4)) & ((byte)0x0F);
+            str.push_back(base64char[(int)current]);
+
+            current = ((byte)(bindata[i + 1] << 2)) & ((byte)0x3C);
+            if (i + 2 >= binlength)
+            {
+                str.push_back(base64char[(int)current]);
+                str.push_back('=');
+                break;
+            }
+            current |= ((byte)(bindata[i + 2] >> 6)) & ((byte)0x03);
+            str.push_back(base64char[(int)current]);
+
+            current = ((byte)bindata[i + 2]) & ((byte)0x3F);
+            str.push_back(base64char[(int)current]);
+        }
+
+        return str;
+    }
+
+    static std::vector<char> js_base64_decode(const std::string& data)
+    {
+        static const char* base64char = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+        byte k;
+        byte temp[4];
+        auto len = data.size();
+        std::vector<char> bindata;
+        for (size_t i = 0, j = 0; i < len; i += 4)
+        {
+            memset(temp, 0xFF, sizeof(temp));
+            for (k = 0; k < 64; k++)
+            {
+                if (base64char[k] == data[i])
+                    temp[0] = k;
+            }
+            for (k = 0; k < 64; k++)
+            {
+                if (base64char[k] == data[i + 1])
+                    temp[1] = k;
+            }
+            for (k = 0; k < 64; k++)
+            {
+                if (base64char[k] == data[i + 2])
+                    temp[2] = k;
+            }
+            for (k = 0; k < 64; k++)
+            {
+                if (base64char[k] == data[i + 3])
+                    temp[3] = k;
+            }
+
+            bindata.push_back((char)(((byte)(((byte)(temp[0] << 2)) & 0xFC)) |
+                ((byte)((byte)(temp[1] >> 4) & 0x03))));
+            if (data[i + 2] == '=')
+                break;
+
+            bindata.push_back((char)(((byte)(((byte)(temp[1] << 4)) & 0xF0)) |
+                ((byte)((byte)(temp[2] >> 2) & 0x0F))));
+            if (data[i + 3] == '=')
+                break;
+
+            bindata.push_back((char)(((byte)(((byte)(temp[2] << 6)) & 0xF0)) |
+                ((byte)(temp[3] & 0x3F))));
+        }
+        return bindata;
+    }
+
     static CStringA StringTToUtf8(CString str)
     {
         USES_CONVERSION;
@@ -710,6 +807,19 @@ namespace clib {
         auto buf = s.GetBuffer(length + 1);
         ZeroMemory(buf, (length + 1) * sizeof(CHAR));
         WideCharToMultiByte(CP_UTF8, 0, str, -1, buf, length, nullptr, nullptr);
+        return s;
+    }
+
+    static CString Utf8ToStringT(LPCSTR str)
+    {
+        _ASSERT(str);
+        USES_CONVERSION;
+        auto length = MultiByteToWideChar(CP_UTF8, 0, str, -1, nullptr, 0);
+        CString s;
+        auto buf = s.GetBuffer(length + 1);
+        ZeroMemory(buf, (length + 1) * sizeof(WCHAR));
+        MultiByteToWideChar(CP_UTF8, 0, str, -1, buf, length);
+        s.ReleaseBuffer();
         return s;
     }
 
@@ -932,6 +1042,9 @@ namespace clib {
                             data[i] = (char)(((unsigned int)wstr[i]) & 0xff);
                         }
                     }
+                    else if (type == "base64") {
+                        data = js_base64_decode(str);
+                    }
                     buf->set_buffer(*this, data);
                     push(buf);
                     break;
@@ -986,6 +1099,38 @@ namespace clib {
             push(buf);
         }
                       break;
+        case API_buffer_toString: {
+            auto r = 0;
+            auto th = _this.lock();
+            assert(th);
+            if (!th->is_primitive() && th->__proto__.lock() == permanents._proto_buffer) {
+                std::string enc = "utf8";
+                if (!args.empty()) {
+                    auto arg_1 = args[0].lock();
+                    if (arg_1->get_type() == r_string) {
+                        enc = JS_STR(arg_1);
+                        std::transform(enc.begin(), enc.end(), enc.begin(), ::tolower);
+                    }
+                }
+                auto __this = JS_O(th);
+                auto buf = __this->get_buffer();
+                if (enc == "utf8" || enc == "utf-8") {
+                    buf.push_back(0);
+                    auto wstr = Utf8ToStringT(buf.data());
+                    auto s = new_string("");
+                    s->init(wstr);
+                    push(s);
+                    break;
+                }
+                else if (enc == "base64") {
+                    push(new_string(js_base64_encode(buf)));
+                    break;
+                }
+            }
+            push(new_string(_this.lock()->to_string(this, 2, &r)));
+            return r;
+        }
+                            break;
         default:
             break;
         }
