@@ -23,3 +23,7 @@ console.log(sys.http({
         }
     }
 }));
+setTimeout(function() {
+    console.log(Buffer.from("123 你好", 'ascii'), Buffer.from(Buffer.from("123 你好")));
+    console.log(Buffer.from([97, 98, 99, 100]));
+}, 4000);

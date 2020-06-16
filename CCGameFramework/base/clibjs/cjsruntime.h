@@ -85,6 +85,7 @@ namespace clib {
             API_eval,
             API_http,
             API_music,
+            API_buffer_from,
         };
         virtual int call_api(int, std::weak_ptr<js_value> &,
                              std::vector<std::weak_ptr<js_value>> &, uint32_t) = 0;
@@ -534,6 +535,7 @@ namespace clib {
             jsv_function::ref f_array;
             // buffer
             jsv_object::ref _proto_buffer;
+            jsv_function::ref _proto_buffer_from;
             jsv_function::ref f_buffer;
             // regexp
             jsv_object::ref _proto_regexp;

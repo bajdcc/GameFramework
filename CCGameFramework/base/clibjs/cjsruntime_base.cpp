@@ -552,20 +552,18 @@ namespace clib {
         permanents._proto_buffer = _new_object(js_value::at_const | js_value::at_readonly);
         permanents._proto_buffer->add("__type__", _new_string("Buffer", js_value::at_const | js_value::at_refs));
         permanents._proto_buffer->__proto__ = permanents._proto_array;
+        permanents._proto_buffer_from = _new_function(nullptr, js_value::at_const | js_value::at_readonly);
+        permanents._proto_buffer_from->add("length", _int_2);
+        permanents._proto_buffer_from->name = "from";
+        permanents._proto_buffer_from->builtin = [](auto& func, auto& _this, auto& args, auto& js, auto attr) {
+            return js.call_api(API_buffer_from, _this, args, 0);
+        };
+        permanents._proto_object->add(permanents._proto_buffer_from->name, permanents._proto_buffer_from);
         permanents.f_buffer = _new_function(permanents._proto_buffer, js_value::at_const | js_value::at_readonly);
         permanents.f_buffer->add("length", _int_1);
         permanents.f_buffer->name = "Buffer";
         permanents.f_buffer->builtin = [](auto& func, auto& _this, auto& args, auto& js, auto attr) {
-            js_value::ref pri;
-            if (args.empty()) {
-                pri = js.new_buffer();
-            }
-            else {
-                auto buf = js.new_buffer();
-                pri = buf;
-            }
-            func->stack.push_back(pri);
-            return 0;
+            return js.call_api(API_buffer_from, _this, args, 0);
         };
         permanents.global_env->add(permanents.f_buffer->name, permanents.f_buffer);
         // regexp
@@ -702,6 +700,17 @@ namespace clib {
                 }
             }
         }
+    }
+
+    static CStringA StringTToUtf8(CString str)
+    {
+        USES_CONVERSION;
+        auto length = WideCharToMultiByte(CP_UTF8, 0, str, -1, nullptr, 0, nullptr, nullptr);
+        CStringA s;
+        auto buf = s.GetBuffer(length + 1);
+        ZeroMemory(buf, (length + 1) * sizeof(CHAR));
+        WideCharToMultiByte(CP_UTF8, 0, str, -1, buf, length, nullptr, nullptr);
+        return s;
     }
 
     int cjsruntime::call_api(int type, js_value::weak_ref& _this,
@@ -892,6 +901,89 @@ namespace clib {
                 push(new_string("invalid method"));
                 break;
             }
+        }
+                      break;
+        case API_buffer_from: {
+            auto buf = new_buffer();
+            if (!args.empty()) {
+                auto arg_1 = args[0].lock();
+                if (arg_1->get_type() == r_string) {
+                    auto str = JS_STR(arg_1);
+                    std::string type = "utf8";
+                    auto r = 0;
+                    if (args.size() > 1) {
+                        auto _type = args[1].lock()->to_string(this, 0, &r);
+                        if (r != 0)
+                            return r;
+                        std::transform(_type.begin(), _type.end(), _type.begin(), ::tolower);
+                        if (_type != "utf-8")
+                            type = _type;
+                    }
+                    auto wstr = CString(CStringA(str.c_str()));
+                    std::vector<char> data;
+                    if (type == "utf8") {
+                        auto u = std::string(StringTToUtf8(wstr).GetBuffer(0));
+                        data.resize(u.size());
+                        std::copy(u.begin(), u.end(), data.begin());
+                    }
+                    else if (type == "ascii") {
+                        data.resize(wstr.GetLength());
+                        for (auto i = 0; i < wstr.GetLength(); i++) {
+                            data[i] = (char)(((unsigned int)wstr[i]) & 0xff);
+                        }
+                    }
+                    buf->set_buffer(*this, data);
+                    push(buf);
+                    break;
+                }
+                if (arg_1->__proto__.lock() == permanents._proto_buffer) {
+                    auto o = JS_O(arg_1);
+                    buf->set_buffer(*this, o->get_buffer());
+                    push(buf);
+                    break;
+                }
+                if (arg_1->__proto__.lock() == permanents._proto_array) {
+                    auto o = JS_O(arg_1);
+                    std::vector<char> data;
+                    auto len = o->get("length", this);
+                    size_t i = 0;
+                    size_t idx = 0;
+                    if (len->get_type() == r_number) {
+                        idx = (size_t)JS_NUM(len);
+                        if (idx < INT_MAX) {
+                            data.resize(idx);
+                            auto obj = o->get_obj();
+                            std::stringstream ss;
+                            for (i = 0; i < idx; i++) {
+                                ss.str("");
+                                ss << i;
+                                auto f = obj.find(ss.str());
+                                if (f == obj.end())
+                                    break;
+                                auto t = f->second.lock();
+                                if (t->get_type() != r_number)
+                                    break;
+                                auto num = JS_NUM(t);
+                                if (isnan(num) || isinf(num))
+                                    break;
+                                if (num < 0)
+                                    num = 0;
+                                if (num > 255)
+                                    num = 255;
+                                data[i] = (char)(byte)num;
+                            }
+                        }
+                    }
+                    if (i != idx)
+                        data.clear();
+                    buf->set_buffer(*this, data);
+                    push(buf);
+                    break;
+                }
+            }
+            std::vector<char> data;
+            buf->set_buffer(*this, data);
+            push(buf);
         }
                       break;
         default:

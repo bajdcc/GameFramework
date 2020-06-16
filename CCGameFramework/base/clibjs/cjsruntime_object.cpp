@@ -645,6 +645,22 @@ namespace clib {
             }
         }
         if (hint != 2) {
+            if (hint == 1 && binary) {
+                std::stringstream ss;
+                ss << "<Buffer";
+                char buf[16];
+                auto i = 0;
+                for (const auto& v : *binary) {
+                    if (++i > MAX_BUFFER_SHOW_SIZE) {
+                        ss << (i - MAX_BUFFER_SHOW_SIZE) << " more bytes";
+                        break;
+                    }
+                    snprintf(buf, sizeof(buf), "%02x", (byte)v);
+                    ss << ' ' << buf;
+                }
+                ss << ">";
+                return ss.str();
+            }
             auto str = gets2("toString");
             if (str && str->get_type() == r_function && (!(str->attr & at_const))) {
                 auto f = JS_FUN(str);
@@ -657,22 +673,6 @@ namespace clib {
                         return "";
                     return o->to_string(n, 0, r);
                 }
-            }
-            if (hint == 1 && binary) {
-                std::stringstream ss;
-                ss << "<Buffer";
-                char buf[16];
-                auto i = 0;
-                for (const auto& v : *binary) {
-                    if (i++ > MAX_BUFFER_SHOW_SIZE) {
-                        ss << "...[total: " << binary->size() << "]";
-                        break;
-                    }
-                    snprintf(buf, sizeof(buf), "%02x", (byte)v);
-                    ss << ' ' << buf;
-                }
-                ss << ">";
-                return ss.str();
             }
         }
         auto type = gets("__type__");
