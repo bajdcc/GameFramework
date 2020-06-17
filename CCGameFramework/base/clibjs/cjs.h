@@ -20,8 +20,6 @@ namespace clib {
         cjs(const cjs&) = delete;
         cjs& operator=(const cjs&) = delete;
 
-        void add_stat(const CString& s, bool show = true);
-
         int exec(const std::string& filename, const std::string& input);
 
         void paint_window(const CRect& bounds);
@@ -40,8 +38,6 @@ namespace clib {
 
     private:
         cjsruntime rt;
-        int stat_n{ 0 };
-        std::list<CString> stat_s;
     };
 }
 

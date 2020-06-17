@@ -1605,8 +1605,8 @@ namespace clib {
     }
 
     int js_sym_code_t::gen_rvalue(ijsgen &gen) {
-        fullName = gen.get_fullname(name ? name->data._identifier : LAMBDA_ID);
         simpleName = name ? name->data._identifier : LAMBDA_ID;
+        fullName = gen.get_fullname(simpleName);
         auto p = parent.lock();
         if (p) {
             if (p->get_type() == s_id) {

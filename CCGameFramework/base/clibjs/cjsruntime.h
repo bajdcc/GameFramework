@@ -86,6 +86,7 @@ namespace clib {
             API_eval,
             API_http,
             API_music,
+            API_config,
             API_buffer_from,
             API_buffer_toString,
         };
@@ -465,6 +466,7 @@ namespace clib {
 
         js_value::ref binop(int code, const js_value::ref &op1, const js_value::ref &op2, int *);
 
+        void eval_input();
         void eval_timeout();
         void eval_http();
 
@@ -472,6 +474,9 @@ namespace clib {
         void api_clearTimeout(double id);
 
         sym_try_t::ref get_try() const;
+
+        static std::string js_base64_encode(const std::vector<char> & data);
+        static std::vector<char> js_base64_decode(const std::string & data);
 
     private:
         bool readonly{true};
@@ -531,6 +536,7 @@ namespace clib {
             jsv_function::ref sys_eval;
             jsv_function::ref sys_http;
             jsv_function::ref sys_music;
+            jsv_function::ref sys_config;
             // function
             jsv_function::ref f_number;
             jsv_function::ref f_boolean;

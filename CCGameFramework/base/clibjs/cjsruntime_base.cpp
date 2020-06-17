@@ -394,6 +394,13 @@ namespace clib {
             return js.call_api(API_music, _this, args, 0);
         };
         permanents.sys->add(permanents.sys_music->name, permanents.sys_music);
+        permanents.sys_config = _new_function(nullptr, js_value::at_const | js_value::at_readonly);
+        permanents.sys_config->add("length", _int_1);
+        permanents.sys_config->name = "config";
+        permanents.sys_config->builtin = [](auto& func, auto& _this, auto& args, auto& js, auto attr) {
+            return js.call_api(API_config, _this, args, 0);
+        };
+        permanents.sys->add(permanents.sys_config->name, permanents.sys_config);
         permanents.global_env->add("sys", permanents.sys);
         // number
         permanents.f_number = _new_function(permanents._proto_number, js_value::at_const | js_value::at_readonly);
@@ -710,7 +717,7 @@ namespace clib {
         }
     }
 
-    static std::string js_base64_encode(const std::vector<char>& data)
+    std::string cjsruntime::js_base64_encode(const std::vector<char>& data)
     {
         static const char* base64char = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
         unsigned char current;
@@ -752,7 +759,7 @@ namespace clib {
         return str;
     }
 
-    static std::vector<char> js_base64_decode(const std::string& data)
+    std::vector<char> cjsruntime::js_base64_decode(const std::string& data)
     {
         static const char* base64char = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
         byte k;
@@ -1129,6 +1136,41 @@ namespace clib {
             return r;
         }
                             break;
+        case API_config: {
+            if (args.empty()) {
+                push(new_undefined());
+                break;
+            }
+            auto obj = args.front().lock();
+            if (obj->is_primitive()) {
+                push(new_string("missing args"));
+                break;
+            }
+            auto code = JS_O(obj);
+            auto r = 0;
+            // input
+            auto v = code->get("input", this);
+            if (v) {
+                if (v->is_primitive()) {
+                    push(new_string("invalid input"));
+                    break;
+                }
+                auto _input = JS_O(v);
+                auto input = _input->get_obj();
+                auto f = input.find("enable");
+                if (f != input.end()) {
+                    cjsgui::singleton().input_set(f->second.lock()->to_bool());
+                }
+                f = input.find("single");
+                if (f != input.end()) {
+                    cjsgui::singleton().get_global().input_s->input_single = (f->second.lock()->to_bool());
+                }
+                push(new_undefined());
+                break;
+            }
+            push(new_string("invalid config"));
+        }
+                                break;
         default:
             break;
         }

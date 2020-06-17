@@ -32,24 +32,6 @@ namespace clib {
         rt.destroy();
     }
 
-    void cjs::add_stat(const CString& s, bool show)
-    {
-        {
-            if (show) {
-                stat_n = STAT_DELAY_N;
-                if (stat_s.size() >= STAT_MAX_N)
-                    stat_s.pop_front();
-                stat_s.push_back(s);
-            }
-#if REPORT_STAT
-            {
-                std::ofstream log(REPORT_STAT_FILE, std::ios::app | std::ios::out);
-                log << CStringA(s).GetBuffer(0) << std::endl;
-            }
-#endif
-        }
-    }
-
     int cjs::exec(const std::string& filename, const std::string& input)
     {
         return rt.exec(filename, input);
@@ -69,7 +51,7 @@ namespace clib {
 
     bool cjs::try_input(int c, bool ch)
     {
-        return false;
+        return true;
     }
 
     int cjs::cursor() const

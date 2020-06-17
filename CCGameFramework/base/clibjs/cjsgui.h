@@ -70,7 +70,6 @@ namespace clib {
         void input(int c);
         int reset_cycles();
         void hit(int n);
-        bool try_input(int c);
         int cursor() const;
         void output() const;
 
@@ -97,7 +96,7 @@ namespace clib {
         static void error(const std::string&);
         void move(bool left);
         void forward(int& x, int& y, bool forward);
-        std::string input_buffer() const;
+        std::vector<char> input_buffer() const;
 
         bool init_screen(int n);
         bool switch_screen_display(int n);
@@ -118,12 +117,8 @@ namespace clib {
         class global_input_t {
         public:
             global_input_t() = default;
+            std::vector<char> input_content;
             int id{ -1 };
-            bool interrupt{ false };
-            bool interrupt_force{ false };
-            int input_lock{ -1 };
-            std::vector<int> input_waiting_list;
-            std::string input_content;
             bool input_success{ false };
             int input_read_ptr{ -1 };
             int input_code{ 0 };
@@ -171,13 +166,13 @@ namespace clib {
             bool input_caret{ false };
             bool cmd_state{ false };
             std::vector<char> cmd_string;
+            std::vector<char> input_delay;
             uint32_t color_bg{ 0 };
             uint32_t color_fg{ 0xffffff };
             global_input_t input;
         };
         std::array<std::unique_ptr<screen_t>, GUI_SCREEN_N> screens;
         std::array<int, GUI_SCREEN_N> screen_ref;
-        std::vector<int> screen_interrupt;
         int screen_id{ -1 };
         int screen_ptr{ -1 };
         bool running{ false };
@@ -193,7 +188,6 @@ namespace clib {
         std::list<std::tuple<CString, int>> stat_s;
 
     public:
-        global_input_t* get_screen_interrupt();
         global_state_t& get_global();
 
     private:

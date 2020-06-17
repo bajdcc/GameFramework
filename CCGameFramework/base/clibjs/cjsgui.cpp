@@ -71,7 +71,6 @@ namespace clib {
             screen_id = -1;
             switch_screen_display(0);
             std::fill(screen_ref.begin(), screen_ref.end(), 0);
-            screen_interrupt.clear();
             reset_cycles();
             reset_ips();
         }
@@ -87,42 +86,38 @@ namespace clib {
 
     void cjsgui::draw(CComPtr<ID2D1RenderTarget>& rt, const CRect& bounds, const JS2DEngine::BrushBag& brushes, bool paused, decimal fps) {
         if (!paused && !entered) {
-            if (global_state.input->interrupt) {
-                cycle = GUI_CYCLES;
-            }
-            else if (cycle_set) {
-                // ...
-            }
-            else if (cycle_stable > 0) {
-                if (fps > GUI_MAX_FPS_RATE) {
-                    cycle = min(cycle << 1, GUI_MAX_CYCLE);
+            if (!cycle_set) {
+                if (cycle_stable > 0) {
+                    if (fps > GUI_MAX_FPS_RATE) {
+                        cycle = min(cycle << 1, GUI_MAX_CYCLE);
+                    }
+                    else if (fps < GUI_MIN_FPS_RATE) {
+                        cycle_stable--;
+                    }
+                }
+                else if (fps > GUI_MAX_FPS_RATE) {
+                    if (cycle_speed >= 0) {
+                        cycle_speed = min(cycle_speed + 1, GUI_MAX_SPEED);
+                        cycle = min(cycle << cycle_speed, GUI_MAX_CYCLE);
+                    }
+                    else {
+                        cycle_speed = 0;
+                    }
                 }
                 else if (fps < GUI_MIN_FPS_RATE) {
-                    cycle_stable--;
-                }
-            }
-            else if (fps > GUI_MAX_FPS_RATE) {
-                if (cycle_speed >= 0) {
-                    cycle_speed = min(cycle_speed + 1, GUI_MAX_SPEED);
-                    cycle = min(cycle << cycle_speed, GUI_MAX_CYCLE);
-                }
-                else {
-                    cycle_speed = 0;
-                }
-            }
-            else if (fps < GUI_MIN_FPS_RATE) {
-                if (cycle_speed <= 0) {
-                    cycle_speed = max(cycle_speed - 1, -GUI_MAX_SPEED);
-                    cycle = max(cycle >> (-cycle_speed), GUI_MIN_CYCLE);
+                    if (cycle_speed <= 0) {
+                        cycle_speed = max(cycle_speed - 1, -GUI_MAX_SPEED);
+                        cycle = max(cycle >> (-cycle_speed), GUI_MIN_CYCLE);
+                    }
+                    else {
+                        cycle_speed = 0;
+                    }
                 }
                 else {
-                    cycle_speed = 0;
-                }
-            }
-            else {
-                if (cycle_stable == 0) {
-                    cycle_speed = 0;
-                    cycle_stable = GUI_CYCLE_STABLE;
+                    if (cycle_stable == 0) {
+                        cycle_speed = 0;
+                        cycle_stable = GUI_CYCLE_STABLE;
+                    }
                 }
             }
             entered = true;
@@ -347,8 +342,18 @@ namespace clib {
     }
 
     void cjsgui::put_string(const std::string& str) {
-        for (auto& s : str) {
-            put_char(s);
+        auto& scr = *screens[screen_ptr].get();
+        auto& input_state = scr.input_state;
+        auto& input_delay = scr.input_delay;
+        if (input_state) {
+            for (auto& s : str) {
+                input_delay.push_back(s);
+            }
+        }
+        else {
+            for (auto& s : str) {
+                put_char(s);
+            }
         }
     }
 
@@ -366,6 +371,7 @@ namespace clib {
         auto& input_state = scr.input_state;
         auto& input_ticks = scr.input_ticks;
         auto& input_caret = scr.input_caret;
+        auto& input_delay = scr.input_delay;
         auto& ptr_x = scr.ptr_x;
         auto& ptr_y = scr.ptr_y;
         auto& ptr_rx = scr.ptr_rx;
@@ -402,6 +408,14 @@ namespace clib {
             cmd_state = true;
             return;
         }
+
+        if (!input_delay.empty()) {
+            auto delay = input_delay;
+            delay.push_back(0);
+            input_delay.clear();
+            put_string(delay.data());
+        }
+
         if (c == 0)
             return;
         if (c == '\n') {
@@ -673,7 +687,7 @@ namespace clib {
         }
     }
 
-    std::string cjsgui::input_buffer() const {
+    std::vector<char> cjsgui::input_buffer() const {
         auto& scr = *screens[screen_ptr].get();
         auto& cols = scr.cols;
         auto& rows = scr.rows;
@@ -689,12 +703,12 @@ namespace clib {
 
         auto begin = ptr_mx + ptr_my * cols;
         auto end = ptr_x + ptr_y * cols;
-        std::stringstream ss;
+        std::vector<char> v;
         for (int i = begin; i <= end; ++i) {
             if (buffer[i])
-                ss << buffer[i];
+                v.push_back(buffer[i]);
         }
-        return ss.str();
+        return v;
     }
 
     bool cjsgui::init_screen(int n)
@@ -730,7 +744,7 @@ namespace clib {
         if (vm) {
             CString s;
             s.Format(L"初始化屏幕（%d）", n);
-            vm->add_stat(s);
+            add_stat(s);
         }
         return true;
     }
@@ -777,18 +791,9 @@ namespace clib {
             if (vm) {
                 CString s;
                 s.Format(L"关闭屏幕（%d）", n);
-                vm->add_stat(s);
+                add_stat(s);
             }
         }
-    }
-
-    cjsgui::global_input_t* cjsgui::get_screen_interrupt()
-    {
-        if (screen_interrupt.empty())
-        return nullptr;
-        auto n = screen_interrupt.back();
-        screen_interrupt.pop_back();
-        return &screens[n]->input;
     }
 
     cjsgui::global_state_t& cjsgui::get_global()
@@ -1070,34 +1075,7 @@ namespace clib {
             }
             else
                 str.Format(L"屏幕（%d）键盘输入：%d 0x%x %c", screen_ptr, c, c, isprint(c) ? wchar_t(c) : L'?');
-            vm->add_stat(str);
-        }
-        if (c == 3) {
-            screen_interrupt.push_back(screen_ptr);
-            global_state.input_s->interrupt = true;
-            cmd_state = false;
-            if (input_state) {
-                ptr_x = ptr_rx;
-                ptr_y = ptr_ry;
-                put_char('\n');
-                global_state.input_s->input_content.clear();
-                global_state.input_s->input_read_ptr = 0;
-                global_state.input_s->input_success = true;
-                global_state.input_s->input_code = 0;
-                input_state = false;
-                global_state.input_s->input_single = false;
-            }
-            if (screen_ptr == 0) {
-                for (auto i = 1; i < (int)screens.size(); i++) {
-                    if (screens[i]) {
-                        screen_ptr = i;
-                        input(c);
-                        screens[i]->input.interrupt_force = true;
-                    }
-                }
-                screen_ptr = 0;
-            }
-            return;
+            add_stat(str);
         }
         if (!input_state)
             return;
@@ -1108,9 +1086,7 @@ namespace clib {
                 put_char(c);
                 ptr_x = ptr_rx;
                 ptr_y = ptr_ry;
-                std::string s;
-                s += c;
-                global_state.input_s->input_content = s;
+                global_state.input_s->input_content.push_back(c);
                 global_state.input_s->input_read_ptr = 0;
                 global_state.input_s->input_success = true;
                 global_state.input_s->input_code = 0;
@@ -1152,17 +1128,6 @@ namespace clib {
             put_char('\b');
             return;
         }
-        if (c == '\r' || c == 4 || c == 26) {
-            ptr_x = ptr_rx;
-            ptr_y = ptr_ry;
-            put_char('\n');
-            global_state.input_s->input_content = input_buffer();
-            global_state.input_s->input_read_ptr = 0;
-            global_state.input_s->input_success = true;
-            global_state.input_s->input_code = 0;
-            input_state = false;
-            return;
-        }
         if (c & GUI_SPECIAL_MASK) {
             char C = (char)-9;
             switch (c & 0xff) {
@@ -1200,7 +1165,7 @@ namespace clib {
             case VK_BACK:
                 return;
             case VK_RETURN:
-                input('\r');
+                input('\n');
                 return;
             /*case 0x71: // SHIFT
                 return;
@@ -1214,6 +1179,20 @@ namespace clib {
                 return;
             case VK_MENU: // ALT
                 return;
+            case VK_F5: {
+                if (!global_state.input_s->input_success) {
+                    ptr_x = ptr_rx;
+                    ptr_y = ptr_ry;
+                    put_char('\n');
+                    global_state.input_s->input_content = input_buffer();
+                    global_state.input_s->input_read_ptr = 0;
+                    global_state.input_s->input_success = true;
+                    global_state.input_s->input_code = 0;
+                    input_state = false;
+                }
+                return;
+            }
+                      break;
             default:
 #if LOG_VM
             {
@@ -1276,14 +1255,6 @@ namespace clib {
     {
         if (vm)
             vm->hit(n);
-    }
-
-    bool cjsgui::try_input(int c)
-    {
-        if (vm) {
-            return vm->try_input(c & 0xffff, !(c & 0x20000));
-        }
-        return false;
     }
 
     int cjsgui::cursor() const

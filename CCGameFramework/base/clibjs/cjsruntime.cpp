@@ -433,6 +433,20 @@ namespace clib {
         }
     }
 
+    void cjsruntime::eval_input() {
+        if (current_stack || !stack.empty())
+            return;
+        if (!cjsgui::singleton().get_global().input_s->input_success)
+            return;
+        cjsgui::singleton().get_global().input_s->input_success = false;
+        auto input = cjsgui::singleton().get_global().input_s->input_content;
+        cjsgui::singleton().get_global().input_s->input_content.clear();
+        std::stringstream ss;
+        auto b = js_base64_encode(input);
+        ss << "sys.event.emit('input', '" << b << "');";
+        exec("<input>", ss.str(), true);
+    }
+
     void cjsruntime::eval_timeout() {
         if (current_stack || !stack.empty())
             return;
@@ -525,6 +539,7 @@ namespace clib {
             if (permanents.state == 0 && !current_stack) {
                 permanents.state = 1;
             }
+            eval_input();
             eval_timeout();
             eval_http();
         }

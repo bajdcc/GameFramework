@@ -144,9 +144,6 @@ int JS2DEngine::SetType(cint value)
         clib::cjsgui::singleton().hit(value & 0xffff);
         return 0;
     }
-    if (value > 0 && clib::cjsgui::singleton().try_input(value)) {
-        return 0;
-    }
     clib::cjsgui::singleton().input_call(value);
     return 0;
 }
