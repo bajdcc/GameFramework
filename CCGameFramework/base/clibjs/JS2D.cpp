@@ -93,6 +93,7 @@ void JS2DEngine::Reset(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget, st
         d2drt = newRenderTarget;
         cur_bursh = newRenderTarget->CreateDirect2DBrush(CColor());
     }
+    clib::cjsgui::singleton().change_target(newRenderTarget);
 }
 
 void JS2DEngine::reset()
@@ -246,7 +247,12 @@ void JS2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
 
     logo.Format(_T("R: %d, FPS: %2.1f IPS: %S"), frame, inv, ipsf(ips));
     rt->DrawText(logo.GetBuffer(0), logo.GetLength(), logoTF->textFormat,
-        D2D1::RectF((float)bounds.right - 290, (float)bounds.top + 5, (float)bounds.right, (float)bounds.top + 50), logoBrush);
+        D2D1::RectF((float)bounds.right - 290, (float)bounds.top + 5, (float)bounds.right, (float)bounds.top + 25), logoBrush);
+
+    const auto global = clib::cjsgui::singleton().get_global();
+    logo.Format(_T("[GC] Alive: %d, Cached: %d"), global.total_obj, global.cache_obj);
+    rt->DrawText(logo.GetBuffer(0), logo.GetLength(), logoTF->textFormat,
+        D2D1::RectF((float)bounds.right - 290, (float)bounds.top + 25, (float)bounds.right, (float)bounds.top + 50), logoBrush);
 
     logo = clib::cjsgui::singleton().get_disp(clib::types::D_STAT);
     if (!logo.IsEmpty()) {

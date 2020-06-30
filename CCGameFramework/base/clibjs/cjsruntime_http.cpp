@@ -58,7 +58,6 @@ namespace clib {
         if (f != r.response.headers.end()) {
             std::regex re(R"(charset=utf-8)", std::regex::ECMAScript | std::regex::icase);
             if (std::regex_search(f->second, re)) {
-                CStringA(r.response.body.c_str());
                 cjsruntime::convert_utf8_to_gbk(r.response.body);
             }
             std::regex re2(R"(^(text/.+|application/json))", std::regex::ECMAScript | std::regex::icase);

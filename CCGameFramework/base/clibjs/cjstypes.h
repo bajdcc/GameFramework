@@ -8,6 +8,8 @@
 
 #include <string>
 
+#define JS_NAN std::numeric_limits<double>::quiet_NaN()
+
 namespace clib {
     namespace types {
 

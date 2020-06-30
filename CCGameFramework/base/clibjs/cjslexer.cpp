@@ -268,13 +268,13 @@ namespace clib {
                     // 判断整数部分
                     for (; isdigit(text[j]); j++) { // 解析整数部分
                         d *= 10.0;
-                        d += text[j] - '0';
+                        d += (double)(int)(text[j] - '0');
                     }
                     if (text[j] == '.') { // 解析小数部分
                         auto l = ++j;
                         for (; isdigit(text[j]); j++) {
                             d *= 10.0;
-                            d += text[j] - '0';
+                            d += (double)(int)(text[j] - '0');
                         }
                         l = j - l;
                         if (l > 0) {
@@ -299,7 +299,7 @@ namespace clib {
                         auto l = j;
                         for (; isdigit(text[j]); j++) { // 解析指数部分
                             e *= 10;
-                            e += text[j] - '0';
+                            e += (double)(int)(text[j] - '0');
                         }
                         if (l == j) {
                             snprintf(buf.data(), buf.size(), "Line: %d, Column: %d, Error: invalid number '%s'", line, column,

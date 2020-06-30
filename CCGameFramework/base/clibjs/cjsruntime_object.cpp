@@ -267,7 +267,7 @@ namespace clib {
                     return n.new_number(0.0);
                 if (number_state == 2)
                     return n.new_number(number);
-                return n.new_number(NAN);
+                return n.new_number(JS_NAN);
             }
             case UNARY_NEGATIVE: {
                 if (!calc_number)
@@ -276,7 +276,7 @@ namespace clib {
                     return n.new_number(-0.0);
                 if (number_state == 2)
                     return n.new_number(-number);
-                return n.new_number(NAN);
+                return n.new_number(JS_NAN);
             }
             case UNARY_NOT:
                 return n.new_boolean(str.empty());
@@ -328,7 +328,7 @@ namespace clib {
             case 2:
                 return d;
             case 3:
-                return NAN;
+                return JS_NAN;
             default:
                 break;
         }
@@ -417,7 +417,7 @@ namespace clib {
             return n->new_number(wstr.length());
         if (key == "charCode") {
             if (wstr.empty())
-                return n->new_number(NAN);
+                return n->new_number(JS_NAN);
             return n->new_number((int)wstr[0]);
         }
         return n->new_undefined();
@@ -709,11 +709,11 @@ namespace clib {
             case 2:
                 return d;
             case 3:
-                return NAN;
+                return JS_NAN;
             default:
                 break;
         }
-        return NAN;
+        return JS_NAN;
     }
 
     jsv_object::ref jsv_object::clear() {
@@ -827,9 +827,9 @@ namespace clib {
     js_value::ref jsv_function::unary_op(js_value_new &n, int code, int* r) {
         switch (code) {
             case UNARY_POSITIVE:
-                return n.new_number(NAN);
+                return n.new_number(JS_NAN);
             case UNARY_NEGATIVE:
-                return n.new_number(NAN);
+                return n.new_number(JS_NAN);
             case UNARY_NOT:
                 return n.new_boolean(false);
             case UNARY_INVERT:
@@ -866,7 +866,7 @@ namespace clib {
     }
 
     double jsv_function::to_number(js_value_new *n, int* r) const {
-        return NAN;
+        return JS_NAN;
     }
 
     jsv_function::ref jsv_function::clear2() {
@@ -1274,9 +1274,9 @@ namespace clib {
     js_value::ref jsv_undefined::unary_op(js_value_new &n, int code, int* r) {
         switch (code) {
             case UNARY_POSITIVE:
-                return n.new_number(NAN);
+                return n.new_number(JS_NAN);
             case UNARY_NEGATIVE:
-                return n.new_number(NAN);
+                return n.new_number(JS_NAN);
             case UNARY_NOT:
                 return n.new_boolean(true);
             case UNARY_INVERT:
@@ -1305,6 +1305,6 @@ namespace clib {
     }
 
     double jsv_undefined::to_number(js_value_new *n, int* r) const {
-        return NAN;
+        return JS_NAN;
     }
 }

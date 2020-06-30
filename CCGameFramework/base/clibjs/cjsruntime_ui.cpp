@@ -5,7 +5,7 @@
 
 #include "stdafx.h"
 #include "cjsruntime.h"
-
+#include "cjsgui.h"
 
 namespace clib {
 
@@ -15,15 +15,15 @@ namespace clib {
             _this->add("left", o);
             auto num = JS_NUM(o);
             if (!std::isinf(num) && !std::isnan(num)) {
-                u->left = num;
+                u->left = (LONG)num;
             }
         }
-        o = obj->get("right", n);
+        o = obj->get("top", n);
         if (o && o->get_type() == r_number) {
-            _this->add("right", o);
+            _this->add("top", o);
             auto num = JS_NUM(o);
             if (!std::isinf(num) && !std::isnan(num)) {
-                u->left = num;
+                u->top = (LONG)num;
             }
         }
         o = obj->get("width", n);
@@ -31,7 +31,7 @@ namespace clib {
             _this->add("width", o);
             auto num = JS_NUM(o);
             if (!std::isinf(num) && !std::isnan(num)) {
-                u->left = num;
+                u->width = (LONG)num;
             }
         }
         o = obj->get("height", n);
@@ -39,9 +39,14 @@ namespace clib {
             _this->add("height", o);
             auto num = JS_NUM(o);
             if (!std::isinf(num) && !std::isnan(num)) {
-                u->left = num;
+                u->height = (LONG)num;
             }
         }
+    }
+
+    int jsv_ui::get_object_type() const
+    {
+        return jsv_object::T_UI;
     }
 
     bool jsv_ui::init(const jsv_object::ref& obj, js_value_new* n)
@@ -70,11 +75,73 @@ namespace clib {
         return false;
     }
 
+    void jsv_ui::render()
+    {
+        if (element)
+            element->render();
+    }
+
+    static LONG obj2num(const js_value::weak_ref& obj) {
+        auto o = obj.lock();
+        if (o->get_type() != r_number) {
+            return 0;
+        }
+        auto num = JS_NUM(o);
+        if (std::isinf(num) || std::isnan(num)) {
+            return 0;
+        }
+        return (LONG)num;
+    }
+
+    void jsv_ui::add(const std::string& s, const js_value::weak_ref& obj)
+    {
+        jsv_object::add(s, obj);
+        if (element) {
+            if (s == "left")
+                element->left = obj2num(obj);
+            if (s == "top")
+                element->top = obj2num(obj);
+            if (s == "width")
+                element->width = obj2num(obj);
+            if (s == "height")
+                element->height = obj2num(obj);
+        }
+    }
+
+    void jsv_ui::remove(const std::string& s)
+    {
+        jsv_object::remove(s);
+        if (element) {
+            if (s == "left")
+                element->left = 0;
+            if (s == "top")
+                element->top = 0;
+            if (s == "width")
+                element->width = 0;
+            if (s == "height")
+                element->height = 0;
+        }
+
+    }
+
+    void jsv_ui::change_target()
+    {
+        if (element)
+            element->change_target();
+    }
+
     void cjsruntime::send_signal(const std::string& s)
     {
         if (!global_ui.signals.empty() && global_ui.signals.back() == s)
             return;
         global_ui.signals.push_back(s);
+    }
+
+    void cjsruntime::change_target()
+    {
+        for (auto& s : global_ui.elements) {
+            s->change_target();
+        }
     }
 
     int cjsruntime::get_frame() const
@@ -102,6 +169,7 @@ namespace clib {
         }
         else {
             auto s = global_ui.signals.front();
+            global_ui.signals.pop_front();
             std::stringstream ss;
             ss << "<signal::" << s << ">";
             auto name = ss.str();
@@ -112,7 +180,42 @@ namespace clib {
             ss.str("");
             ss << "sys.send_signal(\"" << s << "\");";
             exec(name, ss.str(), false, false);
-            global_ui.signals.pop_front();
         }
+    }
+
+    js_ui_label::js_ui_label()
+    {
+        label = SolidLabelElement::Create();
+    }
+
+    int js_ui_label::get_type()
+    {
+        return js_ui_base::label;
+    }
+
+    const char* js_ui_label::get_type_str() const
+    {
+        return "label";
+    }
+
+    void js_ui_label::set_content(const std::wstring& s)
+    {
+        label->SetText(CString(s.c_str()));
+    }
+
+    void js_ui_label::render()
+    {
+        auto bounds = cjsgui::singleton().get_global().bound;
+        bounds.left += left;
+        bounds.top += top;
+        bounds.right -= left + width;
+        bounds.bottom -= top + height;
+        //label->SetRenderRect(bounds);
+        label->GetRenderer()->Render(bounds);
+    }
+
+    void js_ui_label::change_target()
+    {
+        label->GetRenderer()->SetRenderTarget(cjsgui::singleton().get_global().renderTarget.lock());
     }
 }

@@ -1435,13 +1435,13 @@ namespace clib {
                    << node->end << "]" << std::endl;
                 {
                     auto n = std::dynamic_pointer_cast<js_sym_id_t>(node);
-                    os << std::setfill(' ') << std::setw(level + 1) << "";
+                    os << std::setfill(' ') << std::setw((std::streamsize)(level + 1)) << "";
                     os << "id" << std::endl;
                     for (const auto &s : n->ids) {
                         print(s, level + 2, os);
                     }
                     if (n->init) {
-                        os << std::setfill(' ') << std::setw(level + 1) << "";
+                        os << std::setfill(' ') << std::setw((std::streamsize)(level + 1)) << "";
                         os << "init" << std::endl;
                         print(n->init, level + 2, os);
                     }
@@ -1457,7 +1457,7 @@ namespace clib {
                    << node->end << "]" << std::endl;
                 {
                     auto n = std::dynamic_pointer_cast<js_sym_var_t>(node);
-                    os << std::setfill(' ') << std::setw(level + 1) << "";
+                    os << std::setfill(' ') << std::setw((std::streamsize)(level + 1)) << "";
                     os << cjsast::to_string(n->node) << std::endl;
                 }
                 break;
@@ -1469,7 +1469,7 @@ namespace clib {
                    << node->end << "]" << std::endl;
                 {
                     auto n = std::dynamic_pointer_cast<js_sym_var_t>(node);
-                    os << std::setfill(' ') << std::setw(level + 1) << "";
+                    os << std::setfill(' ') << std::setw((std::streamsize)(level + 1)) << "";
                     switch (n->clazz) {
                         case js_sym_var_t::local:
                             os << "[LOCAL] ";
@@ -1499,13 +1499,13 @@ namespace clib {
                    << node->end << "]" << std::endl;
                 {
                     auto n = std::dynamic_pointer_cast<js_sym_unop_t>(node);
-                    os << std::setfill(' ') << std::setw(level + 1) << "";
+                    os << std::setfill(' ') << std::setw((std::streamsize)(level + 1)) << "";
                     os << "op: " << js_lexer_string(n->op->data._op)
                        << " " << "[" << n->op->line << ":"
                        << n->op->column << ":"
                        << n->op->start << ":"
                        << n->op->end << "]" << std::endl;
-                    os << std::setfill(' ') << std::setw(level + 1) << "";
+                    os << std::setfill(' ') << std::setw((std::streamsize)(level + 1)) << "";
                     os << "exp" << std::endl;
                     print(n->exp, level + 2, os);
                 }
@@ -1518,10 +1518,10 @@ namespace clib {
                    << node->end << "]" << std::endl;
                 {
                     auto n = std::dynamic_pointer_cast<js_sym_sinop_t>(node);
-                    os << std::setfill(' ') << std::setw(level + 1) << "";
+                    os << std::setfill(' ') << std::setw((std::streamsize)(level + 1)) << "";
                     os << "exp" << std::endl;
                     print(n->exp, level + 2, os);
-                    os << std::setfill(' ') << std::setw(level + 1) << "";
+                    os << std::setfill(' ') << std::setw((std::streamsize)(level + 1)) << "";
                     os << "op: " << js_lexer_string(n->op->data._op)
                        << " " << "[" << n->op->line << ":"
                        << n->op->column << ":"
@@ -1537,16 +1537,16 @@ namespace clib {
                    << node->end << "]" << std::endl;
                 {
                     auto n = std::dynamic_pointer_cast<js_sym_binop_t>(node);
-                    os << std::setfill(' ') << std::setw(level + 1) << "";
+                    os << std::setfill(' ') << std::setw((std::streamsize)(level + 1)) << "";
                     os << "exp1" << std::endl;
                     print(n->exp1, level + 2, os);
-                    os << std::setfill(' ') << std::setw(level + 1) << "";
+                    os << std::setfill(' ') << std::setw((std::streamsize)(level + 1)) << "";
                     os << "op: " << js_lexer_string(n->op->data._op)
                        << " " << "[" << n->op->line << ":"
                        << n->op->column << ":"
                        << n->op->start << ":"
                        << n->op->end << "]" << std::endl;
-                    os << std::setfill(' ') << std::setw(level + 1) << "";
+                    os << std::setfill(' ') << std::setw((std::streamsize)(level + 1)) << "";
                     os << "exp2" << std::endl;
                     print(n->exp2, level + 2, os);
                 }
@@ -1559,25 +1559,25 @@ namespace clib {
                    << node->end << "]" << std::endl;
                 {
                     auto n = std::dynamic_pointer_cast<js_sym_triop_t>(node);
-                    os << std::setfill(' ') << std::setw(level + 1) << "";
+                    os << std::setfill(' ') << std::setw((std::streamsize)(level + 1)) << "";
                     os << "exp1" << std::endl;
                     print(n->exp1, level + 2, os);
-                    os << std::setfill(' ') << std::setw(level + 1) << "";
+                    os << std::setfill(' ') << std::setw((std::streamsize)(level + 1)) << "";
                     os << "op1: " << js_lexer_string(n->op1->data._op)
                        << " " << "[" << n->op1->line << ":"
                        << n->op1->column << ":"
                        << n->op1->start << ":"
                        << n->op1->end << "]" << std::endl;
-                    os << std::setfill(' ') << std::setw(level + 1) << "";
+                    os << std::setfill(' ') << std::setw((std::streamsize)(level + 1)) << "";
                     os << "exp2" << std::endl;
                     print(n->exp2, level + 2, os);
-                    os << std::setfill(' ') << std::setw(level + 1) << "";
+                    os << std::setfill(' ') << std::setw((std::streamsize)(level + 1)) << "";
                     os << "op2: " << js_lexer_string(n->op2->data._op)
                        << " " << "[" << n->op2->line << ":"
                        << n->op2->column << ":"
                        << n->op2->start << ":"
                        << n->op2->end << "]" << std::endl;
-                    os << std::setfill(' ') << std::setw(level + 1) << "";
+                    os << std::setfill(' ') << std::setw((std::streamsize)(level + 1)) << "";
                     os << "exp3" << std::endl;
                     print(n->exp3, level + 2, os);
                 }
@@ -1590,11 +1590,11 @@ namespace clib {
                    << node->end << "]" << std::endl;
                 {
                     auto n = std::dynamic_pointer_cast<js_sym_member_dot_t>(node);
-                    os << std::setfill(' ') << std::setw(level + 1) << "";
+                    os << std::setfill(' ') << std::setw((std::streamsize)(level + 1)) << "";
                     os << "exp" << std::endl;
                     print(n->exp, level + 2, os);
                     for (const auto &s : n->dots) {
-                        os << std::setfill(' ') << std::setw(level + 1) << "";
+                        os << std::setfill(' ') << std::setw((std::streamsize)(level + 1)) << "";
                         os << "dot: " << s->data._identifier
                            << " " << "[" << s->line << ":"
                            << s->column << ":"
@@ -1611,7 +1611,7 @@ namespace clib {
                    << node->end << "]" << std::endl;
                 {
                     auto n = std::dynamic_pointer_cast<js_sym_member_index_t>(node);
-                    os << std::setfill(' ') << std::setw(level + 1) << "";
+                    os << std::setfill(' ') << std::setw((std::streamsize)(level + 1)) << "";
                     os << "exp" << std::endl;
                     print(n->exp, level + 2, os);
                     for (const auto &s : n->indexes) {
@@ -1644,7 +1644,7 @@ namespace clib {
                         if (s)
                             print(s, level + 1, os);
                         else {
-                            os << std::setfill(' ') << std::setw(level + 1) << "";
+                            os << std::setfill(' ') << std::setw((std::streamsize)(level + 1)) << "";
                             os << "empty" << std::endl;
                         }
                     }
@@ -1683,17 +1683,17 @@ namespace clib {
                    << node->end << "]" << std::endl;
                 {
                     auto n = std::dynamic_pointer_cast<js_sym_call_method_t>(node);
-                    os << std::setfill(' ') << std::setw(level + 1) << "";
+                    os << std::setfill(' ') << std::setw((std::streamsize)(level + 1)) << "";
                     os << "obj" << std::endl;
                     print(n->obj, level + 2, os);
-                    os << std::setfill(' ') << std::setw(level + 1) << "";
+                    os << std::setfill(' ') << std::setw((std::streamsize)(level + 1)) << "";
                     os << "method: " << n->method->data._identifier
                        << " " << "[" << n->method->line << ":"
                        << n->method->column << ":"
                        << n->method->start << ":"
                        << n->method->end << "]" << std::endl;
                     if (!n->args.empty()) {
-                        os << std::setfill(' ') << std::setw(level + 1) << "";
+                        os << std::setfill(' ') << std::setw((std::streamsize)(level + 1)) << "";
                         os << "args" << std::endl;
                         for (const auto &s : n->args) {
                             print(s, level + 2, os);
@@ -1709,11 +1709,11 @@ namespace clib {
                    << node->end << "]" << std::endl;
                 {
                     auto n = std::dynamic_pointer_cast<js_sym_call_function_t>(node);
-                    os << std::setfill(' ') << std::setw(level + 1) << "";
+                    os << std::setfill(' ') << std::setw((std::streamsize)(level + 1)) << "";
                     os << "obj" << std::endl;
                     print(n->obj, level + 2, os);
                     if (!n->args.empty()) {
-                        os << std::setfill(' ') << std::setw(level + 1) << "";
+                        os << std::setfill(' ') << std::setw((std::streamsize)(level + 1)) << "";
                         os << "args" << std::endl;
                         for (const auto &s : n->args) {
                             print(s, level + 2, os);
@@ -1729,11 +1729,11 @@ namespace clib {
                    << node->end << "]" << std::endl;
                 {
                     auto n = std::dynamic_pointer_cast<js_sym_new_t>(node);
-                    os << std::setfill(' ') << std::setw(level + 1) << "";
+                    os << std::setfill(' ') << std::setw((std::streamsize)(level + 1)) << "";
                     os << "obj" << std::endl;
                     print(n->obj, level + 2, os);
                     if (!n->args.empty()) {
-                        os << std::setfill(' ') << std::setw(level + 1) << "";
+                        os << std::setfill(' ') << std::setw((std::streamsize)(level + 1)) << "";
                         os << "args" << std::endl;
                         for (const auto &s : n->args) {
                             print(s, level + 2, os);
@@ -1902,10 +1902,10 @@ namespace clib {
                    << node->end << "]" << std::endl;
                 {
                     auto n = std::dynamic_pointer_cast<js_sym_stmt_try_t>(node);
-                    os << std::setfill(' ') << std::setw(level + 1) << "";
+                    os << std::setfill(' ') << std::setw((std::streamsize)(level + 1)) << "";
                     os << "try" << std::endl;
                     print(n->try_body, level + 2, os);
-                    os << std::setfill(' ') << std::setw(level + 1) << "";
+                    os << std::setfill(' ') << std::setw((std::streamsize)(level + 1)) << "";
                     if (n->var) {
                         os << "var" << std::endl;
                         print(n->var, level + 2, os);
@@ -1939,7 +1939,7 @@ namespace clib {
                 {
                     auto n = std::dynamic_pointer_cast<js_sym_code_t>(node);
                     if (n->name) {
-                        os << std::setfill(' ') << std::setw(level + 1) << "";
+                        os << std::setfill(' ') << std::setw((std::streamsize)(level + 1)) << "";
                         os << "name: " << n->name->data._identifier
                            << " " << "[" << n->name->line << ":"
                            << n->name->column << ":"
@@ -1947,7 +1947,7 @@ namespace clib {
                            << n->name->end << "]" << std::endl;
                     }
                     if (!n->args.empty()) {
-                        os << std::setfill(' ') << std::setw(level + 1) << "";
+                        os << std::setfill(' ') << std::setw((std::streamsize)(level + 1)) << "";
                         os << "args" << std::endl;
                         for (const auto &s : n->args) {
                             print(s, level + 2, os);
@@ -2315,7 +2315,7 @@ namespace clib {
             std::copy(jumps_set.begin(), jumps_set.end(), std::back_inserter(jumps));
         }
         idx = 0;
-        char buf[256];
+        char buf[256] = { 0 };
         for (auto &c : code->codes) {
             auto alt = text->substr(c.start, c.end - c.start);
             auto jmp = "  ";

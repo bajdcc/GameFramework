@@ -33,7 +33,7 @@
 #define SHOW_EXTRA 1
 #define STACK_MAX 256
 #define GC_PERIOD 128
-#define MAX_REUSE_SIZE 256
+#define MAX_REUSE_SIZE 65536
 
 #if defined(WIN32) || defined(WIN64)
 
@@ -170,7 +170,6 @@ namespace clib {
 
     int cjsruntime::call_internal(bool top, size_t stack_size) {
         auto r = 0;
-        auto gc_period = 0;
         auto has_throw = false;
         sym_try_t::ref trys;
         while (stack.size() > stack_size) {
@@ -202,8 +201,8 @@ namespace clib {
 #if DUMP_STEP && SHOW_EXTRA
                 dump_step2(c, &r);
 #endif
-                if (top && gc_period++ >= GC_PERIOD) {
-                    gc_period = 0;
+                if (top && permanents.gc_period++ >= GC_PERIOD) {
+                    permanents.gc_period = 0;
                     gc();
                 }
                 if (r != 0)
@@ -459,6 +458,7 @@ namespace clib {
             if ((*timeout.queues.begin()).first < now) {
                 auto& v = (*timeout.queues.begin()).second;
                 auto callback = v.front();
+                assert(callback->func);
                 stack.clear();
                 stack.push_back(permanents.default_stack);
                 current_stack = stack.back();
@@ -2122,9 +2122,11 @@ namespace clib {
             break;
         case r_object: {
             auto o = std::dynamic_pointer_cast<jsv_object>(v);
-            if (o->get_object_type() == 0)
+            if (o->get_object_type() == jsv_object::T_OBJ)
                 reuse.reuse_objects.push_back(o->clear());
-        }
+            if (o->get_object_type() == jsv_object::T_UI)
+                global_ui.elements.erase(JS_UI(o));
+;        }
             break;
         case r_function:
             reuse.reuse_functions.push_back(
@@ -2250,6 +2252,14 @@ namespace clib {
 #if DUMP_STEP
         std::cout << std::setfill('#') << std::setw(60) << "" << std::endl;
 #endif
+        cjsgui::singleton().get_global().total_obj = (int)objs.size();
+        cjsgui::singleton().get_global().cache_obj =
+            reuse.reuse_numbers.size() +
+            reuse.reuse_strings.size() +
+            reuse.reuse_booleans.size() +
+            reuse.reuse_objects.size() +
+            reuse.reuse_functions.size() +
+            reuse.reuse_regexes.size();
     }
 
     jsv_number::ref cjsruntime::_new_number(double n, uint32_t attr) {
@@ -2552,7 +2562,7 @@ namespace clib {
                 if (s2 == 0)
                     return new_number(1.0);
                 if ((s1 == 1.0 || s1 == -1.0) && std::isinf(s2))
-                    return new_number(NAN);
+                    return new_number(JS_NAN);
                 return new_number(pow(s1, s2));
             case BINARY_MULTIPLY:
                 s1 = op1->to_number(this, r);
@@ -2562,11 +2572,11 @@ namespace clib {
                 s1 = op1->to_number(this, r);
                 s2 = op2->to_number(this, r);
                 if (std::isinf(s1) || s2 == 0)
-                    return new_number(NAN);
+                    return new_number(JS_NAN);
                 if (std::isinf(s2))
                     return new_number(s1);
                 if (s1 == 0)
-                    return new_number(std::isnan(s2) ? NAN : s1);
+                    return new_number(std::isnan(s2) ? JS_NAN : s1);
                 return new_number(fmod(s1, s2));
             case BINARY_ADD:
                 s1 = op1->to_number(this, r);
@@ -2637,7 +2647,7 @@ namespace clib {
             }
         }
         assert(!"invalid binop type");
-        return new_number(NAN);
+        return new_number(JS_NAN);
     }
 
     bool cjsruntime::instance_of(const js_value::ref& obj, const jsv_object::ref& pp)
@@ -2746,25 +2756,5 @@ namespace clib {
         default:
             break;
         }
-    }
-
-    js_ui_label::js_ui_label()
-    {
-        label = SolidLabelElement::Create();
-    }
-
-    int js_ui_label::get_type()
-    {
-        return js_ui_base::label;
-    }
-
-    const char* js_ui_label::get_type_str() const
-    {
-        return "label";
-    }
-
-    void js_ui_label::set_content(const std::wstring& s)
-    {
-        label->SetText(CString(s.c_str()));
     }
 }

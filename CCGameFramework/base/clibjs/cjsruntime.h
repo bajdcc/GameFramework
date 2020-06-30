@@ -29,6 +29,7 @@
 #define JS_FUN(op) (std::dynamic_pointer_cast<jsv_function>(op))
 #define JS_V(op) (std::dynamic_pointer_cast<js_value>(op))
 #define JS_RE(op) (std::dynamic_pointer_cast<jsv_regexp>(op))
+#define JS_UI(op) (std::dynamic_pointer_cast<jsv_ui>(op))
 
 namespace clib {
 
@@ -195,6 +196,10 @@ namespace clib {
 
     class jsv_object : public js_value {
     public:
+        enum object_type {
+            T_OBJ = 0,
+            T_UI = 1,
+        };
         static std::string _str;
         using ref = std::shared_ptr<jsv_object>;
         using weak_ref = std::weak_ptr<jsv_object>;
@@ -216,8 +221,8 @@ namespace clib {
         js_value::ref get(const std::string&, js_value_new* = nullptr) const;
         js_value::ref get_special(const std::string&) const;
         void add_special(const std::string&, const js_value::weak_ref&);
-        void add(const std::string&, const js_value::weak_ref&);
-        void remove(const std::string&);
+        virtual void add(const std::string&, const js_value::weak_ref&);
+        virtual void remove(const std::string&);
         void copy_from(const jsv_object::ref&);
         void set_buffer(js_value_new& n, const std::vector<char>&);
         std::vector<char> get_buffer() const;
@@ -240,10 +245,12 @@ namespace clib {
         };
         virtual int get_type() = 0;
         virtual const char* get_type_str() const = 0;
-        double left{ 0 };
-        double right{ 0 };
-        double width{ 0 };
-        double height{ 0 };
+        virtual void render() = 0;
+        virtual void change_target() = 0;
+        LONG left{ 0 };
+        LONG top{ 0 };
+        LONG width{ 0 };
+        LONG height{ 0 };
     };
 
     class js_ui_label : public js_ui_base {
@@ -254,6 +261,8 @@ namespace clib {
         int get_type() override;
         const char* get_type_str() const override;
         void set_content(const std::wstring &);
+        void render() override;
+        void change_target() override;
         std::shared_ptr<SolidLabelElement> label;
     };
 
@@ -261,7 +270,12 @@ namespace clib {
     public:
         using ref = std::shared_ptr<jsv_ui>;
         using weak_ref = std::weak_ptr<jsv_ui>;
+        int get_object_type() const override;
         bool init(const jsv_object::ref& obj, js_value_new*);
+        void render();
+        void add(const std::string&, const js_value::weak_ref&) override;
+        void remove(const std::string&) override;
+        void change_target();
     private:
         std::shared_ptr<js_ui_base> element;
     };
@@ -618,6 +632,7 @@ namespace clib {
             int cycle{ 0 };
             int cycles{ 0 };
             int state{ 0 };
+            int gc_period{ 0 };
             // stack
             cjs_function::ref default_stack;
         } permanents;
@@ -649,6 +664,7 @@ namespace clib {
         } global_ui;
     public:
         void send_signal(const std::string& s);
+        void change_target();
     public:
         enum http_method_t {
             M_NONE,

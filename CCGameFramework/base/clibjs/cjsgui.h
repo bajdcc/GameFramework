@@ -115,6 +115,8 @@ namespace clib {
         void reset();
         void clear_cache();
 
+        void change_target(std::shared_ptr<Direct2DRenderTarget> renderTarget);
+
     private:
         std::unique_ptr<clib::cjs> vm;
         class global_input_t {
@@ -147,6 +149,9 @@ namespace clib {
             std::vector<char> zplay_data;
             std::string zplay_title;
             CRect bound;
+            std::weak_ptr<Direct2DRenderTarget> renderTarget;
+            int total_obj{ 0 };
+            int cache_obj{ 0 };
         } global_state;
         class screen_t {
         public:

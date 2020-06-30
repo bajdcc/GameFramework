@@ -36,6 +36,8 @@ namespace clib {
         int get_frame() const;
         void clear_frame();
 
+        void change_target();
+
     private:
         void init_lib();
 

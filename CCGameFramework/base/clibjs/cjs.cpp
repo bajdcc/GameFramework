@@ -94,6 +94,11 @@ namespace clib {
         rt.clear_frame();
     }
 
+    void cjs::change_target()
+    {
+        rt.change_target();
+    }
+
     void cjs::init_lib() {
         char buf[256];
         snprintf(buf, sizeof(buf), "sys.exec_file(\"%s\");\n", LIBRARY_FILE);

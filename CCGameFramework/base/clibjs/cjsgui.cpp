@@ -81,7 +81,15 @@ namespace clib {
 
     void cjsgui::clear_cache()
     {
-        vm->clear_cache();
+        if (vm)
+            vm->clear_cache();
+    }
+
+    void cjsgui::change_target(std::shared_ptr<Direct2DRenderTarget> renderTarget)
+    {
+        global_state.renderTarget = renderTarget;
+        if (vm)
+            vm->change_target();
     }
 
     void cjsgui::draw(CComPtr<ID2D1RenderTarget>& rt, const CRect& bounds, const JS2DEngine::BrushBag& brushes, bool paused, decimal fps) {

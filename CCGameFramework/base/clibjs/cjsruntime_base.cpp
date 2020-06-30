@@ -40,7 +40,7 @@ namespace clib {
         permanents._undefined = _new_undefined(js_value::at_const | js_value::at_readonly);
         permanents._true = _new_boolean(true, js_value::at_const | js_value::at_readonly);
         permanents._false = _new_boolean(false, js_value::at_const | js_value::at_readonly);
-        permanents.__nan = _new_number(NAN, js_value::at_const | js_value::at_readonly);
+        permanents.__nan = _new_number(std::numeric_limits<double>::quiet_NaN(), js_value::at_const | js_value::at_readonly);
         permanents._inf = _new_number(INFINITY, js_value::at_const | js_value::at_readonly);
         permanents._minus_inf = _new_number(-INFINITY, js_value::at_const);
         permanents._zero = _new_number(0.0, js_value::at_const);
@@ -429,7 +429,7 @@ namespace clib {
                         pri = js.new_number(d);
                     }
                     else {
-                        pri = js.new_number(NAN);
+                        pri = js.new_number(std::numeric_limits<double>::quiet_NaN());
                     }
                 }
             }
@@ -1240,6 +1240,7 @@ namespace clib {
             if (ui->init(JS_O(a), this)) {
                 register_value(ui);
                 global_ui.elements.insert(ui);
+                ui->change_target();
                 push(ui);
                 break;
             }
@@ -1247,6 +1248,17 @@ namespace clib {
         }
                        break;
         case API_UI_render: {
+            auto o = _this.lock();
+            do {
+                if (!o || o->is_primitive()) {
+                    break;
+                }
+                auto obj = JS_O(o);
+                if (obj->get_object_type() != jsv_object::T_UI)
+                    break;
+                auto ui = JS_UI(obj);
+                ui->render();
+            } while (0);
             push(new_undefined());
         }
                        break;

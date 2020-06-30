@@ -4703,7 +4703,7 @@ namespace clib {
     {
         if (global_state.window_hover != -1 && handles[global_state.window_hover]) {
             const auto& h = handles[global_state.window_hover].get();
-            if (h->type = h_window) {
+            if (h->type == h_window) {
                 return h->data.cwnd->get_cursor();
             }
         }
