@@ -398,16 +398,17 @@ namespace clib {
         using namespace std::chrono_literals;
         auto t = duration_cast<milliseconds>(system_clock::now() - timeout.startup_time + time * 1ms).count();
         if (timeout.queues.find(t) == timeout.queues.end()) {
-            timeout.queues[t] = std::list<std::shared_ptr<timeout_t>>();
+            timeout.queues[t] = std::make_shared<std::list<std::shared_ptr<timeout_t>>>();
         }
         auto s = std::make_shared<timeout_t>();
         s->once = once;
         s->time = time;
+        s->span = t;
         s->id = timeout.global_id++;
         s->func = func;
         s->args = std::move(args);
         s->attr = attr;
-        timeout.queues[t].push_back(s);
+        timeout.queues[t]->push_back(s);
         timeout.ids.insert({ s->id, s });
         return (double)s->id;
     }
@@ -418,15 +419,15 @@ namespace clib {
         auto i = (uint32_t)id;
         auto f = timeout.ids.find(i);
         if (f != timeout.ids.end()) {
-            auto time = f->second->time;
+            auto time = f->second->span;
             auto ff = timeout.queues.find(time);
             if (ff != timeout.queues.end()) {
-                auto f2 = std::find_if(ff->second.begin(), ff->second.end(),
+                auto f2 = std::find_if(ff->second->begin(), ff->second->end(),
                     [i](const auto& x) { return x->id == i; });
-                if (f2 != ff->second.end()) {
-                    ff->second.erase(f2);
+                if (f2 != ff->second->end()) {
+                    ff->second->erase(f2);
                 }
-                if (ff->second.empty()) {
+                if (ff->second->empty()) {
                     timeout.queues.erase(ff);
                 }
             }
@@ -456,9 +457,9 @@ namespace clib {
             using namespace std::chrono_literals;
             auto now = duration_cast<milliseconds>(std::chrono::system_clock::now() - timeout.startup_time).count();
             if ((*timeout.queues.begin()).first < now) {
-                auto& v = (*timeout.queues.begin()).second;
-                auto callback = v.front();
-                assert(callback->func);
+                auto v = (*timeout.queues.begin()).second;
+                auto callback = v->front();
+                assert(callback->func->code);
                 stack.clear();
                 stack.push_back(permanents.default_stack);
                 current_stack = stack.back();
@@ -474,16 +475,17 @@ namespace clib {
                 cjsgui::singleton().add_stat(s);
                 call_api(callback->func, env, callback->args, callback->attr | jsv_function::at_fast);
                 current_stack = stack.back();
-                v.pop_front();
-                if (v.empty()) {
+                v->pop_front();
+                if (v->empty()) {
                     timeout.queues.erase(timeout.queues.begin());
                 }
                 if (!callback->once) {
                     auto t = duration_cast<milliseconds>(system_clock::now() - timeout.startup_time + callback->time * 1ms).count();
                     if (timeout.queues.find(t) == timeout.queues.end()) {
-                        timeout.queues[t] = std::list<std::shared_ptr<timeout_t>>();
+                        timeout.queues[t] = std::make_shared<std::list<std::shared_ptr<timeout_t>>>();
                     }
-                    timeout.queues[t].push_back(callback);
+                    timeout.queues[t]->push_back(callback);
+                    callback->span = t;
                 }
                 else {
                     timeout.ids.erase(callback->id);

@@ -644,16 +644,17 @@ namespace clib {
         cjs_runtime_reuse reuse;
         struct timeout_t {
             bool once{true};
-            int time{0};
-            uint32_t id{0};
+            int time{ 0 };
+            std::chrono::milliseconds::rep span{ 0 };
+            uint32_t id{ 0 };
             jsv_function::ref func;
             std::vector<js_value::weak_ref> args;
-            uint32_t attr{0};
+            uint32_t attr{ 0 };
         };
         struct timeout_struct {
             std::chrono::system_clock::time_point startup_time{ std::chrono::system_clock::now() };
             uint32_t global_id{0};
-            std::map<std::chrono::milliseconds::rep, std::list<std::shared_ptr<timeout_t>>> queues;
+            std::map<std::chrono::milliseconds::rep, std::shared_ptr<std::list<std::shared_ptr<timeout_t>>>> queues;
             std::unordered_map<uint32_t, std::shared_ptr<timeout_t>> ids;
         } timeout;
         static std::unordered_map<std::string, cjs_code_result::ref> caches;
