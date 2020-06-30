@@ -55,6 +55,7 @@ private:
     double dt_inv{ 0 };
     int cycles{ 0 };
     double ips{ 0 };
+    int frame{ 0 };
     bool paused{ false };
 
 private:

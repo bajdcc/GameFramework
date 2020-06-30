@@ -1116,6 +1116,9 @@
     <ClCompile Include="base\clibjs\cjsruntime_http.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="base\clibjs\cjsruntime_ui.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="script\lib\core\scene.lua">
@@ -1281,5 +1284,7 @@
     <None Include="script\js\lib\clib_buffer.js" />
     <None Include="script\js\src\test_7.js" />
     <None Include="script\js\lib\clib_event.js" />
+    <None Include="script\js\lib\clib_ui.js" />
+    <None Include="script\js\src\test_8.js" />
   </ItemGroup>
 </Project>

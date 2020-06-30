@@ -460,6 +460,11 @@ namespace clib {
         return r_object;
     }
 
+    int jsv_object::get_object_type() const
+    {
+        return 0;
+    }
+
     js_value::ref jsv_object::unary_op(js_value_new &n, int code, int* r) {
         switch (code) {
             case UNARY_POSITIVE:
@@ -926,6 +931,7 @@ namespace clib {
 
     cjs_function_info::cjs_function_info(const js_sym_code_t::ref& code, js_value_new& n) {
         arrow = code->arrow;
+        stat = code->stat;
         debugName = code->debugName;
         simpleName = code->simpleName;
         fullName = code->fullName;

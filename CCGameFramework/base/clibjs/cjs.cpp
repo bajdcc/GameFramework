@@ -37,6 +37,11 @@ namespace clib {
         return rt.exec(filename, input);
     }
 
+    void cjs::resize()
+    {
+        rt.send_signal("resize");
+    }
+
     void cjs::paint_window(const CRect& bounds)
     {
     }
@@ -77,6 +82,16 @@ namespace clib {
     void cjs::set_state(int n) 
     {
         return rt.set_state(n);
+    }
+
+    int cjs::get_frame() const
+    {
+        return rt.get_frame();
+    }
+
+    void cjs::clear_frame()
+    {
+        rt.clear_frame();
     }
 
     void cjs::init_lib() {

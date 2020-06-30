@@ -578,8 +578,9 @@ namespace clib {
         void to_json(nlohmann::json&) const;
         void from_json(const nlohmann::json&);
         js_ast_node *name{nullptr};
-        bool arrow{false};
-        bool rest{false};
+        bool arrow{ false };
+        bool rest{ false };
+        bool stat{ false };
         std::string fullName;
         std::string simpleName;
         std::string debugName;

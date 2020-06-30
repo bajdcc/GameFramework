@@ -171,11 +171,13 @@ void JS2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
 
     auto inv = 1.0 / dt;
     if (dt > FRAME) {
+        frame = clib::cjsgui::singleton().get_frame();
         ips = cycles * dt;
         cycles = 0;
         dt = min(dt, FRAME);
         dt_inv = 1.0 / dt;
         last_clock = now;
+        clib::cjsgui::singleton().clear_frame();
     }
 
     rt->FillRectangle(
@@ -242,9 +244,9 @@ void JS2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
     rt->DrawText(logo.GetBuffer(0), logo.GetLength(), logoTF->textFormat,
         D2D1::RectF((float)bounds.left + 10, (float)bounds.top + 35, (float)bounds.left + 200, (float)bounds.top + 60), logoBrush);
 
-    logo.Format(_T("FPS: %2.1f IPS: %S"), inv, ipsf(ips));
+    logo.Format(_T("R: %d, FPS: %2.1f IPS: %S"), frame, inv, ipsf(ips));
     rt->DrawText(logo.GetBuffer(0), logo.GetLength(), logoTF->textFormat,
-        D2D1::RectF((float)bounds.right - 210, (float)bounds.top + 5, (float)bounds.right, (float)bounds.top + 50), logoBrush);
+        D2D1::RectF((float)bounds.right - 290, (float)bounds.top + 5, (float)bounds.right, (float)bounds.top + 50), logoBrush);
 
     logo = clib::cjsgui::singleton().get_disp(clib::types::D_STAT);
     if (!logo.IsEmpty()) {

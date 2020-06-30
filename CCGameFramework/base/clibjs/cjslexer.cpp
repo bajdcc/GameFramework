@@ -900,6 +900,8 @@ namespace clib {
 #undef js_mem_align
 
     bool cjslexer::allow_expr(const std::vector<lexer_unit> &u) {
+        if (u.empty())
+            return true;
         bool can = false;
         for (auto U = u.rbegin(); U != u.rend(); U++) {
             if (U->t == NEWLINE || U->t == COMMENT || U->t == SPACE)

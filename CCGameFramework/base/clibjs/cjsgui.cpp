@@ -283,6 +283,11 @@ namespace clib {
 
     void cjsgui::draw_window(const CRect& bounds)
     {
+        if (!bounds.IsRectEmpty() && global_state.bound != bounds) {
+            global_state.bound = bounds;
+            if (vm)
+                vm->resize();
+        }
         if (vm)
             vm->paint_window(bounds);
     }
@@ -934,6 +939,19 @@ namespace clib {
             return 2;
         init_screen(n);
         return 0;
+    }
+
+    int cjsgui::get_frame() const
+    {
+        if (vm)
+            return vm->get_frame();
+        return 0;
+    }
+
+    void cjsgui::clear_frame()
+    {
+        if (vm)
+            vm->clear_frame();
     }
 
     int cjsgui::play_music(const std::string& title, const std::string& ext, const std::vector<char>& data)

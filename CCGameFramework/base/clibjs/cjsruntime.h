@@ -14,6 +14,7 @@
 #include "cjsgen.h"
 #include <restclient-cpp\restclient.h>
 #include <restclient-cpp\connection.h>
+#include <render\Direct2DRender.h>
 
 #define ROOT_DIR "script/js/"
 
@@ -73,7 +74,7 @@ namespace clib {
         virtual std::shared_ptr<jsv_regexp> new_regexp() = 0;
         virtual std::shared_ptr<jsv_object> new_buffer() = 0;
         virtual std::shared_ptr<jsv_object> new_error(int) = 0;
-        virtual int exec(const std::string &, const std::string &, bool error = false) = 0;
+        virtual int exec(const std::string &, const std::string &, bool error = false, bool stat = true) = 0;
         virtual std::string get_stacktrace() const = 0;
         virtual bool set_builtin(const std::shared_ptr<jsv_object> &obj) = 0;
         virtual bool get_file(std::string &filename, std::string &content) const = 0;
@@ -87,8 +88,11 @@ namespace clib {
             API_http,
             API_music,
             API_config,
+            API_get_config,
             API_buffer_from,
             API_buffer_toString,
+            API_UI_new,
+            API_UI_render,
         };
         virtual int call_api(int, std::weak_ptr<js_value> &,
                              std::vector<std::weak_ptr<js_value>> &, uint32_t) = 0;
@@ -195,6 +199,7 @@ namespace clib {
         using ref = std::shared_ptr<jsv_object>;
         using weak_ref = std::weak_ptr<jsv_object>;
         js_runtime_t get_type() override;
+        virtual int get_object_type() const;
         js_value::ref unary_op(js_value_new &n, int code, int *) override;
         bool to_bool() const override;
         void mark(int n) override;
@@ -221,6 +226,44 @@ namespace clib {
         std::vector<std::string> keys;
         std::shared_ptr<std::unordered_map<std::string, js_value::weak_ref>> special;
         std::shared_ptr<std::vector<char>> binary;
+    };
+
+    // -------------------------- UI --------------------------
+
+    class js_ui_base {
+    public:
+        using ref = std::shared_ptr<js_ui_base>;
+        using weak_ref = std::weak_ptr<js_ui_base>;
+        enum type_t {
+            none,
+            label,
+        };
+        virtual int get_type() = 0;
+        virtual const char* get_type_str() const = 0;
+        double left{ 0 };
+        double right{ 0 };
+        double width{ 0 };
+        double height{ 0 };
+    };
+
+    class js_ui_label : public js_ui_base {
+    public:
+        using ref = std::shared_ptr<js_ui_label>;
+        using weak_ref = std::weak_ptr<js_ui_label>;
+        js_ui_label();
+        int get_type() override;
+        const char* get_type_str() const override;
+        void set_content(const std::wstring &);
+        std::shared_ptr<SolidLabelElement> label;
+    };
+
+    class jsv_ui : public jsv_object {
+    public:
+        using ref = std::shared_ptr<jsv_ui>;
+        using weak_ref = std::weak_ptr<jsv_ui>;
+        bool init(const jsv_object::ref& obj, js_value_new*);
+    private:
+        std::shared_ptr<js_ui_base> element;
     };
 
     class jsv_null : public js_value {
@@ -284,13 +327,14 @@ namespace clib {
         cjs_function_info(const js_sym_code_t::ref &code, js_value_new &n);
         static js_value::ref load_const(const cjs_consts &c, int op, js_value_new &n);
         static ref create_default();
-        bool arrow{false};
+        bool arrow{ false };
         std::string debugName;
         std::string simpleName;
         std::string fullName;
         std::string text;
-        int args_num{0};
-        bool rest{false};
+        int args_num{ 0 };
+        bool rest{ false };
+        bool stat{ false };
         std::vector<std::string> args;
         std::vector<std::string> names;
         std::vector<std::string> globals;
@@ -402,7 +446,7 @@ namespace clib {
         jsv_object::ref new_buffer() override;
         jsv_regexp::ref new_regexp() override;
         jsv_object::ref new_error(int) override;
-        int exec(const std::string &, const std::string &, bool error = false) override;
+        int exec(const std::string &, const std::string &, bool error = false, bool stat = true) override;
         std::string get_stacktrace() const override;
         bool set_builtin(const std::shared_ptr<jsv_object> &obj) override;
         bool get_file(std::string &filename, std::string &content) const override;
@@ -419,6 +463,7 @@ namespace clib {
         void set_state(int);
 
         void clear_cache();
+        bool is_cached(const std::string&) const;
 
         backtrace_direction check(js_pda_edge_t, js_ast_node*) override;
         void error_handler(int, const std::vector<js_pda_trans>&, int&) override;
@@ -426,6 +471,9 @@ namespace clib {
         void save_cache(const std::string& filename, cjs_code_result::ref) const;
 
         static void convert_utf8_to_gbk(std::string& str);
+
+        int get_frame() const;
+        void clear_frame();
 
     private:
         int run(const cjs_code &code);
@@ -466,9 +514,12 @@ namespace clib {
 
         js_value::ref binop(int code, const js_value::ref &op1, const js_value::ref &op2, int *);
 
+        static bool instance_of(const js_value::ref& obj, const jsv_object::ref& proto);
+
         void eval_input();
         void eval_timeout();
         void eval_http();
+        void eval_ui();
 
         double api_setTimeout(int time, const jsv_function::ref &func, std::vector<js_value::weak_ref> args, uint32_t attr, bool once);
         void api_clearTimeout(double id);
@@ -537,6 +588,7 @@ namespace clib {
             jsv_function::ref sys_http;
             jsv_function::ref sys_music;
             jsv_function::ref sys_config;
+            jsv_function::ref sys_get_config;
             // function
             jsv_function::ref f_number;
             jsv_function::ref f_boolean;
@@ -555,6 +607,10 @@ namespace clib {
             jsv_object::ref _proto_regexp;
             jsv_function::ref f_regexp;
             jsv_function::ref _proto_regexp_test;
+            // ui
+            jsv_object::ref _proto_ui;
+            jsv_function::ref f_ui;
+            jsv_function::ref _proto_ui_render_internal;
             // error
             jsv_object::ref _proto_error;
             jsv_function::ref f_error;
@@ -586,6 +642,13 @@ namespace clib {
             std::unordered_map<uint32_t, std::shared_ptr<timeout_t>> ids;
         } timeout;
         static std::unordered_map<std::string, cjs_code_result::ref> caches;
+        struct ui_struct {
+            std::unordered_set<jsv_ui::ref> elements;
+            std::deque<std::string> signals;
+            int frames{ 0 };
+        } global_ui;
+    public:
+        void send_signal(const std::string& s);
     public:
         enum http_method_t {
             M_NONE,

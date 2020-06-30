@@ -34,6 +34,7 @@ void WindowMsgLoop::Run()
         std::ofstream ofs2("stderr.log", std::ios_base::trunc);
     }
     FILE* s1, * s2;
+    s1 = s2 = nullptr;
     freopen_s(&s1, "stdout.log", "w", stdout);
     freopen_s(&s2, "stderr.log", "w", stderr);
 
@@ -45,8 +46,8 @@ void WindowMsgLoop::Run()
     evtimer_add(&msgtimer, &tv);
     event_base_dispatch(evbase);
 
-    fclose(s1);
-    fclose(s2);
+    if (s1)fclose(s1);
+    if (s2)fclose(s2);
 
     WSACleanup();
 }

@@ -1,4 +1,4 @@
-//
+ï»¿//
 // Project: clibjs
 // Created by bajdcc
 //
@@ -87,7 +87,7 @@ namespace clib {
                 arg->headers = s->headers;
                 arg->payload = s->payload;
                 CString str;
-                str.Format(L"HTTP Query£º'%S'", s->url.c_str());
+                str.Format(L"HTTP Queryï¼š'%S'", s->url.c_str());
                 cjsgui::singleton().add_stat(str);
                 s->fut = std::async(js_http_request, arg);
                 i++;
@@ -116,7 +116,7 @@ namespace clib {
                         paths.emplace_back(ROOT_DIR);
                         js_value::weak_ref env = stack.front()->envs;
                         CString str;
-                        str.Format(L"HTTP Success£º'%S', Code: %d", s->url.c_str(), s->resp.response.code);
+                        str.Format(L"HTTP Successï¼š'%S', Code: %d", s->url.c_str(), s->resp.response.code);
                         cjsgui::singleton().add_stat(str);
                         std::vector<js_value::weak_ref> args;
                         auto obj = new_object();

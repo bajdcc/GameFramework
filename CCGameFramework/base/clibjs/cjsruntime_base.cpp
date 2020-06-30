@@ -401,6 +401,13 @@ namespace clib {
             return js.call_api(API_config, _this, args, 0);
         };
         permanents.sys->add(permanents.sys_config->name, permanents.sys_config);
+        permanents.sys_get_config = _new_function(nullptr, js_value::at_const | js_value::at_readonly);
+        permanents.sys_get_config->add("length", _int_1);
+        permanents.sys_get_config->name = "get_config";
+        permanents.sys_get_config->builtin = [](auto& func, auto& _this, auto& args, auto& js, auto attr) {
+            return js.call_api(API_get_config, _this, args, 0);
+        };
+        permanents.sys->add(permanents.sys_get_config->name, permanents.sys_get_config);
         permanents.global_env->add("sys", permanents.sys);
         // number
         permanents.f_number = _new_function(permanents._proto_number, js_value::at_const | js_value::at_readonly);
@@ -538,8 +545,9 @@ namespace clib {
             }
             else {
                 auto arr = js.new_array();
-                if (args.size() == 1 && args.front().lock()->get_type() == r_number) {
-                    arr->add("length", args.front().lock());
+                if (args.size() == 1) {
+                    if (args.front().lock()->get_type() == r_number)
+                        arr->add("length", args.front());
                 }
                 else {
                     auto i = 0;
@@ -632,6 +640,24 @@ namespace clib {
             return 0;
         };
         permanents._proto_regexp->add(permanents._proto_regexp_test->name, permanents._proto_regexp_test);
+        // ui
+        permanents._proto_ui = _new_object(js_value::at_const | js_value::at_readonly);
+        permanents._proto_ui->add("__type__", _new_string("UI", js_value::at_const | js_value::at_refs));
+        permanents._proto_ui->__proto__ = permanents._proto_array;
+        permanents.f_ui = _new_function(permanents._proto_ui, js_value::at_const | js_value::at_readonly);
+        permanents.f_ui->add("length", _int_1);
+        permanents.f_ui->name = "UI";
+        permanents.f_ui->builtin = [](auto& func, auto& _this, auto& args, auto& js, auto attr) {
+            return js.call_api(API_UI_new, _this, args, 0);
+        };
+        permanents._proto_ui_render_internal = _new_function(nullptr, js_value::at_const | js_value::at_readonly);
+        permanents._proto_ui_render_internal->add("length", _int_2);
+        permanents._proto_ui_render_internal->name = "render_internal";
+        permanents._proto_ui_render_internal->builtin = [](auto& func, auto& _this, auto& args, auto& js, auto attr) {
+            return js.call_api(API_UI_render, _this, args, 0);
+        };
+        permanents._proto_ui->add(permanents._proto_ui_render_internal->name, permanents._proto_ui_render_internal);
+        permanents.global_env->add(permanents.f_ui->name, permanents.f_ui);
         // global function
         permanents.global_setTimeout = _new_function(nullptr, js_value::at_const | js_value::at_readonly);
         permanents.global_setTimeout->add("length", _int_1);
@@ -883,7 +909,7 @@ namespace clib {
             if (r != 0)
                 return r;
             current_stack->pc++;
-            return exec("<eval>", code, true);
+            return exec("<eval>", code, true, false);
         }
                      break;
         case API_http: {
@@ -1171,6 +1197,59 @@ namespace clib {
             push(new_string("invalid config"));
         }
                                 break;
+        case API_get_config: {
+            if (args.empty()) {
+                push(new_undefined());
+                break;
+            }
+            auto obj = args.front().lock();
+            if (obj->get_type() != r_string) {
+                push(new_undefined());
+                break;
+            }
+            auto type = JS_STR(obj);
+            auto var = std::split(type, '/');
+            if (var.size() >= 2) {
+                if (var[0] == "screen") {
+                    if (var[1] == "width") {
+                        push(new_number(cjsgui::singleton().get_global().bound.Width()));
+                        break;
+                    }
+                    else if (var[1] == "height") {
+                        push(new_number(cjsgui::singleton().get_global().bound.Height()));
+                        break;
+                    }
+                }
+            }
+            push(new_undefined());
+        }
+                       break;
+        case API_UI_new: {
+            if (args.empty()) {
+                push(new_undefined());
+                break;
+            }
+            auto a = args.front().lock();
+            if (a->is_primitive()) {
+                push(new_undefined());
+                break;
+            }
+            auto ui = std::make_shared<jsv_ui>();
+            if (attr > 0U) ui->attr = attr;
+            ui->__proto__ = permanents._proto_ui;
+            if (ui->init(JS_O(a), this)) {
+                register_value(ui);
+                global_ui.elements.insert(ui);
+                push(ui);
+                break;
+            }
+            push(new_undefined());
+        }
+                       break;
+        case API_UI_render: {
+            push(new_undefined());
+        }
+                       break;
         default:
             break;
         }

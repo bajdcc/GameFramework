@@ -7,7 +7,6 @@
 #define CLIBJS_CJS_H
 
 #include <string>
-#include "ui/gdi/Gdi.h"
 #include "cjsruntime.h"
 
 namespace clib {
@@ -22,6 +21,7 @@ namespace clib {
 
         int exec(const std::string& filename, const std::string& input);
 
+        void resize();
         void paint_window(const CRect& bounds);
         void reset_ips();
         void hit(int n);
@@ -32,6 +32,9 @@ namespace clib {
         bool run(int cycle, int& cycles);
         int get_state() const;
         void set_state(int);
+
+        int get_frame() const;
+        void clear_frame();
 
     private:
         void init_lib();

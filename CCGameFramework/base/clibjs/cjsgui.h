@@ -78,6 +78,9 @@ namespace clib {
 
         int new_screen(int n);
 
+        int get_frame() const;
+        void clear_frame();
+
     public:
         int play_music(const std::string& title, const std::string& ext, const std::vector<char>& data);
         int stop_music();
@@ -143,6 +146,7 @@ namespace clib {
             libZPlay::ZPlay* zplay{ nullptr };
             std::vector<char> zplay_data;
             std::string zplay_title;
+            CRect bound;
         } global_state;
         class screen_t {
         public:

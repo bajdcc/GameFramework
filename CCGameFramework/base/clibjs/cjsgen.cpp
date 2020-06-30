@@ -503,6 +503,7 @@ namespace clib {
     void cjsgen::gen_after(const std::vector<js_ast_node *> &nodes, int level, js_ast_node *node) {
         auto &asts = ast.back();
         auto &tmps = tmp.back();
+        using namespace types;
         switch (node->data._coll) {
             case c_block: {
                 auto block = std::make_shared<js_sym_block_t>();
@@ -553,7 +554,7 @@ namespace clib {
                 tmps.push_back(empty);
             }
                 break;
-            case c_expressionStatement: {
+            case types::c_expressionStatement: {
                 if (tmps.front()->get_type() == s_expression_seq) {
                     auto stmt = std::make_shared<js_sym_stmt_exp_t>();
                     copy_info(stmt, tmps.front());
@@ -1265,16 +1266,16 @@ namespace clib {
                 break;
             case c_instanceofExpression:
             case c_powerExpression:
-            case c_multiplicativeExpression:
-            case c_additiveExpression:
+            case types::c_multiplicativeExpression:
+            case types::c_additiveExpression:
             case c_bitShiftExpression:
-            case c_relationalExpression:
-            case c_equalityExpression:
+            case types::c_relationalExpression:
+            case types::c_equalityExpression:
             case c_bitAndExpression:
             case c_bitXOrExpression:
             case c_bitOrExpression:
-            case c_logicalAndExpression:
-            case c_logicalOrExpression:
+            case types::c_logicalAndExpression:
+            case types::c_logicalOrExpression:
             case c_inExpression:
             case c_ternaryExpression: {
                 size_t tmp_i = 0;
@@ -1310,7 +1311,7 @@ namespace clib {
                 asts.clear();
             }
                 break;
-            case c_assignmentExpression:
+            case types::c_assignmentExpression:
             case c_assignmentOperatorExpression: {
                 size_t tmp_i = 0;
                 std::reverse(asts.begin(), asts.end());
@@ -2190,7 +2191,7 @@ namespace clib {
     std::string cjsgen::get_code_text(js_ast_node_index *idx) const {
         assert(idx && text);
         assert(idx->start >= 0 && idx->start < (int) text->length());
-        assert(idx->end >= 0 && idx->end < (int) text->length());
+        assert(idx->end >= 0 && idx->end <= (int) text->length());
         assert(idx->start <= idx->end);
         return text->substr(idx->start, idx->end - idx->start);
     }

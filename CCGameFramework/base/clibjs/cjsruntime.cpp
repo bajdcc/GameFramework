@@ -265,9 +265,11 @@ namespace clib {
                 break;
             }
             if (!current_stack->exec.empty()) {
-                CString s;
-                s.Format(L"退出：%S", current_stack->exec.c_str());
-                cjsgui::singleton().add_stat(s);
+                if (current_stack->info->stat) {
+                    CString s;
+                    s.Format(L"退出：%S", current_stack->exec.c_str());
+                    cjsgui::singleton().add_stat(s);
+                }
                 paths.pop_back();
             }
             if (stack.size() > 1) {
@@ -542,6 +544,7 @@ namespace clib {
             eval_input();
             eval_timeout();
             eval_http();
+            eval_ui();
         }
         return result;
     }
@@ -587,7 +590,7 @@ namespace clib {
         case DUP_TOP:
             push(top());
             break;
-        case NOP:
+        case types::NOP:
             break;
         case INSTANCE_OF: {
             auto op2 = pop().lock();
@@ -601,26 +604,11 @@ namespace clib {
                 break;
             }
             const auto& ff = JS_OBJ(op2)->get("prototype", this);
-            if (!ff) {
+            if (!ff || ff->is_primitive()) {
                 push(new_boolean(false));
                 break;
             }
-            auto proto = op1->__proto__.lock();
-            if (!proto) {
-                push(new_boolean(false));
-                break;
-            }
-            auto p = proto;
-            auto failed = true;
-            while (p) {
-                assert(!p->is_primitive());
-                if (p == ff) {
-                    failed = false;
-                    break;
-                }
-                p = p->__proto__.lock();
-            }
-            push(new_boolean(!failed));
+            push(new_boolean(!instance_of(op1, JS_O(ff))));
         }
                         break;
         case OBJECT_IN: {
@@ -789,7 +777,7 @@ namespace clib {
                 if (f && (readonly && (f->attr & js_value::at_readonly))) {
                     break;
                 }
-                if (o->__proto__.lock() == permanents._proto_array) {
+                if (instance_of(o, permanents._proto_array)) {
                     auto len = o->get("length", this);
                     if (len->get_type() == r_number) {
                         size_t idx{ 0 };
@@ -812,7 +800,7 @@ namespace clib {
             if (!obj->is_primitive()) {
                 auto o = JS_OBJ(obj);
                 auto arr = new_array();
-                if (obj->__proto__.lock() != permanents._proto_array) {
+                if (!instance_of(o, permanents._proto_array)) {
                     auto ar = o->get_keys();
                     for (size_t i = 0; i < ar.size(); i++) {
                         std::stringstream ss;
@@ -887,7 +875,7 @@ namespace clib {
             auto obj = pop().lock();
             if (!obj->is_primitive()) {
                 const auto o = JS_OBJ(obj);
-                if (obj->__proto__.lock() == permanents._proto_array) {
+                if (instance_of(o, permanents._proto_array)) {
                     auto len = o->get("length", this);
                     if (len) {
                         if (len->get_type() == r_number) {
@@ -917,7 +905,7 @@ namespace clib {
             auto i = JS_NUM(idx);
             assert(!std::isinf(i) && !std::isnan(i));
             auto obj = top().lock();
-            assert(!obj->is_primitive() && obj->__proto__.lock() == permanents._proto_array);
+            assert(!obj->is_primitive() && instance_of(obj, permanents._proto_array));
             const auto o = JS_OBJ(obj);
             auto len = o->get("length", this);
             if (len) {
@@ -1717,21 +1705,23 @@ namespace clib {
         return err;
     }
 
-    int cjsruntime::exec(const std::string& filename, const std::string& input, bool error) {
-        if (input.empty())
-            return 0;
-        auto last = std::chrono::system_clock::now();
+    int cjsruntime::exec(const std::string& filename, const std::string& input, bool error, bool is_stat) {
+        std::chrono::system_clock::time_point last;
+        if (is_stat) {
+            last = std::chrono::system_clock::now();
+        }
         CString stat;
-        auto p = std::make_unique<cjsparser>();
         std::string error_string;
         std::string code_name;
         cjs_code_result::ref code;
         if (!error) {
             auto f = caches.find(filename);
             if (f != caches.end()) {
-                auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - last);
-                stat.Format(L"快速加载：%S，耗时：%lldms", filename.c_str(), duration.count());
-                cjsgui::singleton().add_stat(stat);
+                if (is_stat) {
+                    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - last);
+                    stat.Format(L"快速加载：%S，耗时：%lldms", filename.c_str(), duration.count());
+                    cjsgui::singleton().add_stat(stat);
+                }
                 caches.insert({ filename, code });
                 return eval(f->second, filename);
             }
@@ -1739,7 +1729,7 @@ namespace clib {
         auto needCache = false;
         if (!filename.empty() && (filename[0] == '<' || filename[0] == '(')) {
             code_name = filename;
-            if (filename == "<entry>" || filename == "<library>")
+            if (!error)
                 needCache = true;
         }
         else {
@@ -1753,6 +1743,9 @@ namespace clib {
             }
             code_name = "(" + filename + ":1:1) <entry>";
         }
+        if (input.empty())
+            return 0;
+        auto p = std::make_unique<cjsparser>();
         try {
             if (p->parse(input, error_string, this) == nullptr) {
                 std::stringstream ss;
@@ -1773,22 +1766,25 @@ namespace clib {
             code = g->get_code();
             assert(code);
             code->code->debugName = code_name;
+            code->code->stat = is_stat;
             if (needCache) {
                 save_cache(filename, code);
                 caches.insert({ filename, code });
             }
             g = nullptr;
         }
-        catch (const clib::cjs_exception & e) {
+        catch (const clib::cjs_exception& e) {
             stat.Format(L"编译：%S，失败", filename.c_str());
             cjsgui::singleton().add_stat(stat);
             std::stringstream ss;
             ss << "throw new SyntaxError('" << jsv_string::convert(e.message()) << "')";
             return exec(code_name, ss.str(), true);
         }
-        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - last);
-        stat.Format(L"编译：%S，耗时：%lldms", filename.c_str(), duration.count());
-        cjsgui::singleton().add_stat(stat);
+        if (is_stat) {
+            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - last);
+            stat.Format(L"编译：%S，耗时：%lldms", filename.c_str(), duration.count());
+            cjsgui::singleton().add_stat(stat);
+        }
         return eval(std::move(code), filename);
     }
 
@@ -1932,6 +1928,11 @@ namespace clib {
     void cjsruntime::clear_cache()
     {
         caches.clear();
+    }
+
+    bool cjsruntime::is_cached(const std::string& s) const
+    {
+        return caches.find(s) != caches.end();
     }
 
     backtrace_direction cjsruntime::check(js_pda_edge_t edge, js_ast_node* node) {
@@ -2119,9 +2120,11 @@ namespace clib {
             reuse.reuse_booleans.push_back(
                 std::dynamic_pointer_cast<jsv_boolean>(v));
             break;
-        case r_object:
-            reuse.reuse_objects.push_back(
-                std::dynamic_pointer_cast<jsv_object>(v)->clear());
+        case r_object: {
+            auto o = std::dynamic_pointer_cast<jsv_object>(v);
+            if (o->get_object_type() == 0)
+                reuse.reuse_objects.push_back(o->clear());
+        }
             break;
         case r_function:
             reuse.reuse_functions.push_back(
@@ -2637,6 +2640,23 @@ namespace clib {
         return new_number(NAN);
     }
 
+    bool cjsruntime::instance_of(const js_value::ref& obj, const jsv_object::ref& pp)
+    {
+        auto proto = obj->__proto__.lock();
+        if (!proto) {
+            return false;
+        }
+        auto p = proto;
+        while (p) {
+            assert(!p->is_primitive());
+            if (p == pp) {
+                return true;
+            }
+            p = p->__proto__.lock();
+        }
+        return false;
+    }
+
     static std::string js_limit_string(const std::string& s, uint len) {
         if (s.length() <= len) {
             return s;
@@ -2726,5 +2746,25 @@ namespace clib {
         default:
             break;
         }
+    }
+
+    js_ui_label::js_ui_label()
+    {
+        label = SolidLabelElement::Create();
+    }
+
+    int js_ui_label::get_type()
+    {
+        return js_ui_base::label;
+    }
+
+    const char* js_ui_label::get_type_str() const
+    {
+        return "label";
+    }
+
+    void js_ui_label::set_content(const std::wstring& s)
+    {
+        label->SetText(CString(s.c_str()));
     }
 }

@@ -450,6 +450,7 @@ xcopy /r /y /e /d "$(ProjectDir)img" "$(TargetDir)img"</Command>
     <ClCompile Include="base\clibjs\cjsruntime_base.cpp" />
     <ClCompile Include="base\clibjs\cjsruntime_http.cpp" />
     <ClCompile Include="base\clibjs\cjsruntime_object.cpp" />
+    <ClCompile Include="base\clibjs\cjsruntime_ui.cpp" />
     <ClCompile Include="base\clibjs\cjstypes.cpp" />
     <ClCompile Include="base\clibjs\cjsunit.cpp" />
     <ClCompile Include="base\clibjs\JS2D.cpp" />
@@ -823,6 +824,7 @@ xcopy /r /y /e /d "$(ProjectDir)img" "$(TargetDir)img"</Command>
     <None Include="script\js\lib\clib_math.js" />
     <None Include="script\js\lib\clib_object.js" />
     <None Include="script\js\lib\clib_string.js" />
+    <None Include="script\js\lib\clib_ui.js" />
     <None Include="script\js\src\main.js" />
     <None Include="script\js\src\test_1.js" />
     <None Include="script\js\src\test_2.js" />
@@ -831,6 +833,7 @@ xcopy /r /y /e /d "$(ProjectDir)img" "$(TargetDir)img"</Command>
     <None Include="script\js\src\test_5.js" />
     <None Include="script\js\src\test_6.js" />
     <None Include="script\js\src\test_7.js" />
+    <None Include="script\js\src\test_8.js" />
     <None Include="script\vfs\.gitignore" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

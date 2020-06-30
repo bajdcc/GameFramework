@@ -8,7 +8,7 @@ Array.prototype.push = function(...args) {
     return this.length;
 };
 Array.prototype.slice = function(begin, end) {
-    end = (typeof end !== 'undefined') ? end : this.length;
+    end = (typeof end !== 'undefined') ? end : (this.length || 0);
     var i, cloned = [],
         size, len = this.length;
     var start = begin || 0;
@@ -63,7 +63,7 @@ Array.prototype.concat = function(...args) {
     return arr;
 };
 Array.prototype.map = function(f) {
-    var arr = Array(this.length);
+    var arr = Array(this.length || 0);
     var _this = this instanceof Array ? this : [...this];
     for (var i in _this) {
         arr[i] = f(_this[i], i);
