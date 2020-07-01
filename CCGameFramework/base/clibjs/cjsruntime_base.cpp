@@ -1256,7 +1256,7 @@ namespace clib {
                 if (obj->get_object_type() != jsv_object::T_UI)
                     break;
                 auto ui = JS_UI(obj);
-                ui->render();
+                cjsgui::singleton().get_global().render_queue_auto.push_back(ui);
             } while (0);
             push(new_undefined());
         }

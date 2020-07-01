@@ -77,15 +77,9 @@ namespace clib {
         stop_music();
         running = false;
         exited = false;
-        if (global_state.drawing) {
-            global_state.drawing = false;
-            if (global_state.renderTarget) {
-                global_state.renderTarget->EndDraw();
-                global_state.renderTarget = nullptr;
-                global_state.renderTarget_bitmap = nullptr;
-            }
-        }
-        global_state.need_render = false;
+        global_state.drawing = false;
+        global_state.render_queue.clear();
+        global_state.render_queue_auto.clear();
     }
 
     void cjsgui::clear_cache()
@@ -96,28 +90,24 @@ namespace clib {
 
     void cjsgui::begin_render()
     {
-        if (!global_state.need_render && !global_state.drawing && global_state.renderTarget) {
-            global_state.renderTarget->BeginDraw();
-            global_state.renderTarget->Clear(D2D1::ColorF(D2D1::ColorF::White, 0));
+        if (!global_state.drawing && global_state.renderTarget) {
             global_state.drawing = true;
+            global_state.render_queue_auto.clear();
         }
     }
 
     void cjsgui::end_render()
     {
         if (global_state.drawing) {
-            if (global_state.renderTarget) {
-                global_state.renderTarget->EndDraw();
-            }
             global_state.drawing = false;
-            global_state.need_render = true;
+            std::swap(global_state.render_queue, global_state.render_queue_auto);
+            global_state.render_queue_auto.clear();
         }
     }
 
     void cjsgui::change_target(std::shared_ptr<Direct2DRenderTarget> renderTarget)
     {
         global_state.canvas = renderTarget;
-        global_state.need_render = false;
         init_render_target();
         if (vm)
             vm->change_target();
@@ -328,16 +318,22 @@ namespace clib {
             if (vm)
                 vm->resize();
         }
-        if (global_state.need_render && global_state.canvas.lock() && global_state.renderTarget && !global_state.bound.IsRectEmpty()) {
-            CComPtr<ID2D1Bitmap> bitmap;
-            global_state.renderTarget_bitmap->GetBitmap(&bitmap);
+        if (global_state.canvas.lock() && global_state.renderTarget && !global_state.bound.IsRectEmpty()) {
+            global_state.renderTarget->BeginDraw();
+            global_state.renderTarget->Clear(D2D1::ColorF(D2D1::ColorF::White, 0));
+            for (const auto& s : global_state.render_queue) {
+                if (s.lock()) {
+                    s.lock()->render();
+                }
+            }
+            global_state.renderTarget->EndDraw();
+            global_state.renderTarget_bitmap->GetBitmap(&global_state.bitmap);
             global_state.canvas.lock()->GetDirect2DRenderTarget()->DrawBitmap(
-                bitmap,
+                global_state.bitmap,
                 D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
                 1.0f,
                 D2D1_BITMAP_INTERPOLATION_MODE_LINEAR
             );
-            global_state.need_render = false;
         }
     }
 

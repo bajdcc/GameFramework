@@ -154,12 +154,14 @@ namespace clib {
             std::string zplay_title;
             CRect bound;
             std::weak_ptr<Direct2DRenderTarget> canvas;
+            CComPtr<ID2D1Bitmap> bitmap;
             CComPtr<ID2D1RenderTarget> renderTarget;
             CComPtr<ID2D1BitmapRenderTarget> renderTarget_bitmap;
             int total_obj{ 0 };
             int cache_obj{ 0 };
             bool drawing{ false };
-            bool need_render{ false };
+            std::vector<jsv_ui::weak_ref> render_queue;
+            std::vector<jsv_ui::weak_ref> render_queue_auto;
         } global_state;
         class screen_t {
         public:

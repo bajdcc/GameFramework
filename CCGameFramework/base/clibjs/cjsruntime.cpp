@@ -2120,6 +2120,8 @@ namespace clib {
         if (!v)
             return;
         v->__proto__.reset();
+        v->attr = 0;
+        v->marked = 0;
         switch (v->get_type()) {
         case r_number:
             reuse.reuse_numbers.push_back(

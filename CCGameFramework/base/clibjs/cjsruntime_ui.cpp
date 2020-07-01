@@ -9,38 +9,38 @@
 
 namespace clib {
 
+    static LONG obj2num(const js_value::weak_ref& obj) {
+        auto o = obj.lock();
+        if (o->get_type() != r_number) {
+            return 0;
+        }
+        auto num = JS_NUM(o);
+        if (std::isinf(num) || std::isnan(num)) {
+            return 0;
+        }
+        return (LONG)num;
+    }
+
     static void set_location(const js_ui_base::ref &u, const jsv_object::ref& _this, const jsv_object::ref& obj, js_value_new* n) {
         auto o = obj->get("left", n);
         if (o && o->get_type() == r_number) {
             _this->add("left", o);
-            auto num = JS_NUM(o);
-            if (!std::isinf(num) && !std::isnan(num)) {
-                u->left = (LONG)num;
-            }
+            u->left = obj2num(o);
         }
         o = obj->get("top", n);
         if (o && o->get_type() == r_number) {
             _this->add("top", o);
-            auto num = JS_NUM(o);
-            if (!std::isinf(num) && !std::isnan(num)) {
-                u->top = (LONG)num;
-            }
+            u->top = obj2num(o);
         }
         o = obj->get("width", n);
         if (o && o->get_type() == r_number) {
             _this->add("width", o);
-            auto num = JS_NUM(o);
-            if (!std::isinf(num) && !std::isnan(num)) {
-                u->width = (LONG)num;
-            }
+            u->width = obj2num(o);
         }
         o = obj->get("height", n);
         if (o && o->get_type() == r_number) {
             _this->add("height", o);
-            auto num = JS_NUM(o);
-            if (!std::isinf(num) && !std::isnan(num)) {
-                u->height = (LONG)num;
-            }
+            u->height = obj2num(o);
         }
     }
 
@@ -165,18 +165,6 @@ namespace clib {
     {
         if (element && cjsgui::singleton().get_global().drawing)
             element->render();
-    }
-
-    static LONG obj2num(const js_value::weak_ref& obj) {
-        auto o = obj.lock();
-        if (o->get_type() != r_number) {
-            return 0;
-        }
-        auto num = JS_NUM(o);
-        if (std::isinf(num) || std::isnan(num)) {
-            return 0;
-        }
-        return (LONG)num;
     }
 
     void jsv_ui::add(const std::string& s, const js_value::weak_ref& obj)
