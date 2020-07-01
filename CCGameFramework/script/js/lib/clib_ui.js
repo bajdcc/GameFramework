@@ -1,10 +1,6 @@
-UI.prototype.render = function(left, top) {
-    this.render_internal(left, top);
-    if (this.layout !== 'absolute') {
-        this.map(x => x.render(left, top));
-    } else {
-        this.map(x => x.render(this.left + left, this.top + top));
-    }
+UI.prototype.render = function() {
+    this.render_internal();
+    this.map(x => x.render());
 };
 UI.root = new UI({
     type: 'root',
@@ -16,7 +12,7 @@ UI.root = new UI({
 sys.send_signal = (function() {
     var map_signal = {
         render: function() {
-            UI.root.render(UI.root.left, UI.root.top);
+            UI.root.render();
         },
         resize: function() {
             UI.root.width = sys.get_config('screen/width');

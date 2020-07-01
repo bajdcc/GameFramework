@@ -101,6 +101,7 @@ namespace clib {
                 auto& s = *k;
                 if (s->state == 1) {
                     if (s->fut.wait_for(t) == std::future_status::ready) {
+                        i--;
                         s->resp = s->fut.get();
                         s->state = 2;
                         auto& callback = s->callback;

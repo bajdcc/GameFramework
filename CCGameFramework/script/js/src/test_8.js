@@ -5,7 +5,7 @@
             color: '#ffffff',
             content: 'Hello world!',
             left: 10,
-            top: 110,
+            top: 60,
             width: 100,
             height: 100,
             align: 'center',
@@ -20,12 +20,23 @@
         type: 'rect',
         color: '#ff0000',
         left: 10,
-        top: 50,
+        top: 100,
         width: 100,
         height: 100,
     });
     UI.root.push(
         block
+    );
+    UI.root.push(
+        new UI({
+            type: 'round',
+            color: '#ff0000',
+            left: 10,
+            top: 210,
+            width: 100,
+            height: 100,
+            radius: 5
+        })
     );
     var i = 0;
     var colors = [

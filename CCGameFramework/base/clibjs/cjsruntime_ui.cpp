@@ -21,6 +21,18 @@ namespace clib {
         return (LONG)num;
     }
 
+    static float obj2float(const js_value::weak_ref& obj) {
+        auto o = obj.lock();
+        if (o->get_type() != r_number) {
+            return 0;
+        }
+        auto num = JS_NUM(o);
+        if (std::isinf(num) || std::isnan(num)) {
+            return 0;
+        }
+        return (float)num;
+    }
+
     static void set_location(const js_ui_base::ref &u, const jsv_object::ref& _this, const jsv_object::ref& obj, js_value_new* n) {
         _this->add("left", obj->get("left", n));
         _this->add("top", obj->get("top", n));
@@ -41,9 +53,8 @@ namespace clib {
             auto type = JS_STR(v);
             if (type == "label") {
                 add("type", v);
-                auto u = std::make_shared<js_ui_label>();
-                element = u;
-                set_location(u, JS_O(shared_from_this()), obj, n);
+                element = std::make_shared<js_ui_label>();
+                set_location(element, JS_O(shared_from_this()), obj, n);
                 add("color", obj->get("color", n));
                 add("content", obj->get("content", n));
                 add("font", obj->get("font", n));
@@ -60,11 +71,19 @@ namespace clib {
             }
             if (type == "rect") {
                 add("type", v);
-                auto u = std::make_shared<js_ui_rect>();
-                element = u;
-                set_location(u, JS_O(shared_from_this()), obj, n);
+                element = std::make_shared<js_ui_rect>();
+                set_location(element, JS_O(shared_from_this()), obj, n);
                 add("color", obj->get("color", n));
                 add("fill", obj->get("fill", n));
+                return true;
+            }
+            if (type == "round") {
+                add("type", v);
+                element = std::make_shared<js_ui_round>();
+                set_location(element, JS_O(shared_from_this()), obj, n);
+                add("color", obj->get("color", n));
+                add("fill", obj->get("fill", n));
+                add("radius", obj->get("radius", n));
                 return true;
             }
             if (type == "root") {
@@ -77,7 +96,7 @@ namespace clib {
 
     void jsv_ui::render()
     {
-        if (element && cjsgui::singleton().get_global().drawing)
+        if (element)
             element->render();
     }
 
@@ -85,6 +104,7 @@ namespace clib {
     {
         if (!obj.lock())
             return;
+        if (s == "type")return;
         jsv_object::add(s, obj);
         if (element) {
             if (s == "left")
@@ -102,6 +122,7 @@ namespace clib {
 
     void jsv_ui::remove(const std::string& s)
     {
+        if (s == "type")return;
         jsv_object::remove(s);
         if (element) {
             if (s == "left")
@@ -365,6 +386,69 @@ namespace clib {
         }
         else if (s == "fill") {
             rect->SetFill(true);
+        }
+    }
+
+    // ---------------------- ROUND ----------------------
+
+    js_ui_round::js_ui_round()
+    {
+        round = RoundBorderElement::Create();
+        change_target();
+    }
+
+    int js_ui_round::get_type()
+    {
+        return js_ui_base::round;
+    }
+
+    const char* js_ui_round::get_type_str() const
+    {
+        return "round";
+    }
+
+    void js_ui_round::render()
+    {
+        auto bounds = CRect(left, top, left + width, top + height);
+        round->SetRenderRect(bounds);
+        round->GetRenderer()->Render(bounds, cjsgui::singleton().get_global().renderTarget);
+    }
+
+    void js_ui_round::clear()
+    {
+        round->GetRenderer()->Finalize();
+    }
+
+    void js_ui_round::change_target()
+    {
+        round->GetRenderer()->SetRenderTarget(cjsgui::singleton().get_global().canvas.lock());
+    }
+
+    void js_ui_round::add(const std::string& s, const js_value::ref& obj)
+    {
+        if (s == "color") {
+            if (obj->get_type() == r_string)
+                round->SetColor(CColor::Parse(CStringA(JS_STR(obj).c_str())));
+        }
+        else if (s == "fill") {
+            if (obj->get_type() == r_boolean)
+                round->SetFill(JS_BOOL(obj));
+        }
+        else if (s == "radius") {
+            round->SetRadius(obj2float(obj));
+        }
+    }
+
+    void js_ui_round::remove(const std::string& s)
+    {
+        if (s == "color") {
+            round->SetColor(CColor());
+        }
+        else if (s == "fill") {
+            round->SetFill(true);
+        }
+        else if (s == "radius") {
+            round->SetRadius(0);
         }
     }
 }

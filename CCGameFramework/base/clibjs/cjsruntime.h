@@ -243,6 +243,7 @@ namespace clib {
             none,
             label,
             rect,
+            round,
         };
         virtual int get_type() = 0;
         virtual const char* get_type_str() const = 0;
@@ -287,6 +288,22 @@ namespace clib {
         void remove(const std::string&) override;
     private:
         std::shared_ptr<SolidBackgroundElement> rect;
+    };
+
+    class js_ui_round: public js_ui_base {
+    public:
+        using ref = std::shared_ptr<js_ui_round>;
+        using weak_ref = std::weak_ptr<js_ui_round>;
+        js_ui_round();
+        int get_type() override;
+        const char* get_type_str() const override;
+        void render() override;
+        void clear() override;
+        void change_target() override;
+        void add(const std::string&, const js_value::ref&) override;
+        void remove(const std::string&) override;
+    private:
+        std::shared_ptr<RoundBorderElement> round;
     };
 
     class jsv_ui : public jsv_object {

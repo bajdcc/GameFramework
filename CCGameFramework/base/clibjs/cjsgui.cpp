@@ -343,7 +343,6 @@ namespace clib {
         if (global_state.canvas.lock() && !global_state.bound.IsRectEmpty()) {
             if (global_state.drawing) {
                 global_state.drawing = false;
-                global_state.renderTarget_bitmap->EndDraw();
             }
             global_state.renderTarget_bitmap = global_state.canvas.lock()->CreateBitmapRenderTarget(
                 D2D1::SizeF((float)global_state.bound.Width(), (float)global_state.bound.Height()));
