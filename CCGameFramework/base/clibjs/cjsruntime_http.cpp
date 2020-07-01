@@ -148,6 +148,7 @@ namespace clib {
                         call_api(callback, env, args, callback->attr | jsv_function::at_fast);
                         current_stack = stack.back();
                         k = global_http.caches.erase(k);
+                        permanents.last = 3;
                         break;
                     }
                 }

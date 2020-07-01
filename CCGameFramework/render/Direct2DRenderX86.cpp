@@ -96,12 +96,12 @@ void X86WindowElementRenderer::CreateImage(std::shared_ptr<Direct2DRenderTarget>
     }
 }
 
-void X86WindowElementRenderer::Render(CRect bounds)
+void X86WindowElementRenderer::Render(CRect bounds, CComPtr<ID2D1RenderTarget> r)
 {
     auto e = element.lock();
     if (e->flags.self_visible && bitmap)
     {
-        CComPtr<ID2D1RenderTarget> d2dRenderTarget = renderTarget.lock()->GetDirect2DRenderTarget();
+        CComPtr<ID2D1RenderTarget> d2dRenderTarget = r ? r : renderTarget.lock()->GetDirect2DRenderTarget();
         CRect rt(bounds);
         if (!scaling && bounds.Width() > rect.Width && bounds.Height() > rect.Height)
         {
@@ -116,7 +116,7 @@ void X86WindowElementRenderer::Render(CRect bounds)
             D2D1_BITMAP_INTERPOLATION_MODE_LINEAR
         );
     }
-    GraphicsImageRenderer::Render(bounds);
+    GraphicsImageRenderer::Render(bounds, r);
 }
 
 X86WindowElementRenderer::~X86WindowElementRenderer()

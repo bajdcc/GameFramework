@@ -242,10 +242,12 @@ namespace clib {
         enum type_t {
             none,
             label,
+            rect,
         };
         virtual int get_type() = 0;
         virtual const char* get_type_str() const = 0;
         virtual void render() = 0;
+        virtual void clear() = 0;
         virtual void change_target() = 0;
         LONG left{ 0 };
         LONG top{ 0 };
@@ -260,10 +262,33 @@ namespace clib {
         js_ui_label();
         int get_type() override;
         const char* get_type_str() const override;
+        void set_color(const std::string&);
         void set_content(const std::wstring &);
+        void set_font(const Font&);
+        Font get_font() const;
+        void set_align(Alignment);
+        void set_valign(Alignment);
         void render() override;
+        void clear() override;
         void change_target() override;
+    private:
         std::shared_ptr<SolidLabelElement> label;
+    };
+
+    class js_ui_rect : public js_ui_base {
+    public:
+        using ref = std::shared_ptr<js_ui_rect>;
+        using weak_ref = std::weak_ptr<js_ui_rect>;
+        js_ui_rect();
+        int get_type() override;
+        const char* get_type_str() const override;
+        void set_color(const std::string&);
+        void set_fill(bool);
+        void render() override;
+        void clear() override;
+        void change_target() override;
+    private:
+        std::shared_ptr<SolidBackgroundElement> rect;
     };
 
     class jsv_ui : public jsv_object {
@@ -632,6 +657,7 @@ namespace clib {
             int cycle{ 0 };
             int cycles{ 0 };
             int state{ 0 };
+            int last{ 0 };
             int gc_period{ 0 };
             // stack
             cjs_function::ref default_stack;

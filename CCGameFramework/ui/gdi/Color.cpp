@@ -30,7 +30,7 @@ CColor CColor::Parse(const CStringA& value)
         cint index[8] = { 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF };
         for (cint i = 0; i < value.GetLength() - 1; i++)
         {
-            index[i] = strchr(code, value[i + 1]) - code;
+            index[i] = strchr(code, std::toupper(value[i + 1])) - code;
             if (index[i] < 0 || index[i] > 0xF)
             {
                 return CColor();

@@ -99,13 +99,13 @@ void SolidBackgroundElement::SetFill(bool value)
     }
 }
 
-void SolidBackgroundElementRenderer::Render(CRect bounds)
+void SolidBackgroundElementRenderer::Render(CRect bounds, CComPtr<ID2D1RenderTarget> r)
 {
     auto e = element.lock();
     auto rt = renderTarget.lock();
     if (e->flags.self_visible)
     {
-        auto d2dRenderTarget = rt->GetDirect2DRenderTarget();
+        auto d2dRenderTarget = r ? r : rt->GetDirect2DRenderTarget();
         if (e->IsFill())
         {
             d2dRenderTarget->FillRectangle(
@@ -121,7 +121,7 @@ void SolidBackgroundElementRenderer::Render(CRect bounds)
             );
         }
     }
-    GraphicsRenderer::Render(bounds);
+    GraphicsRenderer::Render(bounds, r);
 }
 #pragma endregion SolidBackground
 
@@ -203,7 +203,7 @@ void GradientBackgroundElement::SetDirection(Direction value)
     direction = value;
 }
 
-void GradientBackgroundElementRenderer::Render(CRect bounds)
+void GradientBackgroundElementRenderer::Render(CRect bounds, CComPtr<ID2D1RenderTarget> r)
 {
     auto e = element.lock();
     auto rt = renderTarget.lock();
@@ -249,13 +249,13 @@ void GradientBackgroundElementRenderer::Render(CRect bounds)
         brush->SetStartPoint(points[0]);
         brush->SetEndPoint(points[1]);
 
-        auto d2dRenderTarget = rt->GetDirect2DRenderTarget();
+        auto d2dRenderTarget = r ? r : rt->GetDirect2DRenderTarget();
         d2dRenderTarget->FillRectangle(
             D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
             brush
         );
     }
-    GraphicsRenderer::Render(bounds);
+    GraphicsRenderer::Render(bounds, r);
 }
 #pragma endregion GradientBackground
 
@@ -370,7 +370,7 @@ SolidLabelElementRenderer::SolidLabelElementRenderer()
 
 }
 
-void SolidLabelElementRenderer::Render(CRect bounds)
+void SolidLabelElementRenderer::Render(CRect bounds, CComPtr<ID2D1RenderTarget> r)
 {
     auto e = element.lock();
     if (e->flags.self_visible)
@@ -448,7 +448,7 @@ void SolidLabelElementRenderer::Render(CRect bounds)
         textLayout->SetMaxHeight((FLOAT)textBounds.Height());
         textLayout->SetTrimming(&trimming, inlineObject);
 
-        auto d2dRenderTarget = rt->GetDirect2DRenderTarget();
+        auto d2dRenderTarget = r ? r : rt->GetDirect2DRenderTarget();
         d2dRenderTarget->DrawTextLayout(
             D2D1::Point2F((FLOAT)textBounds.left, (FLOAT)textBounds.top),
             textLayout,
@@ -462,7 +462,7 @@ void SolidLabelElementRenderer::Render(CRect bounds)
             UpdateMinSize();
         }
     }
-    GraphicsRenderer::Render(bounds);
+    GraphicsRenderer::Render(bounds, r);
 }
 
 void SolidLabelElementRenderer::OnElementStateChanged()
@@ -513,6 +513,12 @@ void SolidLabelElementRenderer::CreateTextFormat(std::shared_ptr<Direct2DRenderT
     {
         oldFont = element.lock()->GetFont();
         textFormat = _renderTarget->CreateDirect2DTextFormat(oldFont);
+        if (!(textFormat && textFormat->textFormat)) {
+            auto newFont = oldFont;
+            newFont.fontFamily = _T("Microsoft Yahei");
+            newFont.size = 12;
+            element.lock()->SetFont(newFont);
+        }
     }
 }
 
@@ -704,13 +710,13 @@ void RoundBorderElement::SetFill(bool value)
     }
 }
 
-void RoundBorderElementRenderer::Render(CRect bounds)
+void RoundBorderElementRenderer::Render(CRect bounds, CComPtr<ID2D1RenderTarget> r)
 {
     auto e = element.lock();
     auto rt = renderTarget.lock();
     if (e->flags.self_visible)
     {
-        auto d2dRenderTarget = rt->GetDirect2DRenderTarget();
+        auto d2dRenderTarget = r ? r : rt->GetDirect2DRenderTarget();
         if (e->IsFill())
         {
             d2dRenderTarget->FillRoundedRectangle(
@@ -734,7 +740,7 @@ void RoundBorderElementRenderer::Render(CRect bounds)
             );
         }
     }
-    GraphicsRenderer::Render(bounds);
+    GraphicsRenderer::Render(bounds, r);
 }
 
 #pragma endregion RoundBorder

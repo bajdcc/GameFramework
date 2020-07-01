@@ -101,7 +101,7 @@ void EditElement::SetCaret(const bool& value)
     caret = value;
 }
 
-void EditElementRenderer::Render(CRect bounds)
+void EditElementRenderer::Render(CRect bounds, CComPtr<ID2D1RenderTarget> r)
 {
     auto e = element.lock();
     if (e->flags.self_visible)
@@ -138,7 +138,7 @@ void EditElementRenderer::Render(CRect bounds)
         hr = textLayout->SetMaxWidth((FLOAT)textBounds.Width());
         hr = textLayout->SetMaxHeight((FLOAT)textBounds.Height());
 
-        auto d2dRenderTarget = rt->GetDirect2DRenderTarget();
+        auto d2dRenderTarget = r ? r : rt->GetDirect2DRenderTarget();
         d2dRenderTarget->DrawTextLayout(
             D2D1::Point2F((FLOAT)textBounds.left, (FLOAT)textBounds.top),
             textLayout,
@@ -163,7 +163,7 @@ void EditElementRenderer::Render(CRect bounds)
             UpdateMinSize();
         }
     }
-    GraphicsRenderer::Render(bounds);
+    GraphicsRenderer::Render(bounds, r);
 }
 
 void EditElementRenderer::OnElementStateChanged()

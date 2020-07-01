@@ -45,15 +45,15 @@ int PhysicsEngine2DElement::Refresh(int arg)
     return std::dynamic_pointer_cast<PhysicsEngine2DElementRenderer, IGraphicsRenderer>(renderer)->Refresh(arg);
 }
 
-void PhysicsEngine2DElementRenderer::Render(CRect bounds)
+void PhysicsEngine2DElementRenderer::Render(CRect bounds, CComPtr<ID2D1RenderTarget> r)
 {
     auto e = element.lock();
     if (e->flags.self_visible)
     {
-        CComPtr<ID2D1RenderTarget> d2dRenderTarget = renderTarget.lock()->GetDirect2DRenderTarget();
+        CComPtr<ID2D1RenderTarget> d2dRenderTarget = r ? r : renderTarget.lock()->GetDirect2DRenderTarget();
         pe.Render(d2dRenderTarget, bounds);
     }
-    GraphicsRenderer::Render(bounds);
+    GraphicsRenderer::Render(bounds, r);
 }
 
 PhysicsEngine2DElementRenderer::~PhysicsEngine2DElementRenderer()

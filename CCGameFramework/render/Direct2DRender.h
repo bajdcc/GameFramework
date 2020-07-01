@@ -79,7 +79,7 @@ public:
     virtual void Initialize(std::shared_ptr<IGraphicsElement> element) = 0;
     virtual void Finalize() = 0;
     virtual std::shared_ptr<Direct2DRenderTarget> SetRenderTarget(std::shared_ptr<Direct2DRenderTarget> renderTarget) = 0;
-    virtual void Render(CRect bounds) = 0;
+    virtual void Render(CRect bounds, CComPtr<ID2D1RenderTarget> = nullptr) = 0;
     virtual void OnElementStateChanged() = 0;
     virtual CSize GetMinSize() = 0;
     virtual void SetRelativePosition(bool s) = 0;
@@ -205,7 +205,8 @@ public:
     {
         auto oldRenderTarget = renderTarget.lock();
         renderTarget = _renderTarget;
-        RenderTargetChangedInternal(oldRenderTarget, renderTarget.lock());
+        if (oldRenderTarget != renderTarget.lock())
+            RenderTargetChangedInternal(oldRenderTarget, renderTarget.lock());
         auto e = element.lock();
         for (auto & child : e->GetChildren())
         {
@@ -228,7 +229,7 @@ public:
             child->GetRenderer()->SetRelativePosition(s);
         }
     }
-    void Render(CRect bounds)override
+    void Render(CRect bounds, CComPtr<ID2D1RenderTarget> rt)override
     {
         auto e = element.lock();
         if (e->flags.children_visible)
@@ -237,13 +238,13 @@ public:
                 for (std::shared_ptr<IGraphicsElement>& child : e->GetChildren())
                 {
                     auto r = child->GetRenderRect().OfRect(e->GetRenderRect());
-                    child->GetRenderer()->Render(r);
+                    child->GetRenderer()->Render(r, rt);
                 }
             }
             else {
                 for (std::shared_ptr<IGraphicsElement>& child : e->GetChildren())
                 {
-                    child->GetRenderer()->Render(child->GetRenderRect());
+                    child->GetRenderer()->Render(child->GetRenderRect(), rt);
                 }
             }
         }
@@ -412,7 +413,7 @@ protected:
 class SolidBackgroundElementRenderer : public GraphicsSolidBrushRenderer<SolidBackgroundElement, SolidBackgroundElementRenderer, ID2D1SolidColorBrush, CColor>
 {
 public:
-    void Render(CRect bounds)override;
+    void Render(CRect bounds, CComPtr<ID2D1RenderTarget>)override;
 };
 #pragma endregion SolidBackground
 
@@ -453,7 +454,7 @@ class GradientBackgroundElementRenderer : public GraphicsGradientBrushRenderer<G
     GradientBackgroundElementRenderer, ID2D1LinearGradientBrush, std::pair<CColor, CColor>>
 {
 public:
-    void Render(CRect bounds)override;
+    void Render(CRect bounds, CComPtr<ID2D1RenderTarget>)override;
 };
 #pragma endregion GradientBackground
 
@@ -494,7 +495,7 @@ class SolidLabelElementRenderer : public GraphicsRenderer<SolidLabelElement, Sol
 public:
     SolidLabelElementRenderer();
 
-    void Render(CRect bounds)override;
+    void Render(CRect bounds, CComPtr<ID2D1RenderTarget>)override;
     void OnElementStateChanged()override;
 
 protected:
@@ -547,7 +548,7 @@ protected:
 class RoundBorderElementRenderer : public GraphicsSolidBrushRenderer<RoundBorderElement, RoundBorderElementRenderer, ID2D1SolidColorBrush, CColor>
 {
 public:
-    void Render(CRect bounds)override;
+    void Render(CRect bounds, CComPtr<ID2D1RenderTarget>)override;
 };
 #pragma endregion RoundBorder
 
@@ -612,7 +613,7 @@ class QRImageElementRenderer : public GraphicsImageRenderer<QRImageElement, QRIm
 protected:
     void CreateImage(std::shared_ptr<Direct2DRenderTarget> renderTarget)override;
 public:
-    void Render(CRect bounds)override;
+    void Render(CRect bounds, CComPtr<ID2D1RenderTarget>)override;
 };
 
 class Base64ImageElement : public GraphicsElement<Base64ImageElement>
@@ -643,7 +644,7 @@ class Base64ImageElementRenderer : public GraphicsImageRenderer<Base64ImageEleme
 protected:
     void CreateImage(std::shared_ptr<Direct2DRenderTarget> renderTarget)override;
 public:
-    void Render(CRect bounds)override;
+    void Render(CRect bounds, CComPtr<ID2D1RenderTarget>)override;
 private:
     CComPtr<IWICBitmap> wic;
     CStringA text;
@@ -677,7 +678,7 @@ class WireworldAutomatonImageElementRenderer : public GraphicsImageRenderer<Wire
 protected:
     void CreateImage(std::shared_ptr<Direct2DRenderTarget> renderTarget)override;
 public:
-    void Render(CRect bounds)override;
+    void Render(CRect bounds, CComPtr<ID2D1RenderTarget>)override;
     ~WireworldAutomatonImageElementRenderer();
     int Refresh(int arg);
 private:
@@ -718,7 +719,7 @@ class SolidImageElementRenderer : public GraphicsImageRenderer<SolidImageElement
 protected:
     void CreateImage(std::shared_ptr<Direct2DRenderTarget> renderTarget)override;
 public:
-    void Render(CRect bounds)override;
+    void Render(CRect bounds, CComPtr<ID2D1RenderTarget>)override;
     void FinalizeInternal()override;
 private:
     HRESULT GetRawFrame(UINT uFrameIndex);
@@ -803,7 +804,7 @@ protected:
 class EditElementRenderer : public GraphicsRenderer<EditElement, EditElementRenderer, Direct2DRenderTarget>
 {
 public:
-    void Render(CRect bounds)override;
+    void Render(CRect bounds, CComPtr<ID2D1RenderTarget>)override;
     void OnElementStateChanged()override;
 
 protected:
@@ -858,7 +859,7 @@ protected:
 class PhysicsEngine2DElementRenderer : public GraphicsRenderer<PhysicsEngine2DElement, PhysicsEngine2DElementRenderer, Direct2DRenderTarget>
 {
 public:
-    void Render(CRect bounds)override;
+    void Render(CRect bounds, CComPtr<ID2D1RenderTarget>)override;
     ~PhysicsEngine2DElementRenderer();
     int Refresh(int arg);
 
@@ -904,7 +905,7 @@ class X86WindowElementRenderer : public GraphicsImageRenderer<X86WindowElement, 
 protected:
     void CreateImage(std::shared_ptr<Direct2DRenderTarget> renderTarget)override;
 public:
-    void Render(CRect bounds)override;
+    void Render(CRect bounds, CComPtr<ID2D1RenderTarget>)override;
     ~X86WindowElementRenderer();
     int Refresh(int arg);
 private:
@@ -958,7 +959,7 @@ protected:
 class Clib2DElementRenderer : public GraphicsRenderer<Clib2DElement, Clib2DElementRenderer, Direct2DRenderTarget>
 {
 public:
-	void Render(CRect bounds)override;
+	void Render(CRect bounds, CComPtr<ID2D1RenderTarget>)override;
 	~Clib2DElementRenderer();
 	int Refresh(int arg);
 
@@ -1004,7 +1005,7 @@ protected:
 class Parser2DElementRenderer : public GraphicsRenderer<Parser2DElement, Parser2DElementRenderer, Direct2DRenderTarget>
 {
 public:
-    void Render(CRect bounds)override;
+    void Render(CRect bounds, CComPtr<ID2D1RenderTarget>)override;
     ~Parser2DElementRenderer();
     int Refresh(int arg);
 
@@ -1050,7 +1051,7 @@ protected:
 class Mice2DElementRenderer : public GraphicsRenderer<Mice2DElement, Mice2DElementRenderer, Direct2DRenderTarget>
 {
 public:
-    void Render(CRect bounds)override;
+    void Render(CRect bounds, CComPtr<ID2D1RenderTarget>)override;
     ~Mice2DElementRenderer();
     int Refresh(int arg);
 
@@ -1095,7 +1096,7 @@ protected:
 class MPM2DElementRenderer : public GraphicsRenderer<MPM2DElement, MPM2DElementRenderer, Direct2DRenderTarget>
 {
 public:
-    void Render(CRect bounds)override;
+    void Render(CRect bounds, CComPtr<ID2D1RenderTarget>)override;
     ~MPM2DElementRenderer();
     int Refresh(int arg);
 
@@ -1142,7 +1143,7 @@ protected:
 class SVG2DElementRenderer : public GraphicsRenderer<SVG2DElement, SVG2DElementRenderer, Direct2DRenderTarget>
 {
 public:
-    void Render(CRect bounds)override;
+    void Render(CRect bounds, CComPtr<ID2D1RenderTarget>)override;
     ~SVG2DElementRenderer();
 
     void OnElementStateChanged()override;
@@ -1189,7 +1190,7 @@ protected:
 class JS2DElementRenderer : public GraphicsRenderer<JS2DElement, JS2DElementRenderer, Direct2DRenderTarget>
 {
 public:
-    void Render(CRect bounds)override;
+    void Render(CRect bounds, CComPtr<ID2D1RenderTarget>)override;
     ~JS2DElementRenderer();
     int Refresh(int arg);
 

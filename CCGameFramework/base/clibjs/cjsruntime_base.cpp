@@ -1240,7 +1240,6 @@ namespace clib {
             if (ui->init(JS_O(a), this)) {
                 register_value(ui);
                 global_ui.elements.insert(ui);
-                ui->change_target();
                 push(ui);
                 break;
             }

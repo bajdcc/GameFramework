@@ -45,15 +45,15 @@ int JS2DElement::Refresh(int arg)
     return std::dynamic_pointer_cast<JS2DElementRenderer, IGraphicsRenderer>(renderer)->Refresh(arg);
 }
 
-void JS2DElementRenderer::Render(CRect bounds)
+void JS2DElementRenderer::Render(CRect bounds, CComPtr<ID2D1RenderTarget> r)
 {
     auto e = element.lock();
     if (e->flags.self_visible)
     {
-        CComPtr<ID2D1RenderTarget> d2dRenderTarget = renderTarget.lock()->GetDirect2DRenderTarget();
+        CComPtr<ID2D1RenderTarget> d2dRenderTarget = r ? r : renderTarget.lock()->GetDirect2DRenderTarget();
         engine.Render(d2dRenderTarget, bounds);
     }
-    GraphicsRenderer::Render(bounds);
+    GraphicsRenderer::Render(bounds, r);
 }
 
 JS2DElementRenderer::~JS2DElementRenderer()

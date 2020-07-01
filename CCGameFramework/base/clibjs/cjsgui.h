@@ -91,6 +91,8 @@ namespace clib {
         void draw_text(CComPtr<ID2D1RenderTarget>& rt, const CRect& bounds, const JS2DEngine::BrushBag& brushes);
         void draw_window(const CRect& bounds);
 
+        void init_render_target();
+
         void new_line();
         inline void draw_char(const char& c);
 
@@ -115,6 +117,8 @@ namespace clib {
         void reset();
         void clear_cache();
 
+        void begin_render();
+        void end_render();
         void change_target(std::shared_ptr<Direct2DRenderTarget> renderTarget);
 
     private:
@@ -149,9 +153,13 @@ namespace clib {
             std::vector<char> zplay_data;
             std::string zplay_title;
             CRect bound;
-            std::weak_ptr<Direct2DRenderTarget> renderTarget;
+            std::weak_ptr<Direct2DRenderTarget> canvas;
+            CComPtr<ID2D1RenderTarget> renderTarget;
+            CComPtr<ID2D1BitmapRenderTarget> renderTarget_bitmap;
             int total_obj{ 0 };
             int cache_obj{ 0 };
+            bool drawing{ false };
+            bool need_render{ false };
         } global_state;
         class screen_t {
         public:

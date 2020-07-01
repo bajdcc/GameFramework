@@ -39,11 +39,8 @@ namespace clib {
 
     void cjs::resize()
     {
+        change_target();
         rt.send_signal("resize");
-    }
-
-    void cjs::paint_window(const CRect& bounds)
-    {
     }
 
     void cjs::reset_ips()

@@ -22,7 +22,6 @@ namespace clib {
         int exec(const std::string& filename, const std::string& input);
 
         void resize();
-        void paint_window(const CRect& bounds);
         void reset_ips();
         void hit(int n);
         bool try_input(int c, bool ch = true);

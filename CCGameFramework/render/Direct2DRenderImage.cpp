@@ -115,12 +115,12 @@ void QRImageElementRenderer::CreateImage(std::shared_ptr<Direct2DRenderTarget> r
     }
 }
 
-void QRImageElementRenderer::Render(CRect bounds)
+void QRImageElementRenderer::Render(CRect bounds, CComPtr<ID2D1RenderTarget> r)
 {
     auto e = element.lock();
     if (e->flags.self_visible)
     {
-        CComPtr<ID2D1RenderTarget> d2dRenderTarget = renderTarget.lock()->GetDirect2DRenderTarget();
+        CComPtr<ID2D1RenderTarget> d2dRenderTarget = r ? r : renderTarget.lock()->GetDirect2DRenderTarget();
         d2dRenderTarget->DrawBitmap(
             bitmap,
             D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
@@ -128,7 +128,7 @@ void QRImageElementRenderer::Render(CRect bounds)
             D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR
         );
     }
-    GraphicsImageRenderer::Render(bounds);
+    GraphicsImageRenderer::Render(bounds, r);
 }
 
 Base64ImageElement::Base64ImageElement()
@@ -220,12 +220,12 @@ void Base64ImageElementRenderer::CreateImage(std::shared_ptr<Direct2DRenderTarge
     }
 }
 
-void Base64ImageElementRenderer::Render(CRect bounds)
+void Base64ImageElementRenderer::Render(CRect bounds, CComPtr<ID2D1RenderTarget> r)
 {
     auto e = element.lock();
     if (e->flags.self_visible)
     {
-        CComPtr<ID2D1RenderTarget> d2dRenderTarget = renderTarget.lock()->GetDirect2DRenderTarget();
+        CComPtr<ID2D1RenderTarget> d2dRenderTarget = r ? r : renderTarget.lock()->GetDirect2DRenderTarget();
         if (bitmap)
         {
             d2dRenderTarget->DrawBitmap(
@@ -236,7 +236,7 @@ void Base64ImageElementRenderer::Render(CRect bounds)
             );
         }
     }
-    GraphicsImageRenderer::Render(bounds);
+    GraphicsImageRenderer::Render(bounds, r);
 }
 
 WireworldAutomatonImageElement::WireworldAutomatonImageElement()
@@ -358,12 +358,12 @@ void WireworldAutomatonImageElementRenderer::CreateImage(std::shared_ptr<Direct2
     }
 }
 
-void WireworldAutomatonImageElementRenderer::Render(CRect bounds)
+void WireworldAutomatonImageElementRenderer::Render(CRect bounds, CComPtr<ID2D1RenderTarget> r)
 {
     auto e = element.lock();
     if (e->flags.self_visible && bitmap)
     {
-        CComPtr<ID2D1RenderTarget> d2dRenderTarget = renderTarget.lock()->GetDirect2DRenderTarget();
+        CComPtr<ID2D1RenderTarget> d2dRenderTarget = r ? r : renderTarget.lock()->GetDirect2DRenderTarget();
         if ((rect.Width > 1000 || rect.Height > 600) && bounds.Width() > rect.Width * 2 && bounds.Height() > rect.Width / 2)
         {
             d2dRenderTarget->DrawBitmap(
@@ -391,7 +391,7 @@ void WireworldAutomatonImageElementRenderer::Render(CRect bounds)
             );
         }
     }
-    GraphicsImageRenderer::Render(bounds);
+    GraphicsImageRenderer::Render(bounds, r);
 }
 
 WireworldAutomatonImageElementRenderer::~WireworldAutomatonImageElementRenderer()
@@ -514,12 +514,12 @@ void SolidImageElementRenderer::CreateImage(std::shared_ptr<Direct2DRenderTarget
     }
 }
 
-void SolidImageElementRenderer::Render(CRect bounds)
+void SolidImageElementRenderer::Render(CRect bounds, CComPtr<ID2D1RenderTarget> r)
 {
     auto e = element.lock();
     if (e->flags.self_visible)
     {
-        CComPtr<ID2D1RenderTarget> d2dRenderTarget = renderTarget.lock()->GetDirect2DRenderTarget();
+        CComPtr<ID2D1RenderTarget> d2dRenderTarget = r ? r : renderTarget.lock()->GetDirect2DRenderTarget();
 
         HRESULT hr = S_OK;
 
@@ -574,7 +574,7 @@ void SolidImageElementRenderer::Render(CRect bounds)
             }
         }
     }
-    GraphicsImageRenderer::Render(bounds);
+    GraphicsImageRenderer::Render(bounds, r);
 }
 
 void SolidImageElementRenderer::FinalizeInternal()

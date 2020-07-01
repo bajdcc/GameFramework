@@ -59,13 +59,13 @@ void SVG2DElement::SetText(const CStringA& value)
     }
 }
 
-void SVG2DElementRenderer::Render(CRect bounds)
+void SVG2DElementRenderer::Render(CRect bounds, CComPtr<ID2D1RenderTarget> r)
 {
     auto e = element.lock();
     if (e->flags.self_visible)
     {
         auto rt = renderTarget.lock();
-        auto d2dRenderTarget = rt->GetDirect2DRenderTarget();
+        auto d2dRenderTarget = r ? r : rt->GetDirect2DRenderTarget();
         if (m_bitmap) {
             d2dRenderTarget->DrawBitmap(
                 m_bitmap,
@@ -75,7 +75,7 @@ void SVG2DElementRenderer::Render(CRect bounds)
             );
         }
     }
-    GraphicsRenderer::Render(bounds);
+    GraphicsRenderer::Render(bounds, r);
 }
 
 SVG2DElementRenderer::~SVG2DElementRenderer()

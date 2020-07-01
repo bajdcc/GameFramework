@@ -440,6 +440,7 @@ namespace clib {
             return;
         if (!cjsgui::singleton().get_global().input_s->input_success)
             return;
+        permanents.last = 1;
         cjsgui::singleton().get_global().input_s->input_success = false;
         auto input = cjsgui::singleton().get_global().input_s->input_content;
         cjsgui::singleton().get_global().input_s->input_content.clear();
@@ -479,6 +480,7 @@ namespace clib {
                 if (v->empty()) {
                     timeout.queues.erase(timeout.queues.begin());
                 }
+                permanents.last = 2;
                 if (!callback->once) {
                     auto t = duration_cast<milliseconds>(system_clock::now() - timeout.startup_time + callback->time * 1ms).count();
                     if (timeout.queues.find(t) == timeout.queues.end()) {
@@ -543,10 +545,19 @@ namespace clib {
             if (permanents.state == 0 && !current_stack) {
                 permanents.state = 1;
             }
+            if (permanents.last == 4) {
+                cjsgui::singleton().end_render();
+            }
+            else if (cjsgui::singleton().get_global().drawing)
+                cjsgui::singleton().end_render();
+            permanents.last = 0;
             eval_input();
             eval_timeout();
             eval_http();
             eval_ui();
+            if (permanents.last == 4) {
+                cjsgui::singleton().begin_render();
+            }
         }
         return result;
     }
@@ -2126,8 +2137,11 @@ namespace clib {
             auto o = std::dynamic_pointer_cast<jsv_object>(v);
             if (o->get_object_type() == jsv_object::T_OBJ)
                 reuse.reuse_objects.push_back(o->clear());
-            if (o->get_object_type() == jsv_object::T_UI)
-                global_ui.elements.erase(JS_UI(o));
+            if (o->get_object_type() == jsv_object::T_UI) {
+                auto ui = JS_UI(o);
+                ui->clear();
+                global_ui.elements.erase(ui);
+            }
 ;        }
             break;
         case r_function:
