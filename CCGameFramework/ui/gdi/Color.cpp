@@ -24,6 +24,44 @@ cint CColor::Compare(CColor color) const
 
 CColor CColor::Parse(const CStringA& value)
 {
+    if (value.Left(4).CompareNoCase("rgba") == 0) {
+        static std::regex re(R"(rgba\((\d{1,3}),(\d{1,3}),(\d{1,3},(\d{1,3})\))", std::regex::ECMAScript | std::regex::icase);
+        std::smatch m;
+        auto s = std::string(value.GetString());
+        CColor c;
+        if (std::regex_match(s, m, re)) {
+            c.r = (BYTE)min(max(atoi(m[1].str().c_str()), 0), 255);
+            c.g = (BYTE)min(max(atoi(m[2].str().c_str()), 0), 255);
+            c.b = (BYTE)min(max(atoi(m[3].str().c_str()), 0), 255);
+            c.a = (BYTE)min(max(atoi(m[4].str().c_str()), 0), 255);
+        }
+        return c;
+    }
+    else if (value.Left(4).CompareNoCase("argb") == 0) {
+        static std::regex re(R"(argb\((\d{1,3}),(\d{1,3}),(\d{1,3},(\d{1,3})\))", std::regex::ECMAScript | std::regex::icase);
+        std::smatch m;
+        auto s = std::string(value.GetString());
+        CColor c;
+        if (std::regex_match(s, m, re)) {
+            c.a = (BYTE)min(max(atoi(m[1].str().c_str()), 0), 255);
+            c.r = (BYTE)min(max(atoi(m[2].str().c_str()), 0), 255);
+            c.g = (BYTE)min(max(atoi(m[3].str().c_str()), 0), 255);
+            c.b = (BYTE)min(max(atoi(m[4].str().c_str()), 0), 255);
+        }
+        return c;
+    }
+    else if (value.Left(3).CompareNoCase("rgb") == 0) {
+        static std::regex re(R"(rgb\((\d{1,3}),(\d{1,3}),(\d{1,3})\))", std::regex::ECMAScript | std::regex::icase);
+        std::smatch m;
+        auto s = std::string(value.GetString());
+        CColor c;
+        if (std::regex_match(s, m, re)) {
+            c.r = (BYTE)min(max(atoi(m[1].str().c_str()), 0), 255);
+            c.g = (BYTE)min(max(atoi(m[2].str().c_str()), 0), 255);
+            c.b = (BYTE)min(max(atoi(m[3].str().c_str()), 0), 255);
+        }
+        return c;
+    }
     auto code = "0123456789ABCDEF";
     if ((value.GetLength() == 7 || value.GetLength() == 9) && value[0] == '#')
     {

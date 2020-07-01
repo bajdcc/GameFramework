@@ -327,6 +327,7 @@ namespace clib {
                 }
             }
             global_state.renderTarget->EndDraw();
+            global_state.bitmap = nullptr;
             global_state.renderTarget_bitmap->GetBitmap(&global_state.bitmap);
             global_state.canvas.lock()->GetDirect2DRenderTarget()->DrawBitmap(
                 global_state.bitmap,

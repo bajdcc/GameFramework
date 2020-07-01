@@ -22,26 +22,10 @@ namespace clib {
     }
 
     static void set_location(const js_ui_base::ref &u, const jsv_object::ref& _this, const jsv_object::ref& obj, js_value_new* n) {
-        auto o = obj->get("left", n);
-        if (o && o->get_type() == r_number) {
-            _this->add("left", o);
-            u->left = obj2num(o);
-        }
-        o = obj->get("top", n);
-        if (o && o->get_type() == r_number) {
-            _this->add("top", o);
-            u->top = obj2num(o);
-        }
-        o = obj->get("width", n);
-        if (o && o->get_type() == r_number) {
-            _this->add("width", o);
-            u->width = obj2num(o);
-        }
-        o = obj->get("height", n);
-        if (o && o->get_type() == r_number) {
-            _this->add("height", o);
-            u->height = obj2num(o);
-        }
+        _this->add("left", obj->get("left", n));
+        _this->add("top", obj->get("top", n));
+        _this->add("width", obj->get("width", n));
+        _this->add("height", obj->get("height", n));
     }
 
     int jsv_ui::get_object_type() const
@@ -60,80 +44,18 @@ namespace clib {
                 auto u = std::make_shared<js_ui_label>();
                 element = u;
                 set_location(u, JS_O(shared_from_this()), obj, n);
-                auto o = obj->get("color", n);
-                if (o && o->get_type() == r_string) {
-                    add("color", o);
-                    u->set_color(JS_STR(o));
-                }
-                o = obj->get("content", n);
-                if (o && o->get_type() == r_string) {
-                    add("content", o);
-                    u->set_content(JS_S(o)->wstr);
-                }
-                o = obj->get("font", n);
-                if (o && !o->is_primitive()) {
-                    add("font", o);
-                    auto font = JS_O(o);
-                    auto f = u->get_font();
-                    auto o = font->get("family", n);
-                    if (o && o->get_type() == r_string) {
-                        f.fontFamily = CStringA(JS_STR(o).c_str());
-                        if (f.fontFamily.IsEmpty()) {
-                            f.fontFamily = _T("Microsoft Yahei");
-                        }
-                    }
-                    o = font->get("size", n);
-                    if (o && o->get_type() == r_number) {
-                        f.size = max(1, min(256, (cint)JS_NUM(o)));
-                    }
-                    o = font->get("bold", n);
-                    if (o && o->get_type() == r_boolean) {
-                        f.bold = JS_BOOL(o);
-                    }
-                    o = font->get("italic", n);
-                    if (o && o->get_type() == r_boolean) {
-                        f.italic = JS_BOOL(o);
-                    }
-                    o = font->get("underline", n);
-                    if (o && o->get_type() == r_boolean) {
-                        f.underline = JS_BOOL(o);
-                    }
-                    o = font->get("strikeline", n);
-                    if (o && o->get_type() == r_boolean) {
-                        f.strikeline = JS_BOOL(o);
-                    }
-                    o = font->get("antialias", n);
-                    if (o && o->get_type() == r_boolean) {
-                        f.antialias = JS_BOOL(o);
-                    }
-                    o = font->get("verticalAntialias", n);
-                    if (o && o->get_type() == r_boolean) {
-                        f.verticalAntialias = JS_BOOL(o);
-                    }
-                    u->set_font(f);
-                }
-                o = obj->get("align", n);
-                if (o && o->get_type() == r_string) {
-                    add("align", o);
-                    auto a = JS_STR(o);
-                    if (a == "left")
-                        u->set_align(Alignment::StringAlignmentNear);
-                    else if (a == "center")
-                        u->set_align(Alignment::StringAlignmentCenter);
-                    else if (a == "right")
-                        u->set_align(Alignment::StringAlignmentFar);
-                }
-                o = obj->get("valign", n);
-                if (o && o->get_type() == r_string) {
-                    add("valign", o);
-                    auto a = JS_STR(o);
-                    if (a == "top")
-                        u->set_valign(Alignment::StringAlignmentNear);
-                    else if (a == "center")
-                        u->set_valign(Alignment::StringAlignmentCenter);
-                    else if (a == "bottom")
-                        u->set_valign(Alignment::StringAlignmentFar);
-                }
+                add("color", obj->get("color", n));
+                add("content", obj->get("content", n));
+                add("font", obj->get("font", n));
+                add("size", obj->get("size", n));
+                add("bold", obj->get("bold", n));
+                add("italic", obj->get("italic", n));
+                add("underline", obj->get("underline", n));
+                add("strikeline", obj->get("strikeline", n));
+                add("antialias", obj->get("antialias", n));
+                add("verticalAntialias", obj->get("verticalAntialias", n));
+                add("align", obj->get("align", n));
+                add("valign", obj->get("valign", n));
                 return true;
             }
             if (type == "rect") {
@@ -141,16 +63,8 @@ namespace clib {
                 auto u = std::make_shared<js_ui_rect>();
                 element = u;
                 set_location(u, JS_O(shared_from_this()), obj, n);
-                auto o = obj->get("color", n);
-                if (o && o->get_type() == r_string) {
-                    add("color", o);
-                    u->set_color(JS_STR(o));
-                }
-                o = obj->get("fill", n);
-                if (o && o->get_type() == r_boolean) {
-                    add("color", o);
-                    u->set_fill(JS_BOOL(o));
-                }
+                add("color", obj->get("color", n));
+                add("fill", obj->get("fill", n));
                 return true;
             }
             if (type == "root") {
@@ -169,16 +83,20 @@ namespace clib {
 
     void jsv_ui::add(const std::string& s, const js_value::weak_ref& obj)
     {
+        if (!obj.lock())
+            return;
         jsv_object::add(s, obj);
         if (element) {
             if (s == "left")
                 element->left = obj2num(obj);
-            if (s == "top")
+            else if (s == "top")
                 element->top = obj2num(obj);
-            if (s == "width")
+            else if (s == "width")
                 element->width = obj2num(obj);
-            if (s == "height")
+            else if (s == "height")
                 element->height = obj2num(obj);
+            else
+                element->add(s, obj.lock());
         }
     }
 
@@ -188,12 +106,14 @@ namespace clib {
         if (element) {
             if (s == "left")
                 element->left = 0;
-            if (s == "top")
+            else if (s == "top")
                 element->top = 0;
-            if (s == "width")
+            else if (s == "width")
                 element->width = 0;
-            if (s == "height")
+            else if (s == "height")
                 element->height = 0;
+            else
+                element->remove(s);
         }
 
     }
@@ -276,36 +196,6 @@ namespace clib {
         return "label";
     }
 
-    void js_ui_label::set_color(const std::string& s)
-    {
-        label->SetColor(CColor::Parse(CStringA(s.c_str())));
-    }
-
-    void js_ui_label::set_content(const std::wstring& s)
-    {
-        label->SetText(CString(s.c_str()));
-    }
-
-    void js_ui_label::set_font(const Font& f)
-    {
-        label->SetFont(f);
-    }
-
-    Font js_ui_label::get_font() const
-    {
-        return label->GetFont();
-    }
-
-    void js_ui_label::set_align(Alignment a)
-    {
-        label->SetHorizontalAlignment(a);
-    }
-
-    void js_ui_label::set_valign(Alignment a)
-    {
-        label->SetVerticalAlignment(a);
-    }
-
     void js_ui_label::render()
     {
         auto bounds = CRect(left, top, left + width, top + height);
@@ -321,6 +211,104 @@ namespace clib {
     void js_ui_label::change_target()
     {
         label->GetRenderer()->SetRenderTarget(cjsgui::singleton().get_global().canvas.lock());
+    }
+
+    void js_ui_label::add(const std::string& s, const js_value::ref& obj)
+    {
+        if (s == "color") {
+            if (obj->get_type() == r_string)
+                label->SetColor(CColor::Parse(CStringA(JS_STR(obj).c_str())));
+        }
+        else if (s == "content") {
+            if (obj->get_type() == r_string)
+                label->SetText(CString(JS_S(obj)->wstr.c_str()));
+        }
+        else if (s == "font") {
+            if (obj && !obj->is_primitive()) {
+                auto font = JS_O(obj);
+                auto f = label->GetFont();
+                auto o = font->get("family", nullptr);
+                if (o && o->get_type() == r_string) {
+                    f.fontFamily = CStringA(JS_STR(o).c_str());
+                    if (f.fontFamily.IsEmpty()) {
+                        f.fontFamily = _T("Microsoft Yahei");
+                    }
+                }
+                o = font->get("size", nullptr);
+                if (o && o->get_type() == r_number) {
+                    f.size = max(1, min(256, (cint)JS_NUM(o)));
+                }
+                o = font->get("bold", nullptr);
+                if (o && o->get_type() == r_boolean) {
+                    f.bold = JS_BOOL(o);
+                }
+                o = font->get("italic", nullptr);
+                if (o && o->get_type() == r_boolean) {
+                    f.italic = JS_BOOL(o);
+                }
+                o = font->get("underline", nullptr);
+                if (o && o->get_type() == r_boolean) {
+                    f.underline = JS_BOOL(o);
+                }
+                o = font->get("strikeline", nullptr);
+                if (o && o->get_type() == r_boolean) {
+                    f.strikeline = JS_BOOL(o);
+                }
+                o = font->get("antialias", nullptr);
+                if (o && o->get_type() == r_boolean) {
+                    f.antialias = JS_BOOL(o);
+                }
+                o = font->get("verticalAntialias", nullptr);
+                if (o && o->get_type() == r_boolean) {
+                    f.verticalAntialias = JS_BOOL(o);
+                }
+                label->SetFont(f);
+            }
+        }
+        else if (s == "align") {
+            if (obj->get_type() == r_string) {
+                auto a = JS_STR(obj);
+                if (a == "left")
+                    label->SetHorizontalAlignment(Alignment::StringAlignmentNear);
+                else if (a == "center")
+                    label->SetHorizontalAlignment(Alignment::StringAlignmentCenter);
+                else if (a == "right")
+                    label->SetHorizontalAlignment(Alignment::StringAlignmentFar);
+            }
+        }
+        else if (s == "valign") {
+            if (obj->get_type() == r_string) {
+                auto a = JS_STR(obj);
+                if (a == "top")
+                    label->SetHorizontalAlignment(Alignment::StringAlignmentNear);
+                else if (a == "center")
+                    label->SetHorizontalAlignment(Alignment::StringAlignmentCenter);
+                else if (a == "bottom")
+                    label->SetHorizontalAlignment(Alignment::StringAlignmentFar);
+            }
+        }
+    }
+
+    void js_ui_label::remove(const std::string& s)
+    {
+        if (s == "color") {
+            label->SetColor(CColor());
+        }
+        else if (s == "content") {
+            label->SetText(CString());
+        }
+        else if (s == "font") {
+            Font f;
+            f.fontFamily = _T("Microsoft Yahei");
+            f.size = 12;
+            label->SetFont(f);
+        }
+        else if (s == "align") {
+            label->SetHorizontalAlignment(Alignment::StringAlignmentNear);
+        }
+        else if (s == "valign") {
+            label->SetVerticalAlignment(Alignment::StringAlignmentNear);
+        }
     }
 
     // ---------------------- RECT ----------------------
@@ -341,16 +329,6 @@ namespace clib {
         return "rect";
     }
 
-    void js_ui_rect::set_color(const std::string& s)
-    {
-        rect->SetColor(CColor::Parse(CStringA(s.c_str())));
-    }
-
-    void js_ui_rect::set_fill(bool b)
-    {
-        rect->SetFill(b);
-    }
-
     void js_ui_rect::render()
     {
         auto bounds = CRect(left, top, left + width, top + height);
@@ -366,5 +344,27 @@ namespace clib {
     void js_ui_rect::change_target()
     {
         rect->GetRenderer()->SetRenderTarget(cjsgui::singleton().get_global().canvas.lock());
+    }
+
+    void js_ui_rect::add(const std::string& s, const js_value::ref& obj)
+    {
+        if (s == "color") {
+            if (obj->get_type() == r_string)
+                rect->SetColor(CColor::Parse(CStringA(JS_STR(obj).c_str())));
+        }
+        else if (s == "fill") {
+            if (obj->get_type() == r_boolean)
+                rect->SetFill(JS_BOOL(obj));
+        }
+    }
+
+    void js_ui_rect::remove(const std::string& s)
+    {
+        if (s == "color") {
+            rect->SetColor(CColor());
+        }
+        else if (s == "fill") {
+            rect->SetFill(true);
+        }
     }
 }

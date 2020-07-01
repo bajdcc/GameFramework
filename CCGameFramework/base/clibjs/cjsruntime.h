@@ -249,6 +249,8 @@ namespace clib {
         virtual void render() = 0;
         virtual void clear() = 0;
         virtual void change_target() = 0;
+        virtual void add(const std::string&, const js_value::ref&) = 0;
+        virtual void remove(const std::string&) = 0;
         LONG left{ 0 };
         LONG top{ 0 };
         LONG width{ 0 };
@@ -262,15 +264,11 @@ namespace clib {
         js_ui_label();
         int get_type() override;
         const char* get_type_str() const override;
-        void set_color(const std::string&);
-        void set_content(const std::wstring &);
-        void set_font(const Font&);
-        Font get_font() const;
-        void set_align(Alignment);
-        void set_valign(Alignment);
         void render() override;
         void clear() override;
         void change_target() override;
+        void add(const std::string&, const js_value::ref&) override;
+        void remove(const std::string&) override;
     private:
         std::shared_ptr<SolidLabelElement> label;
     };
@@ -282,11 +280,11 @@ namespace clib {
         js_ui_rect();
         int get_type() override;
         const char* get_type_str() const override;
-        void set_color(const std::string&);
-        void set_fill(bool);
         void render() override;
         void clear() override;
         void change_target() override;
+        void add(const std::string&, const js_value::ref&) override;
+        void remove(const std::string&) override;
     private:
         std::shared_ptr<SolidBackgroundElement> rect;
     };
