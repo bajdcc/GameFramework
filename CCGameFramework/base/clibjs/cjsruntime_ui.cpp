@@ -45,6 +45,11 @@ namespace clib {
         return jsv_object::T_UI;
     }
 
+    void jsv_ui::add2(const std::string& s, const jsv_object::ref& obj, js_value_new* n)
+    {
+        add(s, obj->get(s, n));
+    }
+
     bool jsv_ui::init(const jsv_object::ref& obj, js_value_new* n)
     {
         auto v = obj->get("type", n);
@@ -55,35 +60,35 @@ namespace clib {
                 add("type", v);
                 element = std::make_shared<js_ui_label>();
                 set_location(element, JS_O(shared_from_this()), obj, n);
-                add("color", obj->get("color", n));
-                add("content", obj->get("content", n));
-                add("font", obj->get("font", n));
-                add("size", obj->get("size", n));
-                add("bold", obj->get("bold", n));
-                add("italic", obj->get("italic", n));
-                add("underline", obj->get("underline", n));
-                add("strikeline", obj->get("strikeline", n));
-                add("antialias", obj->get("antialias", n));
-                add("verticalAntialias", obj->get("verticalAntialias", n));
-                add("align", obj->get("align", n));
-                add("valign", obj->get("valign", n));
+                add2("color", obj, n);
+                add2("content", obj, n);
+                add2("font", obj, n);
+                add2("size", obj, n);
+                add2("bold", obj, n);
+                add2("italic", obj, n);
+                add2("underline", obj, n);
+                add2("strikeline", obj, n);
+                add2("antialias", obj, n);
+                add2("verticalAntialias", obj, n);
+                add2("align", obj, n);
+                add2("valign", obj, n);
                 return true;
             }
             if (type == "rect") {
                 add("type", v);
                 element = std::make_shared<js_ui_rect>();
                 set_location(element, JS_O(shared_from_this()), obj, n);
-                add("color", obj->get("color", n));
-                add("fill", obj->get("fill", n));
+                add2("color", obj, n);
+                add2("fill", obj, n);
                 return true;
             }
             if (type == "round") {
                 add("type", v);
                 element = std::make_shared<js_ui_round>();
                 set_location(element, JS_O(shared_from_this()), obj, n);
-                add("color", obj->get("color", n));
-                add("fill", obj->get("fill", n));
-                add("radius", obj->get("radius", n));
+                add2("color", obj, n);
+                add2("fill", obj, n);
+                add2("radius", obj, n);
                 return true;
             }
             if (type == "root") {
@@ -106,6 +111,15 @@ namespace clib {
             return;
         if (s == "type")return;
         jsv_object::add(s, obj);
+        if (s == "length") {
+            cjsgui::singleton().trigger_render();
+            return;
+        }
+        static std::regex num(R"(\d+)", std::regex::ECMAScript | std::regex::optimize);
+        if (std::regex_match(s, num)) {
+            cjsgui::singleton().trigger_render();
+            return;
+        }
         if (element) {
             if (s == "left")
                 element->left = obj2num(obj);
@@ -169,34 +183,43 @@ namespace clib {
         global_ui.frames = 0;
     }
 
-    void cjsruntime::eval_ui() {
-        if (current_stack || !stack.empty())
-            return;
-        permanents.last = 4;
-        if (global_ui.signals.empty()) {
-            global_ui.frames++;
-            static auto name = std::string("<signal::render>");
-            if (is_cached(name)) {
-                exec(name, "", false, false);
-                return;
+    int cjsruntime::eval_ui(bool signal) {
+        auto current = current_stack;
+        auto size = current_stack ? current_stack->stack.size() : 0;
+        auto stack_size = stack.size();
+        do {
+            if (signal) {
+                if (!global_ui.signals.empty()) {
+                    auto s = global_ui.signals.front();
+                    global_ui.signals.pop_front();
+                    std::stringstream ss;
+                    ss << "<signal::" << s << ">";
+                    auto name = ss.str();
+                    if (is_cached(name)) {
+                        exec(name, "", false, true);
+                        break;
+                    }
+                    ss.str("");
+                    ss << "sys.send_signal(\"" << s << "\");";
+                    exec(name, ss.str(), false, true);
+                }
             }
-            static auto code = std::string("sys.send_signal(\"render\");");
-            exec(name, code, false, false);
-        }
-        else {
-            auto s = global_ui.signals.front();
-            global_ui.signals.pop_front();
-            std::stringstream ss;
-            ss << "<signal::" << s << ">";
-            auto name = ss.str();
-            if (is_cached(name)) {
-                exec(name, "", false, false);
-                return;
+            else {
+                global_ui.frames++;
+                static auto name = std::string("<signal::render>");
+                if (is_cached(name)) {
+                    exec(name, "", false, true);
+                    break;
+                }
+                static auto code = std::string("sys.send_signal(\"render\");");
+                exec(name, code, false, true);
             }
-            ss.str("");
-            ss << "sys.send_signal(\"" << s << "\");";
-            exec(name, ss.str(), false, false);
-        }
+        } while (0);
+        auto r = call_internal(false, stack_size);
+        current_stack = current;
+        if (current_stack)
+            current_stack->stack.resize(size);
+        return r;
     }
 
     // ---------------------- LABEL ----------------------

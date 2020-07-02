@@ -81,6 +81,8 @@ namespace clib {
         int get_frame() const;
         void clear_frame();
 
+        void trigger_render();
+
     public:
         int play_music(const std::string& title, const std::string& ext, const std::vector<char>& data);
         int stop_music();
@@ -117,7 +119,7 @@ namespace clib {
         void reset();
         void clear_cache();
 
-        void begin_render();
+        bool begin_render();
         void end_render();
         void change_target(std::shared_ptr<Direct2DRenderTarget> renderTarget);
 

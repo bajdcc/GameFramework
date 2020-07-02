@@ -317,6 +317,8 @@ namespace clib {
         void remove(const std::string&) override;
         void change_target();
     private:
+        void add2(const std::string&, const jsv_object::ref&, js_value_new*);
+    private:
         std::shared_ptr<js_ui_base> element;
     };
 
@@ -573,7 +575,7 @@ namespace clib {
         void eval_input();
         void eval_timeout();
         void eval_http();
-        void eval_ui();
+        int eval_ui(bool signal);
 
         double api_setTimeout(int time, const jsv_function::ref &func, std::vector<js_value::weak_ref> args, uint32_t attr, bool once);
         void api_clearTimeout(double id);
@@ -672,7 +674,6 @@ namespace clib {
             int cycle{ 0 };
             int cycles{ 0 };
             int state{ 0 };
-            int last{ 0 };
             int gc_period{ 0 };
             // stack
             cjs_function::ref default_stack;

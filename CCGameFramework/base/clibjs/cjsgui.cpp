@@ -88,21 +88,16 @@ namespace clib {
             vm->clear_cache();
     }
 
-    void cjsgui::begin_render()
+    bool cjsgui::begin_render()
     {
-        if (!global_state.drawing && global_state.renderTarget) {
-            global_state.drawing = true;
-            global_state.render_queue_auto.clear();
-        }
+        global_state.drawing = false;
+        return global_state.renderTarget;
     }
 
     void cjsgui::end_render()
     {
-        if (global_state.drawing) {
-            global_state.drawing = false;
-            std::swap(global_state.render_queue, global_state.render_queue_auto);
-            global_state.render_queue_auto.clear();
-        }
+        std::swap(global_state.render_queue, global_state.render_queue_auto);
+        global_state.render_queue_auto.clear();
     }
 
     void cjsgui::change_target(std::shared_ptr<Direct2DRenderTarget> renderTarget)
@@ -341,9 +336,7 @@ namespace clib {
     void cjsgui::init_render_target()
     {
         if (global_state.canvas.lock() && !global_state.bound.IsRectEmpty()) {
-            if (global_state.drawing) {
-                global_state.drawing = false;
-            }
+            global_state.drawing = true;
             global_state.renderTarget_bitmap = global_state.canvas.lock()->CreateBitmapRenderTarget(
                 D2D1::SizeF((float)global_state.bound.Width(), (float)global_state.bound.Height()));
             global_state.renderTarget = global_state.renderTarget_bitmap;
@@ -1010,6 +1003,12 @@ namespace clib {
     {
         if (vm)
             vm->clear_frame();
+    }
+
+    void cjsgui::trigger_render()
+    {
+        if (!global_state.drawing)
+            global_state.drawing = true;
     }
 
     int cjsgui::play_music(const std::string& title, const std::string& ext, const std::vector<char>& data)
