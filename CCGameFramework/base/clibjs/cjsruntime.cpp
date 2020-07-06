@@ -539,7 +539,7 @@ namespace clib {
                 current_stack = nullptr;
             }
         }
-        if (cjsgui::singleton().get_global().drawing) {
+        if (cjsgui::singleton().get_global().drawing && permanents.state != 0) {
             if (cjsgui::singleton().begin_render()) {
                 result = eval_ui(false);
                 cjsgui::singleton().end_render();

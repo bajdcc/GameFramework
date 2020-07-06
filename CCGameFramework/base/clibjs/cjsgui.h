@@ -168,6 +168,9 @@ namespace clib {
         class screen_t {
         public:
             screen_t() = default;
+            int line{ 0 };
+            int view{ 0 };
+            std::vector<int> valid;
             std::vector<char> buffer;
             std::vector<uint32_t> colors_bg;
             std::vector<uint32_t> colors_fg;

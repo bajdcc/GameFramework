@@ -89,8 +89,12 @@ namespace clib {
     js_unit &js_unit::operator~() {
         if (t == u_token)
             return js_to_ref(builder->copy(this))->set_skip(true);
-        if (t == u_token_ref)
-            return js_to_ref(this)->set_marked(true);
+        if (t == u_token_ref) {
+            if (!js_to_ref(this)->marked)
+                return js_to_ref(this)->set_marked(true);
+            else
+                return js_to_ref(this)->set_skip(false);
+        }
         assert(!"invalid type");
         return *this;
     }

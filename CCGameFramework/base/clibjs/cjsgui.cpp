@@ -164,6 +164,8 @@ namespace clib {
         if (!screens[screen_id])
             return;
         auto& scr = *screens[screen_id].get();
+        auto& view = scr.view;
+        auto& line = scr.line;
         auto& cols = scr.cols;
         auto& rows = scr.rows;
         auto& buffer = scr.buffer;
@@ -176,10 +178,6 @@ namespace clib {
         auto& input_caret = scr.input_caret;
         auto& ptr_x = scr.ptr_x;
         auto& ptr_y = scr.ptr_y;
-        auto& ptr_rx = scr.ptr_rx;
-        auto& ptr_ry = scr.ptr_ry;
-        auto& ptr_mx = scr.ptr_mx;
-        auto& ptr_my = scr.ptr_my;
 
         int w = bounds.Width();
         int h = bounds.Height();
@@ -196,12 +194,13 @@ namespace clib {
         char sc[3] = { 0 };
         bool ascii = true;
         bool ascii_head = false;
+        auto view_end = min(view + rows, line + 1);
 
-        for (auto i = 0; i < rows; ++i) {
+        for (auto i = view; i < view_end; ++i) {
             for (auto j = 0; j < cols; ++j) {
                 ascii = true;
                 c = buffer[i * cols + j];
-                if (c < 0 && (i != rows - 1 || j != cols - 1)) {
+                if (c < 0 && (i != line || j != cols - 1)) {
                     WORD wd = (((BYTE)c) << 8) | ((BYTE)buffer[i * cols + j + 1]);
                     if (wd >= 0x8140 && wd <= 0xFEFE) { // GBK
                         if (j < cols - 1)
@@ -283,22 +282,14 @@ namespace clib {
                 input_ticks = 0;
             }
             if (input_caret) {
-                if (ptr_x <= cols - 1) {
+                if (ptr_y >= view && ptr_y <= view_end) {
+                    auto __y = ptr_y - view;
                     int _x = max((w - width) / 2, 0) + ptr_x * GUI_FONT_W;
-                    int _y = max((h - height) / 2, 0) + ptr_y * GUI_FONT_H;
+                    int _y = max((h - height) / 2, 0) + __y * GUI_FONT_H;
                     rt->CreateSolidColorBrush(D2D1::ColorF(color_fg_stack.back()), &b);
                     rt->DrawText(_T("_"), 1, brushes.cmdTF->textFormat,
                         D2D1::RectF((float)bounds.left + _x, (float)bounds.top + _y + GUI_FONT_H_1,
-                        (float)bounds.left + _x + GUI_FONT_W, (float)bounds.top + _y + GUI_FONT_H_2), b);
-                    b.Release();
-                }
-                else if (ptr_y < rows - 1) {
-                    int _x = max((w - width) / 2, 0);
-                    int _y = max((h - height) / 2, 0) + (ptr_y + 1) * GUI_FONT_H;
-                    rt->CreateSolidColorBrush(D2D1::ColorF(color_fg_stack.back()), &b);
-                    rt->DrawText(_T("_"), 1, brushes.cmdTF->textFormat,
-                        D2D1::RectF((float)bounds.left + _x, (float)bounds.top + _y + GUI_FONT_H_1,
-                        (float)bounds.left + _x + GUI_FONT_W, (float)bounds.top + _y + GUI_FONT_H_2), b);
+                            (float)bounds.left + _x + GUI_FONT_W, (float)bounds.top + _y + GUI_FONT_H_2), b);
                     b.Release();
                 }
             }
@@ -417,6 +408,9 @@ namespace clib {
         auto& scr = *screens[screen_ptr].get();
         auto& cols = scr.cols;
         auto& rows = scr.rows;
+        auto& view = scr.view;
+        auto& line = scr.line;
+        auto& valid = scr.valid;
         auto& buffer = scr.buffer;
         auto& color_bg = scr.color_bg;
         auto& color_fg = scr.color_fg;
@@ -465,7 +459,7 @@ namespace clib {
             return;
         }
 
-        if (!input_delay.empty()) {
+        if (!input_state && !input_delay.empty()) {
             auto delay = input_delay;
             delay.push_back(0);
             input_delay.clear();
@@ -475,13 +469,7 @@ namespace clib {
         if (c == 0)
             return;
         if (c == '\n') {
-            ptr_x = 0;
-            if (ptr_y == rows - 1) {
-                new_line();
-            }
-            else {
-                ptr_y++;
-            }
+            new_line();
         }
         else if (c == '\b') {
             auto ascii = true;
@@ -493,53 +481,60 @@ namespace clib {
                         ascii = false;
                     }
                 }
-            }
-            if (ptr_mx == -1 && ptr_my == -1 && ptr_x > 0) {
-                forward(ptr_x, ptr_y, false);
-                draw_char('\u0000');
-                if (!ascii) {
+                if (!input_state) {
                     forward(ptr_x, ptr_y, false);
-                    draw_char('\u0000');
-                }
-            }
-            else {
-                if (ptr_mx + ptr_my * cols < ptr_x + ptr_y * cols) {
-                    forward(ptr_x, ptr_y, false);
+                    valid[ptr_y]--;
                     draw_char('\u0000');
                     if (!ascii) {
                         forward(ptr_x, ptr_y, false);
+                        valid[ptr_y]--;
                         draw_char('\u0000');
                     }
-                    if (!(ptr_x == ptr_rx && ptr_y == ptr_ry)) {
-                        for (auto i = ptr_y * cols + ptr_x; i < ptr_ry * cols + ptr_rx; ++i) {
-                            buffer[i] = buffer[i + 1];
-                            colors_bg[i] = colors_bg[i + 1];
-                            colors_fg[i] = colors_fg[i + 1];
+                }
+                else {
+                    if (ptr_mx + ptr_my * cols < ptr_x + ptr_y * cols) {
+                        auto k = 1;
+                        forward(ptr_x, ptr_y, false);
+                        valid[ptr_y]--;
+                        draw_char('\u0000');
+                        if (!ascii && ptr_mx + ptr_my * cols < ptr_x + ptr_y * cols) {
+                            k++;
+                            forward(ptr_x, ptr_y, false);
+                            valid[ptr_y]--;
+                            draw_char('\u0000');
                         }
-                        buffer[ptr_ry * cols + ptr_rx] = '\0';
-                        colors_bg[ptr_ry * cols + ptr_rx] = color_bg;
-                        colors_fg[ptr_ry * cols + ptr_rx] = color_fg;
-                    }
-                    forward(ptr_rx, ptr_ry, false);
-                    if (!ascii) {
+                        view = max(0, ptr_y - rows);
+                        if (!(ptr_x == ptr_rx && ptr_y == ptr_ry)) {
+                            for (auto i = ptr_y * cols + ptr_x; i < ptr_ry * cols + ptr_rx - k + 1; ++i) {
+                                buffer[i] = buffer[i + k];
+                                colors_bg[i] = colors_bg[i + k];
+                                colors_fg[i] = colors_fg[i + k];
+                            }
+                            for (auto i = 0; i < k; i++) {
+                                buffer[ptr_ry * cols + ptr_rx - i] = '\0';
+                                colors_bg[ptr_ry * cols + ptr_rx - i] = color_bg;
+                                colors_fg[ptr_ry * cols + ptr_rx - i] = color_fg;
+                            }
+                        }
+                        auto y = ptr_ry;
                         forward(ptr_rx, ptr_ry, false);
+                        if (!ascii && ptr_mx + ptr_my * cols < ptr_rx + ptr_ry * cols) {
+                            forward(ptr_rx, ptr_ry, false);
+                        }
+                        if (y != ptr_ry) {
+                            line--;
+                            std::copy(valid.begin() + y, valid.end() - 1, valid.begin() + y + 1);
+                            std::copy(buffer.begin() + cols * y, buffer.end() - cols, buffer.begin() + cols * (y + 1));
+                            std::copy(colors_bg.begin() + cols * y, colors_bg.end() - cols, colors_bg.begin() + cols * (y + 1));
+                            std::copy(colors_fg.begin() + cols * y, colors_fg.end() - cols, colors_fg.begin() + cols * (y + 1));
+                            valid.resize(valid.size() - 1);
+                            buffer.resize(buffer.size() - cols);
+                            colors_bg.resize(colors_bg.size() - cols);
+                            colors_fg.resize(colors_fg.size() - cols);
+                        }
                     }
                 }
             }
-        }
-        else if (c == 0xff) {
-            if (ptr_rx + ptr_ry * cols > ptr_x + ptr_y * cols) {
-                move(false);
-                put_char('\b');
-            }
-        }
-        else if (c == '\u0002') {
-            ptr_x--;
-            while (ptr_x >= 0) {
-                draw_char('\u0000');
-                ptr_x--;
-            }
-            ptr_x = 0;
         }
         else if (c == '\r') {
             ptr_x = 0;
@@ -551,31 +546,75 @@ namespace clib {
             ptr_my = -1;
             ptr_rx = -1;
             ptr_ry = -1;
+            view = 0;
+            line = 0;
+
+            valid.push_back(0);
+            buffer.resize(cols);
             std::fill(buffer.begin(), buffer.end(), 0);
+            colors_bg.resize(cols);
+            color_bg = 0;
             std::fill(colors_bg.begin(), colors_bg.end(), color_bg);
+            colors_fg.resize(cols);
+            color_fg = MAKE_RGB(255, 255, 255);
             std::fill(colors_fg.begin(), colors_fg.end(), color_fg);
+            color_bg_stack.clear();
+            color_bg_stack.push_back(color_bg);
+            color_fg_stack.clear();
+            color_fg_stack.push_back(color_fg);
         }
         else {
-            auto rx = ptr_rx == -1 ? ptr_x : ptr_rx;
-            auto ry = ptr_ry == -1 ? ptr_y : ptr_ry;
-            auto end = rx == cols - 1 && ry == rows - 1;
-            auto nl = rx == ptr_x && rx == cols - 1;
-            if (end) {
-                if (nl) {
+            if (input_state) {
+                if (ptr_mx + ptr_my * cols <= ptr_x + ptr_y * cols &&
+                    ptr_x + ptr_y * cols <= ptr_rx + ptr_ry * cols) {
+                    auto last = ptr_y;
+                    for (auto i = last; i <= line; i++) {
+                        if (valid[i] != cols) {
+                            break;
+                        }
+                        last = i;
+                    }
+                    auto x = valid[last]++;
+                    if (x == cols - 1) {
+                        line++;
+                        valid.resize(valid.size() + 1);
+                        buffer.resize(buffer.size() + cols);
+                        colors_bg.resize(colors_bg.size() + cols);
+                        colors_fg.resize(colors_fg.size() + cols);
+                        std::copy_backward(valid.begin() + last + 1, valid.end() - 1, valid.begin() + last + 2);
+                        std::copy_backward(buffer.begin() + cols * (last + 1), buffer.end() - cols, buffer.begin() + cols * (last + 2));
+                        std::copy_backward(colors_bg.begin() + cols * (last + 1), colors_bg.end() - cols, colors_bg.begin() + cols * (last + 2));
+                        std::copy_backward(colors_fg.begin() + cols * (last + 1), colors_fg.end() - cols, colors_fg.begin() + cols * (last + 2));
+                        valid[last + 1] = 0;
+                        std::fill(buffer.begin() + cols * (last + 1), buffer.begin() + cols * (last + 2), 0);
+                        std::fill(colors_bg.begin() + cols * (last + 1), colors_bg.begin() + cols * (last + 2), color_bg);
+                        std::fill(colors_fg.begin() + cols * (last + 1), colors_fg.begin() + cols * (last + 2), color_fg);
+                    }
+                    auto end_x = x;
+                    auto end_y = last;
+                    std::copy_backward(buffer.begin() + cols * ptr_y + ptr_x, buffer.begin() + cols * end_y + end_x, buffer.begin() + cols * ptr_y + ptr_x + 1);
+                    std::copy_backward(colors_bg.begin() + cols * ptr_y + ptr_x, colors_bg.begin() + cols * end_y + end_x, colors_bg.begin() + cols * ptr_y + ptr_x + 1);
+                    std::copy_backward(colors_fg.begin() + cols * ptr_y + ptr_x, colors_fg.begin() + cols * end_y + end_x, colors_fg.begin() + cols * ptr_y + ptr_x + 1);
                     draw_char(c);
-                    new_line();
-                    ptr_x = 0;
-                }
-                else {
-                    new_line();
-                    ptr_y--;
-                    draw_char(c);
-                    ptr_x++;
+                    forward(ptr_x, ptr_y, true);
+                    auto view_end = min(view + rows, line + 1);
+                    if (ptr_y >= view_end) {
+                        view++;
+                    }
+                    forward(ptr_rx, ptr_ry, true);
                 }
             }
             else {
-                draw_char(c);
-                forward(ptr_x, ptr_y, true);
+                if (ptr_x != cols - 1) {
+                    valid.back() = ptr_x + 1;
+                    draw_char(c);
+                    forward(ptr_x, ptr_y, true);
+                }
+                else {
+                    valid.back() = cols;
+                    draw_char(c);
+                    new_line();
+                }
             }
         }
     }
@@ -591,6 +630,9 @@ namespace clib {
         auto& scr = *screens[screen_ptr].get();
         auto& cols = scr.cols;
         auto& rows = scr.rows;
+        auto& view = scr.view;
+        auto& line = scr.line;
+        auto& valid = scr.valid;
         auto& buffer = scr.buffer;
         auto& color_bg = scr.color_bg;
         auto& color_fg = scr.color_fg;
@@ -602,21 +644,60 @@ namespace clib {
         auto& ptr_ry = scr.ptr_ry;
         auto& ptr_mx = scr.ptr_mx;
         auto& ptr_my = scr.ptr_my;
+        auto& input_state = scr.input_state;
 
-        if (ptr_my != -1) {
-            if (ptr_my == 0) {
-                ptr_mx = ptr_my = 0;
-            }
-            else {
-                ptr_my--;
+        if (input_state) {
+            if (ptr_mx + ptr_my * cols <= ptr_x + ptr_y * cols &&
+                ptr_x + ptr_y * cols <= ptr_rx + ptr_ry * cols) {
+                auto last = ptr_y;
+                for (auto i = last; i <= line; i++) {
+                    if (valid[i] != cols) {
+                        break;
+                    }
+                    last = i;
+                }
+                line++;
+                valid.resize(valid.size() + 1);
+                buffer.resize(buffer.size() + cols);
+                colors_bg.resize(colors_bg.size() + cols);
+                colors_fg.resize(colors_fg.size() + cols);
+                std::copy_backward(valid.begin() + last + 1, valid.end() - 1, valid.begin() + last + 2);
+                std::copy_backward(buffer.begin() + cols * (last + 1), buffer.end() - cols, buffer.begin() + cols * (last + 2));
+                std::copy_backward(colors_bg.begin() + cols * (last + 1), colors_bg.end() - cols, colors_bg.begin() + cols * (last + 2));
+                std::copy_backward(colors_fg.begin() + cols * (last + 1), colors_fg.end() - cols, colors_fg.begin() + cols * (last + 2));
+                std::fill(buffer.begin() + cols * (last + 1), buffer.begin() + cols * (last + 2), 0);
+                std::fill(colors_bg.begin() + cols * (last + 1), colors_bg.begin() + cols * (last + 2), color_bg);
+                std::fill(colors_fg.begin() + cols * (last + 1), colors_fg.begin() + cols * (last + 2), color_fg);
+                auto end_x = valid[last];
+                auto end_y = last;
+                auto n = cols - valid[ptr_y];
+                valid[last] += n;
+                std::copy_backward(buffer.begin() + cols * ptr_y + ptr_x, buffer.begin() + cols * end_y + end_x, buffer.begin() + cols * ptr_y + ptr_x + n);
+                std::copy_backward(colors_bg.begin() + cols * ptr_y + ptr_x, colors_bg.begin() + cols * end_y + end_x, colors_bg.begin() + cols * ptr_y + ptr_x + n);
+                std::copy_backward(colors_fg.begin() + cols * ptr_y + ptr_x, colors_fg.begin() + cols * end_y + end_x, colors_fg.begin() + cols * ptr_y + ptr_x + n);
+                ptr_y++;
+                ptr_x = 0;
+                if (ptr_ry > last)
+                    ptr_ry++;
+                else {
+                    ptr_rx = valid[last];
+                }
             }
         }
-        memcpy(buffer.data(), buffer.data() + cols, (uint)cols * (rows - 1));
-        std::fill(buffer.begin() + cols * (rows - 1), buffer.end(), 0);
-        memcpy(colors_bg.data(), colors_bg.data() + cols, (uint)cols * (rows - 1) * sizeof(uint32_t));
-        std::fill(colors_bg.begin() + cols * (rows - 1), colors_bg.end(), color_bg);
-        memcpy(colors_fg.data(), colors_fg.data() + cols, (uint)cols * (rows - 1) * sizeof(uint32_t));
-        std::fill(colors_fg.begin() + cols * (rows - 1), colors_fg.end(), color_fg);
+        else {
+            valid.back() = ptr_x;
+            valid.push_back(0);
+            ptr_x = 0;
+            ptr_y++;
+            line++;
+            view = max(view, line - rows + 1);
+            buffer.resize(buffer.size() + cols);
+            colors_bg.resize(colors_bg.size() + cols);
+            colors_fg.resize(colors_fg.size() + cols);
+            std::fill(buffer.begin() + cols * line, buffer.end(), 0);
+            std::fill(colors_bg.begin() + cols * line, colors_bg.end(), color_bg);
+            std::fill(colors_fg.begin() + cols * line, colors_fg.end(), color_fg);
+        }
     }
 
     void cjsgui::draw_char(const char& c) {
@@ -637,16 +718,6 @@ namespace clib {
         auto& ptr_ry = scr.ptr_ry;
         auto& size = scr.size;
 
-        if (input_state && c) {
-            forward(ptr_rx, ptr_ry, true);
-            if (!(ptr_x == ptr_rx && ptr_y == ptr_ry)) {
-                for (auto i = ptr_ry * cols + ptr_rx; i > ptr_y * cols + ptr_x; --i) {
-                    buffer[i] = buffer[i - 1];
-                    colors_bg[i] = colors_bg[i - 1];
-                    colors_fg[i] = colors_fg[i - 1];
-                }
-            }
-        }
         buffer[ptr_y * cols + ptr_x] = c;
         colors_bg[ptr_y * cols + ptr_x] = color_bg;
         colors_fg[ptr_y * cols + ptr_x] = color_fg;
@@ -681,7 +752,10 @@ namespace clib {
         auto& ptr_ry = scr.ptr_ry;
         auto& ptr_mx = scr.ptr_mx;
         auto& ptr_my = scr.ptr_my;
+        auto& input_state = scr.input_state;
 
+        if (!input_state)
+            return;
         if (left) {
             if (ptr_mx + ptr_my * cols < ptr_x + ptr_y * cols) {
                 forward(ptr_x, ptr_y, false);
@@ -697,29 +771,11 @@ namespace clib {
     void cjsgui::forward(int& x, int& y, bool forward) {
         auto& scr = *screens[screen_ptr].get();
         auto& cols = scr.cols;
-        auto& rows = scr.rows;
-        auto& buffer = scr.buffer;
-        auto& color_bg = scr.color_bg;
-        auto& color_fg = scr.color_fg;
-        auto& colors_bg = scr.colors_bg;
-        auto& colors_fg = scr.colors_fg;
-        auto& input_state = scr.input_state;
-        auto& input_ticks = scr.input_ticks;
-        auto& input_caret = scr.input_caret;
-        auto& ptr_x = scr.ptr_x;
-        auto& ptr_y = scr.ptr_y;
-        auto& ptr_rx = scr.ptr_rx;
-        auto& ptr_ry = scr.ptr_ry;
-        auto& ptr_mx = scr.ptr_mx;
-        auto& ptr_my = scr.ptr_my;
-        auto& size = scr.size;
 
         if (forward) {
             if (x == cols - 1) {
                 x = 0;
-                if (y != rows - 1) {
-                    y++;
-                }
+                y++;
             }
             else {
                 x++;
@@ -787,16 +843,9 @@ namespace clib {
         auto& color_fg_stack = scr.color_fg_stack;
         auto& size = scr.size;
         input.id = n;
-        buffer.resize(size);
-        std::fill(buffer.begin(), buffer.end(), 0);
-        colors_bg.resize(size);
-        color_bg = 0;
-        std::fill(colors_bg.begin(), colors_bg.end(), color_bg);
-        colors_fg.resize(size);
-        color_fg = MAKE_RGB(255, 255, 255);
-        std::fill(colors_fg.begin(), colors_fg.end(), color_fg);
-        color_bg_stack.push_back(color_bg);
-        color_fg_stack.push_back(color_fg);
+        screen_ptr = 0;
+        put_char('\f');
+        screen_ptr = -1;
         if (vm) {
             CString s;
             s.Format(L"初始化屏幕（%d）", n);
@@ -896,26 +945,7 @@ namespace clib {
         rows = max(10, min(r, 60));
         cols = max(20, min(c, 200));
         ATLTRACE("[SYSTEM] GUI  | Resize: from (%d, %d) to (%d, %d)\n", old_rows, old_cols, rows, cols);
-        size = rows * cols;
-        auto old_buffer = buffer;
-        buffer.resize(size);
-        std::fill(buffer.begin(), buffer.end(), 0);
-        auto old_bg = colors_bg;
-        colors_bg.resize(size);
-        std::fill(colors_bg.begin(), colors_bg.end(), color_bg);
-        auto old_fg = colors_fg;
-        colors_fg.resize(size);
-        std::fill(colors_fg.begin(), colors_fg.end(), color_fg);
-        auto min_rows = min(old_rows, rows);
-        auto min_cols = min(old_cols, cols);
-        auto delta_rows = old_rows - min_rows;
-        for (int i = 0; i < min_rows; ++i) {
-            for (int j = 0; j < min_cols; ++j) {
-                buffer[i * cols + j] = old_buffer[(delta_rows + i) * old_cols + j];
-                colors_bg[i * cols + j] = old_bg[(delta_rows + i) * old_cols + j];
-                colors_fg[i * cols + j] = old_fg[(delta_rows + i) * old_cols + j];
-            }
-        }
+        // ...
         ptr_x = min(ptr_x, cols);
         ptr_y = min(ptr_y, rows);
         ptr_mx = min(ptr_mx, cols);
@@ -938,7 +968,23 @@ namespace clib {
             break;
         case D_HTOP:
             break;
-        case D_HANDLE:
+        case D_HANDLE: {
+            CString s;
+            const auto& scr = *screens[screen_id].get();
+            s.AppendFormat(L"Screen: %d, Rows: %d, Cols: %d, View: %d, Line: %d\n", screen_id, scr.rows, scr.cols, scr.view, scr.line);
+            s.AppendFormat(L"Ptr: (%d, %d), Left: (%d, %d), Right: (%d, %d)\n", scr.ptr_y, scr.ptr_x, scr.ptr_my, scr.ptr_mx, scr.ptr_ry, scr.ptr_rx);
+            for (auto i = max(scr.ptr_y - 1, 0); i <= min(scr.ptr_y + 1, scr.line); i++) {
+                s.AppendFormat(L"LINE #%d | V= %2d, ", i, scr.valid[i]);
+                for (auto j = 0; j < scr.cols; j++) {
+                    if (scr.buffer[i * scr.cols + j])
+                        s.AppendFormat(L"%02X", (BYTE)scr.buffer[i * scr.cols + j]);
+                    else
+                        s.Append(L"  ");
+                }
+                s.Append(L"\n");
+            }
+            return s;
+        }
             break;
         case D_WINDOW:
             break;
@@ -1109,6 +1155,11 @@ namespace clib {
 
     extern const wchar_t* mapVirtKey[];
 
+    static bool js_key_pressing(cint code)
+    {
+        return (GetKeyState((int)code) & 0xF0) != 0;
+    }
+
     void cjsgui::input(int c) {
         auto& scr = *screens[screen_ptr].get();
         auto& cols = scr.cols;
@@ -1212,7 +1263,19 @@ namespace clib {
                 move(true);
                 return;
             case VK_UP:
-                C = (char)-10;
+            {
+                if (!input_state || js_key_pressing(VK_CONTROL)) {
+                    auto& scr = *screens[screen_id].get();
+                    auto& view = scr.view;
+                    auto& line = scr.line;
+                    auto& rows = scr.rows;
+                    view = max(0, view - 1);
+                    return;
+                }
+                else {
+                    C = (char)-10;
+                }
+            }
                 break;
             case VK_RIGHT:
                 // C = (char) -13;
@@ -1220,15 +1283,49 @@ namespace clib {
                 move(false);
                 return;
             case VK_DOWN:
-                C = (char)-11;
+            {
+                if (!input_state || js_key_pressing(VK_CONTROL)) {
+                    auto& scr = *screens[screen_id].get();
+                    auto& view = scr.view;
+                    auto& line = scr.line;
+                    auto& rows = scr.rows;
+                    view = min(max(line - rows, 0), view + 1);
+                    return;
+                }
+                else {
+                    C = (char)-11;
+                }
+            }
                 break;
             case VK_HOME:
-                ptr_x = ptr_mx;
-                ptr_y = ptr_my;
+            {
+                if (!input_state || js_key_pressing(VK_CONTROL)) {
+                    auto& scr = *screens[screen_id].get();
+                    auto& view = scr.view;
+                    view = 0;
+                    return;
+                }
+                else {
+                    ptr_x = ptr_mx;
+                    ptr_y = ptr_my;
+                }
+            }
                 return;
             case VK_END:
-                ptr_x = ptr_rx;
-                ptr_y = ptr_ry;
+            {
+                if (!input_state || js_key_pressing(VK_CONTROL)) {
+                    auto& scr = *screens[screen_id].get();
+                    auto& view = scr.view;
+                    auto& line = scr.line;
+                    auto& rows = scr.rows;
+                    view = max(0, line - rows);
+                    return;
+                }
+                else {
+                    ptr_x = ptr_rx;
+                    ptr_y = ptr_ry;
+                }
+            }
                 return;
             case VK_DELETE:
                 put_char(0xff);
@@ -1239,9 +1336,43 @@ namespace clib {
                 return;
             case VK_BACK:
                 return;
-            case VK_RETURN:
-                input('\n');
+            case VK_NEXT: // page down
+            {
+                auto& scr = *screens[screen_id].get();
+                auto& view = scr.view;
+                auto& line = scr.line;
+                auto& rows = scr.rows;
+                view = min(line, view + rows);
+            }
                 return;
+            case VK_PRIOR: // page up
+            {
+                auto& scr = *screens[screen_id].get();
+                auto& view = scr.view;
+                auto& line = scr.line;
+                auto& rows = scr.rows;
+                view = max(0, view - rows);
+            }
+                return;
+            case VK_RETURN:
+                if (js_key_pressing(VK_CONTROL)) {
+                    if (!global_state.input_s->input_success) {
+                        ptr_x = ptr_rx;
+                        ptr_y = ptr_ry;
+                        put_char('\n');
+                        if (global_state.input_s->input_content.empty())
+                            global_state.input_s->input_content = input_buffer();
+                        global_state.input_s->input_read_ptr = 0;
+                        global_state.input_s->input_success = true;
+                        global_state.input_s->input_code = 0;
+                        input_state = false;
+                    }
+                    return;
+                }
+                else {
+                    input('\n');
+                    return;
+                }
             /*case 0x71: // SHIFT
                 return;
             case 0x72: // CTRL
@@ -1254,20 +1385,6 @@ namespace clib {
                 return;
             case VK_MENU: // ALT
                 return;
-            case VK_F5: {
-                if (!global_state.input_s->input_success) {
-                    ptr_x = ptr_rx;
-                    ptr_y = ptr_ry;
-                    put_char('\n');
-                    global_state.input_s->input_content = input_buffer();
-                    global_state.input_s->input_read_ptr = 0;
-                    global_state.input_s->input_success = true;
-                    global_state.input_s->input_code = 0;
-                    input_state = false;
-                }
-                return;
-            }
-                      break;
             default:
 #if LOG_VM
             {
@@ -1423,18 +1540,6 @@ namespace clib {
             static int cfg;
             cfg = (uint32_t)std::stoul(s.substr(1), nullptr, 10);
             switch (cfg) {
-            case 0: { // 换行
-                if (ptr_x > 0) {
-                    ptr_x = 0;
-                    if (ptr_y == rows - 1) {
-                        new_line();
-                    }
-                    else {
-                        ptr_y++;
-                    }
-                }
-            }
-                    break;
             case 1: // 保存背景色
                 color_bg_stack.push_back(color_bg);
                 break;

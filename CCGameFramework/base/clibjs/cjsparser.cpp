@@ -432,10 +432,10 @@ namespace clib {
         singleExpression = assignmentExpression;
         literal = _K_NULL | _K_UNDEFINED | _K_TRUE | _K_FALSE | _STRING | _REGEX | _NUMBER;
         commaList = *commaList + _T_COMMA;
-        arrayLiteral = _T_LSQUARE + *elementList + _T_RSQUARE;
+        arrayLiteral = _T_LSQUARE + *elementList + ~~~_T_RSQUARE;
         elementList = *(elementList) + *commaList + arrayElement + *commaList;
         arrayElement = *_T_ELLIPSIS + singleExpression;
-        objectLiteral = _T_LBRACE + *propertyAssignments + *~_T_COMMA + _T_RBRACE;
+        objectLiteral = _T_LBRACE + *propertyAssignments + *~_T_COMMA + ~~~_T_RBRACE;
         identifierName = _ID | reservedWord;
         reservedWord = keyword | _K_TRUE | _K_FALSE;
         numericLiteral = _NUMBER;
