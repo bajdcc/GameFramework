@@ -473,7 +473,9 @@ namespace clib {
         }
         else if (c == '\b') {
             auto ascii = true;
-            if (ptr_x != 0 || ptr_y != 0) {
+            if ((ptr_x != 0 || ptr_y != 0) &&
+                ptr_mx + ptr_my * cols < ptr_x + ptr_y * cols &&
+                ptr_x + ptr_y * cols <= ptr_rx + ptr_ry * cols) {
                 auto cc = buffer[ptr_y * cols + ptr_x - 1];
                 if (cc < 0) {
                     WORD wd = (((BYTE)cc) << 8) | ((BYTE)buffer[ptr_y * cols + ptr_x]);
@@ -483,55 +485,90 @@ namespace clib {
                 }
                 if (!input_state) {
                     forward(ptr_x, ptr_y, false);
+                    if (ptr_x == cols)
+                        ptr_x--;
                     valid[ptr_y]--;
                     draw_char('\u0000');
                     if (!ascii) {
                         forward(ptr_x, ptr_y, false);
+                        if (ptr_x == cols)
+                            ptr_x--;
                         valid[ptr_y]--;
                         draw_char('\u0000');
                     }
                 }
                 else {
-                    if (ptr_mx + ptr_my * cols < ptr_x + ptr_y * cols) {
-                        auto k = 1;
+                    if (ptr_mx + ptr_my * cols < ptr_x + ptr_y * cols && ptr_x + ptr_y * cols <= ptr_rx + ptr_ry * cols) {
+                        auto last = ptr_y;
+                        for (auto i = last; i <= line; i++) {
+                            if (valid[i] != cols) {
+                                last = i;
+                                break;
+                            }
+                            last = i;
+                        }
+                        auto x2 = ptr_x;
+                        auto y2 = ptr_y;
                         forward(ptr_x, ptr_y, false);
-                        valid[ptr_y]--;
-                        draw_char('\u0000');
-                        if (!ascii && ptr_mx + ptr_my * cols < ptr_x + ptr_y * cols) {
-                            k++;
-                            forward(ptr_x, ptr_y, false);
-                            valid[ptr_y]--;
-                            draw_char('\u0000');
+                        if (ptr_x == cols) {
+                            ptr_x--;
                         }
+                            if (!ascii && ptr_mx + ptr_my * cols < ptr_x + ptr_y * cols) {
+                                auto x = ptr_x;
+                                auto y = ptr_y;
+                                forward(ptr_x, ptr_y, false);
+                                if (y2 == ptr_y || ptr_x == cols) {
+                                    if (ptr_x == cols)
+                                        ptr_x--;
+                                }
+                                else {
+                                    ptr_x = x;
+                                    ptr_y = y;
+                                }
+                            }
+                        auto k = cols * y2 + x2 - (cols * ptr_y + ptr_x);
                         view = max(0, ptr_y - rows);
-                        if (!(ptr_x == ptr_rx && ptr_y == ptr_ry)) {
-                            for (auto i = ptr_y * cols + ptr_x; i < ptr_ry * cols + ptr_rx - k + 1; ++i) {
-                                buffer[i] = buffer[i + k];
-                                colors_bg[i] = colors_bg[i + k];
-                                colors_fg[i] = colors_fg[i + k];
-                            }
-                            for (auto i = 0; i < k; i++) {
-                                buffer[ptr_ry * cols + ptr_rx - i] = '\0';
-                                colors_bg[ptr_ry * cols + ptr_rx - i] = color_bg;
-                                colors_fg[ptr_ry * cols + ptr_rx - i] = color_fg;
-                            }
-                        }
-                        auto y = ptr_ry;
-                        forward(ptr_rx, ptr_ry, false);
-                        if (!ascii && ptr_mx + ptr_my * cols < ptr_rx + ptr_ry * cols) {
-                            forward(ptr_rx, ptr_ry, false);
-                        }
-                        if (y != ptr_ry) {
+                        auto x = valid[last];
+                        auto end_x = x;
+                        auto end_y = last;
+                        std::copy(buffer.begin() + cols * y2 + x2, buffer.begin() + cols * end_y + end_x, buffer.begin() + cols * ptr_y + ptr_x);
+                        std::copy(colors_bg.begin() + cols * y2 + x2, colors_bg.begin() + cols * end_y + end_x, colors_bg.begin() + cols * ptr_y + ptr_x);
+                        std::copy(colors_fg.begin() + cols * y2 + x2, colors_fg.begin() + cols * end_y + end_x, colors_fg.begin() + cols * ptr_y + ptr_x);
+                        if (x < k) {
                             line--;
-                            std::copy(valid.begin() + y, valid.end() - 1, valid.begin() + y + 1);
-                            std::copy(buffer.begin() + cols * y, buffer.end() - cols, buffer.begin() + cols * (y + 1));
-                            std::copy(colors_bg.begin() + cols * y, colors_bg.end() - cols, colors_bg.begin() + cols * (y + 1));
-                            std::copy(colors_fg.begin() + cols * y, colors_fg.end() - cols, colors_fg.begin() + cols * (y + 1));
+                            if (last == y2) {
+                                valid[ptr_y] += x;
+                            }
+                            else {
+                                valid[ptr_y] = cols;
+                                valid[last - 1] += x - k;
+                            }
+                            std::copy(valid.begin() + last + 1, valid.end(), valid.begin() + last);
+                            std::copy(buffer.begin() + cols * (last + 1), buffer.end(), buffer.begin() + cols * last);
+                            std::copy(colors_bg.begin() + cols * (last + 1), colors_bg.end(), colors_bg.begin() + cols * last);
+                            std::copy(colors_fg.begin() + cols * (last + 1), colors_fg.end(), colors_fg.begin() + cols * last);
                             valid.resize(valid.size() - 1);
                             buffer.resize(buffer.size() - cols);
                             colors_bg.resize(colors_bg.size() - cols);
                             colors_fg.resize(colors_fg.size() - cols);
+                            std::fill(buffer.begin() + (cols * end_y + end_x - k), buffer.begin() + cols * end_y, 0);
+                            std::fill(colors_bg.begin() + (cols * end_y + end_x - k), colors_bg.begin() + cols * end_y, color_bg);
+                            std::fill(colors_fg.begin() + (cols * end_y + end_x - k), colors_fg.begin() + cols * end_y, color_fg);
                         }
+                        else {
+                            if (x2 == 0 && ptr_y != last) {
+                                valid[ptr_y] = min(cols, valid[ptr_y] + k);
+                                valid[last] -= k;
+                            }
+                            else {
+                                valid[last] -= k;
+                            }
+                            std::fill(buffer.begin() + (cols * end_y + end_x - k), buffer.begin() + cols * end_y + end_x, 0);
+                            std::fill(colors_bg.begin() + (cols * end_y + end_x - k), colors_bg.begin() + cols * end_y + end_x, color_bg);
+                            std::fill(colors_fg.begin() + (cols * end_y + end_x - k), colors_fg.begin() + cols * end_y + end_x, color_fg);
+                        }
+                        ptr_ry = line;
+                        ptr_rx = valid[line];
                     }
                 }
             }
@@ -570,6 +607,7 @@ namespace clib {
                     auto last = ptr_y;
                     for (auto i = last; i <= line; i++) {
                         if (valid[i] != cols) {
+                            last = i;
                             break;
                         }
                         last = i;
@@ -581,10 +619,10 @@ namespace clib {
                         buffer.resize(buffer.size() + cols);
                         colors_bg.resize(colors_bg.size() + cols);
                         colors_fg.resize(colors_fg.size() + cols);
-                        std::copy_backward(valid.begin() + last + 1, valid.end() - 1, valid.begin() + last + 2);
-                        std::copy_backward(buffer.begin() + cols * (last + 1), buffer.end() - cols, buffer.begin() + cols * (last + 2));
-                        std::copy_backward(colors_bg.begin() + cols * (last + 1), colors_bg.end() - cols, colors_bg.begin() + cols * (last + 2));
-                        std::copy_backward(colors_fg.begin() + cols * (last + 1), colors_fg.end() - cols, colors_fg.begin() + cols * (last + 2));
+                        std::copy_backward(valid.begin() + last + 1, valid.end() - 1, valid.end());
+                        std::copy_backward(buffer.begin() + cols * (last + 1), buffer.end() - cols, buffer.end());
+                        std::copy_backward(colors_bg.begin() + cols * (last + 1), colors_bg.end() - cols, buffer.end());
+                        std::copy_backward(colors_fg.begin() + cols * (last + 1), colors_fg.end() - cols, buffer.end());
                         valid[last + 1] = 0;
                         std::fill(buffer.begin() + cols * (last + 1), buffer.begin() + cols * (last + 2), 0);
                         std::fill(colors_bg.begin() + cols * (last + 1), colors_bg.begin() + cols * (last + 2), color_bg);
@@ -592,9 +630,9 @@ namespace clib {
                     }
                     auto end_x = x;
                     auto end_y = last;
-                    std::copy_backward(buffer.begin() + cols * ptr_y + ptr_x, buffer.begin() + cols * end_y + end_x, buffer.begin() + cols * ptr_y + ptr_x + 1);
-                    std::copy_backward(colors_bg.begin() + cols * ptr_y + ptr_x, colors_bg.begin() + cols * end_y + end_x, colors_bg.begin() + cols * ptr_y + ptr_x + 1);
-                    std::copy_backward(colors_fg.begin() + cols * ptr_y + ptr_x, colors_fg.begin() + cols * end_y + end_x, colors_fg.begin() + cols * ptr_y + ptr_x + 1);
+                    std::copy_backward(buffer.begin() + cols * ptr_y + ptr_x, buffer.begin() + cols * end_y + end_x + 1, buffer.begin() + cols * end_y + end_x + 2);
+                    std::copy_backward(colors_bg.begin() + cols * ptr_y + ptr_x, colors_bg.begin() + cols * end_y + end_x + 1, colors_bg.begin() + cols * end_y + end_x + 2);
+                    std::copy_backward(colors_fg.begin() + cols * ptr_y + ptr_x, colors_fg.begin() + cols * end_y + end_x + 1, colors_fg.begin() + cols * end_y + end_x + 2);
                     draw_char(c);
                     forward(ptr_x, ptr_y, true);
                     auto view_end = min(view + rows, line + 1);
@@ -652,36 +690,61 @@ namespace clib {
                 auto last = ptr_y;
                 for (auto i = last; i <= line; i++) {
                     if (valid[i] != cols) {
+                        last = i;
                         break;
                     }
                     last = i;
                 }
-                line++;
-                valid.resize(valid.size() + 1);
-                buffer.resize(buffer.size() + cols);
-                colors_bg.resize(colors_bg.size() + cols);
-                colors_fg.resize(colors_fg.size() + cols);
-                std::copy_backward(valid.begin() + last + 1, valid.end() - 1, valid.begin() + last + 2);
-                std::copy_backward(buffer.begin() + cols * (last + 1), buffer.end() - cols, buffer.begin() + cols * (last + 2));
-                std::copy_backward(colors_bg.begin() + cols * (last + 1), colors_bg.end() - cols, colors_bg.begin() + cols * (last + 2));
-                std::copy_backward(colors_fg.begin() + cols * (last + 1), colors_fg.end() - cols, colors_fg.begin() + cols * (last + 2));
-                std::fill(buffer.begin() + cols * (last + 1), buffer.begin() + cols * (last + 2), 0);
-                std::fill(colors_bg.begin() + cols * (last + 1), colors_bg.begin() + cols * (last + 2), color_bg);
-                std::fill(colors_fg.begin() + cols * (last + 1), colors_fg.begin() + cols * (last + 2), color_fg);
-                auto end_x = valid[last];
-                auto end_y = last;
-                auto n = cols - valid[ptr_y];
-                valid[last] += n;
-                std::copy_backward(buffer.begin() + cols * ptr_y + ptr_x, buffer.begin() + cols * end_y + end_x, buffer.begin() + cols * ptr_y + ptr_x + n);
-                std::copy_backward(colors_bg.begin() + cols * ptr_y + ptr_x, colors_bg.begin() + cols * end_y + end_x, colors_bg.begin() + cols * ptr_y + ptr_x + n);
-                std::copy_backward(colors_fg.begin() + cols * ptr_y + ptr_x, colors_fg.begin() + cols * end_y + end_x, colors_fg.begin() + cols * ptr_y + ptr_x + n);
-                ptr_y++;
-                ptr_x = 0;
-                if (ptr_ry > last)
-                    ptr_ry++;
-                else {
-                    ptr_rx = valid[last];
+                if (ptr_x > valid[last]) {
+                    auto end_x = valid[last];
+                    auto end_y = last;
+                    auto len = valid[ptr_y] - ptr_x;
+                    valid[last] += valid[ptr_y] - ptr_x;
+                    valid[ptr_y] = ptr_x;
+                    std::copy_backward(buffer.begin() + cols * ptr_y + ptr_x, buffer.begin() + cols * end_y + end_x, buffer.begin() + cols * last + valid[last]);
+                    std::copy_backward(colors_bg.begin() + cols * ptr_y + ptr_x, colors_bg.begin() + cols * end_y + end_x, colors_bg.begin() + cols * last + valid[last]);
+                    std::copy_backward(colors_fg.begin() + cols * ptr_y + ptr_x, colors_fg.begin() + cols * end_y + end_x, colors_fg.begin() + cols * last + valid[last]);
+                    std::fill(buffer.begin() + cols * ptr_y + ptr_x, buffer.begin() + cols * ptr_y + ptr_x + len, 0);
+                    std::fill(colors_bg.begin() + cols * ptr_y + ptr_x, colors_bg.begin() + cols * ptr_y + ptr_x + len, color_bg);
+                    std::fill(colors_fg.begin() + cols * ptr_y + ptr_x, colors_fg.begin() + cols * ptr_y + ptr_x + len, color_fg);
+                    ptr_y++;
                 }
+                else {
+                    line++;
+                    auto end_x = valid[last];
+                    auto end_y = last;
+                    auto len = valid[ptr_y] - ptr_x;
+                    valid.resize(valid.size() + 1);
+                    buffer.resize(buffer.size() + cols);
+                    colors_bg.resize(colors_bg.size() + cols);
+                    colors_fg.resize(colors_fg.size() + cols);
+                    std::copy_backward(valid.begin() + last + 1, valid.end() - 1, valid.end());
+                    std::copy_backward(buffer.begin() + cols * (last + 1), buffer.end() - cols, buffer.end());
+                    std::copy_backward(colors_bg.begin() + cols * (last + 1), colors_bg.end() - cols, colors_bg.end());
+                    std::copy_backward(colors_fg.begin() + cols * (last + 1), colors_fg.end() - cols, colors_fg.end());
+                    std::fill(buffer.begin() + cols * (last + 1), buffer.begin() + cols * (last + 2), 0);
+                    std::fill(colors_bg.begin() + cols * (last + 1), colors_bg.begin() + cols * (last + 2), color_bg);
+                    std::fill(colors_fg.begin() + cols * (last + 1), colors_fg.begin() + cols * (last + 2), color_fg);
+                    if (last != ptr_y) {
+                        valid[ptr_y] = ptr_x;
+                        valid[last + 1] = valid[last] - ptr_x;
+                        valid[last] = cols;
+                    }
+                    else {
+                        valid[last + 1] = valid[last] - ptr_x;
+                        valid[ptr_y] = ptr_x;
+                    }
+                    std::copy_backward(buffer.begin() + cols * ptr_y + ptr_x, buffer.begin() + cols * end_y + end_x, buffer.begin() + cols * (last + 1) + valid[last + 1]);
+                    std::copy_backward(colors_bg.begin() + cols * ptr_y + ptr_x, colors_bg.begin() + cols * end_y + end_x, colors_bg.begin() + cols * (last + 1) + valid[last + 1]);
+                    std::copy_backward(colors_fg.begin() + cols * ptr_y + ptr_x, colors_fg.begin() + cols * end_y + end_x, colors_fg.begin() + cols * (last + 1) + valid[last + 1]);
+                    std::fill(buffer.begin() + cols * ptr_y + ptr_x, buffer.begin() + cols * ptr_y + ptr_x + len, 0);
+                    std::fill(colors_bg.begin() + cols * ptr_y + ptr_x, colors_bg.begin() + cols * ptr_y + ptr_x + len, color_bg);
+                    std::fill(colors_fg.begin() + cols * ptr_y + ptr_x, colors_fg.begin() + cols * ptr_y + ptr_x + len, color_fg);
+                    ptr_y++;
+                    ptr_x = 0;
+                }
+                ptr_ry = line;
+                ptr_rx = valid[line];
             }
         }
         else {
@@ -746,6 +809,7 @@ namespace clib {
         auto& scr = *screens[screen_ptr].get();
         auto& cols = scr.cols;
         auto& rows = scr.rows;
+        auto& valid = scr.valid;
         auto& ptr_x = scr.ptr_x;
         auto& ptr_y = scr.ptr_y;
         auto& ptr_rx = scr.ptr_rx;
@@ -759,11 +823,14 @@ namespace clib {
         if (left) {
             if (ptr_mx + ptr_my * cols < ptr_x + ptr_y * cols) {
                 forward(ptr_x, ptr_y, false);
+                if (ptr_x == cols)
+                    ptr_x--;
             }
         }
         else {
             if (ptr_x + ptr_y * cols < ptr_rx + ptr_ry * cols) {
-                forward(ptr_x, ptr_y, true);
+                if (ptr_x < valid[ptr_y])
+                    forward(ptr_x, ptr_y, true);
             }
         }
     }
@@ -771,6 +838,7 @@ namespace clib {
     void cjsgui::forward(int& x, int& y, bool forward) {
         auto& scr = *screens[screen_ptr].get();
         auto& cols = scr.cols;
+        auto& valid = scr.valid;
 
         if (forward) {
             if (x == cols - 1) {
@@ -792,8 +860,8 @@ namespace clib {
                     x--;
                 }
                 else {
-                    x = cols - 1;
                     y--;
+                    x = valid[y];
                 }
             }
         }
@@ -973,7 +1041,7 @@ namespace clib {
             const auto& scr = *screens[screen_id].get();
             s.AppendFormat(L"Screen: %d, Rows: %d, Cols: %d, View: %d, Line: %d\n", screen_id, scr.rows, scr.cols, scr.view, scr.line);
             s.AppendFormat(L"Ptr: (%d, %d), Left: (%d, %d), Right: (%d, %d)\n", scr.ptr_y, scr.ptr_x, scr.ptr_my, scr.ptr_mx, scr.ptr_ry, scr.ptr_rx);
-            for (auto i = max(scr.ptr_y - 1, 0); i <= min(scr.ptr_y + 1, scr.line); i++) {
+            for (auto i = max(scr.ptr_y - 2, 0); i <= min(scr.ptr_y + 2, scr.line); i++) {
                 s.AppendFormat(L"LINE #%d | V= %2d, ", i, scr.valid[i]);
                 for (auto j = 0; j < scr.cols; j++) {
                     if (scr.buffer[i * scr.cols + j])
@@ -1164,6 +1232,9 @@ namespace clib {
         auto& scr = *screens[screen_ptr].get();
         auto& cols = scr.cols;
         auto& rows = scr.rows;
+        auto& view = scr.view;
+        auto& line = scr.line;
+        auto& valid = scr.valid;
         auto& buffer = scr.buffer;
         auto& color_bg = scr.color_bg;
         auto& color_fg = scr.color_fg;
@@ -1265,65 +1336,101 @@ namespace clib {
             case VK_UP:
             {
                 if (!input_state || js_key_pressing(VK_CONTROL)) {
-                    auto& scr = *screens[screen_id].get();
-                    auto& view = scr.view;
-                    auto& line = scr.line;
-                    auto& rows = scr.rows;
                     view = max(0, view - 1);
                     return;
                 }
                 else {
-                    C = (char)-10;
+                    //C = (char)-10;
+                    if (cols * ptr_my + ptr_mx <= cols * (ptr_y - 1) + ptr_x) {
+                        ptr_y--;
+                        ptr_x = min(ptr_x, valid[ptr_y]);
+                        view = min(view, ptr_y);
+                    }
+                    else if (cols* ptr_my + ptr_mx <= cols * (ptr_y - 1) + cols - 1) {
+                        ptr_y--;
+                        ptr_x = ptr_mx;
+                        view = max(view, ptr_y);
+                    }
+                    return;
                 }
             }
                 break;
             case VK_RIGHT:
                 // C = (char) -13;
                 // break;
-                move(false);
+                if (input_state) {
+                    if (ptr_x == valid[ptr_y] && ptr_ry > ptr_y) {
+                        ptr_x = 0;
+                        ptr_y++;
+                    }
+                    else {
+                        move(false);
+                    }
+                }
+                else
+                    move(false);
                 return;
             case VK_DOWN:
             {
                 if (!input_state || js_key_pressing(VK_CONTROL)) {
-                    auto& scr = *screens[screen_id].get();
-                    auto& view = scr.view;
-                    auto& line = scr.line;
-                    auto& rows = scr.rows;
                     view = min(max(line - rows, 0), view + 1);
                     return;
                 }
                 else {
-                    C = (char)-11;
+                    //C = (char)-11;
+                    if (cols * ptr_ry + ptr_rx >= cols * (ptr_y + 1) + ptr_x) {
+                        ptr_y++;
+                        ptr_x = min(ptr_x, valid[ptr_y]);
+                        view = max(view, ptr_y - rows);
+                    }
+                    else if (cols * ptr_ry + ptr_rx >= cols * (ptr_y + 1)) {
+                        ptr_y++;
+                        ptr_x = ptr_rx;
+                        view = max(view, ptr_y - rows);
+                    }
+                    return;
                 }
             }
                 break;
             case VK_HOME:
             {
                 if (!input_state || js_key_pressing(VK_CONTROL)) {
-                    auto& scr = *screens[screen_id].get();
-                    auto& view = scr.view;
                     view = 0;
                     return;
                 }
-                else {
+                else if (js_key_pressing(VK_MENU)) {
                     ptr_x = ptr_mx;
                     ptr_y = ptr_my;
+                }
+                else {
+                    if (ptr_y > ptr_my) {
+                        ptr_x = 0;
+                    }
+                    else {
+                        ptr_x = ptr_mx;
+                    }
                 }
             }
                 return;
             case VK_END:
             {
                 if (!input_state || js_key_pressing(VK_CONTROL)) {
-                    auto& scr = *screens[screen_id].get();
-                    auto& view = scr.view;
-                    auto& line = scr.line;
-                    auto& rows = scr.rows;
                     view = max(0, line - rows);
                     return;
                 }
-                else {
+                else if (js_key_pressing(VK_MENU)) {
                     ptr_x = ptr_rx;
                     ptr_y = ptr_ry;
+                }
+                else {
+                    if (ptr_y < ptr_ry) {
+                        ptr_x = valid[ptr_y];
+                        if (ptr_x == cols)
+                            ptr_x--;
+                    }
+                    else {
+                        ptr_x = ptr_rx;
+                    }
                 }
             }
                 return;
@@ -1337,22 +1444,10 @@ namespace clib {
             case VK_BACK:
                 return;
             case VK_NEXT: // page down
-            {
-                auto& scr = *screens[screen_id].get();
-                auto& view = scr.view;
-                auto& line = scr.line;
-                auto& rows = scr.rows;
                 view = min(line, view + rows);
-            }
                 return;
             case VK_PRIOR: // page up
-            {
-                auto& scr = *screens[screen_id].get();
-                auto& view = scr.view;
-                auto& line = scr.line;
-                auto& rows = scr.rows;
                 view = max(0, view - rows);
-            }
                 return;
             case VK_RETURN:
                 if (js_key_pressing(VK_CONTROL)) {
@@ -1461,14 +1556,16 @@ namespace clib {
         auto& scr = *screens[screen_id].get();
         auto& rows = scr.rows;
         auto& cols = scr.cols;
+        auto& line = scr.line;
+        auto& valid = scr.valid;
         auto& buffer = scr.buffer;
 
         if (!vm)
             return;
         OpenClipboard(window->GetWindowHandle());
         std::vector<char> outs;
-        for (auto i = 0; i < rows; ++i) {
-            for (auto j = 0; j < cols; ++j) {
+        for (auto i = 0; i <= line; ++i) {
+            for (auto j = 0; j < valid[i]; ++j) {
                 const auto& b = buffer[i * cols + j];
                 if (b == 0) {
                     break;
