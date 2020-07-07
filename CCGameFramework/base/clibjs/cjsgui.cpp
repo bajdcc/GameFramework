@@ -507,25 +507,30 @@ namespace clib {
                             }
                             last = i;
                         }
+                        auto t = 0;
                         auto x2 = ptr_x;
                         auto y2 = ptr_y;
                         forward(ptr_x, ptr_y, false);
                         if (ptr_x == cols) {
                             ptr_x--;
                         }
-                            if (!ascii && ptr_mx + ptr_my * cols < ptr_x + ptr_y * cols) {
-                                auto x = ptr_x;
-                                auto y = ptr_y;
-                                forward(ptr_x, ptr_y, false);
-                                if (y2 == ptr_y || ptr_x == cols) {
-                                    if (ptr_x == cols)
-                                        ptr_x--;
-                                }
-                                else {
-                                    ptr_x = x;
-                                    ptr_y = y;
-                                }
+                        if (!ascii && ptr_mx + ptr_my * cols < ptr_x + ptr_y * cols) {
+                            auto x = ptr_x;
+                            auto y = ptr_y;
+                            forward(ptr_x, ptr_y, false);
+                            if (ptr_x == cols) {
+                                ptr_x--;
                             }
+                        }
+                        if (!ascii) {
+                            t = 2;
+                        }
+                        else {
+                            if (x2 == 0)
+                                t = 0;
+                            else
+                                t = 1;
+                        }
                         auto k = cols * y2 + x2 - (cols * ptr_y + ptr_x);
                         view = max(0, ptr_y - rows);
                         auto x = valid[last];
@@ -537,11 +542,11 @@ namespace clib {
                         if (x < k) {
                             line--;
                             if (last == y2) {
-                                valid[ptr_y] += x;
+                                valid[ptr_y] = min(cols, valid[ptr_y] + x - t);
                             }
                             else {
                                 valid[ptr_y] = cols;
-                                valid[last - 1] += x - k;
+                                valid[last - 1] = min(cols, valid[last - 1] + x - k);
                             }
                             std::copy(valid.begin() + last + 1, valid.end(), valid.begin() + last);
                             std::copy(buffer.begin() + cols * (last + 1), buffer.end(), buffer.begin() + cols * last);
@@ -574,7 +579,8 @@ namespace clib {
             }
         }
         else if (c == '\r') {
-            ptr_x = 0;
+            if (!input_state)
+                ptr_x = 0;
         }
         else if (c == '\f') {
             ptr_x = 0;
@@ -1434,8 +1440,34 @@ namespace clib {
                 }
             }
                 return;
-            case VK_DELETE:
-                put_char(0xff);
+            case VK_DELETE: {
+                if (input_state &&
+                    (ptr_x != line || ptr_y != cols - 1) &&
+                    ptr_mx + ptr_my * cols <= ptr_x + ptr_y * cols &&
+                    ptr_x + ptr_y * cols < ptr_rx + ptr_ry * cols) {
+                    auto cc = buffer[ptr_y * cols + ptr_x];
+                    auto x = ptr_x;
+                    auto y = ptr_y;
+                    auto k = 1;
+                    if (cc < 0 && ptr_x + ptr_y * cols + 1 <= ptr_rx + ptr_ry * cols) {
+                        WORD wd = (((BYTE)cc) << 8) | ((BYTE)buffer[ptr_y * cols + ptr_x + 1]);
+                        if (wd >= 0x8140 && wd <= 0xFEFE) { // GBK
+                            k++;
+                        }
+                    }
+                    for (auto i = 0; i < k; i++) {
+                        if (ptr_x == valid[ptr_y]) {
+                            ptr_x = 0;
+                            ptr_y++;
+                        }
+                        else {
+                            ptr_x++;
+                        }
+                        assert(ptr_x + ptr_y * cols <= ptr_rx + ptr_ry * cols);
+                    }
+                    put_char('\b');
+                }
+            }
                 return;
             case VK_ESCAPE:
                 return;
