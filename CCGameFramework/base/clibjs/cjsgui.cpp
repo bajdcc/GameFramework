@@ -160,6 +160,17 @@ namespace clib {
         draw_text(rt, bounds, brushes);
         draw_window(bounds);
     }
+    
+    static int js_get_num_length(int x)
+    {
+        int len = 0;
+        while (x)
+        {
+            x /= 10;
+            len++;
+        }
+        return len;
+    }
 
     void cjsgui::draw_text(CComPtr<ID2D1RenderTarget>& rt, const CRect& bounds, const JS2DEngine::BrushBag& brushes) {
         if (!screens[screen_id])
@@ -179,6 +190,10 @@ namespace clib {
         auto& input_caret = scr.input_caret;
         auto& ptr_x = scr.ptr_x;
         auto& ptr_y = scr.ptr_y;
+        auto& ptr_mx = scr.ptr_mx;
+        auto& ptr_my = scr.ptr_my;
+        auto& ptr_rx = scr.ptr_rx;
+        auto& ptr_ry = scr.ptr_ry;
 
         int w = bounds.Width();
         int h = bounds.Height();
@@ -201,7 +216,27 @@ namespace clib {
         bool ascii_head = false;
         auto view_end = min(view + rows, line + 1);
 
+        auto num_k = js_get_num_length(view_end - 1);
+        CString line_no;
         for (auto i = view; i < view_end; ++i) {
+            if (input_state) {
+                if (i >= ptr_my && i <= ptr_ry) {
+                    b->SetColor(D2D1::ColorF(87.0f / 255.0f, 116.0f / 255.0f, 48.0f / 255.0f, 0.4f));
+                    rt->FillRectangle(
+                        D2D1::RectF((float)bounds.left + x - num_k * GUI_FONT_W - 5, (float)bounds.top + y + GUI_FONT_H_1,
+                            (float)bounds.left + x, (float)bounds.top + y + GUI_FONT_H_2), b);
+                }
+            }
+            line_no.Format(L"%d", i);
+            while (line_no.GetLength() != num_k)
+                line_no = L" " + line_no;
+            if (ptr_y == i)
+                b->SetColor(D2D1::ColorF(55.0f / 255.0f, 173.0f / 255.0f, 231.0f / 255.0f));
+            else
+                b->SetColor(D2D1::ColorF(43.0f / 255.0f, 145.0f / 255.0f, 175.0f / 255.0f));
+            rt->DrawText(line_no.GetBuffer(0), line_no.GetLength(), brushes.cmdTF->textFormat,
+                D2D1::RectF((float)bounds.left + x - num_k * GUI_FONT_W - 5, (float)bounds.top + y + GUI_FONT_H_1,
+                    (float)bounds.left + x, (float)bounds.top + y + GUI_FONT_H_2), b);
             for (auto j = 0; j < cols; ++j) {
                 ascii = true;
                 c = buffer[i * cols + j];
@@ -636,7 +671,7 @@ namespace clib {
                                 t = 1;
                         }
                         auto k = cols * y2 + x2 - (cols * ptr_y + ptr_x);
-                        view = max(0, ptr_y - rows);
+                        view = max(0, ptr_y - rows + 1);
                         auto x = valid[last];
                         auto end_x = x;
                         auto end_y = last;
