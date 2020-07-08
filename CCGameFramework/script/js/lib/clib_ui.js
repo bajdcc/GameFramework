@@ -10,7 +10,7 @@ UI.root = new UI({
     height: 0
 });
 sys.send_signal = (function() {
-    var map_signal = {
+    const map_signal = {
         render: function() {
             UI.root.render();
         },

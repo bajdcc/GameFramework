@@ -1306,12 +1306,12 @@ namespace clib {
             std::make_tuple(e_finish, "finish", 0),
     };
 
-    static const std::string &js_pda_edge_str(js_pda_edge_t type) {
+    const std::string &js_pda_edge_str(js_pda_edge_t type) {
         assert(type >= e_shift && type <= e_finish);
         return std::get<1>(pda_edge_string[type]);
     }
 
-    static const int &js_pda_edge_priority(js_pda_edge_t type) {
+    const int &js_pda_edge_priority(js_pda_edge_t type) {
         assert(type >= e_shift && type <= e_finish);
         return std::get<2>(pda_edge_string[type]);
     }

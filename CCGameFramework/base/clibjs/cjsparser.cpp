@@ -433,10 +433,10 @@ namespace clib {
         singleExpression = assignmentExpression;
         literal = _K_NULL | _K_UNDEFINED | _K_TRUE | _K_FALSE | _STRING | _REGEX | _NUMBER;
         commaList = *commaList + _T_COMMA;
-        arrayLiteral = _T_LSQUARE + *elementList + ~~~_T_RSQUARE;
+        arrayLiteral = _T_LSQUARE + *elementList + _T_RSQUARE;
         elementList = *(elementList) + *commaList + arrayElement + *commaList;
         arrayElement = *_T_ELLIPSIS + singleExpression;
-        objectLiteral = _T_LBRACE + *propertyAssignments + *~_T_COMMA + ~~~_T_RBRACE;
+        objectLiteral = _T_LBRACE + *propertyAssignments + *~_T_COMMA + _T_RBRACE;
         identifierName = _ID | reservedWord;
         reservedWord = keyword | _K_TRUE | _K_FALSE;
         numericLiteral = _NUMBER;
@@ -533,6 +533,8 @@ namespace clib {
         }
 #endif
     }
+
+    extern const std::string& js_pda_edge_str(js_pda_edge_t type);
 
     void cjsparser::program() {
 #if REPORT_ERROR
@@ -741,7 +743,7 @@ namespace clib {
                         fprintf(stdout, "[%d:%d:%d:%d:%d]%s State: %3d => To: %3d   -- Action: %-10s -- Rule: %s\n",
                                 ast_cache_index, ast_stack.size(), bks.size(),
                                 line, column, is_end ? "*" : "", state, jump,
-                                pda_edge_str(t.type).c_str(), current_state.label.c_str());
+                                js_pda_edge_str(t.type).c_str(), current_state.label.c_str());
                     };
 #endif
 #if REPORT_ERROR
