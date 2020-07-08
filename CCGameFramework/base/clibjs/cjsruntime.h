@@ -90,6 +90,7 @@ namespace clib {
             API_music,
             API_config,
             API_get_config,
+            API_math,
             API_buffer_from,
             API_buffer_toString,
             API_UI_new,
@@ -645,6 +646,7 @@ namespace clib {
             jsv_function::ref sys_music;
             jsv_function::ref sys_config;
             jsv_function::ref sys_get_config;
+            jsv_function::ref sys_math;
             // function
             jsv_function::ref f_number;
             jsv_function::ref f_boolean;

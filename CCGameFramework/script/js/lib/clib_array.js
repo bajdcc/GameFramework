@@ -130,6 +130,59 @@ Array.isArray = function(arr) {
     return Object.prototype.toString.call(arr) == "[object Array]";
 };
 (function() {
+    Array.prototype.sort = mergeSort;
+
+    function mergeSort(compare) {
+
+        var length = this.length,
+            middle = Math.floor(length / 2);
+
+        if (!compare) {
+            compare = function(left, right) {
+                if (left < right)
+                    return -1;
+                if (left == right)
+                    return 0;
+                else
+                    return 1;
+            };
+        }
+
+        if (length < 2)
+            return this;
+
+        return merge(
+            this.slice(0, middle).mergeSort(compare),
+            this.slice(middle, length).mergeSort(compare),
+            compare
+        );
+    }
+
+    function merge(left, right, compare) {
+
+        var result = [];
+
+        while (left.length > 0 || right.length > 0) {
+            if (left.length > 0 && right.length > 0) {
+                if (compare(left[0], right[0]) <= 0) {
+                    result.push(left[0]);
+                    left = left.slice(1);
+                } else {
+                    result.push(right[0]);
+                    right = right.slice(1);
+                }
+            } else if (left.length > 0) {
+                result.push(left[0]);
+                left = left.slice(1);
+            } else if (right.length > 0) {
+                result.push(right[0]);
+                right = right.slice(1);
+            }
+        }
+        return result;
+    }
+})();
+(function() {
     function quote(string) {
         return "\"" + string + "\"";
     }
@@ -154,7 +207,7 @@ Array.isArray = function(arr) {
         }
     }
     Array.prototype.toString = function(hint) {
-        return str("", { "": this });
+        return !this.length ? '' : str("", { "": this });
     };
 }());
 return;

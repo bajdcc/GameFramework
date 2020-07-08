@@ -117,12 +117,12 @@ void MPM2DEngine::Reset(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget, s
         return;
     if (oldRenderTarget)
     {
-        oldRenderTarget->DestroyDirect2DBrush(bgColor); bg = nullptr;
-        oldRenderTarget->DestroyDirect2DBrush(bgColorLog); bg_log = nullptr;
-        oldRenderTarget->DestroyDirect2DTextFormat(logoFont); logoTF = nullptr;
-        oldRenderTarget->DestroyDirect2DTextFormat(loggingFont); loggingTF = nullptr;
-        oldRenderTarget->DestroyDirect2DBrush(logoColor); logoBrush = nullptr;
-        oldRenderTarget->DestroyDirect2DTextFormat(backup_font); font_format = nullptr;
+        bg = nullptr;
+        bg_log = nullptr;
+        logoTF = nullptr;
+        loggingTF = nullptr;
+        logoBrush = nullptr;
+        font_format = nullptr;
         destroy(oldRenderTarget);
     }
     if (newRenderTarget)

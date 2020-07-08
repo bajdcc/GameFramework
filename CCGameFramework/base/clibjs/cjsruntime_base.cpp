@@ -408,6 +408,13 @@ namespace clib {
             return js.call_api(API_get_config, _this, args, 0);
         };
         permanents.sys->add(permanents.sys_get_config->name, permanents.sys_get_config);
+        permanents.sys_math = _new_function(nullptr, js_value::at_const | js_value::at_readonly);
+        permanents.sys_math->add("length", _int_1);
+        permanents.sys_math->name = "math";
+        permanents.sys_math->builtin = [](auto& func, auto& _this, auto& args, auto& js, auto attr) {
+            return js.call_api(API_math, _this, args, 0);
+        };
+        permanents.sys->add(permanents.sys_math->name, permanents.sys_math);
         permanents.global_env->add("sys", permanents.sys);
         // number
         permanents.f_number = _new_function(permanents._proto_number, js_value::at_const | js_value::at_readonly);
@@ -1224,6 +1231,51 @@ namespace clib {
             push(new_undefined());
         }
                        break;
+        case API_math: {
+            if (args.size() < 2) {
+                push(new_number(JS_NAN));
+                break;
+            }
+            auto r = 0;
+            auto id = args.front().lock()->to_number(this, &r);
+            if (r != 0)
+                return r;
+            auto n = (int)id;
+            if (n > 100 && n < 200) {
+                auto a = args[1].lock()->to_number(this, &r);
+                if (r != 0)
+                    return r;
+                switch (n) {
+                case 101:
+                    push(new_number(floor(a)));
+                    return 0;
+                case 102:
+                    push(new_number(ceil(a)));
+                    return 0;
+                case 103:
+                    push(new_number(round(a)));
+                    return 0;
+                }
+            }
+            if (n > 200 && n < 300 && args.size() >= 3) {
+                auto a = args[1].lock()->to_number(this, &r);
+                if (r != 0)
+                    return r;
+                auto b = args[2].lock()->to_number(this, &r);
+                if (r != 0)
+                    return r;
+                switch (n) {
+                case 201:
+                    push(new_number(max(a, b)));
+                    return 0;
+                case 202:
+                    push(new_number(min(a, b)));
+                    return 0;
+                }
+            }
+            push(new_number(JS_NAN));
+        }
+                           break;
         case API_UI_new: {
             if (args.empty()) {
                 push(new_undefined());

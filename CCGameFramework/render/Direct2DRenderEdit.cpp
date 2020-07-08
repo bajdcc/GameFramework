@@ -203,7 +203,6 @@ void EditElementRenderer::DestroyBrush(std::shared_ptr<Direct2DRenderTarget> _re
 {
     if (_renderTarget && brush)
     {
-        _renderTarget->DestroyDirect2DBrush(oldColor);
         brush = nullptr;
     }
 }
@@ -221,7 +220,6 @@ void EditElementRenderer::DestroyTextFormat(std::shared_ptr<Direct2DRenderTarget
 {
     if (_renderTarget && textFormat)
     {
-        _renderTarget->DestroyDirect2DTextFormat(oldFont);
         textFormat = nullptr;
     }
 }

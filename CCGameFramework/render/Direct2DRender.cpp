@@ -502,7 +502,6 @@ void SolidLabelElementRenderer::DestroyBrush(std::shared_ptr<Direct2DRenderTarge
 {
     if (_renderTarget && brush)
     {
-        _renderTarget->DestroyDirect2DBrush(oldColor);
         brush = nullptr;
     }
 }
@@ -526,7 +525,6 @@ void SolidLabelElementRenderer::DestroyTextFormat(std::shared_ptr<Direct2DRender
 {
     if (_renderTarget && textFormat)
     {
-        _renderTarget->DestroyDirect2DTextFormat(oldFont);
         textFormat = nullptr;
     }
 }

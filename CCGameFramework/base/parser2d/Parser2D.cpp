@@ -73,14 +73,14 @@ void Parser2DEngine::Reset(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget
         return;
     if (oldRenderTarget)
     {
-        oldRenderTarget->DestroyDirect2DBrush(bgColor); bg = nullptr;
-        oldRenderTarget->DestroyDirect2DBrush(bgColorLog); bg_log = nullptr;
-        oldRenderTarget->DestroyDirect2DTextFormat(logoFont); logoTF = nullptr;
-        oldRenderTarget->DestroyDirect2DTextFormat(loggingFont); loggingTF = nullptr;
-        oldRenderTarget->DestroyDirect2DBrush(logoColor); logoBrush = nullptr;
-        oldRenderTarget->DestroyDirect2DTextFormat(brushes.cmdFont); brushes.cmdTF = nullptr;
-        oldRenderTarget->DestroyDirect2DTextFormat(brushes.gbkFont); brushes.gbkTF = nullptr;
-        oldRenderTarget->DestroyDirect2DTextFormat(backup_font); font_format = nullptr;
+        bg = nullptr;
+        bg_log = nullptr;
+        logoTF = nullptr;
+        loggingTF = nullptr;
+        logoBrush = nullptr;
+        brushes.cmdTF = nullptr;
+        brushes.gbkTF = nullptr;
+        font_format = nullptr;
     }
     if (newRenderTarget)
     {

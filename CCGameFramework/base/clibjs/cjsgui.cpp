@@ -51,6 +51,7 @@ namespace clib {
         init_screen(0);
         switch_screen(0);
         switch_screen_display(0);
+        init_cubic_bezier();
     }
 
     cjsgui& cjsgui::singleton() {
@@ -186,10 +187,14 @@ namespace clib {
 
         int x = max((w - width) / 2, 0);
         int y = max((h - height) / 2, 0);
+        int y2 = 0;
+        auto x0 = x;
+        auto y0 = y;
         auto old_x = x;
         char c;
 
         CComPtr<ID2D1SolidColorBrush> b;
+        rt->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black), &b);
         TCHAR s[2] = { 0 };
         char sc[3] = { 0 };
         bool ascii = true;
@@ -215,65 +220,62 @@ namespace clib {
                 }
                 if (ascii) {
                     if (colors_bg[i * cols + j]) {
-                        rt->CreateSolidColorBrush(D2D1::ColorF(colors_bg[i * cols + j]), &b);
+                        b->SetColor(D2D1::ColorF(colors_bg[i * cols + j]));
                         rt->FillRectangle(
                             D2D1::RectF((float)bounds.left + x, (float)bounds.top + y + GUI_FONT_H_1,
                             (float)bounds.left + x + GUI_FONT_W, (float)bounds.top + y + GUI_FONT_H_2), b);
-                        b.Release();
                     }
                     if (c > 0) {
                         if (std::isprint(buffer[i * cols + j])) {
-                            rt->CreateSolidColorBrush(D2D1::ColorF(colors_fg[i * cols + j]), &b);
+                            b->SetColor(D2D1::ColorF(colors_fg[i * cols + j]));
                             s[0] = c;
                             rt->DrawText(s, 1, brushes.cmdTF->textFormat,
                                 D2D1::RectF((float)bounds.left + x, (float)bounds.top + y + GUI_FONT_H_1,
                                 (float)bounds.left + x + GUI_FONT_W, (float)bounds.top + y + GUI_FONT_H_2), b);
-                            b.Release();
                         }
                         else if (c == '\7') {
-                            rt->CreateSolidColorBrush(D2D1::ColorF(colors_fg[i * cols + j]), &b);
+                            b->SetColor(D2D1::ColorF(colors_fg[i * cols + j]));
                             rt->FillRectangle(
                                 D2D1::RectF((float)bounds.left + x, (float)bounds.top + y + GUI_FONT_H_1,
                                 (float)bounds.left + x + GUI_FONT_W, (float)bounds.top + y + GUI_FONT_H_2), b);
-                            b.Release();
                         }
                     }
                     else if (c < 0) {
-                        rt->CreateSolidColorBrush(D2D1::ColorF(colors_fg[i * cols + j]), &b);
+                        b->SetColor(D2D1::ColorF(colors_fg[i * cols + j]));
                         rt->FillRectangle(
                             D2D1::RectF((float)bounds.left + x, (float)bounds.top + y + GUI_FONT_H_1,
                             (float)bounds.left + x + GUI_FONT_W, (float)bounds.top + y + GUI_FONT_H_2), b);
-                        b.Release();
                     }
                     x += GUI_FONT_W;
                 }
                 else {
                     if (colors_bg[i * cols + j]) {
-                        rt->CreateSolidColorBrush(D2D1::ColorF(colors_bg[i * cols + j]), &b);
+                        b->SetColor(D2D1::ColorF(colors_bg[i * cols + j]));
                         rt->FillRectangle(
                             D2D1::RectF((float)bounds.left + x, (float)bounds.top + y + GUI_FONT_H_1,
                             (float)bounds.left + x + GUI_FONT_W * 2, (float)bounds.top + y + GUI_FONT_H_2), b);
-                        b.Release();
                     }
                     sc[0] = c;
                     sc[1] = buffer[i * cols + j + 1];
                     auto utf = cnet::GBKToStringT(sc);
                     s[0] = (TCHAR)(utf[0]);
                     j++;
-                    rt->CreateSolidColorBrush(D2D1::ColorF(colors_fg[i * cols + j]), &b);
+                    b->SetColor(D2D1::ColorF(colors_fg[i * cols + j]));
                     rt->DrawText(s, 1, brushes.gbkTF->textFormat,
                         D2D1::RectF((float)bounds.left + x + GUI_FONT_W_C1, (float)bounds.top + y + GUI_FONT_H_C1,
                         (float)bounds.left + x + GUI_FONT_W_C2, (float)bounds.top + y + GUI_FONT_H_C2), b);
-                    b.Release();
                     x += GUI_FONT_W * 2;
                 }
             }
             x = old_x;
             y += GUI_FONT_H;
             if (y + GUI_FONT_H >= bounds.Height()) {
+                y2 = y - y0;
                 break;
             }
         }
+        if (y2 == 0)
+            y2 = y - y0;
 
         if (input_state) {
             input_ticks++;
@@ -285,14 +287,116 @@ namespace clib {
                 if (ptr_y >= view && ptr_y <= view_end) {
                     auto __y = ptr_y - view;
                     int _x = max((w - width) / 2, 0) + ptr_x * GUI_FONT_W;
-                    int _y = max((h - height) / 2, 0) + __y * GUI_FONT_H;
-                    rt->CreateSolidColorBrush(D2D1::ColorF(color_fg_stack.back()), &b);
+                    int _y =max((h - height) / 2, 0) + __y * GUI_FONT_H;
+                    b->SetColor(D2D1::ColorF(color_fg_stack.back()));
                     rt->DrawText(_T("_"), 1, brushes.cmdTF->textFormat,
                         D2D1::RectF((float)bounds.left + _x, (float)bounds.top + _y + GUI_FONT_H_1,
                             (float)bounds.left + _x + GUI_FONT_W, (float)bounds.top + _y + GUI_FONT_H_2), b);
-                    b.Release();
                 }
             }
+        }
+
+        // Draw scroll
+        // 0:stop,1-0xf:fade in,0x10-0x1f:show,0x20-0x2f:fade out
+        auto& scroll_fade = scr.scroll_fade;
+        auto& old_line = scr.old_line;
+        auto& old_view = scr.old_view;
+        if (old_line != line || old_view != view) {
+            auto&& k = (scroll_fade & 0xf0) >> 4;
+            auto&& p = scroll_fade & 0xf;
+            switch (k) {
+            case 0:
+                if (scroll_fade == 0)
+                    scroll_fade = 1;
+                break;
+            case 1:
+                scroll_fade = 0x10;
+                break;
+            case 2:
+                scroll_fade = 0xf - p;
+                if (scroll_fade == 0)
+                    scroll_fade = 1;
+                break;
+            default:
+                break;
+            }
+            old_line = line;
+            old_view = view;
+        }
+        if (scroll_fade) {
+            auto&& k = (scroll_fade & 0xf0) >> 4;
+            auto&& p = scroll_fade & 0xf;
+            auto a = 0.0f;
+            switch (k) {
+            case 0:
+                a = animation.easy_in[p];
+                scroll_fade++;
+                break;
+            case 1:
+                a = 1.0f;
+                scroll_fade++;
+                break;
+            case 2:
+                a = animation.easy_out[p];
+                scroll_fade++;
+                if (scroll_fade == 0x30)
+                    scroll_fade = 0;
+                break;
+            default:
+                break;
+            }
+            if (a > 0.0f) {
+                int _x = bounds.left + x + cols * GUI_FONT_W;
+                int _y = bounds.top + y0;
+                int _x2 = min(bounds.right, _x + 20);
+                int _y2 = min(bounds.bottom, _y + y2);
+                auto r = D2D1::RectF((float)_x, (float)_y, (float)_x2, (float)_y2);
+                b->SetColor(D2D1::ColorF(62.0f / 255.0f, 62.0f / 255.0f, 66.0f / 255.0f, a));
+                rt->FillRectangle(r, b);
+                auto h2 = min(bounds.Height(), y2) - 10;
+                auto start_y = 1.0f * min(view, line) / line;
+                auto end_y = 1.0f * min(line, view + rows) / line;
+                r = D2D1::RectF((float)_x + 5, (float)_y + 5 + start_y * h2,
+                    (float)_x + 15, (float)_y + 5 + end_y * h2);
+                b->SetColor(D2D1::ColorF(104.0f / 255.0f, 104.0f / 255.0f, 104.0f / 255.0f, a));
+                rt->FillRectangle(r, b);
+            }
+        }
+    }
+
+    static void cubic_bezier(int n, float x1, float y1, float x2, float y2, std::vector<D2D1_POINT_2F> &out) {
+        auto p = 1.0f / n;
+        for (auto i = 0; i < n; i++) {
+            auto t = p * i;
+            auto k = t * t * t;
+            auto q = 3 * t * (1 - t);
+            out[i] = D2D1::Point2F(
+                k + (q * (x1 + t * (x2 - x1))),
+                k + (q * (y1 + t * (y2 - y1))));
+        }
+    }
+
+    void cjsgui::init_cubic_bezier()
+    {
+        const auto N = 128;
+        const auto TARGET = 16;
+        std::vector<D2D1_POINT_2F> v(N);
+        cubic_bezier(N, .42f, 0, 1.0f, 1.0f, v);
+        auto gap = 1.0f / TARGET;
+        auto k = 0.0f;
+        animation.easy_in.resize(TARGET);
+        std::fill(animation.easy_in.begin(), animation.easy_in.end(), 1.0f);
+        for (auto i = 0, j = 0; i < N; i++) {
+            if (v[i].x >= k) {
+                animation.easy_in[j++] = max(0.0f, min(v[i].y, 1.0f));
+                if (j == TARGET)
+                    break;
+                k = gap * j;
+            }
+        }
+        animation.easy_out.resize(TARGET);
+        for (auto i = 0; i < TARGET; i++) {
+            animation.easy_out[i] = max(0, 1.0f - animation.easy_in[i]);
         }
     }
 
@@ -596,10 +700,10 @@ namespace clib {
             buffer.resize(cols);
             std::fill(buffer.begin(), buffer.end(), 0);
             colors_bg.resize(cols);
-            color_bg = 0;
+            color_bg = MAKE_RGB(30, 30, 30);
             std::fill(colors_bg.begin(), colors_bg.end(), color_bg);
             colors_fg.resize(cols);
-            color_fg = MAKE_RGB(255, 255, 255);
+            color_fg = MAKE_RGB(241, 241, 241);
             std::fill(colors_fg.begin(), colors_fg.end(), color_fg);
             color_bg_stack.clear();
             color_bg_stack.push_back(color_bg);
@@ -717,6 +821,7 @@ namespace clib {
                 }
                 else {
                     line++;
+                    view = max(view, line - rows + 1);
                     auto end_x = valid[last];
                     auto end_y = last;
                     auto len = valid[ptr_y] - ptr_x;
@@ -878,6 +983,7 @@ namespace clib {
         auto& cols = scr.cols;
         auto& rows = scr.rows;
         auto& buffer = scr.buffer;
+        auto& valid = scr.valid;
         auto& color_bg = scr.color_bg;
         auto& color_fg = scr.color_fg;
         auto& ptr_x = scr.ptr_x;
@@ -887,12 +993,25 @@ namespace clib {
         auto& ptr_mx = scr.ptr_mx;
         auto& ptr_my = scr.ptr_my;
 
-        auto begin = ptr_mx + ptr_my * cols;
-        auto end = ptr_x + ptr_y * cols;
         std::vector<char> v;
-        for (int i = begin; i <= end; ++i) {
-            if (buffer[i])
-                v.push_back(buffer[i]);
+        if (ptr_my == ptr_ry) {
+            for (auto i = ptr_mx; i < ptr_ry; ++i) {
+                v.push_back(buffer[cols * ptr_my + i]);
+            }
+            return v;
+        }
+        for (auto i = ptr_mx; i < valid[ptr_my]; ++i) {
+            v.push_back(buffer[cols * ptr_my + i]);
+        }
+        v.push_back('\n');
+        for (auto i = ptr_my + 1; i < ptr_ry; i++) {
+            for (auto j = 0; j < valid[i]; ++j) {
+                v.push_back(buffer[cols * i + j]);
+            }
+            v.push_back('\n');
+        }
+        for (auto i = 0; i < ptr_rx; ++i) {
+            v.push_back(buffer[cols * ptr_ry + i]);
         }
         return v;
     }
@@ -1045,7 +1164,7 @@ namespace clib {
         case D_HANDLE: {
             CString s;
             const auto& scr = *screens[screen_id].get();
-            s.AppendFormat(L"Screen: %d, Rows: %d, Cols: %d, View: %d, Line: %d\n", screen_id, scr.rows, scr.cols, scr.view, scr.line);
+            s.AppendFormat(L"Screen: %d, Rows: %d, Cols: %d, View: %d, Line: %d, Scroll: %02x\n", screen_id, scr.rows, scr.cols, scr.view, scr.line, scr.scroll_fade);
             s.AppendFormat(L"Ptr: (%d, %d), Left: (%d, %d), Right: (%d, %d)\n", scr.ptr_y, scr.ptr_x, scr.ptr_my, scr.ptr_mx, scr.ptr_ry, scr.ptr_rx);
             for (auto i = max(scr.ptr_y - 2, 0); i <= min(scr.ptr_y + 2, scr.line); i++) {
                 s.AppendFormat(L"LINE #%d | V= %2d, ", i, scr.valid[i]);
@@ -1476,7 +1595,7 @@ namespace clib {
             case VK_BACK:
                 return;
             case VK_NEXT: // page down
-                view = min(line, view + rows);
+                view = min(line - rows + 1, view + rows);
                 return;
             case VK_PRIOR: // page up
                 view = max(0, view - rows);

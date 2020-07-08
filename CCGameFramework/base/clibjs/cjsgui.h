@@ -108,6 +108,8 @@ namespace clib {
         bool init_screen(int n);
         bool switch_screen_display(int n);
 
+        void init_cubic_bezier();
+
     public:
         static cjsgui& singleton();
 
@@ -193,6 +195,9 @@ namespace clib {
             std::vector<char> input_delay;
             uint32_t color_bg{ 0 };
             uint32_t color_fg{ 0xffffff };
+            int scroll_fade{ 0 };
+            int old_line{ 0 };
+            int old_view{ 0 };
             global_input_t input;
         };
         std::array<std::unique_ptr<screen_t>, GUI_SCREEN_N> screens;
@@ -210,6 +215,10 @@ namespace clib {
         bool entered{ false };
         std::chrono::time_point<std::chrono::system_clock> last_time{ std::chrono::system_clock::now() };
         std::list<std::tuple<CString, int>> stat_s;
+        struct easy_t {
+            std::vector<float> easy_in;
+            std::vector<float> easy_out;
+        } animation;
 
     public:
         global_state_t& get_global();

@@ -156,19 +156,9 @@ CComPtr<ID2D1SolidColorBrush> Direct2DRenderTarget::CreateDirect2DBrushSimple(D2
     return brush;
 }
 
-void Direct2DRenderTarget::DestroyDirect2DBrush(CColor color)
-{
-    solidBrushes.Destroy(color);
-}
-
 CComPtr<ID2D1LinearGradientBrush> Direct2DRenderTarget::CreateDirect2DLinearBrush(CColor c1, CColor c2)
 {
     return linearBrushes.Create(std::make_pair(c1, c2));
-}
-
-void Direct2DRenderTarget::DestroyDirect2DLinearBrush(CColor c1, CColor c2)
-{
-    linearBrushes.Destroy(std::make_pair(c1, c2));
 }
 
 std::shared_ptr<D2DTextFormatPackage> Direct2DRenderTarget::CreateDirect2DTextFormat(const Font& font)
@@ -255,11 +245,6 @@ CComPtr<ID2D1PathGeometry> Direct2DRenderTarget::CreatePathGeometry()
     if (FAILED(hr))
         ATLVERIFY(!"CreatePathGeometry failed");
     return geo;
-}
-
-void Direct2DRenderTarget::DestroyDirect2DTextFormat(const Font& font)
-{
-    textFormats.Destroy(font);
 }
 
 CComPtr<ID2D1BitmapRenderTarget> Direct2DRenderTarget::CreateBitmapRenderTarget(D2D1_SIZE_F size)

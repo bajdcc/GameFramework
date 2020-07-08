@@ -131,7 +131,6 @@ void Parser2DEngine::create_font()
 {
     if (d2drt.lock() && font.size > 0 && !font.fontFamily.IsEmpty()) {
         auto d = d2drt.lock();
-        d->DestroyDirect2DTextFormat(backup_font);
         font_format = d->CreateDirect2DTextFormat(font);
         backup_font.fontFamily = font.fontFamily;
         backup_font.size = font.size;

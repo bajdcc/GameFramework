@@ -54,12 +54,9 @@ void Clib2DEngine::Reset(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget, 
     using namespace clib;
     if (oldRenderTarget)
     {
-        oldRenderTarget->DestroyDirect2DBrush(bgColor); bg = nullptr;
-        oldRenderTarget->DestroyDirect2DTextFormat(logoFont); logoTF = nullptr;
-        oldRenderTarget->DestroyDirect2DBrush(logoColor); logoBrush = nullptr;
-        for (int i = b_static; i < b__end; ++i) {
-            oldRenderTarget->DestroyDirect2DBrush(brushes.colors[i]);
-        }
+        bg = nullptr;
+        logoTF = nullptr;
+        logoBrush = nullptr;
         brushes.colors.clear();
     }
     if (newRenderTarget)

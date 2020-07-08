@@ -319,7 +319,6 @@ protected:
     {
         if (_renderTarget && base::brush)
         {
-            _renderTarget->DestroyDirect2DBrush(base::oldColor);
             base::brush = nullptr;
         }
     }
@@ -359,7 +358,6 @@ protected:
     {
         if (_renderTarget && base::brush)
         {
-            _renderTarget->DestroyDirect2DLinearBrush(base::oldColor.first, base::oldColor.second);
             base::brush = nullptr;
         }
     }

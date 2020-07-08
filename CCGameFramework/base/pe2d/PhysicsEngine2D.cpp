@@ -107,7 +107,7 @@ void PhysicsEngine::Reset(std::shared_ptr<Direct2DRenderTarget> oldRenderTarget,
         return;
     if (oldRenderTarget)
     {
-        oldRenderTarget->DestroyDirect2DBrush(bgColor); bg = nullptr;
+        bg = nullptr;
     }
     if (newRenderTarget)
     {

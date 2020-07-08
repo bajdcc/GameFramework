@@ -16,62 +16,20 @@ public:
     template<>
     struct CachedType<true>
     {
-        typedef std::shared_ptr<TValue> ValueType;
         typedef std::shared_ptr<TValue> ReturnType;
     };
 
     template<>
     struct CachedType<false>
     {
-        typedef TValue ValueType;
         typedef TValue ReturnType;
     };
-
-    typedef typename CachedType<GetPtr>::ValueType ValueType;
     typedef typename CachedType<GetPtr>::ReturnType ReturnType;
-
-    struct Package
-    {
-        ValueType resource;
-        cint reference;
-        bool operator==(const Package& package) const { return false; }
-        bool operator!=(const Package& package) const { return true; }
-    };
-
-    std::map<TKey, Package> aliveResources;
 
 public:
     ReturnType Create(const TKey& key)
     {
-        auto alive = aliveResources.find(key);
-        if (alive != aliveResources.end())
-        {
-            ++(alive->second.reference);
-        }
-        ValueType resource = CreateInternal(key);
-        Package package;
-        package.resource = resource;
-        package.reference = 1;
-        aliveResources.insert(std::make_pair(key, package));
-        return package.resource;
-    }
-
-    void Destroy(const TKey& key)
-    {
-        auto alive = aliveResources.find(key);
-        if (alive != aliveResources.end())
-        {
-            auto package = alive->second;
-            --(alive->second.reference);
-            if (alive->second.reference == 0)
-            {
-                aliveResources.erase(alive);
-            }
-            else
-            {
-                aliveResources.insert(std::make_pair(key, package));
-            }
-        }
+        return CreateInternal(key);
     }
 
 protected:
