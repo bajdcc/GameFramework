@@ -452,6 +452,8 @@ namespace clib {
         void store_name(const std::string &name, js_value::weak_ref obj);
         void store_fast(const std::string &name, js_value::weak_ref obj);
         void store_deref(const std::string &name, js_value::weak_ref obj);
+        void add_const_var(const std::string& name);
+        bool is_const(const std::string& name) const;
         cjs_function_info::ref info;
         std::string name{"UNKNOWN"};
         int pc{0};
@@ -463,6 +465,7 @@ namespace clib {
         jsv_object::weak_ref closure;
         std::vector<int> rests;
         std::vector<sym_try_t::ref> trys;
+        std::unordered_set<std::string> consts_var;
     };
 
     struct cjs_runtime_reuse {

@@ -31,6 +31,7 @@ namespace clib {
                     "K_NEW",
                     "K_VAR",
                     "K_LET",
+                    "K_CONST",
                     "K_FUNCTION",
                     "K_IF",
                     "K_ELSE",

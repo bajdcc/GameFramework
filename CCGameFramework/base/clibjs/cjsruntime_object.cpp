@@ -905,6 +905,16 @@ namespace clib {
         JS_OBJ(var)->add(n, std::move(obj));
     }
 
+    void cjs_function::add_const_var(const std::string& name)
+    {
+        consts_var.insert(name);
+    }
+
+    bool cjs_function::is_const(const std::string& name) const
+    {
+        return consts_var.find(name) != consts_var.end();
+    }
+
     void cjs_function::clear() {
         info = nullptr;
         name = "UNKNOWN";

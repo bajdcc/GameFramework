@@ -79,6 +79,7 @@ namespace clib {
         DEF_LEXER(K_NEW)
         DEF_LEXER(K_VAR)
         DEF_LEXER(K_LET)
+        DEF_LEXER(K_CONST)
         DEF_LEXER(K_FUNCTION)
         DEF_LEXER(K_IF)
         DEF_LEXER(K_ELSE)
@@ -290,7 +291,7 @@ namespace clib {
 #undef DEF_RULE_NOT_GREED
 #undef DEF_RULE_EXP
         program = sourceElements;
-        variableStatement = _K_VAR + variableDeclarationList + eos;
+        variableStatement = (_K_VAR | _K_LET | _K_CONST) + variableDeclarationList + eos;
         variableDeclarationList = *(variableDeclarationList + ~_T_COMMA) + variableDeclaration;
         variableDeclaration = assignable + *(~_T_ASSIGN + singleExpression);
         emptyStatement = _T_SEMI;
@@ -299,9 +300,9 @@ namespace clib {
         iterationStatement = doStatement | whileStatement | forStatement | forInStatement;
         doStatement = _K_DO + statement + ~_K_WHILE + ~_T_LPARAN + expressionSequence + ~_T_RPARAN + eos;
         whileStatement = _K_WHILE + ~_T_LPARAN + expressionSequence + ~_T_RPARAN + statement;
-        forStatement = _K_FOR + ~_T_LPARAN + *(expressionSequence | (_K_VAR + variableDeclarationList)) +
+        forStatement = _K_FOR + ~_T_LPARAN + *(expressionSequence | ((_K_VAR | _K_LET | _K_CONST) + variableDeclarationList)) +
                        _T_SEMI + *expressionSequence + _T_SEMI + *expressionSequence + ~_T_RPARAN + statement;
-        forInStatement = _K_FOR + ~_T_LPARAN + (singleExpression | (_K_VAR + variableDeclarationList)) +
+        forInStatement = _K_FOR + ~_T_LPARAN + (singleExpression | ((_K_VAR | _K_LET | _K_CONST) + variableDeclarationList)) +
                          ~_K_IN + expressionSequence + ~_T_RPARAN + statement;
         continueStatement = _K_CONTINUE + *(_RULE_NO_LINE + _ID) + eos;
         breakStatement = _K_BREAK + *(_RULE_NO_LINE + _ID) + eos;

@@ -639,13 +639,23 @@ namespace clib {
                 auto _for = std::make_shared<js_sym_stmt_for_t>();
                 copy_info(_for, asts.front());
                 _for->end = tmps.back()->end;
-                auto semi1 = AST_IS_KEYWORD_K(asts[1], K_VAR) ? asts[2] : asts[1];
-                auto semi2 = AST_IS_KEYWORD_K(asts[1], K_VAR) ? asts[3] : asts[2];
+                auto v = AST_IS_KEYWORD_K(asts[1], K_VAR) || AST_IS_KEYWORD_K(asts[1], K_LET) || AST_IS_KEYWORD_K(asts[1], K_CONST);
+                auto semi1 = v ? asts[2] : asts[1];
+                auto semi2 = v ? asts[3] : asts[2];
                 for (const auto &t : tmps) {
                     if (t->start < semi1->start) {
-                        if (AST_IS_KEYWORD_K(asts[1], K_VAR)) {
+                        if (v) {
                             assert(t->get_type() == s_statement_var);
                             _for->vars = std::dynamic_pointer_cast<js_sym_stmt_var_t>(t);
+                            if (AST_IS_KEYWORD_N(asts[1], K_VAR)) {
+                                _for->vars->t = js_sym_var_t::TYPE_VAR;
+                            }
+                            else if (AST_IS_KEYWORD_N(asts[1], K_LET)) {
+                                _for->vars->t = js_sym_var_t::TYPE_LET;
+                            }
+                            else if (AST_IS_KEYWORD_N(asts[1], K_CONST)) {
+                                _for->vars->t = js_sym_var_t::TYPE_CONST;
+                            }
                             _for->vars->start = asts[1]->start;
                         } else {
                             _for->exp = to_exp(t);
@@ -666,6 +676,7 @@ namespace clib {
             case c_forInStatement: {
                 auto _for_in = std::make_shared<js_sym_stmt_for_in_t>();
                 copy_info(_for_in, asts.front());
+                auto v = AST_IS_KEYWORD_K(asts.front(), K_VAR) || AST_IS_KEYWORD_K(asts.front(), K_LET) || AST_IS_KEYWORD_K(asts.front(), K_CONST);
                 _for_in->end = tmps.back()->end;
                 assert(tmps.size() >= 3);
                 if (tmps[0]->get_base_type() == s_expression) {
@@ -673,6 +684,17 @@ namespace clib {
                 } else {
                     assert(tmps[0]->get_type() == s_statement_var);
                     auto var = std::dynamic_pointer_cast<js_sym_stmt_var_t>(tmps[0]);
+                    if (v) {
+                        if (AST_IS_KEYWORD_N(asts.front(), K_VAR)) {
+                            var->t = js_sym_var_t::TYPE_VAR;
+                        }
+                        else if (AST_IS_KEYWORD_N(asts.front(), K_LET)) {
+                            var->t = js_sym_var_t::TYPE_LET;
+                        }
+                        else if (AST_IS_KEYWORD_N(asts.front(), K_CONST)) {
+                            var->t = js_sym_var_t::TYPE_CONST;
+                        }
+                    }
                     assert(var->vars.size() == 1);
                     _for_in->vars = var->vars.front();
                     _for_in->vars->start = asts[1]->start;
@@ -683,6 +705,25 @@ namespace clib {
                 asts.clear();
                 tmps.clear();
                 tmps.push_back(_for_in);
+            }
+                break;
+            case c_variableStatement: {
+                auto var = std::dynamic_pointer_cast<js_sym_stmt_var_t>(tmps.front());
+                auto type = asts.front();
+                var->start = type->start;
+                if (AST_IS_KEYWORD_N(type, K_VAR)) {
+                    var->t = js_sym_var_t::TYPE_VAR;
+                }
+                else if (AST_IS_KEYWORD_N(type, K_LET)) {
+                    var->t = js_sym_var_t::TYPE_LET;
+                }
+                else if (AST_IS_KEYWORD_N(type, K_CONST)) {
+                    var->t = js_sym_var_t::TYPE_CONST;
+                }
+                else {
+                    error(type, "invalid var type");
+                }
+                asts.clear();
             }
                 break;
             case c_continueStatement:
@@ -2198,6 +2239,13 @@ namespace clib {
 
     std::string cjsgen::get_filename() const {
         return filename;
+    }
+
+    std::string cjsgen::gen_local(const std::string& s, int line, int column)
+    {
+        std::stringstream ss;
+        ss << s << "$$" << filename << "#" << line << "," << column;
+        return ss.str();
     }
 
     void cjsgen::gen_try(int t) {

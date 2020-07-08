@@ -874,7 +874,18 @@ namespace clib {
             auto obj = top();
             auto id = code.op1;
             auto name = current_stack->info->names.at(id);
+            if (current_stack->is_const(name)) {
+                std::stringstream ss;
+                ss << "throw new TypeError('Assignment to constant variable " << jsv_string::convert(name) << "')";
+                auto _stack_size = stack.size();
+                auto r = exec("<store_name::error>", ss.str(), true);
+                if (r != 0)
+                    return r;
+                return call_internal(false, _stack_size);
+            }
             current_stack->store_name(name, obj);
+            if (code.op2 == 1)
+                current_stack->add_const_var(name);
         }
                        break;
         case DELETE_NAME:
@@ -1150,7 +1161,18 @@ namespace clib {
             auto obj = top();
             auto id = code.op1;
             auto name = current_stack->info->names.at(id);
+            if (current_stack->is_const(name)) {
+                std::stringstream ss;
+                ss << "throw new TypeError('Assignment to constant variable " << jsv_string::convert(name) << "')";
+                auto _stack_size = stack.size();
+                auto r = exec("<store_fast::error>", ss.str(), true);
+                if (r != 0)
+                    return r;
+                return call_internal(false, _stack_size);
+            }
             current_stack->store_fast(name, obj);
+            if (code.op2 == 1)
+                current_stack->add_const_var(name);
         }
                        break;
         case CALL_FUNCTION: {
@@ -1245,7 +1267,18 @@ namespace clib {
             auto obj = top();
             auto id = code.op1;
             auto name = current_stack->info->derefs.at(id);
+            if (current_stack->is_const(name)) {
+                std::stringstream ss;
+                ss << "throw new TypeError('Assignment to constant variable " << jsv_string::convert(name) << "')";
+                auto _stack_size = stack.size();
+                auto r = exec("<store_deref::error>", ss.str(), true);
+                if (r != 0)
+                    return r;
+                return call_internal(false, _stack_size);
+            }
             current_stack->store_deref(name, obj);
+            if (code.op2 == 1)
+                current_stack->add_const_var(name);
         }
                         break;
         case REST_ARGUMENT:

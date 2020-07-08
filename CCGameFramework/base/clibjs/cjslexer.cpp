@@ -22,6 +22,7 @@ namespace clib {
                 std::make_tuple(K_NEW, "new"),
                 std::make_tuple(K_VAR, "var"),
                 std::make_tuple(K_LET, "let"),
+                std::make_tuple(K_CONST, "const"),
                 std::make_tuple(K_FUNCTION, "function"),
                 std::make_tuple(K_IF, "if"),
                 std::make_tuple(K_ELSE, "else"),

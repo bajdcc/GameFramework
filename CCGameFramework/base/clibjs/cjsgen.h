@@ -86,6 +86,7 @@ namespace clib {
         virtual bool is_arrow_func() const = 0;
         virtual std::string get_code_text(js_ast_node_index *) const = 0;
         virtual std::string get_filename() const = 0;
+        virtual std::string gen_local(const std::string&, int, int) = 0;
         virtual void gen_try(int) = 0;
         virtual void error(js_ast_node_index *, const std::string &) const = 0;
     };
@@ -131,7 +132,14 @@ namespace clib {
             closure,
             global,
         } clazz{local};
+        enum var_t {
+            TYPE_VAR,
+            TYPE_LET,
+            TYPE_CONST
+        };
         js_ast_node *node{nullptr};
+        var_t t{ TYPE_VAR };
+        std::string local_id;
     };
 
     class js_sym_var_id_t : public js_sym_var_t {
@@ -159,6 +167,7 @@ namespace clib {
         int gen_rvalue_decl(ijsgen &gen);
         int set_parent(js_sym_t::ref node) override;
         void parse();
+        void set_var_type(js_sym_var_t::var_t t);
         std::vector<js_sym_var_t::ref> ids;
         js_sym_exp_t::ref init;
     };
@@ -341,6 +350,7 @@ namespace clib {
         int gen_rvalue_decl(ijsgen& gen);
         int set_parent(js_sym_t::ref node) override;
         std::vector<js_sym_id_t::ref> vars;
+        js_sym_var_t::var_t t{ js_sym_var_t::TYPE_VAR };
     };
 
     class js_sym_stmt_exp_t : public js_sym_stmt_t {
@@ -637,6 +647,7 @@ namespace clib {
         bool is_arrow_func() const override;
         std::string get_code_text(js_ast_node_index *) const override;
         std::string get_filename() const override;
+        std::string gen_local(const std::string&, int, int) override;
         void gen_try(int) override;
         void error(js_ast_node_index *, const std::string &) const override;
 

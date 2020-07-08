@@ -166,6 +166,13 @@ namespace clib {
         }
     }
 
+    void js_sym_id_t::set_var_type(js_sym_var_t::var_t t)
+    {
+        for (auto& s : ids) {
+            s->t = t;
+        }
+    }
+
     // ----
 
     js_sym_var_t::js_sym_var_t(js_ast_node *node) : node(node) {
@@ -181,6 +188,15 @@ namespace clib {
     }
 
     int js_sym_var_t::gen_lvalue(ijsgen &gen) {
+        switch (node->flag) {
+        case a_literal:
+            if (t == TYPE_CONST) {
+                //gen.error(this, "cannot modify const value");
+            }
+            break;
+        default:
+            break;
+        }
         return gen_lvalue_decl(gen);
     }
 
@@ -188,8 +204,17 @@ namespace clib {
     {
         switch (node->flag) {
         case a_literal:
+            if (local_id.empty()) {
+                if (t == TYPE_VAR)
+                    local_id = node->data._string;
+                else
+                    local_id = gen.gen_local(node->data._string, node->line, node->column);
+            }
             if (clazz == local) {
-                gen.emit(this, STORE_NAME, gen.load_string(node->data._string, cjs_consts::get_string_t::gs_name));
+                if (t == TYPE_CONST)
+                    gen.emit(this, STORE_NAME, gen.load_string(local_id, cjs_consts::get_string_t::gs_name), 1);
+                else
+                    gen.emit(this, STORE_NAME, gen.load_string(local_id, cjs_consts::get_string_t::gs_name));
                 if (parent.lock()->get_type() == s_id) {
                     if (check && gen.get_var(node->data._string, sq_local) != nullptr)
                         gen.error(this, "id conflict");
@@ -197,7 +222,10 @@ namespace clib {
                 }
             }
             else if (clazz == fast) {
-                gen.emit(this, STORE_FAST, gen.load_string(node->data._string, cjs_consts::get_string_t::gs_name));
+                if (t == TYPE_CONST)
+                    gen.emit(this, STORE_FAST, gen.load_string(local_id, cjs_consts::get_string_t::gs_name), 1);
+                else
+                    gen.emit(this, STORE_FAST, gen.load_string(local_id, cjs_consts::get_string_t::gs_name));
                 if (parent.lock()->get_type() == s_id) {
                     if (check && gen.get_var(node->data._string, sq_local) != nullptr)
                         gen.error(this, "id conflict");
@@ -205,10 +233,16 @@ namespace clib {
                 }
             }
             else if (clazz == global) {
-                gen.emit(this, STORE_GLOBAL, gen.load_string(node->data._string, cjs_consts::get_string_t::gs_global));
+                if (t == TYPE_CONST)
+                    gen.emit(this, STORE_GLOBAL, gen.load_string(local_id, cjs_consts::get_string_t::gs_global), 1);
+                else
+                    gen.emit(this, STORE_GLOBAL, gen.load_string(local_id, cjs_consts::get_string_t::gs_global));
             }
             else if (clazz == closure) {
-                gen.emit(this, STORE_DEREF, gen.load_string(node->data._string, cjs_consts::get_string_t::gs_deref));
+                if (t == TYPE_CONST)
+                    gen.emit(this, STORE_DEREF, gen.load_string(local_id, cjs_consts::get_string_t::gs_deref), 1);
+                else
+                    gen.emit(this, STORE_DEREF, gen.load_string(local_id, cjs_consts::get_string_t::gs_deref));
             }
             else {
                 gen.error(this, "unsupported class type");
@@ -224,14 +258,20 @@ namespace clib {
     int js_sym_var_t::gen_rvalue(ijsgen &gen) {
         switch (node->flag) {
             case a_literal:
+                if (local_id.empty()) {
+                    if (t == TYPE_VAR)
+                        local_id = node->data._string;
+                    else
+                        local_id = gen.gen_local(node->data._string, node->line, node->column);
+                }
                 if (clazz == local) {
-                    gen.emit(this, LOAD_NAME, gen.load_string(node->data._string, cjs_consts::get_string_t::gs_name));
+                    gen.emit(this, LOAD_NAME, gen.load_string(local_id, cjs_consts::get_string_t::gs_name));
                 } else if (clazz == fast) {
-                    gen.emit(this, LOAD_FAST, gen.load_string(node->data._string, cjs_consts::get_string_t::gs_name));
+                    gen.emit(this, LOAD_FAST, gen.load_string(local_id, cjs_consts::get_string_t::gs_name));
                 } else if (clazz == global) {
-                    gen.emit(this, LOAD_GLOBAL, gen.load_string(node->data._string, cjs_consts::get_string_t::gs_global));
+                    gen.emit(this, LOAD_GLOBAL, gen.load_string(local_id, cjs_consts::get_string_t::gs_global));
                 } else if (clazz == closure) {
-                    gen.emit(this, LOAD_DEREF, gen.load_string(node->data._string, cjs_consts::get_string_t::gs_deref));
+                    gen.emit(this, LOAD_DEREF, gen.load_string(local_id, cjs_consts::get_string_t::gs_deref));
                 } else {
                     gen.error(this, "unsupported class type");
                 }
@@ -320,6 +360,11 @@ namespace clib {
             } else {
                 clazz = global;
             }
+        }
+        if (id.lock() && id.lock()->get_type() == s_var) {
+            auto k = std::dynamic_pointer_cast<js_sym_var_t>(id.lock());
+            t = k->t;
+            local_id = k->local_id;
         }
     }
 
@@ -1099,6 +1144,7 @@ namespace clib {
 
     int js_sym_stmt_var_t::gen_rvalue(ijsgen &gen) {
         for (const auto &s : vars) {
+            s->set_var_type(t);
             s->gen_rvalue(gen);
             gen.emit(s.get(), POP_TOP);
         }
