@@ -447,7 +447,7 @@ namespace clib {
         propertyAssignment = propertyExpressionAssignment
                              | computedPropertyExpressionAssignment
                              | propertyShorthand;
-        propertyExpressionAssignment = propertyName + ~_T_COLON + singleExpression;
+        propertyExpressionAssignment = propertyName + *(~_T_COLON + singleExpression);
         computedPropertyExpressionAssignment = ~_T_LPARAN + singleExpression + ~_T_RPARAN +
                                                ~_T_COLON + singleExpression;
         propertyShorthand = _T_ELLIPSIS + singleExpression;
@@ -467,7 +467,7 @@ namespace clib {
         arrowFunction = arrowFunctionParameters + ~_T_ARROW + arrowFunctionBody;
         arrowFunctionParameters = _ID | (_T_LPARAN + *formalParameterList + _T_RPARAN);
         arrowFunctionBody = singleExpression | (~_T_LBRACE + *functionBody + _T_RBRACE);
-        eos = (~~_T_SEMI)((void *) &clear_bk) | _RULE_EOF | _RULE_LINE | _RULE_RBRACE;
+        eos = ~_T_SEMI | _RULE_EOF | _RULE_LINE | _RULE_RBRACE;
         keyword = _K_BREAK
                   | _K_DO
                   | _K_INSTANCEOF
@@ -568,7 +568,17 @@ namespace clib {
         bks.push_back(bk_tmp);
         auto trans_id = -1;
         auto prev_idx = 0;
+        using namespace std::chrono;
+        using namespace std::chrono_literals;
+        auto start_time = system_clock::now();
         while (!bks.empty()) {
+#if NDEBUG
+            if (duration_cast<milliseconds>(system_clock::now() - start_time) >= 5s) {
+                ast->reset();
+                break;
+            }
+#endif
+
             auto bk = &bks.back();
             if (bk->direction == b_success || bk->direction == b_fail) {
                 break;

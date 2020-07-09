@@ -375,6 +375,9 @@ void SolidLabelElementRenderer::Render(CRect bounds, CComPtr<ID2D1RenderTarget> 
     auto e = element.lock();
     if (e->flags.self_visible)
     {
+        if (bounds.IsRectEmpty())
+            return;
+
         if (!textLayout)
         {
             CreateTextLayout();

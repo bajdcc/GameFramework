@@ -1010,12 +1010,13 @@ namespace clib {
                                break;
             case c_propertyExpressionAssignment: {
                 auto p = std::make_shared<js_sym_object_pair_t>();
-                if (tmps.size() == 2) {
+                if (tmps.size() == 2 || tmps.size() == 1) {
                     copy_info(p, tmps.front());
                     p->end = tmps.back()->end;
                     p->key = to_exp(tmps.front());
                     p->value = to_exp(tmps.back());
-                } else {
+                }
+                else {
                     assert(!"invalid property");
                 }
                 asts.clear();
