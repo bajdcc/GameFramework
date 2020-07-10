@@ -1,5 +1,10 @@
-function Event() {
+function Event(evt) {
     this.listener = {};
+    if (evt) {
+        for (var i in evt) {
+            this.on(i, evt[i]);
+        }
+    }
 }
 Event.prototype.on = function(type, f) {
     this.listener[type] = this.listener[type] || [];
@@ -19,9 +24,9 @@ Event.prototype.off = function(type, f) {
         this.listener[type] = this.listener[type].filter(x => x !== f);
     return this;
 };
-Event.prototype.emit = function(type, ...args) {
+Event.prototype.emit = function(type, obj, ...args) {
     if (this.listener[type])
-        this.listener[type].forEach(x => x.apply(this, args));
+        this.listener[type].forEach(x => x.apply(obj, args));
     return this;
 };
 sys.event = new Event();

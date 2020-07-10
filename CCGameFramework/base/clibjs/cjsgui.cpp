@@ -81,6 +81,10 @@ namespace clib {
         global_state.drawing = false;
         global_state.render_queue.clear();
         global_state.render_queue_auto.clear();
+        global_state.render_queue_bk.clear();
+        global_state.render_queue_auto_bk.clear();
+        global_state.ui_focus.reset();
+        global_state.ui_hover.reset();
     }
 
     void cjsgui::clear_cache()
@@ -99,6 +103,14 @@ namespace clib {
     {
         std::swap(global_state.render_queue, global_state.render_queue_auto);
         global_state.render_queue_auto.clear();
+        std::swap(global_state.render_queue_bk, global_state.render_queue_auto_bk);
+        global_state.render_queue_auto_bk.clear();
+        if (global_state.ui_hover.lock() && !global_state.ui_hover.lock()->is_render()) {
+            global_state.ui_hover.reset();
+        }
+        if (global_state.ui_focus.lock() && !global_state.ui_focus.lock()->is_render()) {
+            global_state.ui_focus.reset();
+        }
     }
 
     void cjsgui::change_target(std::shared_ptr<Direct2DRenderTarget> renderTarget)
@@ -529,11 +541,27 @@ namespace clib {
 
     void cjsgui::put_string(const std::string& str) {
         auto& scr = *screens[screen_ptr].get();
+        auto& ptr_x = scr.ptr_x;
+        auto& ptr_y = scr.ptr_y;
+        auto& ptr_rx = scr.ptr_rx;
+        auto& ptr_ry = scr.ptr_ry;
+        auto& ptr_mx = scr.ptr_mx;
+        auto& ptr_my = scr.ptr_my;
         auto& input_state = scr.input_state;
         auto& input_delay = scr.input_delay;
         if (input_state) {
-            for (auto& s : str) {
-                input_delay.push_back(s);
+            if (ptr_x == ptr_rx && ptr_x == ptr_mx &&
+                ptr_y == ptr_ry && ptr_y == ptr_my) {
+                input_set(false);
+                for (auto& s : str) {
+                    put_char(s);
+                }
+                input_set(true);
+            }
+            else {
+                for (auto& s : str) {
+                    input_delay.push_back(s);
+                }
             }
         }
         else {

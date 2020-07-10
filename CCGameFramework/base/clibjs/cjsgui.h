@@ -166,6 +166,10 @@ namespace clib {
             bool drawing{ false };
             std::vector<jsv_ui::weak_ref> render_queue;
             std::vector<jsv_ui::weak_ref> render_queue_auto;
+            std::vector<jsv_ui::weak_ref> render_queue_bk;
+            std::vector<jsv_ui::weak_ref> render_queue_auto_bk;
+            jsv_ui::weak_ref ui_focus;
+            jsv_ui::weak_ref ui_hover;
         } global_state;
         class screen_t {
         public:

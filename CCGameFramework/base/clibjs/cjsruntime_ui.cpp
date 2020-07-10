@@ -55,6 +55,7 @@ namespace clib {
         auto v = obj->get("type", n);
         if (v && v->get_type() == r_string) {
             add("length", n->new_number(0));
+            add2("event", obj, n);
             auto type = JS_STR(v);
             if (type == "label") {
                 add("type", v);
@@ -101,6 +102,8 @@ namespace clib {
 
     void jsv_ui::render()
     {
+        if (!render_state)
+            render_state = true;
         if (element)
             element->render();
     }
@@ -159,6 +162,24 @@ namespace clib {
             element->change_target();
     }
 
+    void jsv_ui::set_render(bool s)
+    {
+        render_state = s;
+    }
+
+    bool jsv_ui::is_render() const
+    {
+        return render_state;
+    }
+
+    bool jsv_ui::hit(int x, int y) const
+    {
+        if (element) {
+            return element->hit(x, y);
+        }
+        return false;
+    }
+
     void cjsruntime::send_signal(const std::string& s)
     {
         if (!global_ui.signals.empty() && global_ui.signals.back() == s)
@@ -181,6 +202,162 @@ namespace clib {
     void cjsruntime::clear_frame()
     {
         global_ui.frames = 0;
+    }
+
+    void cjsruntime::ui_hit(const js_value::ref& obj, const std::string& n)
+    {
+        global_ui.hit = obj;
+        global_ui.hit_n = n;
+        global_ui.hit_x = (double)GLOBAL_STATE.mouse_x;
+        global_ui.hit_y = (double)GLOBAL_STATE.mouse_y;
+        global_ui.signals.push_front("hit");
+        eval_ui(true);
+        global_ui.hit.reset();
+        global_ui.hit_n.clear();
+        global_ui.hit_x = 0;
+        global_ui.hit_y = 0;
+    }
+
+    void cjsruntime::hit(int n)
+    {
+        if (n == 212 || n == 6 || n == 7)
+            return;
+        if (GLOBAL_STATE.drawing && permanents.state != 0) {
+            if (cjsgui::singleton().begin_render()) {
+                for (auto& e : global_ui.elements) {
+                    e->set_render(false);
+                }
+                auto result = eval_ui(false);
+                cjsgui::singleton().end_render();
+                if (result != 0)
+                    return;
+            }
+        }
+        if (n == 213) {
+            auto& hover = GLOBAL_STATE.ui_hover;
+            if (hover.lock()) {
+                ui_hit(hover.lock(), "mouseleave");
+            }
+            return;
+        }
+        if (n == 214) {
+            auto& hover = GLOBAL_STATE.ui_hover;
+            if (hover.lock()) {
+                ui_hit(hover.lock(), "mousehover");
+            }
+            return;
+        }
+        const auto& wnds = GLOBAL_STATE.render_queue_bk;
+        if (wnds.empty())
+            return;
+        auto mouse_x = GLOBAL_STATE.mouse_x - GLOBAL_STATE.bound.left;
+        auto mouse_y = GLOBAL_STATE.mouse_y - GLOBAL_STATE.bound.top;
+        for (const auto& i : wnds) {
+            if (i.lock()->hit(mouse_x, mouse_y)) {
+                switch (n) {
+                case 6:
+                    ui_hit(i.lock(), "gotfocus");
+                    break;
+                case 7:
+                    ui_hit(i.lock(), "lostfocus");
+                    break;
+                case 200:
+                    ui_hit(i.lock(), "leftbuttondown");
+                    break;
+                case 201:
+                    ui_hit(i.lock(), "leftbuttonup");
+                    break;
+                case 202:
+                    ui_hit(i.lock(), "leftbuttondoubleclick");
+                    break;
+                case 203:
+                    ui_hit(i.lock(), "rightbuttondown");
+                    break;
+                case 204:
+                    ui_hit(i.lock(), "rightbuttonup");
+                    break;
+                case 205:
+                    ui_hit(i.lock(), "rightbuttondoubleclick");
+                    break;
+                case 206:
+                    ui_hit(i.lock(), "middlebuttondown");
+                    break;
+                case 207:
+                    ui_hit(i.lock(), "middlebuttonup");
+                    break;
+                case 208:
+                    ui_hit(i.lock(), "middlebuttondoubleclick");
+                    break;
+                case 209:
+                    ui_hit(i.lock(), "horizontalwheel");
+                    break;
+                case 210:
+                    ui_hit(i.lock(), "verticalwheel");
+                    break;
+                case 211:
+                    ui_hit(i.lock(), "mousemove");
+                    break;
+                case 212:
+                    ui_hit(i.lock(), "mouseenter");
+                    break;
+                case 213:
+                    ui_hit(i.lock(), "mouseleave");
+                    break;
+                case 214:
+                    ui_hit(i.lock(), "mousehover");
+                    break;
+                default: {
+                    std::stringstream ss;
+                    ss << "Unknown hit type: " << n;
+                    ui_hit(i.lock(), ss.str());
+                }
+                    break;
+                }
+                if (n == 211) {
+                    auto& hover = GLOBAL_STATE.ui_hover;
+                    if (hover.lock()) {
+                        if (hover.lock() != i.lock()) {
+                            ui_hit(hover.lock(), "mouseleave");
+                            hover = i;
+                            ui_hit(hover.lock(), "mouseenter");
+                        }
+                    }
+                    else {
+                        hover = i;
+                        ui_hit(hover.lock(), "mouseenter");
+                    }
+                }
+                else if (n >= 200 && n <= 208) {
+                    auto& focus = GLOBAL_STATE.ui_focus;
+                    if (focus.lock()) {
+                        if (focus.lock() != i.lock()) {
+                            ui_hit(focus.lock(), "lostfocus");
+                            focus = i;
+                            ui_hit(focus.lock(), "gotfocus");
+                        }
+                    }
+                    else {
+                        focus = i;
+                        ui_hit(focus.lock(), "gotfocus");
+                    }
+                }
+                return;
+            }
+        }
+        if (n == 211) {
+            auto& hover = GLOBAL_STATE.ui_hover;
+            if (hover.lock()) {
+                ui_hit(hover.lock(), "mouseleave");
+                hover.reset();
+            }
+        }
+        else if (n >= 200 && n <= 208) {
+            auto& focus = GLOBAL_STATE.ui_focus;
+            if (focus.lock()) {
+                ui_hit(focus.lock(), "lostfocus");
+                focus.reset();
+            }
+        }
     }
 
     int cjsruntime::eval_ui(bool signal) {
@@ -244,7 +421,7 @@ namespace clib {
     {
         auto bounds = CRect(left, top, left + width, top + height);
         label->SetRenderRect(bounds);
-        label->GetRenderer()->Render(bounds, cjsgui::singleton().get_global().renderTarget);
+        label->GetRenderer()->Render(bounds, GLOBAL_STATE.renderTarget);
     }
 
     void js_ui_label::clear()
@@ -254,7 +431,7 @@ namespace clib {
 
     void js_ui_label::change_target()
     {
-        label->GetRenderer()->SetRenderTarget(cjsgui::singleton().get_global().canvas.lock());
+        label->GetRenderer()->SetRenderTarget(GLOBAL_STATE.canvas.lock());
     }
 
     void js_ui_label::add(const std::string& s, const js_value::ref& obj)
@@ -355,6 +532,11 @@ namespace clib {
         }
     }
 
+    bool js_ui_label::hit(int x, int y) const
+    {
+        return label->GetRenderRect().PtInRect(CPoint(x, y));
+    }
+
     // ---------------------- RECT ----------------------
 
     js_ui_rect::js_ui_rect()
@@ -377,7 +559,7 @@ namespace clib {
     {
         auto bounds = CRect(left, top, left + width, top + height);
         rect->SetRenderRect(bounds);
-        rect->GetRenderer()->Render(bounds, cjsgui::singleton().get_global().renderTarget);
+        rect->GetRenderer()->Render(bounds, GLOBAL_STATE.renderTarget);
     }
 
     void js_ui_rect::clear()
@@ -387,7 +569,7 @@ namespace clib {
 
     void js_ui_rect::change_target()
     {
-        rect->GetRenderer()->SetRenderTarget(cjsgui::singleton().get_global().canvas.lock());
+        rect->GetRenderer()->SetRenderTarget(GLOBAL_STATE.canvas.lock());
     }
 
     void js_ui_rect::add(const std::string& s, const js_value::ref& obj)
@@ -412,6 +594,11 @@ namespace clib {
         }
     }
 
+    bool js_ui_rect::hit(int x, int y) const
+    {
+        return rect->GetRenderRect().PtInRect(CPoint(x, y));
+    }
+
     // ---------------------- ROUND ----------------------
 
     js_ui_round::js_ui_round()
@@ -434,7 +621,7 @@ namespace clib {
     {
         auto bounds = CRect(left, top, left + width, top + height);
         round->SetRenderRect(bounds);
-        round->GetRenderer()->Render(bounds, cjsgui::singleton().get_global().renderTarget);
+        round->GetRenderer()->Render(bounds, GLOBAL_STATE.renderTarget);
     }
 
     void js_ui_round::clear()
@@ -444,7 +631,7 @@ namespace clib {
 
     void js_ui_round::change_target()
     {
-        round->GetRenderer()->SetRenderTarget(cjsgui::singleton().get_global().canvas.lock());
+        round->GetRenderer()->SetRenderTarget(GLOBAL_STATE.canvas.lock());
     }
 
     void js_ui_round::add(const std::string& s, const js_value::ref& obj)
@@ -473,5 +660,10 @@ namespace clib {
         else if (s == "radius") {
             round->SetRadius(0);
         }
+    }
+
+    bool js_ui_round::hit(int x, int y) const
+    {
+        return round->GetRenderRect().PtInRect(CPoint(x, y));
     }
 }

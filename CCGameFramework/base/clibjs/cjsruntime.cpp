@@ -438,14 +438,14 @@ namespace clib {
     void cjsruntime::eval_input() {
         if (current_stack || !stack.empty())
             return;
-        if (!cjsgui::singleton().get_global().input_s->input_success)
+        if (!GLOBAL_STATE.input_s->input_success)
             return;
-        cjsgui::singleton().get_global().input_s->input_success = false;
-        auto input = cjsgui::singleton().get_global().input_s->input_content;
-        cjsgui::singleton().get_global().input_s->input_content.clear();
+        GLOBAL_STATE.input_s->input_success = false;
+        auto input = GLOBAL_STATE.input_s->input_content;
+        GLOBAL_STATE.input_s->input_content.clear();
         std::stringstream ss;
         auto b = js_base64_encode(input);
-        ss << "sys.event.emit('input', '" << b << "');";
+        ss << "sys.event.emit('input', null, '" << b << "');";
         exec("<input>", ss.str(), true);
     }
 
@@ -539,8 +539,11 @@ namespace clib {
                 current_stack = nullptr;
             }
         }
-        if (cjsgui::singleton().get_global().drawing && permanents.state != 0) {
+        if (GLOBAL_STATE.drawing && permanents.state != 0) {
             if (cjsgui::singleton().begin_render()) {
+                for (auto& e : global_ui.elements) {
+                    e->set_render(false);
+                }
                 result = eval_ui(false);
                 cjsgui::singleton().end_render();
             }
@@ -616,7 +619,7 @@ namespace clib {
                 push(new_boolean(false));
                 break;
             }
-            push(new_boolean(!instance_of(op1, JS_O(ff))));
+            push(new_boolean(instance_of(op1, JS_O(ff))));
         }
                         break;
         case OBJECT_IN: {
@@ -2298,8 +2301,8 @@ namespace clib {
 #if DUMP_STEP
         std::cout << std::setfill('#') << std::setw(60) << "" << std::endl;
 #endif
-        cjsgui::singleton().get_global().total_obj = (int)objs.size();
-        cjsgui::singleton().get_global().cache_obj =
+        GLOBAL_STATE.total_obj = (int)objs.size();
+        GLOBAL_STATE.cache_obj =
             reuse.reuse_numbers.size() +
             reuse.reuse_strings.size() +
             reuse.reuse_booleans.size() +

@@ -253,6 +253,7 @@ namespace clib {
         virtual void change_target() = 0;
         virtual void add(const std::string&, const js_value::ref&) = 0;
         virtual void remove(const std::string&) = 0;
+        virtual bool hit(int, int) const = 0;
         LONG left{ 0 };
         LONG top{ 0 };
         LONG width{ 0 };
@@ -271,6 +272,7 @@ namespace clib {
         void change_target() override;
         void add(const std::string&, const js_value::ref&) override;
         void remove(const std::string&) override;
+        bool hit(int, int) const override;
     private:
         std::shared_ptr<SolidLabelElement> label;
     };
@@ -287,6 +289,7 @@ namespace clib {
         void change_target() override;
         void add(const std::string&, const js_value::ref&) override;
         void remove(const std::string&) override;
+        bool hit(int, int) const override;
     private:
         std::shared_ptr<SolidBackgroundElement> rect;
     };
@@ -303,6 +306,7 @@ namespace clib {
         void change_target() override;
         void add(const std::string&, const js_value::ref&) override;
         void remove(const std::string&) override;
+        bool hit(int, int) const override;
     private:
         std::shared_ptr<RoundBorderElement> round;
     };
@@ -317,10 +321,14 @@ namespace clib {
         void add(const std::string&, const js_value::weak_ref&) override;
         void remove(const std::string&) override;
         void change_target();
+        void set_render(bool);
+        bool is_render() const;
+        bool hit(int, int) const;
     private:
         void add2(const std::string&, const jsv_object::ref&, js_value_new*);
     private:
         std::shared_ptr<js_ui_base> element;
+        bool render_state{ false };
     };
 
     class jsv_null : public js_value {
@@ -535,6 +543,9 @@ namespace clib {
         int get_frame() const;
         void clear_frame();
 
+        void ui_hit(const js_value::ref&, const std::string&);
+        void hit(int n);
+
     private:
         int run(const cjs_code &code);
         js_value::ref load_const(int op);
@@ -707,6 +718,10 @@ namespace clib {
         static std::unordered_map<std::string, cjs_code_result::ref> caches;
         struct ui_struct {
             std::unordered_set<jsv_ui::ref> elements;
+            js_value::weak_ref hit;
+            std::string hit_n;
+            double hit_x;
+            double hit_y;
             std::deque<std::string> signals;
             int frames{ 0 };
         } global_ui;

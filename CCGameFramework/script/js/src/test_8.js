@@ -7,7 +7,7 @@
             left: 10,
             top: 60,
             width: 100,
-            height: 100,
+            height: 20,
             align: 'center',
             valign: 'center',
             font: {
@@ -23,6 +23,11 @@
         top: 100,
         width: 100,
         height: 100,
+        event: new Event({
+            'hit': function(t, x, y) {
+                console.log(t, x, y);
+            }
+        })
     });
     UI.root.push(
         block

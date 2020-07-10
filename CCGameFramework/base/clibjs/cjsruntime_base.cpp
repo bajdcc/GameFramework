@@ -1196,7 +1196,7 @@ namespace clib {
                 }
                 f = input.find("single");
                 if (f != input.end()) {
-                    cjsgui::singleton().get_global().input_s->input_single = (f->second.lock()->to_bool());
+                    GLOBAL_STATE.input_s->input_single = (f->second.lock()->to_bool());
                 }
                 push(new_undefined());
                 break;
@@ -1219,11 +1219,29 @@ namespace clib {
             if (var.size() >= 2) {
                 if (var[0] == "screen") {
                     if (var[1] == "width") {
-                        push(new_number(cjsgui::singleton().get_global().bound.Width()));
+                        push(new_number(GLOBAL_STATE.bound.Width()));
                         break;
                     }
                     else if (var[1] == "height") {
-                        push(new_number(cjsgui::singleton().get_global().bound.Height()));
+                        push(new_number(GLOBAL_STATE.bound.Height()));
+                        break;
+                    }
+                }
+                else if (var[0] == "hit") {
+                    if (var[1] == "obj") {
+                        push(global_ui.hit.lock() ? global_ui.hit : new_undefined());
+                        break;
+                    }
+                    else if (var[1] == "type") {
+                        push(new_string(global_ui.hit_n));
+                        break;
+                    }
+                    else if (var[1] == "x") {
+                        push(new_number(global_ui.hit_x));
+                        break;
+                    }
+                    else if (var[1] == "y") {
+                        push(new_number(global_ui.hit_y));
                         break;
                     }
                 }
@@ -1301,14 +1319,21 @@ namespace clib {
         case API_UI_render: {
             auto o = _this.lock();
             do {
-                if (!o || o->is_primitive()) {
+                if (!o || o->is_primitive() || args.empty()) {
                     break;
                 }
                 auto obj = JS_O(o);
                 if (obj->get_object_type() != jsv_object::T_UI)
                     break;
+                auto r = 0;
+                auto n = args.front().lock()->to_number(this, &r);
+                if (r != 0)
+                    return r;
                 auto ui = JS_UI(obj);
-                cjsgui::singleton().get_global().render_queue_auto.push_back(ui);
+                if (n == 1.0f)
+                    GLOBAL_STATE.render_queue_auto.push_back(ui);
+                else if (n == 2.0f)
+                    GLOBAL_STATE.render_queue_auto_bk.push_back(ui);
             } while (0);
             push(new_undefined());
         }
