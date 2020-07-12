@@ -54,11 +54,11 @@ namespace clib {
     {
         auto v = obj->get("type", n);
         if (v && v->get_type() == r_string) {
-            add("length", n->new_number(0));
+            jsv_object::add("type", v);
+            jsv_object::add("length", n->new_number(0));
             add2("event", obj, n);
             auto type = JS_STR(v);
             if (type == "label") {
-                add("type", v);
                 element = std::make_shared<js_ui_label>();
                 set_location(element, JS_O(shared_from_this()), obj, n);
                 add2("color", obj, n);
@@ -76,7 +76,6 @@ namespace clib {
                 return true;
             }
             if (type == "rect") {
-                add("type", v);
                 element = std::make_shared<js_ui_rect>();
                 set_location(element, JS_O(shared_from_this()), obj, n);
                 add2("color", obj, n);
@@ -84,7 +83,6 @@ namespace clib {
                 return true;
             }
             if (type == "round") {
-                add("type", v);
                 element = std::make_shared<js_ui_round>();
                 set_location(element, JS_O(shared_from_this()), obj, n);
                 add2("color", obj, n);
@@ -93,7 +91,6 @@ namespace clib {
                 return true;
             }
             if (type == "root") {
-                add("type", v);
                 return true;
             }
         }

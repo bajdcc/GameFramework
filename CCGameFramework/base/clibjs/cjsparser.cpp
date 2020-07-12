@@ -45,7 +45,7 @@ namespace clib {
         if (unit.get_pda().empty())
             gen();
         // 语法分析（递归下降）
-        program();
+        program(str);
         return ast->get_root();
     }
 
@@ -536,7 +536,7 @@ namespace clib {
 
     extern const std::string& js_pda_edge_str(js_pda_edge_t type);
 
-    void cjsparser::program() {
+    void cjsparser::program(const std::string& str) {
 #if REPORT_ERROR
         std::ofstream log(REPORT_ERROR_FILE, std::ios::app | std::ios::out);
 #endif
@@ -556,21 +556,27 @@ namespace clib {
         ast_stack.push_back(root);
         std::vector<int> jumps;
         std::vector<int> trans_ids;
-        backtrace_t bk_tmp;
-        bk_tmp.lexer_index = 0;
-        bk_tmp.state_stack = state_stack;
-        bk_tmp.ast_stack = ast_stack;
-        bk_tmp.current_state = 0;
-        bk_tmp.coll_index = 0;
-        bk_tmp.reduce_index = 0;
-        bk_tmp.direction = b_next;
-        std::vector<backtrace_t> bks;
+        auto bk_tmp = std::make_shared<backtrace_t>();
+        bk_tmp->lexer_index = 0;
+        bk_tmp->state_stack = state_stack;
+        bk_tmp->ast_stack = ast_stack;
+        bk_tmp->current_state = 0;
+        bk_tmp->coll_index = 0;
+        bk_tmp->reduce_index = 0;
+        bk_tmp->direction = b_next;
+        std::vector<std::shared_ptr<backtrace_t>> bks;
         bks.push_back(bk_tmp);
         auto trans_id = -1;
         auto prev_idx = 0;
         using namespace std::chrono;
         using namespace std::chrono_literals;
         auto start_time = system_clock::now();
+#if TRACE_PARSING && TRACE_PARSING_LOG
+        auto idx = 0;
+        {
+            fprintf(stdout, "Parsing Code:\n---->\n%s\n<----\n", str.c_str());
+        };
+#endif
         while (!bks.empty()) {
 #if NDEBUG
             if (duration_cast<milliseconds>(system_clock::now() - start_time) >= 5s) {
@@ -579,7 +585,7 @@ namespace clib {
             }
 #endif
 
-            auto bk = &bks.back();
+            auto bk = bks.back();
             if (bk->direction == b_success || bk->direction == b_fail) {
                 break;
             }
@@ -587,8 +593,8 @@ namespace clib {
                 if (bk->trans_ids.empty()) {
                     if (bks.size() > 1) {
                         bks.pop_back();
-                        bks.back().direction = b_error;
-                        bk = &bks.back();
+                        bks.back()->direction = b_error;
+                        bk = bks.back();
                         if (bk->lexer_index < prev_idx) {
                             bk->direction = b_fail;
                             continue;
@@ -674,21 +680,23 @@ namespace clib {
                                     }
                                 }
                                 if (trans_ids.size() > add.size()) {
-                                    trans_ids = add;
-                                    std::copy(trans_ids.cbegin(), trans_ids.cend(), back_inserter(then));
+                                    trans_ids = then;
+                                    std::copy(add.cbegin(), add.cend(), std::back_inserter(trans_ids));
                                 }
                             }
                             if (trans_ids.size() > 1) {
-                                bk_tmp.lexer_index = ast_cache_index;
-                                bk_tmp.state_stack = state_stack;
-                                bk_tmp.ast_stack = ast_stack;
-                                bk_tmp.current_state = state;
-                                bk_tmp.trans_ids = trans_ids;
-                                bk_tmp.coll_index = ast_coll_cache.size();
-                                bk_tmp.reduce_index = ast_reduce_cache.size();
-                                bk_tmp.direction = b_next;
+                                bk_tmp = std::make_shared<backtrace_t>();
+                                bk_tmp->lexer_index = ast_cache_index;
+                                bk_tmp->state_stack = state_stack;
+                                bk_tmp->ast_stack = ast_stack;
+                                bk_tmp->current_state = state;
+                                bk_tmp->trans_ids = trans_ids;
+                                bk_tmp->trans_ids_tmp = trans_ids;
+                                bk_tmp->coll_index = ast_coll_cache.size();
+                                bk_tmp->reduce_index = ast_reduce_cache.size();
+                                bk_tmp->direction = b_next;
 #if DEBUG_AST
-                                for (auto i = 0; i < bks.size(); ++i) {
+                                for (size_t i = 0; i < bks.size(); ++i) {
                                     auto &_bk = bks[i];
                                     fprintf(stdout,
                                             "[DEBUG] Branch old: i=%d, LI=%d, SS=%d, AS=%d, S=%d, TS=%d, CI=%d, RI=%d, TK=%d\n",
@@ -698,7 +706,7 @@ namespace clib {
                                 }
 #endif
                                 bks.push_back(bk_tmp);
-                                bk = &bks.back();
+                                bk = bks.back();
 #if DEBUG_AST
                                 fprintf(stdout,
                                         "[DEBUG] Branch new: BS=%d, LI=%d, SS=%d, AS=%d, S=%d, TS=%d, CI=%d, RI=%d, TK=%d\n",
@@ -707,6 +715,31 @@ namespace clib {
                                         bk_tmp.coll_index, bk_tmp.reduce_index, bk_tmp.ast_ids.size());
 #endif
                                 bk->direction = b_next;
+#if TRACE_PARSING
+                                std::cout << "create branch: " << current_state.label << std::endl;
+                                for (size_t i = 0; i < bks.size(); ++i) {
+                                    auto& _bk = bks[i];
+                                    fprintf(stdout,
+                                        "[BACKTRACE#%d:%d] %s   -- %s\n",
+                                        i + 1, _bk->trans_ids.size(), pdas[_bk->current_state].label.c_str(), lexer->get_unit_desc(_bk->lexer_index).c_str());
+                                    if (!_bk->trans_ids_tmp.empty()) {
+                                        const auto& tr = pdas[_bk->current_state].trans;
+                                        for (size_t j = 0; j < _bk->trans_ids_tmp.size(); ++j) {
+                                            const auto& t = tr[_bk->trans_ids_tmp[j]];
+                                            if (t.label.empty())
+                                                fprintf(stdout,
+                                                    "[BACKTRACE#%d:%d:%d] %s%s %s\n",
+                                                    i + 1, _bk->trans_ids.size(), j + 1, j == _bk->trans_ids.size() ? "*" : "",
+                                                    js_pda_edge_str(t.type).c_str(), pdas[t.jump].label.c_str());
+                                            else
+                                                fprintf(stdout,
+                                                    "[BACKTRACE#%d:%d:%d] %s%s %s\n",
+                                                    i + 1, _bk->trans_ids.size(), j + 1, j == _bk->trans_ids.size() ? "*" : "",
+                                                    js_pda_edge_str(t.type).c_str(), t.label.c_str());
+                                        }
+                                    }
+                                }
+#endif
                                 break;
                             } else {
                                 trans_id = trans_ids.back();
@@ -715,6 +748,28 @@ namespace clib {
                         } else {
 #if TRACE_PARSING
                             std::cout << "parsing error: " << current_state.label << std::endl;
+                            for (size_t i = 0; i < bks.size(); ++i) {
+                                auto& _bk = bks[i];
+                                fprintf(stdout,
+                                    "[BACKTRACE#%d:%d] %s   -- %s\n",
+                                    i + 1, _bk->trans_ids.size(), pdas[_bk->current_state].label.c_str(), lexer->get_unit_desc(_bk->lexer_index).c_str());
+                                if (!_bk->trans_ids_tmp.empty()) {
+                                    const auto& tr = pdas[_bk->current_state].trans;
+                                    for (size_t j = 0; j < _bk->trans_ids_tmp.size(); ++j) {
+                                        const auto& t = tr[_bk->trans_ids_tmp[j]];
+                                        if (t.label.empty())
+                                            fprintf(stdout,
+                                                "[BACKTRACE#%d:%d:%d] %s%s %s\n",
+                                                i + 1, _bk->trans_ids.size(), j + 1, j == _bk->trans_ids.size() ? "*" : "",
+                                                js_pda_edge_str(t.type).c_str(), pdas[t.jump].label.c_str());
+                                        else
+                                            fprintf(stdout,
+                                                "[BACKTRACE#%d:%d:%d] %s%s %s\n",
+                                                i + 1, _bk->trans_ids.size(), j + 1, j == _bk->trans_ids.size() ? "*" : "",
+                                                js_pda_edge_str(t.type).c_str(), t.label.c_str());
+                                    }
+                                }
+                            }
 #endif
 #if REPORT_ERROR
                             log << "parsing error: " << current_state.label << std::endl;
@@ -746,14 +801,17 @@ namespace clib {
                     {
                         auto line = 0;
                         auto column = 0;
+                        std::string s;
                         if (!ast_cache.empty() && ast_cache_index > 0 && ast_cache_index <= ast_cache.size()) {
-                            line = ast_cache[ast_cache_index - 1]->line;
-                            column = ast_cache[ast_cache_index - 1]->column;
+                            auto a = ast_cache[ast_cache_index - 1];
+                            line = a->line;
+                            column = a->column;
+                            s = str.substr(a->start, a->end - a->start);
                         }
-                        fprintf(stdout, "[%d:%d:%d:%d:%d]%s State: %3d => To: %3d   -- Action: %-10s -- Rule: %s\n",
-                                ast_cache_index, ast_stack.size(), bks.size(),
-                                line, column, is_end ? "*" : "", state, jump,
-                                js_pda_edge_str(t.type).c_str(), current_state.label.c_str());
+                        fprintf(stdout, "[%d:%d:%d:%d:%d:%d]%s State: %3d => To: %3d  %.100s -- Action: %-10s -- Rule: %s\n",
+                            idx++, ast_cache_index, ast_stack.size(), bks.size(),
+                            line, column, is_end ? "*" : "", state, jump, s.c_str(),
+                            js_pda_edge_str(t.type).c_str(), current_state.label.c_str());
                     };
 #endif
 #if REPORT_ERROR
@@ -931,17 +989,7 @@ namespace clib {
             return node;
         }
         if (current->t > RULE_START && current->t < RULE_END) {
-            auto node = ast->new_node(a_rule);
-            node->line = current->line;
-            node->column = current->column;
-            node->start = current->start;
-            node->end = current->end;
-            node->data._ins._1 = current->t;
-            node->data._ins._2 = (uint32_t) current->id;
-            match_type(current->t);
-            ast_cache.push_back(node);
-            ast_cache_index++;
-            return node;
+            error("invalid rule type");
         }
         error("invalid type");
         return nullptr;
@@ -1064,14 +1112,7 @@ namespace clib {
             return false;
         auto token = js_to_token(u);
         if (token->type > RULE_START && token->type < RULE_END) {
-            if (ast_cache_index < ast_cache.size()) {
-                auto &cache = ast_cache[ast_cache_index];
-                if (cache->flag == a_rule) {
-                    return lexer->valid_rule(cache->data._ins._2, (js_lexer_t) cache->data._ins._1);
-                }
-                return false;
-            }
-            return lexer->valid_rule(current->id, token->type);
+            return lexer->valid_rule(ast_cache_index, token->type);
         }
         if (ast_cache_index < ast_cache.size()) {
             auto &cache = ast_cache[ast_cache_index];
@@ -1134,12 +1175,5 @@ namespace clib {
             }
         }
         return find_for ? p_REMOVE : p_ALLOW;
-    }
-
-    void cjsparser::clear_bk(const cjslexer *, int idx, std::vector<backtrace_t> &bks, backtrace_t *&bk) {
-        std::vector<backtrace_t> b(1);
-        std::swap(b[0], bks.back());
-        bks = b;
-        bk = &bks.back();
     }
 }

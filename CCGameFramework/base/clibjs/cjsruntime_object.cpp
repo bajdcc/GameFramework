@@ -771,6 +771,8 @@ namespace clib {
 
     void jsv_object::add(const std::string& key, const js_value::weak_ref& value)
     {
+        if (!value.lock())
+            return;
         if (obj.find(key) == obj.end()) {
             obj.insert({key, value});
             keys.push_back(key);

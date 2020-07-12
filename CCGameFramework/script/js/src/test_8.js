@@ -25,7 +25,7 @@
         height: 100,
         event: new Event({
             'hit': function(t, x, y) {
-                console.log(t, x, y);
+                console.log(this.type, this.left, this.top, this.color, t, x, y);
             }
         })
     });
@@ -40,7 +40,12 @@
             top: 210,
             width: 100,
             height: 100,
-            radius: 5
+            radius: 5,
+            event: new Event({
+                'hit': function(t, x, y) {
+                    console.log(this.type, this.left, this.top, this.color, t, x, y);
+                }
+            })
         })
     );
     var i = 0;

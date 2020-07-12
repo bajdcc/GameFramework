@@ -33,6 +33,7 @@ namespace clib {
         uint32_t coll_index;
         uint32_t reduce_index;
         std::vector<int> trans_ids;
+        std::vector<int> trans_ids_tmp;
         std::unordered_set<int> ast_ids;
         backtrace_direction direction;
     };
@@ -57,14 +58,14 @@ namespace clib {
 
         using pda_coll_pred_cb = js_pda_coll_pred(*)(const cjslexer *, int idx);
         using terminal_cb = void (*)(const cjslexer *, int idx,
-                                     std::vector<backtrace_t> &bks, backtrace_t *&bk);
+                                     std::vector<std::shared_ptr<backtrace_t>> &bks, std::shared_ptr<backtrace_t> &bk);
 
     private:
 
         void next();
 
         void gen();
-        void program();
+        void program(const std::string& str);
         js_ast_node *terminal();
 
         bool valid_trans(const js_pda_trans &trans) const;
@@ -78,8 +79,6 @@ namespace clib {
 
         static js_pda_coll_pred pred_for(const cjslexer *, int idx);
         static js_pda_coll_pred pred_in(const cjslexer *, int idx);
-        static void clear_bk(const cjslexer *, int idx,
-                             std::vector<backtrace_t> &bks, backtrace_t *&bk);
 
     private:
         const lexer_unit *current{nullptr};
