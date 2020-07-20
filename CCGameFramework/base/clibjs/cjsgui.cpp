@@ -27,9 +27,6 @@
 
 #define AST_FILE "js_ast.log"
 
-#define LOG_AST 0
-#define LOG_DEP 0
-
 #define IPS_STAT_TIME 1s
 
 #define ENTRY_FILE "src/main.js"

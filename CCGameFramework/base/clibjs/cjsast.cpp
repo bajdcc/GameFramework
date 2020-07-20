@@ -32,6 +32,7 @@ namespace clib {
         node->next = node->prev = node->parent = node->child = nullptr;
         node->data._ins._1 = node->data._ins._2 = 0;
         node->flag = type;
+        node->idx = -1;
         return node;
     }
 
@@ -118,6 +119,10 @@ namespace clib {
             }
         }
         nodes.free((char *) node);
+    }
+
+    void cjsast::remove_force(js_ast_node* node) {
+        nodes.free((char*)node);
     }
 
     void cjsast::to(js_ast_to_t type) {

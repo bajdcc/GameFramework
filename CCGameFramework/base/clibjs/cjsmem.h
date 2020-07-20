@@ -26,9 +26,9 @@ namespace clib {
         void reset();
 
     private:
-        std::vector<std::vector<char>> data;
-        std::unordered_map<char *, int> map_data;
-        std::set<int> removed;
+        std::vector<std::shared_ptr<std::vector<char>>> data;
+        std::unordered_map<char *, size_t> map_data;
+        std::unordered_set<int> removed;
     };
 }
 

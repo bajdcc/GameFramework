@@ -1262,24 +1262,6 @@ namespace clib {
                     }
                     exp->args.push_back(to_exp(*s));
                 }
-                if (exp->obj->get_type() == s_member_dot) {
-                    auto dot = std::dynamic_pointer_cast<js_sym_member_dot_t>(exp->obj);
-                    if (dot->exp->get_type() == s_call_function && dot->dots.size() == 1) {
-                        auto f = std::dynamic_pointer_cast<js_sym_call_function_t>(dot->exp);
-                        auto new_exp = std::make_shared<js_sym_new_t>();
-                        copy_info(new_exp, f);
-                        new_exp->obj = f->obj;
-                        new_exp->args = f->args;
-                        new_exp->rests = f->rests;
-                        auto new_call_method = std::make_shared<js_sym_call_method_t>();
-                        copy_info(new_call_method, exp);
-                        new_call_method->obj = new_exp;
-                        new_call_method->method = dot->dots.front();
-                        new_call_method->args = exp->args;
-                        new_call_method->rests = exp->rests;
-                        r = new_call_method;
-                    }
-                }
                 asts.clear();
                 tmps.clear();
                 tmps.push_back(r);

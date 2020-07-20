@@ -393,7 +393,7 @@ namespace clib {
         current_stack = current;
         if (current_stack)
             current_stack->stack.resize(size);
-        return r;
+        return 0;
     }
 
     // ---------------------- LABEL ----------------------

@@ -17,7 +17,8 @@
 #define REPORT_ERROR_FILE "js_parsing.log"
 
 #define TRACE_PARSING 0
-#define TRACE_PARSING_LOG 0
+#define TRACE_PARSING_LOG 1
+#define TRACE_PARSING_AST 1
 #define DUMP_LEXER 0
 #define DUMP_PDA 0
 #define DUMP_PDA_FILE "js_PDA.txt"
@@ -26,7 +27,7 @@
 
 namespace clib {
 
-    js_ast_node *cjsparser::parse(const std::string &str, std::string &error_string, csemantic *s) {
+    bool cjsparser::parse(const std::string &str, std::string &error_string, csemantic *s) {
         semantic = s;
         lexer = std::make_unique<cjslexer>();
         lexer->input(str, error_string);
@@ -45,8 +46,8 @@ namespace clib {
         if (unit.get_pda().empty())
             gen();
         // 语法分析（递归下降）
-        program(str);
-        return ast->get_root();
+        auto r = program(error_string, str);
+        return r;
     }
 
     js_ast_node *cjsparser::root() const {
@@ -66,16 +67,18 @@ namespace clib {
         // REFER: antlr/grammars-v4
         // URL: https://github.com/antlr/grammars-v4/blob/master/javascript/javascript/JavaScriptParser.g4
 #define DEF_LEXER(name) auto &_##name = unit.token(name);
+#define DEF_LEXER_RULE(name) DEF_LEXER(name)
+#define DEF_LEXER_RULE_LA(name) auto &_##name = unit.token(name, true);
         DEF_LEXER(NUMBER)
         DEF_LEXER(ID)
         DEF_LEXER(REGEX)
         DEF_LEXER(STRING)
         // ---
-        DEF_LEXER(RULE_NO_LINE)
-        DEF_LEXER(RULE_LINE)
-        DEF_LEXER(RULE_RBRACE)
-        DEF_LEXER(RULE_EOF)
-        // ---
+        DEF_LEXER_RULE_LA(RULE_NO_LINE)
+        DEF_LEXER_RULE(RULE_LINE)
+        DEF_LEXER_RULE(RULE_RBRACE)
+        DEF_LEXER_RULE(RULE_EOF)
+        // ---  LEXER
         DEF_LEXER(K_NEW)
         DEF_LEXER(K_VAR)
         DEF_LEXER(K_LET)
@@ -362,8 +365,8 @@ namespace clib {
         arrayLiteralExpression = arrayLiteral;
         objectLiteralExpression = objectLiteral;
         parenthesizedExpression = _T_LPARAN + expressionSequence + _T_RPARAN;
-        newExpression = newExpressionArgument | (_K_NEW + singleExpression);
-        newExpressionArgument = _K_NEW + singleExpression + arguments;
+        newExpression = _K_NEW + newExpressionArgument;
+        newExpressionArgument = identifierExpression + *arguments;
         functionExpression = anonymousFunction
                              | classExpression
                              | thisExpression
@@ -497,8 +500,9 @@ namespace clib {
                   | _K_CLASS
                   | _K_SUPER
                   | _K_LET;
-        unit.adjust(&functionExpression, &anonymousFunction, e_shift, -1);
+        unit.adjust(&functionExpression, &anonymousFunction, e_shift, 1);
         unit.adjust(&iterationStatement, &forInStatement, e_shift, -1);
+        unit.adjust(&statement, &expressionStatement, e_shift, 1);
         unit.adjust(&iterationStatement, &forStatement, e_shift, 0, (void *) &pred_for);
         unit.adjust(&newExpression, &newExpressionArgument, e_shift, 1);
         unit.adjust(&inExpression, &inExpression, e_left_recursion, 0, (void *) &pred_in);
@@ -536,38 +540,30 @@ namespace clib {
 
     extern const std::string& js_pda_edge_str(js_pda_edge_t type);
 
-    void cjsparser::program(const std::string& str) {
+    bool cjsparser::program(std::string& error_string, const std::string& str) {
 #if REPORT_ERROR
         std::ofstream log(REPORT_ERROR_FILE, std::ios::app | std::ios::out);
 #endif
         next();
-        state_stack.clear();
-        ast_stack.clear();
-        ast_cache.clear();
-        ast_cache_index = 0;
-        ast_coll_cache.clear();
-        ast_reduce_cache.clear();
-        state_stack.push_back(0);
-        const auto &pdas = unit.get_pda();
+        auto &pdas = unit.get_pda();
         auto root = ast->new_node(a_collection);
         root->line = root->column = 0;
         root->data._coll = pdas[0].coll;
-        cjsast::set_child(ast->get_root(), root);
-        ast_stack.push_back(root);
-        std::vector<int> jumps;
-        std::vector<int> trans_ids;
-        auto bk_tmp = std::make_shared<backtrace_t>();
-        bk_tmp->lexer_index = 0;
-        bk_tmp->state_stack = state_stack;
-        bk_tmp->ast_stack = ast_stack;
-        bk_tmp->current_state = 0;
-        bk_tmp->coll_index = 0;
-        bk_tmp->reduce_index = 0;
-        bk_tmp->direction = b_next;
         std::vector<std::shared_ptr<backtrace_t>> bks;
-        bks.push_back(bk_tmp);
-        auto trans_id = -1;
-        auto prev_idx = 0;
+        {
+            auto bk_tmp = std::make_shared<backtrace_t>();
+            bk_tmp->lexer_index = 0;
+            bk_tmp->state_stack.push_back(0);
+            bk_tmp->ast_stack.push_back(root);
+            bk_tmp->cache.push_back(root);
+            bk_tmp->current_state = 0;
+            bk_tmp->reduced_rule = -1;
+            bk_tmp->trans = -1;
+            bk_tmp->parent = -1;
+            bk_tmp->init = true;
+            bks.push_back(bk_tmp);
+        }
+        std::vector<int> trans_ids;
         using namespace std::chrono;
         using namespace std::chrono_literals;
         auto start_time = system_clock::now();
@@ -579,335 +575,289 @@ namespace clib {
 #endif
         while (!bks.empty()) {
 #if NDEBUG
-            if (duration_cast<milliseconds>(system_clock::now() - start_time) >= 5s) {
-                ast->reset();
-                break;
+            if (duration_cast<milliseconds>(system_clock::now() - start_time) >= 15s) {
+                error_string = "[COMPILE] Timeout";
+                return false;
             }
 #endif
-
             auto bk = bks.back();
-            if (bk->direction == b_success || bk->direction == b_fail) {
-                break;
+            if (!bk->init) {
+                auto p = bks[bk->parent];
+                bk->init = true;
+                copy_bk(*bk, *p);
             }
-            if (bk->direction == b_fallback) {
-                if (bk->trans_ids.empty()) {
-                    if (bks.size() > 1) {
-                        bks.pop_back();
-                        bks.back()->direction = b_error;
-                        bk = bks.back();
-                        if (bk->lexer_index < prev_idx) {
-                            bk->direction = b_fail;
-                            continue;
+            lexer->set_index(bk->lexer_index);
+            next();
+            auto reduced = false;
+            for (;;) {
+#if TRACE_PARSING
+                idx++;
+                //fflush(stdout);
+#endif
+                auto& current_state = pdas[bk->current_state];
+                if (current->t == END) {
+                    if (current_state.final) {
+                        if (bk->state_stack.empty()) {
+                            // success
+                            cjsast::set_child(ast->get_root(), bk->ast_stack.back());
+                            return true;
                         }
-                    } else {
-                        bk->direction = b_fail;
-                        continue;
                     }
                 }
-            }
-            ast_cache_index = (size_t) bk->lexer_index;
-            state_stack = bk->state_stack;
-            ast_stack = bk->ast_stack;
-            auto state = bk->current_state;
-
-#if TRACE_PARSING && !TRACE_PARSING_LOG
-            {
-                auto line = 0;
-                auto column = 0;
-                if (!ast_cache.empty() && ast_cache_index > 0 && ast_cache_index <= ast_cache.size()) {
-                    line = ast_cache[ast_cache_index - 1]->line;
-                    column = ast_cache[ast_cache_index - 1]->column;
+                auto& trans = current_state.trans;
+                trans_ids.clear();
+                if (bk->trans != -1) {
+                    trans_ids.push_back(bk->trans);
+                    bk->trans = -1;
                 }
-                fprintf(stdout, "[%d:%d:%d:%d:%d] State: %3d\n",
-                        ast_cache_index, ast_stack.size(), bks.size(),
-                        line, column, state);
-            };
-#endif
-            if (bk->direction != b_error)
-                for (;;) {
-                    auto is_end = current->t == END && ast_cache_index >= ast_cache.size();
-                    const auto &current_state = pdas[state];
-                    if (is_end) {
-                        if (current_state.final) {
-                            if (state_stack.empty()) {
-                                bk->direction = b_success;
-                                break;
-                            }
+                else {
+                    for (size_t i = 0; i < trans.size(); ++i) {
+                        auto& cs = trans[i];
+                        if (valid_trans(*bk, cs)) {
+                            trans_ids.push_back(i);
                         }
                     }
-                    auto &trans = current_state.trans;
-                    if (trans_id == -1 && !bk->trans_ids.empty()) {
-                        trans_id = bk->trans_ids.back() & ((1 << 16) - 1);
-                        bk->trans_ids.pop_back();
-                    } else {
-                        trans_ids.clear();
-                        if (is_end) {
-                            for (size_t i = 0; i < trans.size(); ++i) {
-                                auto &cs = trans[i];
-                                if (valid_trans(cs) && (cs.type != e_move && cs.type != e_pass)) {
-                                    trans_ids.push_back(i);
+                }
+                if (!trans_ids.empty()) {
+                    if (current_state.pred) {
+                        std::vector<int> then;
+                        std::vector<int> add;
+                        for (const auto t : trans_ids) {
+                            if (trans[t].pred) {
+                                auto cb = (pda_coll_pred_cb)trans[t].pred;
+                                auto r = cb(lexer.get(), current->id);
+                                if (r == p_ALLOW) {
+                                    add.push_back(t);
+                                }
+                                else if (r == p_DELAY) {
+                                    then.push_back(t);
                                 }
                             }
-                        } else {
-                            for (size_t i = 0; i < trans.size(); ++i) {
-                                auto &cs = trans[i];
-                                if (valid_trans(cs)) {
-                                    trans_ids.push_back(i);
-                                }
-                            }
-                            if (trans.size() == 1 && !trans_ids.empty() &&
-                                (trans[0].type == e_move || trans[0].type == e_pass) &&
-                                trans[0].marked) {
-                                prev_idx = bk->lexer_index;
+                            else {
+                                add.push_back(t);
                             }
                         }
-                        if (!trans_ids.empty()) {
-                            std::sort(trans_ids.begin(), trans_ids.end(), std::greater<>());
-                            if (current_state.pred) {
-                                std::vector<int> then;
-                                std::vector<int> add;
-                                for (const auto t : trans_ids) {
-                                    if (trans[t].pred) {
-                                        auto cb = (pda_coll_pred_cb) trans[t].pred;
-                                        auto r = cb(lexer.get(), current->id);
-                                        if (r == p_ALLOW) {
-                                            add.push_back(t);
-                                        } else if (r == p_DELAY) {
-                                            then.push_back(t);
-                                        }
-                                    } else {
-                                        add.push_back(t);
-                                    }
-                                }
-                                if (trans_ids.size() > add.size()) {
-                                    trans_ids = then;
-                                    std::copy(add.cbegin(), add.cend(), std::back_inserter(trans_ids));
-                                }
-                            }
-                            if (trans_ids.size() > 1) {
-                                bk_tmp = std::make_shared<backtrace_t>();
-                                bk_tmp->lexer_index = ast_cache_index;
-                                bk_tmp->state_stack = state_stack;
-                                bk_tmp->ast_stack = ast_stack;
-                                bk_tmp->current_state = state;
-                                bk_tmp->trans_ids = trans_ids;
-                                bk_tmp->trans_ids_tmp = trans_ids;
-                                bk_tmp->coll_index = ast_coll_cache.size();
-                                bk_tmp->reduce_index = ast_reduce_cache.size();
-                                bk_tmp->direction = b_next;
-#if DEBUG_AST
-                                for (size_t i = 0; i < bks.size(); ++i) {
-                                    auto &_bk = bks[i];
-                                    fprintf(stdout,
-                                            "[DEBUG] Branch old: i=%d, LI=%d, SS=%d, AS=%d, S=%d, TS=%d, CI=%d, RI=%d, TK=%d\n",
-                                            i, _bk.lexer_index, _bk.state_stack.size(),
-                                            _bk.ast_stack.size(), _bk.current_state, _bk.trans_ids.size(),
-                                            _bk.coll_index, _bk.reduce_index, _bk.ast_ids.size());
-                                }
-#endif
-                                bks.push_back(bk_tmp);
-                                bk = bks.back();
-#if DEBUG_AST
-                                fprintf(stdout,
-                                        "[DEBUG] Branch new: BS=%d, LI=%d, SS=%d, AS=%d, S=%d, TS=%d, CI=%d, RI=%d, TK=%d\n",
-                                        bks.size(), bk_tmp.lexer_index, bk_tmp.state_stack.size(),
-                                        bk_tmp.ast_stack.size(), bk_tmp.current_state, bk_tmp.trans_ids.size(),
-                                        bk_tmp.coll_index, bk_tmp.reduce_index, bk_tmp.ast_ids.size());
-#endif
-                                bk->direction = b_next;
-#if TRACE_PARSING
-                                std::cout << "create branch: " << current_state.label << std::endl;
-                                for (size_t i = 0; i < bks.size(); ++i) {
-                                    auto& _bk = bks[i];
-                                    fprintf(stdout,
-                                        "[BACKTRACE#%d:%d] %s   -- %s\n",
-                                        i + 1, _bk->trans_ids.size(), pdas[_bk->current_state].label.c_str(), lexer->get_unit_desc(_bk->lexer_index).c_str());
-                                    if (!_bk->trans_ids_tmp.empty()) {
-                                        const auto& tr = pdas[_bk->current_state].trans;
-                                        for (size_t j = 0; j < _bk->trans_ids_tmp.size(); ++j) {
-                                            const auto& t = tr[_bk->trans_ids_tmp[j]];
-                                            if (t.label.empty())
-                                                fprintf(stdout,
-                                                    "[BACKTRACE#%d:%d:%d] %s%s %s\n",
-                                                    i + 1, _bk->trans_ids.size(), j + 1, j == _bk->trans_ids.size() ? "*" : "",
-                                                    js_pda_edge_str(t.type).c_str(), pdas[t.jump].label.c_str());
-                                            else
-                                                fprintf(stdout,
-                                                    "[BACKTRACE#%d:%d:%d] %s%s %s\n",
-                                                    i + 1, _bk->trans_ids.size(), j + 1, j == _bk->trans_ids.size() ? "*" : "",
-                                                    js_pda_edge_str(t.type).c_str(), t.label.c_str());
-                                        }
-                                    }
-                                }
-#endif
-                                break;
-                            } else {
-                                trans_id = trans_ids.back();
-                                trans_ids.pop_back();
-                            }
-                        } else {
-#if TRACE_PARSING
-                            std::cout << "parsing error: " << current_state.label << std::endl;
-                            for (size_t i = 0; i < bks.size(); ++i) {
-                                auto& _bk = bks[i];
-                                fprintf(stdout,
-                                    "[BACKTRACE#%d:%d] %s   -- %s\n",
-                                    i + 1, _bk->trans_ids.size(), pdas[_bk->current_state].label.c_str(), lexer->get_unit_desc(_bk->lexer_index).c_str());
-                                if (!_bk->trans_ids_tmp.empty()) {
-                                    const auto& tr = pdas[_bk->current_state].trans;
-                                    for (size_t j = 0; j < _bk->trans_ids_tmp.size(); ++j) {
-                                        const auto& t = tr[_bk->trans_ids_tmp[j]];
-                                        if (t.label.empty())
-                                            fprintf(stdout,
-                                                "[BACKTRACE#%d:%d:%d] %s%s %s\n",
-                                                i + 1, _bk->trans_ids.size(), j + 1, j == _bk->trans_ids.size() ? "*" : "",
-                                                js_pda_edge_str(t.type).c_str(), pdas[t.jump].label.c_str());
-                                        else
-                                            fprintf(stdout,
-                                                "[BACKTRACE#%d:%d:%d] %s%s %s\n",
-                                                i + 1, _bk->trans_ids.size(), j + 1, j == _bk->trans_ids.size() ? "*" : "",
-                                                js_pda_edge_str(t.type).c_str(), t.label.c_str());
-                                    }
-                                }
-                            }
-#endif
-#if REPORT_ERROR
-                            log << "parsing error: " << current_state.label << std::endl;
-#endif
-                            bk->direction = b_error;
-                            /*if (semantic) {
-                                semantic->error_handler(state, current_state.trans, jump_state);
-                            }*/
-                            break;
+                        if (trans_ids.size() > add.size()) {
+                            trans_ids = then;
+                            std::copy(add.cbegin(), add.cend(), std::back_inserter(trans_ids));
                         }
                     }
-                    auto &t = trans[trans_id];
+                }
+                if (!trans_ids.empty()) {
+                    if (reduced) {
+                        auto parent = bk->parent;
+                        if (parent >= 0) {
+                            auto i = parent;
+                            bk->parent = bks[i]->parent;
+                            bk->reduced_rule = bks[i]->reduced_rule;
+                            for (size_t j = i; j + 1 < bks.size(); j++) {
+                                del_bk(*bks[j]);
+                            }
+                            bks.erase(bks.begin() + i, bks.end() - 1);
+#if TRACE_PARSING
+                            print_bk(bks);
+#endif
+                        }
+                        reduced = false;
+                    }
+                    if (trans_ids.size() > 1) {
+                        auto parent = (int)bks.size() - 1;
+                        for (const auto& i : trans_ids) {
+                            auto bk_tmp = std::make_shared<backtrace_t>();
+                            bk_tmp->current_state = bk->current_state;
+                            bk_tmp->parent = parent;
+                            bk_tmp->reduced_rule = trans[trans_ids.back()].reduced_rule;
+                            bk_tmp->trans = i;
+                            bk_tmp->init = false;
+                            bks.push_back(bk_tmp);
+                        }
+#if TRACE_PARSING
+                        std::cout << "create branch" << std::endl;
+                        print_bk(bks);
+#endif
+                        break;
+                    }
+                    const auto& t = trans[trans_ids.back()];
                     if (t.type == e_finish) {
-                        if (!is_end) {
+                        if (current->t != END) {
 #if TRACE_PARSING
                             std::cout << "parsing redundant code: " << current_state.label << std::endl;
 #endif
 #if REPORT_ERROR
                             log << "parsing redundant code: " << current_state.label << std::endl;
 #endif
-                            bk->direction = b_error;
-                            break;
+                            error_string = "[COMPILE] Redundant code";
+                            return false;
                         }
-                    } else if (current_state.cb && t.cb != nullptr) {
-                        ((terminal_cb) (t.cb))(lexer.get(), current->id, bks, bk);
                     }
-                    auto jump = trans[trans_id].jump;
+                    else if (current_state.cb && t.cb != nullptr) {
+                        ((terminal_cb)(t.cb))(lexer.get(), current->id, bks, bk);
+                    }
+                    const auto& jump = t.jump;
 #if TRACE_PARSING && TRACE_PARSING_LOG
                     {
-                        auto line = 0;
-                        auto column = 0;
-                        std::string s;
-                        if (!ast_cache.empty() && ast_cache_index > 0 && ast_cache_index <= ast_cache.size()) {
-                            auto a = ast_cache[ast_cache_index - 1];
-                            line = a->line;
-                            column = a->column;
-                            s = str.substr(a->start, a->end - a->start);
-                        }
-                        fprintf(stdout, "[%d:%d:%d:%d:%d:%d]%s State: %3d => To: %3d  %.100s -- Action: %-10s -- Rule: %s\n",
-                            idx++, ast_cache_index, ast_stack.size(), bks.size(),
-                            line, column, is_end ? "*" : "", state, jump, s.c_str(),
+                        const auto& line = current->line;
+                        const auto& column = current->column;
+                        auto s = str.substr(current->start, current->end - current->start);
+                        auto end = current->t == END ? "*" : "";
+                        do_trans(*bk, t);
+                        fprintf(stdout, "[%d|%d|%d:%d|%d:%d]%s State: %3d => To: %3d  %.100s -- Action: %-10s -- Rule: %s\n",
+                            idx, bks.size(), bk->reduced_rule, t.reduced_rule, line, column, end, bk->current_state, jump, s.c_str(),
                             js_pda_edge_str(t.type).c_str(), current_state.label.c_str());
-                    };
-#endif
-#if REPORT_ERROR
-                    {
-                        static char fmt[256];
-                        int line = 0, column = 0;
-                        if (ast_cache_index < ast_cache.size()) {
-                            line = ast_cache[ast_cache_index]->line;
-                            column = ast_cache[ast_cache_index]->column;
-                        } else {
-                            line = current->line;
-                            column = current->column;
-                        }
-                        snprintf(fmt, sizeof(fmt),
-                                 "[%d,%d:%d:%d:%d]%s State: %3d => To: %3d   -- Action: %-10s -- Rule: %s",
-                                 line, column, ast_cache_index, ast_stack.size(),
-                                 bks.size(), is_end ? "*" : "", state, jump,
-                                 pda_edge_str(t.type).c_str(), current_state.label.c_str());
-                        log << fmt << std::endl;
                     }
+#else
+                    do_trans(*bk, t);
 #endif
-                    do_trans(state, *bk, trans[trans_id]);
-                    state = jump;
+                    bk->current_state = jump;
                     if (semantic) {
                         // DETERMINE LR JUMP BEFORE PARSING AST
-                        bk->direction = semantic->check(trans[trans_id].type, ast_stack.back());
-                        if (bk->direction == b_error) {
+                        auto dir = semantic->check(t.type, bk->ast_stack.back());
+                        if (dir == b_error) {
 #if TRACE_PARSING
                             std::cout << "parsing semantic error: " << current_state.label << std::endl;
 #endif
 #if REPORT_ERROR
                             log << "parsing semantic error: " << current_state.label << std::endl;
 #endif
-                            break;
+                            error_string = "[COMPILE] Semantic error";
+                            return false;
                         }
                     }
+                    if (bk->reduced_rule == t.reduced_rule && (t.type == e_reduce || t.type == e_reduce_exp)) {
+                        reduced = true;
+                    }
                 }
-            if (bk->direction == b_error) {
-#if DEBUG_AST
-                for (auto i = 0; i < bks.size(); ++i) {
-                    auto &_bk = bks[i];
-                    fprintf(stdout,
-                            "[DEBUG] Backtrace failed: i=%d, LI=%d, SS=%d, AS=%d, S=%d, TS=%d, CI=%d, RI=%d, TK=%d\n",
-                            i, _bk.lexer_index, _bk.state_stack.size(),
-                            _bk.ast_stack.size(), _bk.current_state, _bk.trans_ids.size(),
-                            _bk.coll_index, _bk.reduce_index, _bk.ast_ids.size());
-                }
+                else {
+#if TRACE_PARSING
+                    std::cout << "parsing error" << std::endl;
 #endif
-                for (auto &i : bk->ast_ids) {
-                    auto &token = ast_cache[i];
-                    check_ast(token);
-#if DEBUG_AST
-                    fprintf(stdout, "[DEBUG] Backtrace failed, unlink token: %p, PB=%p\n", token, token->parent);
+                    auto parent = bk->parent;
+                    if (parent == -1) {
+                        return false;
+                    }
+                    if (parent + 2 == bks.size()) {
+                        auto i = parent;
+                        for (;;) {
+                            auto p = bks[i];
+                            auto pp = p->parent;
+                            if (pp != -1 && pp + 1 == i) {
+                                i = pp;
+                            }
+                            else {
+                                break;
+                            }
+                        }
+                        parent = i;
+                        for (size_t j = parent; j < bks.size(); j++) {
+                            del_bk(*bks[j]);
+                        }
+                        bks.erase(bks.begin() + parent, bks.end());
+                        if (!bks.empty())
+                            bk = bks.back();
+                        else
+                            return false;
+#if TRACE_PARSING
+                        print_bk(bks);
 #endif
-                    cjsast::unlink(token);
-                    check_ast(token);
-                }
-                auto size = ast_reduce_cache.size();
-                for (auto i = size; i > bk->reduce_index; --i) {
-                    auto &coll = ast_reduce_cache[i - 1];
-                    check_ast(coll);
-#if DEBUG_AST
-                    fprintf(stdout, "[DEBUG] Backtrace failed, unlink: %p, PB=%p, NE=%d, CB=%d\n",
-                            coll, coll->parent, cjsast::children_size(coll->parent), cjsast::children_size(coll));
+                    }
+                    else {
+                        del_bk(*bk);
+                        bks.pop_back();
+                        bk = bks.back();
+#if TRACE_PARSING
+                        print_bk(bks);
 #endif
-                    cjsast::unlink(coll);
-                    check_ast(coll);
+                    }
+                    break;
                 }
-                ast_reduce_cache.erase(ast_reduce_cache.begin() + bk->reduce_index, ast_reduce_cache.end());
-                size = ast_coll_cache.size();
-                for (auto i = size; i > bk->coll_index; --i) {
-                    auto &coll = ast_coll_cache[i - 1];
-                    assert(coll->flag == a_collection);
-                    check_ast(coll);
-#if DEBUG_AST
-                    fprintf(stdout, "[DEBUG] Backtrace failed, delete coll: %p, PB=%p, CB=%p, NE=%d, CS=%d\n",
-                            coll, coll->parent, coll->child,
-                            cjsast::children_size(coll->parent), cjsast::children_size(coll));
-#endif
-                    cjsast::unlink(coll);
-                    check_ast(coll);
-                    ast->remove(coll);
-                }
-                ast_coll_cache.erase(ast_coll_cache.begin() + bk->coll_index, ast_coll_cache.end());
-                bk->direction = b_fallback;
             }
-            trans_id = -1;
+        }
+        error_string = "[COMPILE] Compile error";
+        return false;
+    }
+
+    void cjsparser::print_bk(std::vector<std::shared_ptr<backtrace_t>>& bks) const
+    {
+        const auto& pdas = unit.get_pda();
+        for (size_t i = 0; i < bks.size(); ++i) {
+            auto& _bk = bks[i];
+            fprintf(stdout,
+                "[BACKTRACE#%d] [%d:%d] %s   -- %s\n", i, _bk->parent, _bk->reduced_rule,
+                pdas[_bk->current_state].label.c_str(), lexer->get_unit_desc(_bk->lexer_index).c_str());
+            if (_bk->trans != -1) {
+                auto t = pdas[_bk->current_state].trans[_bk->trans];
+                if (t.label.empty()) {
+                    fprintf(stdout, "[BACKTRACE#%d]     %s :: %s\n", i, js_pda_edge_str(t.type).c_str(), pdas[t.jump].label.c_str());
+                }
+                else {
+                    fprintf(stdout, "[BACKTRACE#%d]     %s :: %s\n", i, js_pda_edge_str(t.type).c_str(), t.label.c_str());
+                }
+            }
+#if 0
+            if (_bk->init) {
+                for (size_t j = 0; j < _bk->ast_stack.size(); j++) {
+                    auto& token = _bk->ast_stack[j];
+                    fprintf(stdout, "[STACK: %d] ", j);
+                    cjsast::print(token, 0, str, std::cout);
+                }
+            }
+#endif
+        }
+    }
+
+    void cjsparser::copy_bk(backtrace_t& bk, backtrace_t& p)
+    {
+        bk.lexer_index = p.lexer_index;
+        bk.state_stack = p.state_stack;
+        bk.current_state = p.current_state;
+        std::unordered_map<js_ast_node*, js_ast_node*> map_ast1, map_ast2;
+        bk.cache.reserve(p.cache.size());
+        for (const auto& c : p.cache) {
+            if (c->idx != -1) {
+                lexer->set_index(c->idx);
+                next();
+                bk.cache.push_back(terminal());
+            }
+            else {
+                assert(c->flag == a_collection);
+                auto new_ast = ast->new_node(a_collection);
+                memcpy(new_ast, c, sizeof(*c));
+                bk.cache.push_back(new_ast);
+            }
+            map_ast1.insert({ c, bk.cache.back() });
+            map_ast2.insert({ bk.cache.back(), c });
+        }
+        for (const auto& c : bk.cache) {
+            auto c2 = map_ast2.at(c);
+            if (c2->child)
+                c->child = map_ast1.at(c2->child);
+            if (c2->prev)
+                c->prev = map_ast1.at(c2->prev);
+            if (c2->next)
+                c->next = map_ast1.at(c2->next);
+            if (c2->parent) {
+                if (c2->parent->flag == a_root)
+                    c->parent = c2->parent;
+                else
+                    c->parent = map_ast1.at(c2->parent);
+            }
+        }
+        bk.ast_stack.reserve(p.ast_stack.size());
+        for (const auto& c : p.ast_stack) {
+            bk.ast_stack.push_back(map_ast1.at(c));
+        }
+    }
+
+    void cjsparser::del_bk(backtrace_t& bk)
+    {
+        for (const auto& c : bk.cache) {
+            ast->remove_force(c);
         }
     }
 
     js_ast_node *cjsparser::terminal() {
-        if (current->t == END && ast_cache_index >= ast_cache.size()) { // 结尾
+        if (current->t == END) { // 结尾
             error("unexpected token EOF of expression");
-        }
-        if (ast_cache_index < ast_cache.size()) {
-            return ast_cache[ast_cache_index++];
         }
         if (current->t > OPERATOR_START && current->t < OPERATOR_END) {
             auto node = ast->new_node(a_operator);
@@ -916,9 +866,8 @@ namespace clib {
             node->start = current->start;
             node->end = current->end;
             node->data._op = current->t;
+            node->idx = lexer->get_index() - 1;
             match_type(node->data._op);
-            ast_cache.push_back(node);
-            ast_cache_index++;
             return node;
         }
         if (current->t > KEYWORD_START && current->t < KEYWORD_END) {
@@ -928,9 +877,8 @@ namespace clib {
             node->start = current->start;
             node->end = current->end;
             node->data._keyword = current->t;
+            node->idx = lexer->get_index() - 1;
             match_type(node->data._keyword);
-            ast_cache.push_back(node);
-            ast_cache_index++;
             return node;
         }
         if (current->t == ID) {
@@ -940,9 +888,8 @@ namespace clib {
             node->start = current->start;
             node->end = current->end;
             ast->set_str(node, lexer->get_data(current->idx));
+            node->idx = lexer->get_index() - 1;
             match_type(current->t);
-            ast_cache.push_back(node);
-            ast_cache_index++;
             return node;
         }
         if (current->t == NUMBER) {
@@ -952,9 +899,8 @@ namespace clib {
             node->start = current->start;
             node->end = current->end;
             node->data._number = *(double *) lexer->get_data(current->idx);
+            node->idx = lexer->get_index() - 1;
             match_type(current->t);
-            ast_cache.push_back(node);
-            ast_cache_index++;
             return node;
         }
         if (current->t == STRING) {
@@ -965,6 +911,7 @@ namespace clib {
             node->end = current->end;
             std::stringstream ss;
             ss << lexer->get_data(current->idx);
+            node->idx = lexer->get_index() - 1;
             match_type(current->t);
 
             while (current->t == STRING) {
@@ -972,8 +919,6 @@ namespace clib {
                 match_type(current->t);
             }
             ast->set_str(node, ss.str());
-            ast_cache.push_back(node);
-            ast_cache_index++;
             return node;
         }
         if (current->t == REGEX) {
@@ -983,9 +928,8 @@ namespace clib {
             node->start = current->start;
             node->end = current->end;
             ast->set_str(node, lexer->get_data(current->idx));
+            node->idx = lexer->get_index() - 1;
             match_type(current->t);
-            ast_cache.push_back(node);
-            ast_cache_index++;
             return node;
         }
         if (current->t > RULE_START && current->t < RULE_END) {
@@ -995,12 +939,12 @@ namespace clib {
         return nullptr;
     }
 
-    bool cjsparser::valid_trans(const js_pda_trans &trans) const {
-        auto &la = trans.LA;
+    bool cjsparser::valid_trans(backtrace_t& bk, js_pda_trans& trans, js_unit_token** out) {
+        auto& la = trans.LA;
         if (!la.empty()) {
             auto success = false;
-            for (auto &_la : la) {
-                if (LA(_la)) {
+            for (auto& _la : la) {
+                if (LA(bk, _la, trans, out)) {
                     success = true;
                     break;
                 }
@@ -1009,26 +953,26 @@ namespace clib {
                 return false;
         }
         switch (trans.type) {
-            case e_reduce:
-            case e_reduce_exp: {
-                if (ast_stack.size() <= 1)
-                    return false;
-                if (state_stack.empty())
-                    return false;
-                if (trans.status != state_stack.back())
-                    return false;
-            }
-                break;
-            default:
-                break;
+        case e_reduce:
+        case e_reduce_exp: {
+            if (bk.ast_stack.size() <= 1)
+                return false;
+            if (bk.state_stack.empty())
+                return false;
+            if (trans.status != bk.state_stack.back())
+                return false;
+        }
+                         break;
+        default:
+            break;
         }
         return true;
     }
 
-    void cjsparser::do_trans(int state, backtrace_t &bk, const js_pda_trans &trans) {
+    void cjsparser::do_trans(backtrace_t &bk, const js_pda_trans &trans) {
         switch (trans.type) {
             case e_shift: {
-                state_stack.push_back(state);
+                bk.state_stack.push_back(bk.current_state);
                 auto new_node = ast->new_node(a_collection);
                 new_node->line = new_node->column = 0;
                 auto &pdas = unit.get_pda();
@@ -1037,27 +981,21 @@ namespace clib {
                 fprintf(stdout, "[DEBUG] Shift: top=%p, new=%p, CS=%d\n", ast_stack.back(), new_node,
                         cjsast::children_size(ast_stack.back()));
 #endif
-                ast_coll_cache.push_back(new_node);
-                ast_stack.push_back(new_node);
+                bk.ast_stack.push_back(new_node);
+                bk.cache.push_back(new_node);
             }
                 break;
             case e_pass: {
-                bk.ast_ids.insert(ast_cache_index);
-#if CHECK_AST
-                auto t = terminal();
-                check_ast(t);
-#else
-                terminal();
-#endif
-#if DEBUG_AST
-                fprintf(stdout, "[DEBUG] Move: parent=%p, child=%p, CS=%d\n", ast_stack.back(), t,
-                        cjsast::children_size(ast_stack.back()));
-#endif
+                if (current->t == END) {
+                    error("unexpected token EOF of expression");
+                }
+                next();
+                bk.lexer_index++;
             }
                 break;
             case e_move: {
-                bk.ast_ids.insert(ast_cache_index);
                 auto t = terminal();
+                bk.lexer_index++;
 #if CHECK_AST
                 check_ast(t);
 #endif
@@ -1065,7 +1003,8 @@ namespace clib {
                 fprintf(stdout, "[DEBUG] Move: parent=%p, child=%p, CS=%d\n", ast_stack.back(), t,
                         cjsast::children_size(ast_stack.back()));
 #endif
-                cjsast::set_child(ast_stack.back(), t);
+                cjsast::set_child(bk.ast_stack.back(), t);
+                bk.cache.push_back(t);
             }
                 break;
             case e_left_recursion:
@@ -1074,54 +1013,73 @@ namespace clib {
                 break;
             case e_reduce:
             case e_reduce_exp: {
-                auto new_ast = ast_stack.back();
+                auto new_ast = bk.ast_stack.back();
                 check_ast(new_ast);
-                if (new_ast->flag != a_collection) {
-                    bk.ast_ids.insert(ast_cache_index);
-                }
-                state_stack.pop_back();
-                ast_stack.pop_back();
-                assert(!ast_stack.empty());
+                bk.state_stack.pop_back();
+                bk.ast_stack.pop_back();
+                assert(!bk.ast_stack.empty());
 #if DEBUG_AST
                 fprintf(stdout, "[DEBUG] Reduce: parent=%p, child=%p, CS=%d, AS=%d, RI=%d\n",
                         ast_stack.back(), new_ast, cjsast::children_size(ast_stack.back()),
                         ast_stack.size(), ast_reduce_cache.size());
 #endif
                 if (trans.type == e_reduce_exp)
-                    ast_stack.back()->attr |= a_exp;
+                    bk.ast_stack.back()->attr |= a_exp;
                 if (new_ast->flag != a_collection || new_ast->child != nullptr) {
-                    ast_reduce_cache.push_back(new_ast);
-                    cjsast::set_child(ast_stack.back(), new_ast);
-                    check_ast(ast_stack.back());
-                } else {
-                    cjsast::unlink(new_ast);
-                    ast->remove(new_ast);
+                    cjsast::set_child(bk.ast_stack.back(), new_ast);
+                    check_ast(bk.ast_stack.back());
                 }
             }
                 break;
             case e_finish:
-                state_stack.pop_back();
+                bk.state_stack.pop_back();
                 break;
             default:
                 break;
         }
     }
 
-    bool cjsparser::LA(struct js_unit *u) const {
+    bool cjsparser::LA(backtrace_t& bk, struct js_unit* u, js_pda_trans& trans, js_unit_token** out) {
         if (u->t != u_token)
             return false;
         auto token = js_to_token(u);
         if (token->type > RULE_START && token->type < RULE_END) {
-            return lexer->valid_rule(ast_cache_index, token->type);
+            auto r = lexer->valid_rule(bk.lexer_index, token->type);
+            if (!r)
+                return false;
+            if (!token->LA)
+                return true;
+            auto& pdas = unit.get_pda();
+            auto& target = pdas[trans.jump];
+            auto& t = target.trans;
+            auto id = token->type - RULE_START - 1;
+            if (trans.rule && trans.rule->at(id)) {
+                for (auto& _la : *trans.rule->at(id)) {
+                    if (LA(bk, _la, trans)) {
+                        return true;
+                    }
+                }
+            }
+            js_unit_token* out2 = nullptr;
+            for (size_t i = 0; i < t.size(); ++i) {
+                auto& cs = t[i];
+                if (valid_trans(bk, cs, &out2)) {
+                    auto id = token->type - RULE_START - 1;
+                    if (!trans.rule) {
+                        trans.rule = std::make_shared<std::array<std::shared_ptr<std::vector<js_unit*>>, RULE_END - RULE_START - 1>>();
+                    }
+                    auto& rule = *trans.rule;
+                    if (!rule[id]) {
+                        rule[id] = std::make_shared<std::vector<js_unit*>>();
+                    }
+                    rule[id]->push_back(out2);
+                    return true;
+                }
+            }
+            return false;
         }
-        if (ast_cache_index < ast_cache.size()) {
-            auto &cache = ast_cache[ast_cache_index];
-            if (token->type > KEYWORD_START && token->type < KEYWORD_END)
-                return cache->flag == a_keyword && cache->data._keyword == token->type;
-            if (token->type > OPERATOR_START && token->type < OPERATOR_END)
-                return cache->flag == a_operator && cache->data._op == token->type;
-            return cjsast::ast_equal((js_ast_t) cache->flag, token->type);
-        }
+        if (out)
+            *out = token;
         return current->t == token->type;
     }
 

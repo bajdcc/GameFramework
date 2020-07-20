@@ -1054,6 +1054,14 @@ namespace clib {
         return buf;
     }
 
+    void cjslexer::set_index(int i)
+    {
+        if (i < 0 || i >= (int)units.size())
+            i = (int)units.size();
+        else
+            index = i;
+    }
+
     int cjslexer::get_index() const {
         return index;
     }

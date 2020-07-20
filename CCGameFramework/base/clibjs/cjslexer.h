@@ -43,6 +43,7 @@ namespace clib {
         const char *get_data(int idx) const;
         bool valid_rule(int idx, js_lexer_t rule) const;
 
+        void set_index(int);
         int get_index() const;
         void inc_index();
         const lexer_unit &get_current_unit() const;

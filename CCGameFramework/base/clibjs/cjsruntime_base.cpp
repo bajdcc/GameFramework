@@ -20,9 +20,6 @@
 #define DUMP_PRINT_FILE_AUTO_CLEAR 1
 #define DUMP_PRINT_FILE "js_debug_print.txt"
 
-#define LOG_AST 0
-#define LOG_FILE 0
-
 namespace clib {
 
     void cjsruntime::init() {

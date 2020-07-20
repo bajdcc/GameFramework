@@ -23,6 +23,7 @@ namespace clib {
         // 类型
         uint16_t flag{0};
         uint16_t attr{0};
+        int idx{ -1 };
 
         union {
             double _number;
@@ -59,6 +60,7 @@ namespace clib {
         js_ast_node *new_sibling(js_ast_t type, bool step = true);
 
         void remove(js_ast_node *);
+        void remove_force(js_ast_node*);
 
         js_ast_node *add_child(js_ast_node *);
         static js_ast_node *set_child(js_ast_node *, js_ast_node *);

@@ -21,6 +21,7 @@ namespace clib {
         b_success,
         b_next,
         b_error,
+        b_removed,
         b_fail,
         b_fallback,
     };
@@ -28,14 +29,13 @@ namespace clib {
     struct backtrace_t {
         int lexer_index;
         std::vector<int> state_stack;
-        std::vector<js_ast_node *> ast_stack;
+        std::vector<js_ast_node*> ast_stack;
+        std::vector<js_ast_node*> cache;
         int current_state;
-        uint32_t coll_index;
-        uint32_t reduce_index;
-        std::vector<int> trans_ids;
-        std::vector<int> trans_ids_tmp;
-        std::unordered_set<int> ast_ids;
-        backtrace_direction direction;
+        int reduced_rule;
+        int trans;
+        int parent;
+        bool init;
     };
 
     class csemantic {
@@ -52,7 +52,7 @@ namespace clib {
         cjsparser(const cjsparser &) = delete;
         cjsparser &operator=(const cjsparser &) = delete;
 
-        js_ast_node *parse(const std::string &str, std::string &, csemantic *s = nullptr);
+        bool parse(const std::string &str, std::string &, csemantic *s = nullptr);
         js_ast_node *root() const;
         void clear_ast();
 
@@ -65,29 +65,27 @@ namespace clib {
         void next();
 
         void gen();
-        void program(const std::string& str);
+        bool program(std::string& error_string, const std::string& str);
         js_ast_node *terminal();
 
-        bool valid_trans(const js_pda_trans &trans) const;
-        void do_trans(int state, backtrace_t &bk, const js_pda_trans &trans);
-        bool LA(js_unit *u) const;
-
+        bool valid_trans(backtrace_t& bk, js_pda_trans &trans, js_unit_token** = nullptr);
+        void do_trans(backtrace_t& bk, const js_pda_trans &trans);
+        bool LA(backtrace_t& bk, js_unit* u, js_pda_trans& trans, js_unit_token** = nullptr);
+    ;
         void expect(bool, const std::string &);
         void match_type(js_lexer_t);
 
         void error(const std::string &);
+
+        void print_bk(std::vector<std::shared_ptr<backtrace_t>>& bks) const;
+        void copy_bk(backtrace_t& dst, backtrace_t& src);
+        void del_bk(backtrace_t&);
 
         static js_pda_coll_pred pred_for(const cjslexer *, int idx);
         static js_pda_coll_pred pred_in(const cjslexer *, int idx);
 
     private:
         const lexer_unit *current{nullptr};
-        std::vector<int> state_stack;
-        std::vector<js_ast_node *> ast_stack;
-        std::vector<js_ast_node *> ast_cache;
-        size_t ast_cache_index{0};
-        std::vector<js_ast_node *> ast_coll_cache;
-        std::vector<js_ast_node *> ast_reduce_cache;
 
     private:
         cjsunit unit;

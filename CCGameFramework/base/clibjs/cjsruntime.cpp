@@ -35,6 +35,9 @@
 #define GC_PERIOD 128
 #define MAX_REUSE_SIZE 65536
 
+#define LOG_AST 1
+#define LOG_FILE 0
+
 #if defined(WIN32) || defined(WIN64)
 
 #include <windows.h>
@@ -1526,13 +1529,22 @@ namespace clib {
                 (*s)->info ? (*s)->info->text.c_str() : "[builtin]");
             const auto& st = (*s)->stack;
             auto sti = (int)st.size();
-            fprintf(stdout, "this | [%p] \n", (*s)->_this.lock().get());
+            auto _t = (*s)->_this.lock();
+            if (_t->is_primitive() || _t->get_type() == r_regex || _t->get_type() == r_function)
+                fprintf(stdout, "this | [%p] %s\n", _t.get(), _t->to_string((js_value_new*)const_cast<cjsruntime*>(this), 0, nullptr).c_str());
+            else
+                fprintf(stdout, "this | [%p] <object>\n");
             for (auto s2 = st.rbegin(); s2 != st.rend(); s2++) {
                 fprintf(stdout, "%4d | [%p] ", sti--, s2->lock().get());
                 if (s2->lock() == permanents.global_env)
                     fprintf(stdout, "<global env>\n");
-                else if (s2->lock()->attr & js_value::at_readonly)
-                    fprintf(stdout, "<builtin>\n");
+                else if (s2->lock()->attr & js_value::at_readonly) {
+                    auto s3 = s2->lock();
+                    if (s3->is_primitive() || s3->get_type() == r_regex || s3->get_type() == r_function)
+                        fprintf(stdout, "<builtin> %s\n", s3->to_string((js_value_new*)const_cast<cjsruntime*>(this), 0, nullptr).c_str());
+                    else
+                        fprintf(stdout, "<builtin>\n");
+                }
                 else
                     print(s2->lock(), 0, std::cout);
             }
@@ -1551,8 +1563,12 @@ namespace clib {
                         a.c_str());
                     if (o == permanents.global_env)
                         fprintf(stdout, "<global env>\n");
-                    else if (o->attr & js_value::at_readonly)
-                        fprintf(stdout, "<builtin>\n");
+                    else if (o->attr & js_value::at_readonly) {
+                        if (o->is_primitive() || o->get_type() == r_regex || o->get_type() == r_function)
+                            fprintf(stdout, "<builtin> %s\n", o->to_string((js_value_new*)const_cast<cjsruntime*>(this), 0, nullptr).c_str());
+                        else
+                            fprintf(stdout, "<builtin>\n", o->get_type());
+                    }
                     else
                         print(o, 0, std::cout);
                 }
@@ -1791,7 +1807,7 @@ namespace clib {
             return 0;
         auto p = std::make_unique<cjsparser>();
         try {
-            if (p->parse(input, error_string, this) == nullptr) {
+            if (!p->parse(input, error_string, this)) {
                 std::stringstream ss;
                 ss << "throw new SyntaxError('" << jsv_string::convert(error_string) << "')";
                 return exec(code_name, ss.str(), true);

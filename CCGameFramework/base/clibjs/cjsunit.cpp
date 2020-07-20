@@ -119,6 +119,12 @@ namespace clib {
         return *this;
     }
 
+    js_unit_token& js_unit_token::set_LA(bool b)
+    {
+        this->LA = b;
+        return *this;
+    }
+
     js_unit_collection &js_unit_collection::set_skip(bool skip) {
         this->skip = skip;
         return *this;
@@ -157,8 +163,8 @@ namespace clib {
         return f->c_str();
     }
 
-    js_unit &cjsunit::token(const js_lexer_t &type) {
-        return (*(js_unit_token *) nodes.alloc(sizeof(js_unit_token))).set_type(type).set_t(u_token).init(this);
+    js_unit &cjsunit::token(const js_lexer_t &type, bool LA) {
+        return (*(js_unit_token *) nodes.alloc(sizeof(js_unit_token))).set_type(type).set_LA(LA).set_t(u_token).init(this);
     }
 
     js_unit *cjsunit::copy(js_unit *u) {
@@ -627,15 +633,13 @@ namespace clib {
     void cjsunit::disconnect(js_nga_status *status) {
         auto ins = get_children(status->in);
         for (auto &edge : ins) {
-            remove_edge(edge->edge->end->in, edge);
-            nodes.free((char *) edge);
+            remove_edge(edge->edge);
         }
         auto outs = get_children(status->out);
         for (auto &edge : outs) {
-            remove_edge(edge->edge->end->in, edge);
-            nodes.free((char *) edge);
+            remove_edge(edge->edge);
         }
-        nodes.free((char *) status);
+        nodes.free((char*)status);
     }
 
     js_nga_status *cjsunit::status() {
@@ -670,26 +674,28 @@ namespace clib {
         }
     }
 
-    void cjsunit::remove_edge(js_nga_edge_list *&list, js_nga_edge_list *edge) {
+    void cjsunit::remove_edge(js_nga_edge_list*& list, js_nga_edge* edge) {
         if (list == nullptr) {
             error("remove from empty edge list");
-        } else if (list->next == list) {
-            assert(list->edge == edge->edge);
+        }
+        else if (list->next == list) {
+            assert(list->edge == edge);
+            nodes.free((char*)list);
             list = nullptr;
-            nodes.free((char *) list);
-        } else {
-            if (list->edge == edge->edge) {
+        }
+        else {
+            if (list->edge == edge) {
                 list->prev->next = list->next;
                 list->next->prev = list->prev;
                 list = list->prev;
-                nodes.free((char *) edge);
-            } else {
+            }
+            else {
                 auto node = list->next;
                 while (node != list) {
-                    if (node->edge == edge->edge) {
+                    if (node->edge == edge) {
                         node->prev->next = node->next;
                         node->next->prev = node->prev;
-                        nodes.free((char *) node);
+                        nodes.free((char*)node);
                         return;
                     }
                     node = node->next;
@@ -697,6 +703,12 @@ namespace clib {
                 error("remove nothing from edge list");
             }
         }
+    }
+
+    void cjsunit::remove_edge(js_nga_edge*edge) {
+        remove_edge(edge->begin->out, edge);
+        remove_edge(edge->end->in, edge);
+        nodes.free((char*)edge);
     }
 
     const char *cjsunit::label(js_unit *focused, bool front) {
@@ -934,8 +946,7 @@ namespace clib {
         for (auto &status : nga_status_list) {
             auto out_edges = get_filter_out_edges(status, [](auto it) { return it->data == nullptr; });
             for (auto &out_edge : out_edges) {
-                remove_edge(out_edge->edge->end->in, out_edge);
-                remove_edge(status->out, out_edge);
+                remove_edge(out_edge->edge);
             }
         }
         for (auto &status : nga_status_list) {
@@ -1143,12 +1154,16 @@ namespace clib {
                     } else {
                         trans.status = -1;
                     }
-                    if ((trans.type == e_reduce || trans.type == e_reduce_exp) && trans.status >= 0) {
+                    if ((trans.type == e_reduce || trans.type == e_reduce_exp)) {
                         auto h = 2 * (trans.jump * 2 * closure.size() + trans.status) + trans.type - e_reduce;
+                        trans.reduced_rule = ((js_pda_status*)edge->end)->rule;
                         if (reduces.find(h) != reduces.end()) {
                             continue;
                         }
                         reduces.insert(h);
+                    }
+                    else {
+                        trans.reduced_rule = p.rule;
                     }
                     std::copy(std::begin(LA[edge]), std::end(LA[edge]), std::back_inserter(trans.LA));
                     p.trans.push_back(trans);
@@ -1237,10 +1252,18 @@ namespace clib {
                     }
                 }
             }
+            for (auto& p : pdas) {
+                std::reverse(p.trans.begin(), p.trans.end());
+            }
         }
     }
 
-    const std::vector<js_pda_rule> &cjsunit::get_pda() const {
+    std::vector<js_pda_rule> &cjsunit::get_pda() {
+        return pdas;
+    }
+
+    const std::vector<js_pda_rule>& cjsunit::get_pda() const
+    {
         return pdas;
     }
 
@@ -1296,7 +1319,7 @@ namespace clib {
 
     static std::tuple<js_pda_edge_t, std::string, int> pda_edge_string[] = {
             std::make_tuple(e_shift, "shift", 2),
-            std::make_tuple(e_pass, "pass", 10),
+            std::make_tuple(e_pass, "pass", 1),
             std::make_tuple(e_rule, "rule", 1),
             std::make_tuple(e_move, "move", 1),
             std::make_tuple(e_left_recursion, "recursion", 3),
