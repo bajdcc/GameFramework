@@ -451,10 +451,12 @@ xcopy /r /y /e /d "$(ProjectDir)img" "$(TargetDir)img"</Command>
     <ClCompile Include="base\clibjs\cjsruntime_http.cpp" />
     <ClCompile Include="base\clibjs\cjsruntime_object.cpp" />
     <ClCompile Include="base\clibjs\cjsruntime_ui.cpp" />
+    <ClCompile Include="base\clibjs\cjsruntime_util.cpp" />
     <ClCompile Include="base\clibjs\cjstypes.cpp" />
     <ClCompile Include="base\clibjs\cjsunit.cpp" />
     <ClCompile Include="base\clibjs\JS2D.cpp" />
     <ClCompile Include="base\clibjs\JS2DRender.cpp" />
+    <ClCompile Include="base\clibjs\util\cjsext_puzzle_Klotski_1.cpp" />
     <ClCompile Include="base\json\cjast.cpp" />
     <ClCompile Include="base\json\cjdom.cpp" />
     <ClCompile Include="base\json\cjlexer.cpp" />

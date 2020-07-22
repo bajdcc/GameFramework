@@ -412,6 +412,13 @@ namespace clib {
             return js.call_api(API_math, _this, args, 0);
         };
         permanents.sys->add(permanents.sys_math->name, permanents.sys_math);
+        permanents.sys_helper = _new_function(nullptr, js_value::at_const | js_value::at_readonly);
+        permanents.sys_helper->add("length", _int_1);
+        permanents.sys_helper->name = "helper";
+        permanents.sys_helper->builtin = [](auto& func, auto& _this, auto& args, auto& js, auto attr) {
+            return js.call_api(API_helper, _this, args, 0);
+        };
+        permanents.sys->add(permanents.sys_helper->name, permanents.sys_helper);
         permanents.global_env->add("sys", permanents.sys);
         // number
         permanents.f_number = _new_function(permanents._proto_number, js_value::at_const | js_value::at_readonly);
@@ -1335,6 +1342,13 @@ namespace clib {
             push(new_undefined());
         }
                        break;
+        case API_helper: {
+            js_value::ref ret = new_undefined();
+            auto r = call_helper(args, ret);
+            push(ret);
+            return r;
+        }
+                          break;
         default:
             break;
         }

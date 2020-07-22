@@ -56,6 +56,12 @@ namespace clib {
         if (v && v->get_type() == r_string) {
             jsv_object::add("type", v);
             jsv_object::add("length", n->new_number(0));
+            auto keys = obj->get_keys();
+            for (const auto& k : keys) {
+                if (!k.empty() && k[0] == '_') {
+                    add2(k, obj, n);
+                }
+            }
             add2("event", obj, n);
             auto type = JS_STR(v);
             if (type == "label") {

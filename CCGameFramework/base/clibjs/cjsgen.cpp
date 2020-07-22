@@ -16,7 +16,7 @@
 #define DEBUG_MODE 0
 #define PRINT_CODE 1
 #define DUMP_CODE 1
-#define PRINT_AST 1
+#define PRINT_AST 0
 
 #define AST_IS_KEYWORD(node) ((node)->flag == a_keyword)
 #define AST_IS_KEYWORD_K(node, k) ((node)->data._keyword == (k))

@@ -91,6 +91,7 @@ namespace clib {
             API_config,
             API_get_config,
             API_math,
+            API_helper,
             API_buffer_from,
             API_buffer_toString,
             API_UI_new,
@@ -597,6 +598,8 @@ namespace clib {
 
         sym_try_t::ref get_try() const;
 
+        int call_helper(std::vector<js_value::weak_ref>& args, js_value::ref&);
+
         static std::string js_base64_encode(const std::vector<char> & data);
         static std::vector<char> js_base64_decode(const std::string & data);
 
@@ -661,6 +664,7 @@ namespace clib {
             jsv_function::ref sys_config;
             jsv_function::ref sys_get_config;
             jsv_function::ref sys_math;
+            jsv_function::ref sys_helper;
             // function
             jsv_function::ref f_number;
             jsv_function::ref f_boolean;

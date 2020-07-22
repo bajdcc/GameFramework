@@ -1119,6 +1119,12 @@
     <ClCompile Include="base\clibjs\cjsruntime_ui.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="base\clibjs\cjsruntime_util.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\clibjs\util\cjsext_puzzle_Klotski_1.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="script\lib\core\scene.lua">
