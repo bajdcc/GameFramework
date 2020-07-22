@@ -93,6 +93,7 @@ namespace clib {
     bool cjsgui::begin_render()
     {
         global_state.drawing = false;
+        global_state.painting = false;
         return global_state.renderTarget;
     }
 
@@ -108,6 +109,7 @@ namespace clib {
         if (global_state.ui_focus.lock() && !global_state.ui_focus.lock()->is_render()) {
             global_state.ui_focus.reset();
         }
+        global_state.painting = true;
     }
 
     void cjsgui::change_target(std::shared_ptr<Direct2DRenderTarget> renderTarget)
@@ -166,8 +168,7 @@ namespace clib {
             last_time = std::chrono::system_clock::now();
             reset_ips();
         }
-        draw_text(rt, bounds, brushes);
-        draw_window(bounds);
+        draw_window(bounds, brushes);
     }
     
     static int js_get_num_length(int x)
@@ -181,7 +182,7 @@ namespace clib {
         return len;
     }
 
-    void cjsgui::draw_text(CComPtr<ID2D1RenderTarget>& rt, const CRect& bounds, const JS2DEngine::BrushBag& brushes) {
+    void cjsgui::draw_text(CComPtr<ID2D1RenderTarget>& rt, const CRect& bounds, const JS2DEngine::BrushBag& brushes, bool cached) {
         if (!screens[screen_id])
             return;
         auto& scr = *screens[screen_id].get();
@@ -211,7 +212,6 @@ namespace clib {
 
         int x = max((w - width) / 2, 0);
         int y = max((h - height) / 2, 0);
-        int y2 = 0;
         auto x0 = x;
         auto y0 = y;
         auto old_x = x;
@@ -227,99 +227,97 @@ namespace clib {
 
         auto num_k = js_get_num_length(view_end - 1);
         CString line_no;
-        for (auto i = view; i < view_end; ++i) {
-            if (input_state) {
-                if (i >= ptr_my && i <= ptr_ry) {
-                    b->SetColor(D2D1::ColorF(87.0f / 255.0f, 116.0f / 255.0f, 48.0f / 255.0f, 0.4f));
-                    rt->FillRectangle(
-                        D2D1::RectF((float)bounds.left + x - num_k * GUI_FONT_W - 5, (float)bounds.top + y + GUI_FONT_H_1,
-                            (float)bounds.left + x, (float)bounds.top + y + GUI_FONT_H_2), b);
-                }
-            }
-            line_no.Format(L"%d", i);
-            while (line_no.GetLength() != num_k)
-                line_no = L" " + line_no;
-            if (ptr_y == i)
-                b->SetColor(D2D1::ColorF(55.0f / 255.0f, 173.0f / 255.0f, 231.0f / 255.0f));
-            else
-                b->SetColor(D2D1::ColorF(43.0f / 255.0f, 145.0f / 255.0f, 175.0f / 255.0f));
-            rt->DrawText(line_no.GetBuffer(0), line_no.GetLength(), brushes.cmdTF->textFormat,
-                D2D1::RectF((float)bounds.left + x - num_k * GUI_FONT_W - 5, (float)bounds.top + y + GUI_FONT_H_1,
-                    (float)bounds.left + x, (float)bounds.top + y + GUI_FONT_H_2), b);
-            for (auto j = 0; j < cols; ++j) {
-                ascii = true;
-                c = buffer[i * cols + j];
-                if (c < 0 && (i != line || j != cols - 1)) {
-                    WORD wd = (((BYTE)c) << 8) | ((BYTE)buffer[i * cols + j + 1]);
-                    if (wd >= 0x8140 && wd <= 0xFEFE) { // GBK
-                        if (j < cols - 1)
-                            ascii = false;
-                        else
-                            ascii_head = true;
-                    }
-                }
-                if (j == 0 && ascii_head) {
-                    ascii_head = false;
-                    ascii = true;
-                }
-                if (ascii) {
-                    if (colors_bg[i * cols + j]) {
-                        b->SetColor(D2D1::ColorF(colors_bg[i * cols + j]));
+
+        if (!cached) {
+            for (auto i = view; i < view_end; ++i) {
+                if (input_state) {
+                    if (i >= ptr_my && i <= ptr_ry) {
+                        b->SetColor(D2D1::ColorF(87.0f / 255.0f, 116.0f / 255.0f, 48.0f / 255.0f, 0.4f));
                         rt->FillRectangle(
-                            D2D1::RectF((float)bounds.left + x, (float)bounds.top + y + GUI_FONT_H_1,
-                            (float)bounds.left + x + GUI_FONT_W, (float)bounds.top + y + GUI_FONT_H_2), b);
+                            D2D1::RectF((float)x - num_k * GUI_FONT_W - 5, (float)y + GUI_FONT_H_1,
+                                (float)x, (float)y + GUI_FONT_H_2), b);
                     }
-                    if (c > 0) {
-                        if (std::isprint(buffer[i * cols + j])) {
-                            b->SetColor(D2D1::ColorF(colors_fg[i * cols + j]));
-                            s[0] = c;
-                            rt->DrawText(s, 1, brushes.cmdTF->textFormat,
-                                D2D1::RectF((float)bounds.left + x, (float)bounds.top + y + GUI_FONT_H_1,
-                                (float)bounds.left + x + GUI_FONT_W, (float)bounds.top + y + GUI_FONT_H_2), b);
+                }
+                line_no.Format(L"%d", i);
+                while (line_no.GetLength() != num_k)
+                    line_no = L" " + line_no;
+                if (ptr_y == i)
+                    b->SetColor(D2D1::ColorF(55.0f / 255.0f, 173.0f / 255.0f, 231.0f / 255.0f));
+                else
+                    b->SetColor(D2D1::ColorF(43.0f / 255.0f, 145.0f / 255.0f, 175.0f / 255.0f));
+                rt->DrawText(line_no.GetBuffer(0), line_no.GetLength(), brushes.cmdTF->textFormat,
+                    D2D1::RectF((float)x - num_k * GUI_FONT_W - 5, (float)y + GUI_FONT_H_1,
+                        (float)x, (float)y + GUI_FONT_H_2), b);
+                for (auto j = 0; j < cols; ++j) {
+                    ascii = true;
+                    c = buffer[i * cols + j];
+                    if (c < 0 && (i != line || j != cols - 1)) {
+                        WORD wd = (((BYTE)c) << 8) | ((BYTE)buffer[i * cols + j + 1]);
+                        if (wd >= 0x8140 && wd <= 0xFEFE) { // GBK
+                            if (j < cols - 1)
+                                ascii = false;
+                            else
+                                ascii_head = true;
                         }
-                        else if (c == '\7') {
+                    }
+                    if (j == 0 && ascii_head) {
+                        ascii_head = false;
+                        ascii = true;
+                    }
+                    if (ascii) {
+                        if (colors_bg[i * cols + j]) {
+                            b->SetColor(D2D1::ColorF(colors_bg[i * cols + j]));
+                            rt->FillRectangle(
+                                D2D1::RectF((float)x, (float)y + GUI_FONT_H_1,
+                                    (float)x + GUI_FONT_W, (float)y + GUI_FONT_H_2), b);
+                        }
+                        if (c > 0) {
+                            if (std::isprint(buffer[i * cols + j])) {
+                                b->SetColor(D2D1::ColorF(colors_fg[i * cols + j]));
+                                s[0] = c;
+                                rt->DrawText(s, 1, brushes.cmdTF->textFormat,
+                                    D2D1::RectF((float)x, (float)y + GUI_FONT_H_1,
+                                        (float)x + GUI_FONT_W, (float)y + GUI_FONT_H_2), b);
+                            }
+                            else if (c == '\7') {
+                                b->SetColor(D2D1::ColorF(colors_fg[i * cols + j]));
+                                rt->FillRectangle(
+                                    D2D1::RectF((float)x, (float)y + GUI_FONT_H_1,
+                                        (float)x + GUI_FONT_W, (float)y + GUI_FONT_H_2), b);
+                            }
+                        }
+                        else if (c < 0) {
                             b->SetColor(D2D1::ColorF(colors_fg[i * cols + j]));
                             rt->FillRectangle(
-                                D2D1::RectF((float)bounds.left + x, (float)bounds.top + y + GUI_FONT_H_1,
-                                (float)bounds.left + x + GUI_FONT_W, (float)bounds.top + y + GUI_FONT_H_2), b);
+                                D2D1::RectF((float)x, (float)y + GUI_FONT_H_1,
+                                    (float)x + GUI_FONT_W, (float)y + GUI_FONT_H_2), b);
                         }
+                        x += GUI_FONT_W;
                     }
-                    else if (c < 0) {
+                    else {
+                        if (colors_bg[i * cols + j]) {
+                            b->SetColor(D2D1::ColorF(colors_bg[i * cols + j]));
+                            rt->FillRectangle(
+                                D2D1::RectF((float)x, (float)y + GUI_FONT_H_1,
+                                    (float)x + GUI_FONT_W * 2, (float)y + GUI_FONT_H_2), b);
+                        }
+                        sc[0] = c;
+                        sc[1] = buffer[i * cols + j + 1];
+                        auto utf = cnet::GBKToStringT(sc);
+                        s[0] = (TCHAR)(utf[0]);
+                        j++;
                         b->SetColor(D2D1::ColorF(colors_fg[i * cols + j]));
-                        rt->FillRectangle(
-                            D2D1::RectF((float)bounds.left + x, (float)bounds.top + y + GUI_FONT_H_1,
-                            (float)bounds.left + x + GUI_FONT_W, (float)bounds.top + y + GUI_FONT_H_2), b);
+                        rt->DrawText(s, 1, brushes.gbkTF->textFormat,
+                            D2D1::RectF((float)x + GUI_FONT_W_C1, (float)y + GUI_FONT_H_C1,
+                                (float)x + GUI_FONT_W_C2, (float)y + GUI_FONT_H_C2), b);
+                        x += GUI_FONT_W * 2;
                     }
-                    x += GUI_FONT_W;
                 }
-                else {
-                    if (colors_bg[i * cols + j]) {
-                        b->SetColor(D2D1::ColorF(colors_bg[i * cols + j]));
-                        rt->FillRectangle(
-                            D2D1::RectF((float)bounds.left + x, (float)bounds.top + y + GUI_FONT_H_1,
-                            (float)bounds.left + x + GUI_FONT_W * 2, (float)bounds.top + y + GUI_FONT_H_2), b);
-                    }
-                    sc[0] = c;
-                    sc[1] = buffer[i * cols + j + 1];
-                    auto utf = cnet::GBKToStringT(sc);
-                    s[0] = (TCHAR)(utf[0]);
-                    j++;
-                    b->SetColor(D2D1::ColorF(colors_fg[i * cols + j]));
-                    rt->DrawText(s, 1, brushes.gbkTF->textFormat,
-                        D2D1::RectF((float)bounds.left + x + GUI_FONT_W_C1, (float)bounds.top + y + GUI_FONT_H_C1,
-                        (float)bounds.left + x + GUI_FONT_W_C2, (float)bounds.top + y + GUI_FONT_H_C2), b);
-                    x += GUI_FONT_W * 2;
-                }
+                x = old_x;
+                y += GUI_FONT_H;
             }
-            x = old_x;
-            y += GUI_FONT_H;
-            if (y + GUI_FONT_H >= bounds.Height()) {
-                y2 = y - y0;
-                break;
-            }
+            return;
         }
-        if (y2 == 0)
-            y2 = y - y0;
 
         if (input_state) {
             input_ticks++;
@@ -368,6 +366,7 @@ namespace clib {
             old_view = view;
         }
         if (scroll_fade) {
+            global_state.paintingConsole = true;
             auto&& k = (scroll_fade & 0xf0) >> 4;
             auto&& p = scroll_fade & 0xf;
             auto a = 0.0f;
@@ -391,13 +390,13 @@ namespace clib {
             }
             if (a > 0.0f) {
                 int _x = bounds.left + x + cols * GUI_FONT_W;
-                int _y = bounds.top + y0;
-                int _x2 = min(bounds.right, _x + 20);
-                int _y2 = min(bounds.bottom, _y + y2);
+                int _y = bounds.top + y;
+                int _x2 = _x + 20;
+                int _y2 = _y + rows * GUI_FONT_H;
                 auto r = D2D1::RectF((float)_x, (float)_y, (float)_x2, (float)_y2);
                 b->SetColor(D2D1::ColorF(62.0f / 255.0f, 62.0f / 255.0f, 66.0f / 255.0f, a));
                 rt->FillRectangle(r, b);
-                auto h2 = min(bounds.Height(), y2) - 10;
+                auto h2 = rows * GUI_FONT_H - 10;
                 auto start_y = 1.0f * min(view, line) / line;
                 auto end_y = 1.0f * min(line, view + rows) / line;
                 r = D2D1::RectF((float)_x + 5, (float)_y + 5 + start_y * h2,
@@ -444,31 +443,61 @@ namespace clib {
         }
     }
 
-    void cjsgui::draw_window(const CRect& bounds)
+    void cjsgui::draw_window(const CRect& bounds, const JS2DEngine::BrushBag& brushes)
     {
         if (!bounds.IsRectEmpty() && global_state.bound != bounds) {
             global_state.bound = bounds;
             init_render_target();
             if (vm)
                 vm->resize();
+            global_state.painting = true;
+            global_state.paintingConsole = true;
         }
-        if (global_state.canvas.lock() && global_state.renderTarget && !global_state.bound.IsRectEmpty()) {
-            global_state.renderTarget->BeginDraw();
-            global_state.renderTarget->Clear(D2D1::ColorF(D2D1::ColorF::White, 0));
-            for (const auto& s : global_state.render_queue) {
-                if (s.lock()) {
-                    s.lock()->render();
+        auto rt = global_state.canvas.lock()->GetDirect2DRenderTarget();
+        if (global_state.canvas.lock() && !global_state.bound.IsRectEmpty()) {
+            if (global_state.renderTarget) {
+                if (global_state.painting) {
+                    global_state.painting = false;
+                    global_state.renderTarget->BeginDraw();
+                    global_state.renderTarget->Clear(D2D1::ColorF(D2D1::ColorF::White, 0));
+                    for (const auto& s : global_state.render_queue) {
+                        if (s.lock()) {
+                            s.lock()->render();
+                        }
+                    }
+                    global_state.renderTarget->EndDraw();
+                    global_state.bitmap = nullptr;
+                    global_state.renderTarget_bitmap->GetBitmap(&global_state.bitmap);
                 }
             }
-            global_state.renderTarget->EndDraw();
-            global_state.bitmap = nullptr;
-            global_state.renderTarget_bitmap->GetBitmap(&global_state.bitmap);
-            global_state.canvas.lock()->GetDirect2DRenderTarget()->DrawBitmap(
-                global_state.bitmap,
-                D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
-                1.0f,
-                D2D1_BITMAP_INTERPOLATION_MODE_LINEAR
-            );
+            if (global_state.bitmap) {
+                rt->DrawBitmap(
+                    global_state.bitmap,
+                    D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
+                    1.0f,
+                    D2D1_BITMAP_INTERPOLATION_MODE_LINEAR
+                );
+            }
+            if (global_state.renderTargetConsole) {
+                if (global_state.paintingConsole) {
+                    global_state.paintingConsole = false;
+                    global_state.renderTargetConsole->BeginDraw();
+                    global_state.renderTargetConsole->Clear(D2D1::ColorF(D2D1::ColorF::White, 0));
+                    draw_text(global_state.renderTargetConsole, bounds, brushes, false);
+                    global_state.renderTargetConsole->EndDraw();
+                    global_state.bitmapConsole = nullptr;
+                    global_state.renderTarget_bitmapConsole->GetBitmap(&global_state.bitmapConsole);
+                }
+            }
+            if (global_state.bitmapConsole) {
+                rt->DrawBitmap(
+                    global_state.bitmapConsole,
+                    D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
+                    1.0f,
+                    D2D1_BITMAP_INTERPOLATION_MODE_LINEAR
+                );
+            }
+            draw_text(rt, bounds, brushes, true);
         }
     }
 
@@ -476,9 +505,16 @@ namespace clib {
     {
         if (global_state.canvas.lock() && !global_state.bound.IsRectEmpty()) {
             global_state.drawing = true;
+            global_state.painting = true;
             global_state.renderTarget_bitmap = global_state.canvas.lock()->CreateBitmapRenderTarget(
                 D2D1::SizeF((float)global_state.bound.Width(), (float)global_state.bound.Height()));
             global_state.renderTarget = global_state.renderTarget_bitmap;
+            global_state.drawingConsole = true;
+            global_state.paintingConsole = true;
+            global_state.paintingScroll = false;
+            global_state.renderTarget_bitmapConsole = global_state.canvas.lock()->CreateBitmapRenderTarget(
+                D2D1::SizeF((float)global_state.bound.Width(), (float)global_state.bound.Height()));
+            global_state.renderTargetConsole = global_state.renderTarget_bitmapConsole;
         }
     }
 
@@ -595,6 +631,9 @@ namespace clib {
         auto& cmd_state = scr.cmd_state;
         auto& cmd_string = scr.cmd_string;
         auto& size = scr.size;
+
+        if (!global_state.paintingConsole)
+            global_state.paintingConsole = true;
 
         if (cmd_state) {
             if (c == '\033') {

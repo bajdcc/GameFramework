@@ -90,8 +90,8 @@ namespace clib {
     private:
         void reset_ips();
         void tick();
-        void draw_text(CComPtr<ID2D1RenderTarget>& rt, const CRect& bounds, const JS2DEngine::BrushBag& brushes);
-        void draw_window(const CRect& bounds);
+        void draw_text(CComPtr<ID2D1RenderTarget>& rt, const CRect& bounds, const JS2DEngine::BrushBag& brushes, bool cached);
+        void draw_window(const CRect& bounds, const JS2DEngine::BrushBag& brushes);
 
         void init_render_target();
 
@@ -161,9 +161,16 @@ namespace clib {
             CComPtr<ID2D1Bitmap> bitmap;
             CComPtr<ID2D1RenderTarget> renderTarget;
             CComPtr<ID2D1BitmapRenderTarget> renderTarget_bitmap;
+            CComPtr<ID2D1Bitmap> bitmapConsole;
+            CComPtr<ID2D1RenderTarget> renderTargetConsole;
+            CComPtr<ID2D1BitmapRenderTarget> renderTarget_bitmapConsole;
             int total_obj{ 0 };
             int cache_obj{ 0 };
             bool drawing{ false };
+            bool drawingConsole{ false };
+            bool painting{ false };
+            bool paintingConsole{ false };
+            bool paintingScroll{ false };
             std::vector<jsv_ui::weak_ref> render_queue;
             std::vector<jsv_ui::weak_ref> render_queue_auto;
             std::vector<jsv_ui::weak_ref> render_queue_bk;

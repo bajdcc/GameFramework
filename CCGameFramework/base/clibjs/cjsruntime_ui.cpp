@@ -129,8 +129,11 @@ namespace clib {
                 element->width = obj2num(obj);
             else if (s == "height")
                 element->height = obj2num(obj);
-            else
+            else {
                 element->add(s, obj.lock());
+                return;
+            }
+            cjsgui::singleton().trigger_render();
         }
     }
 
@@ -147,8 +150,11 @@ namespace clib {
                 element->width = 0;
             else if (s == "height")
                 element->height = 0;
-            else
+            else {
                 element->remove(s);
+                return;
+            }
+            cjsgui::singleton().trigger_render();
         }
 
     }
@@ -358,6 +364,9 @@ namespace clib {
     }
 
     int cjsruntime::eval_ui(bool signal) {
+        if (signal && global_ui.signals.empty()) {
+            return 0;
+        }
         auto current = current_stack;
         auto size = current_stack ? current_stack->stack.size() : 0;
         auto stack_size = stack.size();
@@ -436,10 +445,14 @@ namespace clib {
         if (s == "color") {
             if (obj->get_type() == r_string)
                 label->SetColor(CColor::Parse(CStringA(JS_STR(obj).c_str())));
+            else
+                return;
         }
         else if (s == "content") {
             if (obj->get_type() == r_string)
                 label->SetText(CString(JS_S(obj)->wstr.c_str()));
+            else
+                return;
         }
         else if (s == "font") {
             if (obj && !obj->is_primitive()) {
@@ -492,7 +505,11 @@ namespace clib {
                     label->SetHorizontalAlignment(Alignment::StringAlignmentCenter);
                 else if (a == "right")
                     label->SetHorizontalAlignment(Alignment::StringAlignmentFar);
+                else
+                    return;
             }
+            else
+                return;
         }
         else if (s == "valign") {
             if (obj->get_type() == r_string) {
@@ -503,8 +520,15 @@ namespace clib {
                     label->SetHorizontalAlignment(Alignment::StringAlignmentCenter);
                 else if (a == "bottom")
                     label->SetHorizontalAlignment(Alignment::StringAlignmentFar);
+                else
+                    return;
             }
+            else
+                return;
         }
+        else
+            return;
+        cjsgui::singleton().trigger_render();
     }
 
     void js_ui_label::remove(const std::string& s)
@@ -527,6 +551,9 @@ namespace clib {
         else if (s == "valign") {
             label->SetVerticalAlignment(Alignment::StringAlignmentNear);
         }
+        else
+            return;
+        cjsgui::singleton().trigger_render();
     }
 
     bool js_ui_label::hit(int x, int y) const
@@ -574,11 +601,18 @@ namespace clib {
         if (s == "color") {
             if (obj->get_type() == r_string)
                 rect->SetColor(CColor::Parse(CStringA(JS_STR(obj).c_str())));
+            else
+                return;
         }
         else if (s == "fill") {
             if (obj->get_type() == r_boolean)
                 rect->SetFill(JS_BOOL(obj));
+            else
+                return;
         }
+        else
+            return;
+        cjsgui::singleton().trigger_render();
     }
 
     void js_ui_rect::remove(const std::string& s)
@@ -589,6 +623,9 @@ namespace clib {
         else if (s == "fill") {
             rect->SetFill(true);
         }
+        else
+            return;
+        cjsgui::singleton().trigger_render();
     }
 
     bool js_ui_rect::hit(int x, int y) const
@@ -636,14 +673,21 @@ namespace clib {
         if (s == "color") {
             if (obj->get_type() == r_string)
                 round->SetColor(CColor::Parse(CStringA(JS_STR(obj).c_str())));
+            else
+                return;
         }
         else if (s == "fill") {
             if (obj->get_type() == r_boolean)
                 round->SetFill(JS_BOOL(obj));
+            else
+                return;
         }
         else if (s == "radius") {
             round->SetRadius(obj2float(obj));
         }
+        else
+            return;
+        cjsgui::singleton().trigger_render();
     }
 
     void js_ui_round::remove(const std::string& s)
@@ -657,6 +701,9 @@ namespace clib {
         else if (s == "radius") {
             round->SetRadius(0);
         }
+        else
+            return;
+        cjsgui::singleton().trigger_render();
     }
 
     bool js_ui_round::hit(int x, int y) const
