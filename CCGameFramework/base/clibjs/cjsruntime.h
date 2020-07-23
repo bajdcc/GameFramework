@@ -72,6 +72,7 @@ namespace clib {
         virtual std::shared_ptr<jsv_undefined> new_undefined() = 0;
         virtual std::shared_ptr<cjs_function> new_func(const std::shared_ptr<cjs_function_info> &code) = 0;
         virtual std::shared_ptr<jsv_object> new_array() = 0;
+        virtual std::shared_ptr<jsv_object> new_array(const std::vector<std::shared_ptr<js_value>>&) = 0;
         virtual std::shared_ptr<jsv_regexp> new_regexp() = 0;
         virtual std::shared_ptr<jsv_object> new_buffer() = 0;
         virtual std::shared_ptr<jsv_object> new_error(int) = 0;
@@ -512,6 +513,7 @@ namespace clib {
         jsv_undefined::ref new_undefined() override;
         cjs_function::ref new_func(const cjs_function_info::ref &code) override;
         jsv_object::ref new_array() override;
+        jsv_object::ref new_array(const std::vector<js_value::ref>&) override;
         jsv_object::ref new_buffer() override;
         jsv_regexp::ref new_regexp() override;
         jsv_object::ref new_error(int) override;

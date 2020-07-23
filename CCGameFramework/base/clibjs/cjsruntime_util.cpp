@@ -9,34 +9,34 @@
 
 namespace clib {
 
-    static bool js_trans(const js_value::ref& obj, std::string& s) {
+    bool js_trans(const js_value::ref& obj, std::string& s) {
         if (!obj || obj->get_type() != r_string)
             return false;
         s = JS_STR(obj);
         return true;
     }
 
-    static bool js_trans(const js_value::ref& obj, double& d) {
+    bool js_trans(const js_value::ref& obj, double& d) {
         if (!obj || obj->get_type() != r_number)
             return false;
         d = JS_NUM(obj);
         return true;
     }
 
-    static bool js_trans(const js_value::ref& obj, jsv_object::ref& o) {
+    bool js_trans(const js_value::ref& obj, jsv_object::ref& o) {
         if (!obj || obj->is_primitive())
             return false;
         o = JS_OBJ(obj);
         return true;
     }
 
-    static bool js_trans(const js_value::ref& obj) {
+    bool js_trans(const js_value::ref& obj) {
         if (!obj)
             return false;
         return obj->to_bool();
     }
 
-    static bool js_trans(const js_value::ref& obj, std::vector<js_value::ref>& v) {
+    bool js_trans(const js_value::ref& obj, std::vector<js_value::ref>& v) {
         if (!obj || obj->is_primitive())
             return false;
         auto o = JS_OBJ(obj);
@@ -61,7 +61,7 @@ namespace clib {
         return true;
     }
 
-    static bool js_trans(const js_value::ref& obj, CRect& r) {
+    bool js_trans(const js_value::ref& obj, CRect& r) {
         if (!obj || obj->is_primitive())
             return false;
         auto o = JS_OBJ(obj);
@@ -77,7 +77,7 @@ namespace clib {
         return true;
     }
 
-    extern int helper_Klotski_1(js_value_new& js, int size, const std::vector<CRect>& blocks, int red, js_value::ref& out);
+    extern int helper_Klotski_1(js_value_new* js, int size, const std::vector<CRect>& blocks, int red, js_value::ref& out);
 
     int cjsruntime::call_helper(std::vector<js_value::weak_ref>& args, js_value::ref& out)
     {
@@ -98,20 +98,21 @@ namespace clib {
                 if (!js_trans(data->get("type"), t))
                     break;
                 if (t == "Klotski-1") {
-                    double size;
-                    if (!js_trans(data->get("size"), size))
+                    double _size;
+                    if (!js_trans(data->get("size"), _size))
                         break;
-                    if (std::isinf(size) || std::isnan(size) || size < 0 || size > 10) {
+                    if (std::isinf(_size) || std::isnan(_size) || _size < 0 || _size >= 10) {
                         ret = new_string("invalid size");
                         break;
                     }
+                    auto size = (int)_size;
                     std::vector<js_value::ref> blocks;
                     if (!js_trans(data->get("blocks"), blocks))
                         break;
                     std::vector<CRect> rects;
                     CRect r;
                     auto idx = 0, target = -1;
-                    for (const auto& b: blocks) {
+                    for (const auto& b : blocks) {
                         if (js_trans(b, r)) {
                             rects.push_back(r);
                             if (js_trans(JS_OBJ(b)->get("main"))) {
@@ -146,6 +147,10 @@ namespace clib {
                                 ret = new_string("invalid height");
                                 break;
                             }
+                            if (r.Width() > 0 && r.Height() > 0) {
+                                ret = new_string("invalid rect");
+                                break;
+                            }
                         }
                         idx++;
                     }
@@ -153,8 +158,14 @@ namespace clib {
                         ret = new_string("no target");
                         break;
                     }
-                    return helper_Klotski_1(*this, (int)size, rects, target, out);
+                    return helper_Klotski_1(this, (int)size, rects, target, out);
                 }
+                ret = new_string("invalid type");
+            }
+            else if (type == "debugger") {
+#ifdef DEBUG
+                _asm int 3;
+#endif
             }
         } while (0);
         push(ret);

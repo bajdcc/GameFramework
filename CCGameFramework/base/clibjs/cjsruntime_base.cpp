@@ -33,12 +33,12 @@ namespace clib {
         permanents._proto_function = _new_object(js_value::at_const | js_value::at_readonly);
         // const value
         permanents.global_env = _new_object(js_value::at_const);
-        permanents._null = _new_null(js_value::at_const | js_value::at_readonly);
-        permanents._undefined = _new_undefined(js_value::at_const | js_value::at_readonly);
-        permanents._true = _new_boolean(true, js_value::at_const | js_value::at_readonly);
-        permanents._false = _new_boolean(false, js_value::at_const | js_value::at_readonly);
-        permanents.__nan = _new_number(std::numeric_limits<double>::quiet_NaN(), js_value::at_const | js_value::at_readonly);
-        permanents._inf = _new_number(INFINITY, js_value::at_const | js_value::at_readonly);
+        permanents._null = _new_null(js_value::at_const);
+        permanents._undefined = _new_undefined(js_value::at_const);
+        permanents._true = _new_boolean(true, js_value::at_const);
+        permanents._false = _new_boolean(false, js_value::at_const);
+        permanents.__nan = _new_number(std::numeric_limits<double>::quiet_NaN(), js_value::at_const);
+        permanents._inf = _new_number(INFINITY, js_value::at_const);
         permanents._minus_inf = _new_number(-INFINITY, js_value::at_const);
         permanents._zero = _new_number(0.0, js_value::at_const);
         permanents._minus_zero = _new_number(-0.0, js_value::at_const);

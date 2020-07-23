@@ -23,6 +23,7 @@
         top: 100,
         width: 100,
         height: 100,
+        hit: true,
         event: new Event({
             'hit': function(t, x, y) {
                 console.log(this.type, this.left, this.top, this.color, t, x, y);
@@ -41,6 +42,7 @@
             width: 100,
             height: 100,
             radius: 5,
+            hit: true,
             event: new Event({
                 'hit': function(t, x, y) {
                     console.log(this.type, this.left, this.top, this.color, t, x, y);

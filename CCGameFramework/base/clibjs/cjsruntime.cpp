@@ -35,7 +35,7 @@
 #define GC_PERIOD 128
 #define MAX_REUSE_SIZE 65536
 
-#define LOG_AST 1
+#define LOG_AST 0
 #define LOG_FILE 0
 
 #if defined(WIN32) || defined(WIN64)
@@ -1533,7 +1533,7 @@ namespace clib {
             if (_t->is_primitive() || _t->get_type() == r_regex || _t->get_type() == r_function)
                 fprintf(stdout, "this | [%p] %s\n", _t.get(), _t->to_string((js_value_new*)const_cast<cjsruntime*>(this), 0, nullptr).c_str());
             else
-                fprintf(stdout, "this | [%p] <object>\n");
+                fprintf(stdout, "this | [%p] <object>\n", _t.get());
             for (auto s2 = st.rbegin(); s2 != st.rend(); s2++) {
                 fprintf(stdout, "%4d | [%p] ", sti--, s2->lock().get());
                 if (s2->lock() == permanents.global_env)
@@ -1567,7 +1567,7 @@ namespace clib {
                         if (o->is_primitive() || o->get_type() == r_regex || o->get_type() == r_function)
                             fprintf(stdout, "<builtin> %s\n", o->to_string((js_value_new*)const_cast<cjsruntime*>(this), 0, nullptr).c_str());
                         else
-                            fprintf(stdout, "<builtin>\n", o->get_type());
+                            fprintf(stdout, "<builtin>\n");
                     }
                     else
                         print(o, 0, std::cout);
@@ -1736,6 +1736,19 @@ namespace clib {
         auto arr = new_object();
         arr->__proto__ = permanents._proto_array;
         arr->add("length", new_number(0.0));
+        return arr;
+    }
+
+    jsv_object::ref cjsruntime::new_array(const std::vector<js_value::ref>& v)
+    {
+        auto arr = new_array();
+        std::stringstream ss;
+        for (size_t i = 0; i < v.size(); i++) {
+            ss.str("");
+            ss << i;
+            arr->add(ss.str(), v[i]);
+        }
+        arr->add("length", new_number(v.size()));
         return arr;
     }
 
