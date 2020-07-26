@@ -12,6 +12,37 @@ UI.root = new UI({
     width: 0,
     height: 0
 });
+UI.get_layout = (function() {
+    const map_layout = {
+        linear: function() {
+            if (!this.orientation)
+                this.orientation = 'vertical';
+            if (this.orientation == 'horizontal') {
+                var w = this.map(x => x.weight || 0);
+                var all = w.reduce((a, b) => a + b, 0);
+                if (all === 0)
+                    return;
+                all = 1 / all;
+                var sum = 0;
+                for (var i in this) {
+                    var o = this[i];
+                    o.left = this.left + sum;
+                    o.width = Math.ceil(this.width * w[i] * all);
+                    sum += o.width;
+                    o.top = this.top;
+                    o.height = this.height;
+                    if (o.event)
+                        o.event.emit('resize', o);
+                }
+            } else if (this.orientation == 'vertical') {
+
+            }
+        }
+    };
+    return function(t) {
+        return map_layout[t];
+    }
+})();
 sys.send_signal = (function() {
     const map_signal = {
         render: function() {

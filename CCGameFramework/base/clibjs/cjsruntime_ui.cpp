@@ -54,52 +54,54 @@ namespace clib {
     {
         auto v = obj->get("type", n);
         if (v && v->get_type() == r_string) {
-            jsv_object::add("type", v);
-            jsv_object::add("length", n->new_number(0));
+            do {
+                jsv_object::add("type", v);
+                jsv_object::add("length", n->new_number(0));
+                auto type = JS_STR(v);
+                if (type == "label") {
+                    element = std::make_shared<js_ui_label>();
+                    set_location(element, JS_O(shared_from_this()), obj, n);
+                    add2("color", obj, n);
+                    add2("content", obj, n);
+                    add2("font", obj, n);
+                    add2("size", obj, n);
+                    add2("bold", obj, n);
+                    add2("italic", obj, n);
+                    add2("underline", obj, n);
+                    add2("strikeline", obj, n);
+                    add2("antialias", obj, n);
+                    add2("verticalAntialias", obj, n);
+                    add2("align", obj, n);
+                    add2("valign", obj, n);
+                    break;
+                }
+                if (type == "rect") {
+                    element = std::make_shared<js_ui_rect>();
+                    set_location(element, JS_O(shared_from_this()), obj, n);
+                    add2("color", obj, n);
+                    add2("fill", obj, n);
+                    break;
+                }
+                if (type == "round") {
+                    element = std::make_shared<js_ui_round>();
+                    set_location(element, JS_O(shared_from_this()), obj, n);
+                    add2("color", obj, n);
+                    add2("fill", obj, n);
+                    add2("radius", obj, n);
+                    break;
+                }
+                if (type == "root") {
+                    break;
+                }
+                return false;
+            } while (0);
             auto keys = obj->get_keys();
             for (const auto& k : keys) {
-                if (!k.empty() && k[0] == '_') {
+                if (!exists(k)) {
                     add2(k, obj, n);
                 }
             }
-            add2("event", obj, n);
-            add2("hit", obj, n);
-            auto type = JS_STR(v);
-            if (type == "label") {
-                element = std::make_shared<js_ui_label>();
-                set_location(element, JS_O(shared_from_this()), obj, n);
-                add2("color", obj, n);
-                add2("content", obj, n);
-                add2("font", obj, n);
-                add2("size", obj, n);
-                add2("bold", obj, n);
-                add2("italic", obj, n);
-                add2("underline", obj, n);
-                add2("strikeline", obj, n);
-                add2("antialias", obj, n);
-                add2("verticalAntialias", obj, n);
-                add2("align", obj, n);
-                add2("valign", obj, n);
-                return true;
-            }
-            if (type == "rect") {
-                element = std::make_shared<js_ui_rect>();
-                set_location(element, JS_O(shared_from_this()), obj, n);
-                add2("color", obj, n);
-                add2("fill", obj, n);
-                return true;
-            }
-            if (type == "round") {
-                element = std::make_shared<js_ui_round>();
-                set_location(element, JS_O(shared_from_this()), obj, n);
-                add2("color", obj, n);
-                add2("fill", obj, n);
-                add2("radius", obj, n);
-                return true;
-            }
-            if (type == "root") {
-                return true;
-            }
+            return true;
         }
         return false;
     }
