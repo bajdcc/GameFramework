@@ -86,6 +86,7 @@ namespace clib {
             API_setInterval,
             API_clearTimeout,
             API_clearInterval,
+            API_parseInt,
             API_eval,
             API_http,
             API_music,
@@ -424,7 +425,8 @@ namespace clib {
         void init(const std::string& str, const std::string& flag);
         bool test(const std::string& str);
         std::string replace(const std::string& origin, const std::string& replacer);
-        bool match(const std::string& origin, std::vector<std::tuple<std::string, bool>>& matches);
+        bool match(const std::string& origin, std::vector<std::tuple<std::string, bool, int>>& matches);
+        bool match(const std::string& origin, std::vector<std::tuple<std::string, int>>& matches);
         static std::string replace(const std::string& origin, const std::string& pat, const std::string& replacer);
         std::string str_origin;
         std::string str;
@@ -638,6 +640,7 @@ namespace clib {
             jsv_function::ref global_setInterval;
             jsv_function::ref global_clearTimeout;
             jsv_function::ref global_clearInterval;
+            jsv_function::ref global_parseInt;
             // proto
             jsv_object::ref _proto_boolean;
             jsv_object::ref _proto_function;
@@ -650,6 +653,7 @@ namespace clib {
             jsv_function::ref _proto_object_valueOf;
             jsv_object::ref _proto_string;
             jsv_function::ref _proto_string_replace;
+            jsv_function::ref _proto_string_match;
             jsv_object::ref _proto_root;
             // console
             jsv_object::ref console;

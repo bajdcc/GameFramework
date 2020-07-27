@@ -21,11 +21,13 @@
 #define TRACE_PARSING_AST 1
 #define DUMP_LEXER 0
 #define DUMP_PDA 0
-#define DUMP_PDA_FILE "js_PDA.txt"
+#define DUMP_PDA_FILE "js_PDA.log"
 #define DEBUG_AST 0
 #define CHECK_AST 0
 
 namespace clib {
+
+    std::unique_ptr<cjsunit> cjsparser::unit;
 
     bool cjsparser::parse(const std::string &str, std::string &error_string, csemantic *s) {
         semantic = s;
@@ -43,8 +45,10 @@ namespace clib {
         // 清空AST
         ast->reset();
         // 产生式
-        if (unit.get_pda().empty())
+        if (!unit) {
+            unit = std::make_unique<cjsunit>();
             gen();
+        }
         // 语法分析（递归下降）
         auto r = program(error_string, str);
         return r;
@@ -58,6 +62,13 @@ namespace clib {
         ast.reset();
     }
 
+    void cjsparser::dump_pda(std::ostream& os)
+    {
+#if DUMP_PDA
+        unit->dump(os);
+#endif
+    }
+
     void cjsparser::next() {
         current = &lexer->get_current_unit();
         lexer->inc_index();
@@ -66,9 +77,9 @@ namespace clib {
     void cjsparser::gen() {
         // REFER: antlr/grammars-v4
         // URL: https://github.com/antlr/grammars-v4/blob/master/javascript/javascript/JavaScriptParser.g4
-#define DEF_LEXER(name) auto &_##name = unit.token(name);
+#define DEF_LEXER(name) auto &_##name = unit->token(name);
 #define DEF_LEXER_RULE(name) DEF_LEXER(name)
-#define DEF_LEXER_RULE_LA(name) auto &_##name = unit.token(name, true);
+#define DEF_LEXER_RULE_LA(name) auto &_##name = unit->token(name, true);
         DEF_LEXER(NUMBER)
         DEF_LEXER(ID)
         DEF_LEXER(REGEX)
@@ -169,8 +180,8 @@ namespace clib {
         DEF_LEXER(T_ELLIPSIS)
         DEF_LEXER(T_ARROW)
 #undef DEF_LEXER
-#define DEF_RULE(name) auto &name = unit.rule(#name, c_##name);
-#define DEF_RULE_ATTR(name, attr) auto &name = unit.rule(#name, c_##name, attr);
+#define DEF_RULE(name) auto &name = unit->rule(#name, c_##name);
+#define DEF_RULE_ATTR(name, attr) auto &name = unit->rule(#name, c_##name, attr);
 #define DEF_RULE_NOT_GREED(name) DEF_RULE_ATTR(name, r_not_greed)
 #define DEF_RULE_EXP(name) DEF_RULE_ATTR(name, r_exp)
         DEF_RULE(program)
@@ -500,16 +511,16 @@ namespace clib {
                   | _K_CLASS
                   | _K_SUPER
                   | _K_LET;
-        unit.adjust(&functionExpression, &anonymousFunction, e_shift, 1);
-        unit.adjust(&iterationStatement, &forInStatement, e_shift, -1);
-        unit.adjust(&statement, &expressionStatement, e_shift, 1);
-        unit.adjust(&iterationStatement, &forStatement, e_shift, 0, (void *) &pred_for);
-        unit.adjust(&newExpression, &newExpressionArgument, e_shift, 1);
-        unit.adjust(&inExpression, &inExpression, e_left_recursion, 0, (void *) &pred_in);
-        unit.gen(&program);
+        unit->adjust(&functionExpression, &anonymousFunction, e_shift, 1);
+        unit->adjust(&iterationStatement, &forInStatement, e_shift, -1);
+        unit->adjust(&statement, &expressionStatement, e_shift, 1);
+        unit->adjust(&iterationStatement, &forStatement, e_shift, 0, (void *) &pred_for);
+        unit->adjust(&newExpression, &newExpressionArgument, e_shift, 1);
+        unit->adjust(&inExpression, &inExpression, e_left_recursion, 0, (void *) &pred_in);
+        unit->gen(&program);
 #if DUMP_PDA
         std::ofstream of(DUMP_PDA_FILE);
-        unit.dump(of);
+        unit->dump(of);
 #endif
     }
 
@@ -545,7 +556,7 @@ namespace clib {
         std::ofstream log(REPORT_ERROR_FILE, std::ios::app | std::ios::out);
 #endif
         next();
-        auto &pdas = unit.get_pda();
+        auto &pdas = unit->get_pda();
         auto root = ast->new_node(a_collection);
         root->line = root->column = 0;
         root->data._coll = pdas[0].coll;
@@ -592,7 +603,7 @@ namespace clib {
             for (;;) {
 #if TRACE_PARSING
                 idx++;
-                //fflush(stdout);
+                fflush(stdout);
 #endif
                 auto& current_state = pdas[bk->current_state];
                 if (current->t == END) {
@@ -778,7 +789,7 @@ namespace clib {
 
     void cjsparser::print_bk(std::vector<std::shared_ptr<backtrace_t>>& bks) const
     {
-        const auto& pdas = unit.get_pda();
+        const auto& pdas = unit->get_pda();
         for (size_t i = 0; i < bks.size(); ++i) {
             auto& _bk = bks[i];
             fprintf(stdout,
@@ -975,7 +986,7 @@ namespace clib {
                 bk.state_stack.push_back(bk.current_state);
                 auto new_node = ast->new_node(a_collection);
                 new_node->line = new_node->column = 0;
-                auto &pdas = unit.get_pda();
+                auto &pdas = unit->get_pda();
                 new_node->data._coll = pdas[trans.jump].coll;
 #if DEBUG_AST
                 fprintf(stdout, "[DEBUG] Shift: top=%p, new=%p, CS=%d\n", ast_stack.back(), new_node,
@@ -1049,7 +1060,7 @@ namespace clib {
                 return false;
             if (!token->LA)
                 return true;
-            auto& pdas = unit.get_pda();
+            auto& pdas = unit->get_pda();
             auto& target = pdas[trans.jump];
             auto& t = target.trans;
             auto id = token->type - RULE_START - 1;

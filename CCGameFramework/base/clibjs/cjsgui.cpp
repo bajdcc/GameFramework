@@ -1498,8 +1498,31 @@ namespace clib {
                 str.Format(L"屏幕（%d）键盘输入：%d 0x%x %c", screen_ptr, c, c, isprint(c) ? wchar_t(c) : L'?');
             add_stat(str);
         }
-        if (!input_state)
+        if (!input_state) {
+            if (c & GUI_SPECIAL_MASK) {
+                switch (c & 0xff) {
+                case VK_UP:
+                    view = max(0, view - 1);
+                    break;
+                case VK_DOWN:
+                    view = min(max(line - rows, 0), view + 1);
+                    break;
+                case VK_HOME:
+                    view = 0;
+                    break;
+                case VK_END:
+                    view = max(0, line - rows + 1);
+                    break;
+                case VK_NEXT: // page down
+                    view = min(line - rows + 1, view + rows);
+                    break;
+                case VK_PRIOR: // page up
+                    view = max(0, view - rows);
+                    break;
+                }
+            }
             return;
+        }
         if (global_state.input_s->input_single) {
             if (c > 0 && c < 256 && (std::isprint(c) || c == '\r')) {
                 if (c == '\r')
@@ -1639,7 +1662,7 @@ namespace clib {
             case VK_END:
             {
                 if (!input_state || js_key_pressing(VK_CONTROL)) {
-                    view = max(0, line - rows);
+                    view = max(0, line - rows + 1);
                     return;
                 }
                 else if (js_key_pressing(VK_MENU)) {
@@ -1815,7 +1838,8 @@ namespace clib {
         OpenClipboard(window->GetWindowHandle());
         std::vector<char> outs;
         for (auto i = 0; i <= line; ++i) {
-            for (auto j = 0; j < valid[i]; ++j) {
+            auto end = min(valid[i], cols - 1);
+            for (auto j = 0; j <= end; ++j) {
                 const auto& b = buffer[i * cols + j];
                 if (b == 0) {
                     break;

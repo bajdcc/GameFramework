@@ -17,13 +17,13 @@ UI.get_layout = (function() {
         linear: function() {
             if (!this.orientation)
                 this.orientation = 'vertical';
+            var w = this.map(x => x.weight || 0);
+            var all = w.reduce((a, b) => a + b, 0);
+            if (all === 0)
+                return;
+            all = 1 / all;
+            var sum = 0;
             if (this.orientation == 'horizontal') {
-                var w = this.map(x => x.weight || 0);
-                var all = w.reduce((a, b) => a + b, 0);
-                if (all === 0)
-                    return;
-                all = 1 / all;
-                var sum = 0;
                 for (var i in this) {
                     var o = this[i];
                     o.left = this.left + sum;
@@ -31,11 +31,44 @@ UI.get_layout = (function() {
                     sum += o.width;
                     o.top = this.top;
                     o.height = this.height;
+                    if (o.margin) {
+                        if (o.margin.left && o.margin.left > 0) {
+                            o.left += o.margin.left;
+                            o.width -= o.margin.left;
+                        }
+                        if (o.margin.top && o.margin.top > 0) {
+                            o.top += o.margin.top;
+                            o.height -= o.margin.top;
+                        }
+                        if (o.margin.right && o.margin.right > 0) o.width -= o.margin.right;
+                        if (o.margin.bottom && o.margin.bottom > 0) o.height -= o.margin.bottom;
+                    }
                     if (o.event)
                         o.event.emit('resize', o);
                 }
             } else if (this.orientation == 'vertical') {
-
+                for (var i in this) {
+                    var o = this[i];
+                    o.top = this.top + sum;
+                    o.height = Math.ceil(this.height * w[i] * all);
+                    sum += o.height;
+                    o.left = this.left;
+                    o.width = this.width;
+                    if (o.margin) {
+                        if (o.margin.left) {
+                            o.left += o.margin.left;
+                            o.width -= o.margin.left;
+                        }
+                        if (o.margin.top) {
+                            o.top += o.margin.top;
+                            o.height -= o.margin.top;
+                        }
+                        if (o.margin.right) o.width -= o.margin.right;
+                        if (o.margin.bottom) o.height -= o.margin.bottom;
+                    }
+                    if (o.event)
+                        o.event.emit('resize', o);
+                }
             }
         }
     };

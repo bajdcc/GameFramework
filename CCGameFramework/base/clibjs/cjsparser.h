@@ -55,6 +55,7 @@ namespace clib {
         bool parse(const std::string &str, std::string &, csemantic *s = nullptr);
         js_ast_node *root() const;
         void clear_ast();
+        void dump_pda(std::ostream& os);
 
         using pda_coll_pred_cb = js_pda_coll_pred(*)(const cjslexer *, int idx);
         using terminal_cb = void (*)(const cjslexer *, int idx,
@@ -88,7 +89,7 @@ namespace clib {
         const lexer_unit *current{nullptr};
 
     private:
-        cjsunit unit;
+        static std::unique_ptr<cjsunit> unit;
         std::unique_ptr<cjslexer> lexer;
         csemantic *semantic{nullptr};
         std::unique_ptr<cjsast> ast;

@@ -164,7 +164,7 @@ namespace clib {
                 }
                 else {
                     auto rep = JS_FUN(_replacer);
-                    std::vector<std::tuple<std::string, bool>> matches;
+                    std::vector<std::tuple<std::string, bool, int>> matches;
                     if (!JS_RE(re)->match(origin, matches)) {
                         func->stack.push_back(js.new_string(origin));
                         return 0;
@@ -175,6 +175,7 @@ namespace clib {
                             auto r = 0;
                             std::vector<js_value::weak_ref> args;
                             args.push_back(js.new_string(str));
+                            args.push_back(js.new_number(std::get<2>(s)));
                             auto v = js.fast_api(rep, _this, args, 0, &r);
                             if (r != 0)
                                 return r;
@@ -207,21 +208,95 @@ namespace clib {
                     auto pat = re->to_string(&js, 0, &r);
                     if (r != 0)
                         return r;
-                    auto r = 0;
-                    std::vector<js_value::weak_ref> args;
-                    args.push_back(js.new_string(pat));
-                    auto v = js.fast_api(rep, _this, args, 0, &r);
-                    if (r != 0)
-                        return r;
-                    auto v2 = v->to_string(&js, 0, &r);
-                    if (r != 0)
-                        return r;
-                    func->stack.push_back(js.new_string(jsv_regexp::replace(origin, pat, v2)));
-                    return 0;
+                    auto f = origin.find(pat);
+                    if (f != std::string::npos) {
+                        std::vector<js_value::weak_ref> args;
+                        args.push_back(js.new_string(pat));
+                        args.push_back(js.new_number(f));
+                        auto v = js.fast_api(rep, _this, args, 0, &r);
+                        if (r != 0)
+                            return r;
+                        auto v2 = v->to_string(&js, 0, &r);
+                        if (r != 0)
+                            return r;
+                        func->stack.push_back(js.new_string(jsv_regexp::replace(origin, pat, v2)));
+                        return 0;
+                    }
+                    else {
+                        func->stack.push_back(_this);
+                        return 0;
+                    }
                 }
             }
         };
         permanents._proto_string->add(permanents._proto_string_replace->name, permanents._proto_string_replace);
+        permanents._proto_string_match = _new_function(nullptr, js_value::at_const | js_value::at_readonly);
+        permanents._proto_string_match->add("length", _int_1);
+        permanents._proto_string_match->name = "match";
+        permanents._proto_string_match->builtin = [](auto& func, auto& _this, auto& __args, auto& js, auto attr) {
+            auto f = _this.lock();
+            std::vector<js_value::ref> matches;
+            if (__args.empty()) {
+                matches.push_back(js.new_string(""));
+                auto arr = js.new_array(matches);
+                arr->add("index", js.new_number(0));
+                arr->add("input", _this);
+                func->stack.push_back(arr);
+                return 0;
+            }
+            auto r = 0;
+            auto origin = f->to_string(&js, 0, &r);
+            if (r != 0)
+                return r;
+            auto a = __args.front().lock();
+            if (a->get_type() != r_regex) {
+                auto pat = a->to_string(&js, 0, &r);
+                if (r != 0)
+                    return r;
+                if (pat.empty()) {
+                    matches.push_back(js.new_string(""));
+                    auto arr = js.new_array(matches);
+                    arr->add("index", js.new_number(0));
+                    arr->add("input", _this);
+                    func->stack.push_back(arr);
+                }
+                auto ff = origin.find(pat);
+                if (ff != std::string::npos) {
+                    matches.push_back(a);
+                    auto arr = js.new_array(matches);
+                    arr->add("index", js.new_number(ff));
+                    arr->add("input", _this);
+                    func->stack.push_back(arr);
+                    return 0;
+                }
+                else {
+                    func->stack.push_back(js.new_null());
+                    return 0;
+                }
+            }
+            else {
+                auto re = JS_RE(a);
+                std::vector<std::tuple<std::string, int>> m;
+                if (re->match(origin, m)) {
+                    auto k = std::get<1>(m.front());
+                    for (const auto& j : m) {
+                        matches.push_back(js.new_string(std::get<0>(j)));
+                    }
+                    auto arr = js.new_array(matches);
+                    if (k != -1) {
+                        arr->add("index", js.new_number(k));
+                        arr->add("input", _this);
+                    }
+                    func->stack.push_back(arr);
+                    return 0;
+                }
+                else {
+                    func->stack.push_back(js.new_null());
+                    return 0;
+                }
+            }
+        };
+        permanents._proto_string->add(permanents._proto_string_match->name, permanents._proto_string_match);
 #if DUMP_PRINT_FILE_ENABLE
         permanents._debug_print = _new_function(nullptr, js_value::at_const | js_value::at_readonly);
         permanents._debug_print->add("length", _int_1);
@@ -698,6 +773,13 @@ namespace clib {
             return js.call_api(API_clearInterval, _this, args, 0);
         };
         permanents.global_env->add(permanents.global_clearInterval->name, permanents.global_clearInterval);
+        permanents.global_parseInt = _new_function(nullptr, js_value::at_const | js_value::at_readonly);
+        permanents.global_parseInt->add("length", _int_1);
+        permanents.global_parseInt->name = "parseInt";
+        permanents.global_parseInt->builtin = [](auto& func, auto& _this, auto& args, auto& js, auto attr) {
+            return js.call_api(API_parseInt, _this, args, 0);
+        };
+        permanents.global_env->add(permanents.global_parseInt->name, permanents.global_parseInt);
         // error
         permanents._proto_error = _new_object(js_value::at_const | js_value::at_readonly);
         permanents._proto_error->add("__type__", _new_string("Error", js_value::at_const | js_value::at_refs));
@@ -887,10 +969,12 @@ namespace clib {
             auto arg_n = 1;
             auto time = 0;
             if (args.size() > 1) {
-                auto r = 0;
-                time = (int)args[1].lock()->to_number(this, &r);
-                if (r != 0)
-                    return r;
+                if (args[1].lock()->get_type() != r_undefined) {
+                    auto r = 0;
+                    time = (int)args[1].lock()->to_number(this, &r);
+                    if (r != 0)
+                        return r;
+                }
                 arg_n++;
             }
             if (r != 0)
@@ -1249,6 +1333,14 @@ namespace clib {
                         break;
                     }
                 }
+                else if (var[0] == "time") {
+                    if (var[1] == "timestamp") {
+                        using namespace std::chrono;
+                        auto n = system_clock::now();
+                        push(new_number((double)duration_cast<milliseconds>(n.time_since_epoch()).count()));
+                        break;
+                    }
+                }
             }
             push(new_undefined());
         }
@@ -1349,6 +1441,23 @@ namespace clib {
             return r;
         }
                           break;
+        case API_parseInt: {
+            if (args.empty()) {
+                push(new_number(JS_NAN));
+                break;
+            }
+            auto a = args.front().lock();
+            if (a->get_type() == r_number) { 
+                push(a);
+                break;
+            }
+            auto r = 0;
+            auto n = a->to_number(this, &r);
+            if (r != 0)
+                return r;
+            push(new_number(n));
+        }
+                       break;
         default:
             break;
         }

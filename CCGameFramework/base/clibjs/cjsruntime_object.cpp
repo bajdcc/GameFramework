@@ -1117,7 +1117,7 @@ namespace clib {
         return CStringA(CString(r.c_str())).GetBuffer(0);
     }
 
-    bool jsv_regexp::match(const std::string& origin, std::vector<std::tuple<std::string, bool>>& matches)
+    bool jsv_regexp::match(const std::string& origin, std::vector<std::tuple<std::string, bool, int>>& matches)
     {
         auto o = std::wstring(CString(CStringA(origin.c_str())));
         if (flag & _g) {
@@ -1128,11 +1128,11 @@ namespace clib {
                 auto s = iter->prefix().str();
                 if (!s.empty()) {
                     auto s2 = CStringA(CString(s.c_str()));
-                    matches.push_back({ s2.GetBuffer(0), false });
+                    matches.push_back({ s2.GetBuffer(0), false, 0 });
                 }
                 s = iter->str();
                 auto s3 = CStringA(CString(s.c_str()));
-                matches.push_back({ s3.GetBuffer(0), true });
+                matches.push_back({ s3.GetBuffer(0), true, iter->position() });
                 prev = iter;
                 ++iter;
             }
@@ -1140,7 +1140,7 @@ namespace clib {
                 auto s = prev->suffix().str();
                 auto s2 = CStringA(CString(s.c_str()));
                 if (!s.empty())
-                    matches.push_back({ s2.GetBuffer(0), false });
+                    matches.push_back({ s2.GetBuffer(0), false, 0 });
             }
             return true;
         }
@@ -1150,16 +1150,48 @@ namespace clib {
                 auto s = sm.prefix().str();
                 if (!s.empty()) {
                     auto s2 = CStringA(CString(s.c_str()));
-                    matches.push_back({ s2.GetBuffer(0), false });
+                    matches.push_back({ s2.GetBuffer(0), false, 0 });
                 }
                 s = sm.str();
                 auto s3 = CStringA(CString(s.c_str()));
-                matches.push_back({ s3.GetBuffer(0), true });
+                matches.push_back({ s3.GetBuffer(0), true, sm.position() });
                 s = sm.suffix().str();
                 if (!s.empty()) {
                     auto s2 = CStringA(CString(s.c_str()));
-                    matches.push_back({ s2.GetBuffer(0), false });
+                    matches.push_back({ s2.GetBuffer(0), false, 0 });
                 }
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool jsv_regexp::match(const std::string& origin, std::vector<std::tuple<std::string, int>>& matches)
+    {
+        auto o = std::wstring(CString(CStringA(origin.c_str())));
+        if (flag & _g) {
+            std::wsregex_iterator iter(o.begin(), o.end(), re);
+            std::wsregex_iterator end;
+            std::wsregex_iterator prev;
+            while (iter != end) {
+                auto s = iter->str();
+                auto s3 = CStringA(CString(s.c_str()));
+                matches.push_back({ s3.GetBuffer(0), iter->position() });
+                prev = iter;
+                ++iter;
+            }
+            return true;
+        }
+        else {
+            std::wsmatch sm;
+            if (std::regex_search(o, sm, re)) {
+                for (size_t i = 0; i < sm.size(); ++i) {
+                    auto s = sm[i].str();
+                    auto s3 = CStringA(CString(s.c_str()));
+                    matches.push_back({ s3.GetBuffer(), -1 });
+                }
+                auto s = sm.str();
+                auto s3 = CStringA(CString(s.c_str()));
                 return true;
             }
         }

@@ -886,7 +886,7 @@ namespace clib {
             u.t = END;
             u.id = id;
             units.push_back(u);
-            no_line.push_back(false);
+            no_line.push_back(true);
         }
     }
 

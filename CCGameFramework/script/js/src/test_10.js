@@ -15,12 +15,24 @@
     moving.push(new UI({
         type: 'rect',
         color: 'rgb(0,122,204)',
+        margin: {
+            left: 2,
+            top: 2,
+            right: 2,
+            bottom: 2
+        },
         weight: 1
 
     }));
     moving.push(new UI({
         type: 'rect',
         color: 'rgb(197,197,61)',
+        margin: {
+            left: 2,
+            top: 2,
+            right: 2,
+            bottom: 2
+        },
         weight: 2
     }));
     moving.event.emit('resize', moving);

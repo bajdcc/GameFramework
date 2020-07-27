@@ -11,4 +11,5 @@ sys.exec_file("clib_JSON.js");
 sys.exec_file("clib_buffer.js");
 sys.exec_file("clib_event.js");
 sys.exec_file("clib_ui.js");
+sys.exec_file("clib_promise.js");
 return "library loaded";
