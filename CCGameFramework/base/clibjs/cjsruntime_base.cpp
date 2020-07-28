@@ -297,6 +297,61 @@ namespace clib {
             }
         };
         permanents._proto_string->add(permanents._proto_string_match->name, permanents._proto_string_match);
+        permanents._proto_string_substring = _new_function(nullptr, js_value::at_const | js_value::at_readonly);
+        permanents._proto_string_substring->add("length", _int_1);
+        permanents._proto_string_substring->name = "substring";
+        permanents._proto_string_substring->builtin = [](auto& func, auto& _this, auto& __args, auto& js, auto attr) {
+            auto f = _this.lock();
+            if (f->get_type() != r_string) {
+                func->stack.push_back(js.new_undefined());
+                return 0;
+            }
+            auto s = JS_S(f)->wstr;
+            if (__args.empty()) {
+                func->stack.push_back(_this);
+                return 0;
+            }
+            auto _begin = __args.front().lock();
+            auto r = 0;
+            auto begin0 = _begin->to_number(&js, &r);
+            if (r != 0)
+                return r;
+            if (std::isnan(begin0) || std::isinf(begin0)) {
+                func->stack.push_back(js.new_string(""));
+                return 0;
+            }
+            auto begin = (int)begin0;
+            if (begin0 < 0 || begin0 >= s.length()) {
+                func->stack.push_back(js.new_string(""));
+                return 0;
+            }
+            if (__args.size() >= 2) {
+                auto _end = __args[1].lock();
+                auto r = 0;
+                auto end0 = _end->to_number(&js, &r);
+                if (r != 0)
+                    return r;
+                if (std::isnan(end0) || std::isinf(end0)) {
+                    func->stack.push_back(js.new_string(""));
+                    return 0;
+                }
+                auto end = (int)end0;
+                if (end < 0) {
+                    func->stack.push_back(js.new_string(""));
+                    return 0;
+                }
+                if (end < begin) {
+                    func->stack.push_back(js.new_string(""));
+                    return 0;
+                }
+                func->stack.push_back(js.new_string(CString(s.substr(begin, end - begin).c_str())));
+            }
+            else {
+                func->stack.push_back(js.new_string(CString(s.substr(begin).c_str())));
+            }
+            return 0;
+        };
+        permanents._proto_string->add(permanents._proto_string_substring->name, permanents._proto_string_substring);
 #if DUMP_PRINT_FILE_ENABLE
         permanents._debug_print = _new_function(nullptr, js_value::at_const | js_value::at_readonly);
         permanents._debug_print->add("length", _int_1);

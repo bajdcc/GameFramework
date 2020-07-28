@@ -252,7 +252,7 @@ void JS2DEngine::RenderDefault(CComPtr<ID2D1RenderTarget> rt, CRect bounds)
     const auto global = clib::cjsgui::singleton().get_global();
     logo.Format(_T("[GC] Alive: %d, Cached: %d"), global.total_obj, global.cache_obj);
     rt->DrawText(logo.GetBuffer(0), logo.GetLength(), logoTF->textFormat,
-        D2D1::RectF((float)bounds.right - 290, (float)bounds.top + 25, (float)bounds.right, (float)bounds.top + 50), logoBrush);
+        D2D1::RectF((float)bounds.right - 320, (float)bounds.top + 25, (float)bounds.right, (float)bounds.top + 50), logoBrush);
 
     logo = clib::cjsgui::singleton().get_disp(clib::types::D_STAT);
     if (!logo.IsEmpty()) {

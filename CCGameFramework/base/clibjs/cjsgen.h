@@ -13,7 +13,7 @@
 #include "cjsast.h"
 #include <base\nlohmann_json\json.h>
 
-#define LAMBDA_ID "<lambda>"
+#define LAMBDA_ID "<$>"
 
 namespace clib {
 

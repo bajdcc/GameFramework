@@ -527,11 +527,11 @@ namespace clib {
             if (obj->get_type() == r_string) {
                 auto a = JS_STR(obj);
                 if (a == "top")
-                    label->SetHorizontalAlignment(Alignment::StringAlignmentNear);
+                    label->SetVerticalAlignment(Alignment::StringAlignmentNear);
                 else if (a == "center")
-                    label->SetHorizontalAlignment(Alignment::StringAlignmentCenter);
+                    label->SetVerticalAlignment(Alignment::StringAlignmentCenter);
                 else if (a == "bottom")
-                    label->SetHorizontalAlignment(Alignment::StringAlignmentFar);
+                    label->SetVerticalAlignment(Alignment::StringAlignmentFar);
                 else
                     return;
             }

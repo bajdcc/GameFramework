@@ -654,6 +654,7 @@ namespace clib {
             jsv_object::ref _proto_string;
             jsv_function::ref _proto_string_replace;
             jsv_function::ref _proto_string_match;
+            jsv_function::ref _proto_string_substring;
             jsv_object::ref _proto_root;
             // console
             jsv_object::ref console;

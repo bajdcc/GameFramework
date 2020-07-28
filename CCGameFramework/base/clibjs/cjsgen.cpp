@@ -2196,7 +2196,7 @@ namespace clib {
                 ss << (*i)->name->data._identifier;
             else
                 ss << LAMBDA_ID;
-            ss << ".<locals>.";
+            ss << "@";
         }
         ss << name;
         return ss.str();

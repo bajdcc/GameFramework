@@ -64,7 +64,7 @@
                     type: 'label',
                     color: '#ffffff',
                     content: '',
-                    left: 210,
+                    left: 320,
                     top: 10,
                     width: 400,
                     height: 20,
@@ -92,7 +92,7 @@
                 _data.play_index = 0;
                 _data.play_time = sys.get_config('time/timestamp');
                 setTimeout(function auto_play() {
-                    if (_data.play_index >= _data.L) return;
+                    if (_data.play_index >= _data.L.length) return;
                     var diff = sys.get_config('time/timestamp') - _data.play_time;
                     var now = _data.L[_data.play_index];
                     if (diff >= now.time) {
