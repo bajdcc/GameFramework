@@ -421,7 +421,7 @@ namespace clib {
 
     js_ui_label::js_ui_label()
     {
-        label = SolidLabelElement::Create();
+        label = cjsrender_label::create();
         change_target();
     }
 
@@ -438,38 +438,37 @@ namespace clib {
     void js_ui_label::render()
     {
         auto bounds = CRect(left, top, left + width, top + height);
-        label->SetRenderRect(bounds);
-        label->GetRenderer()->Render(bounds, GLOBAL_STATE.renderTarget);
+        label->get_renderer()->render(bounds, GLOBAL_STATE.renderTarget);
     }
 
     void js_ui_label::clear()
     {
-        label->GetRenderer()->Finalize();
+        label->get_renderer()->destroy2();
     }
 
     void js_ui_label::change_target()
     {
-        label->GetRenderer()->SetRenderTarget(GLOBAL_STATE.canvas.lock());
+        label->get_renderer()->on_changed();
     }
 
     void js_ui_label::add(const std::string& s, const js_value::ref& obj)
     {
         if (s == "color") {
             if (obj->get_type() == r_string)
-                label->SetColor(CColor::Parse(CStringA(JS_STR(obj).c_str())));
+                label->set_color(CColor::Parse(CStringA(JS_STR(obj).c_str())));
             else
                 return;
         }
         else if (s == "content") {
             if (obj->get_type() == r_string)
-                label->SetText(CString(JS_S(obj)->wstr.c_str()));
+                label->set_text(CString(JS_S(obj)->wstr.c_str()));
             else
                 return;
         }
         else if (s == "font") {
             if (obj && !obj->is_primitive()) {
                 auto font = JS_O(obj);
-                auto f = label->GetFont();
+                auto f = label->get_font();
                 auto o = font->get("family", nullptr);
                 if (o && o->get_type() == r_string) {
                     f.fontFamily = CStringA(JS_STR(o).c_str());
@@ -505,18 +504,18 @@ namespace clib {
                 if (o && o->get_type() == r_boolean) {
                     f.verticalAntialias = JS_BOOL(o);
                 }
-                label->SetFont(f);
+                label->set_font(f);
             }
         }
         else if (s == "align") {
             if (obj->get_type() == r_string) {
                 auto a = JS_STR(obj);
                 if (a == "left")
-                    label->SetHorizontalAlignment(Alignment::StringAlignmentNear);
+                    label->set_horizontal_alignment(cjsrender_label::Alignment::StringAlignmentNear);
                 else if (a == "center")
-                    label->SetHorizontalAlignment(Alignment::StringAlignmentCenter);
+                    label->set_horizontal_alignment(cjsrender_label::Alignment::StringAlignmentCenter);
                 else if (a == "right")
-                    label->SetHorizontalAlignment(Alignment::StringAlignmentFar);
+                    label->set_horizontal_alignment(cjsrender_label::Alignment::StringAlignmentFar);
                 else
                     return;
             }
@@ -527,11 +526,11 @@ namespace clib {
             if (obj->get_type() == r_string) {
                 auto a = JS_STR(obj);
                 if (a == "top")
-                    label->SetVerticalAlignment(Alignment::StringAlignmentNear);
+                    label->set_vertical_alignment(cjsrender_label::Alignment::StringAlignmentNear);
                 else if (a == "center")
-                    label->SetVerticalAlignment(Alignment::StringAlignmentCenter);
+                    label->set_vertical_alignment(cjsrender_label::Alignment::StringAlignmentCenter);
                 else if (a == "bottom")
-                    label->SetVerticalAlignment(Alignment::StringAlignmentFar);
+                    label->set_vertical_alignment(cjsrender_label::Alignment::StringAlignmentFar);
                 else
                     return;
             }
@@ -546,22 +545,22 @@ namespace clib {
     void js_ui_label::remove(const std::string& s)
     {
         if (s == "color") {
-            label->SetColor(CColor());
+            label->set_color(CColor());
         }
         else if (s == "content") {
-            label->SetText(CString());
+            label->set_text(CString());
         }
         else if (s == "font") {
             Font f;
             f.fontFamily = _T("Microsoft Yahei");
             f.size = 12;
-            label->SetFont(f);
+            label->set_font(f);
         }
         else if (s == "align") {
-            label->SetHorizontalAlignment(Alignment::StringAlignmentNear);
+            label->set_horizontal_alignment(cjsrender_label::Alignment::StringAlignmentNear);
         }
         else if (s == "valign") {
-            label->SetVerticalAlignment(Alignment::StringAlignmentNear);
+            label->set_vertical_alignment(cjsrender_label::Alignment::StringAlignmentNear);
         }
         else
             return;
@@ -570,14 +569,15 @@ namespace clib {
 
     bool js_ui_label::hit(int x, int y) const
     {
-        return label->GetRenderRect().PtInRect(CPoint(x, y));
+        auto bounds = CRect(left, top, left + width, top + height);
+        return bounds.PtInRect(CPoint(x, y));
     }
 
     // ---------------------- RECT ----------------------
 
     js_ui_rect::js_ui_rect()
     {
-        rect = SolidBackgroundElement::Create();
+        rect = cjsrender_rect::create();
         change_target();
     }
 
@@ -594,31 +594,30 @@ namespace clib {
     void js_ui_rect::render()
     {
         auto bounds = CRect(left, top, left + width, top + height);
-        rect->SetRenderRect(bounds);
-        rect->GetRenderer()->Render(bounds, GLOBAL_STATE.renderTarget);
+        rect->get_renderer()->render(bounds, GLOBAL_STATE.renderTarget);
     }
 
     void js_ui_rect::clear()
     {
-        rect->GetRenderer()->Finalize();
+        rect->get_renderer()->destroy2();
     }
 
     void js_ui_rect::change_target()
     {
-        rect->GetRenderer()->SetRenderTarget(GLOBAL_STATE.canvas.lock());
+        rect->get_renderer()->on_changed();
     }
 
     void js_ui_rect::add(const std::string& s, const js_value::ref& obj)
     {
         if (s == "color") {
             if (obj->get_type() == r_string)
-                rect->SetColor(CColor::Parse(CStringA(JS_STR(obj).c_str())));
+                rect->set_color(CColor::Parse(CStringA(JS_STR(obj).c_str())));
             else
                 return;
         }
         else if (s == "fill") {
             if (obj->get_type() == r_boolean)
-                rect->SetFill(JS_BOOL(obj));
+                rect->set_fill(JS_BOOL(obj));
             else
                 return;
         }
@@ -630,10 +629,10 @@ namespace clib {
     void js_ui_rect::remove(const std::string& s)
     {
         if (s == "color") {
-            rect->SetColor(CColor());
+            rect->set_color(CColor());
         }
         else if (s == "fill") {
-            rect->SetFill(true);
+            rect->set_fill(true);
         }
         else
             return;
@@ -642,14 +641,15 @@ namespace clib {
 
     bool js_ui_rect::hit(int x, int y) const
     {
-        return rect->GetRenderRect().PtInRect(CPoint(x, y));
+        auto bounds = CRect(left, top, left + width, top + height);
+        return bounds.PtInRect(CPoint(x, y));
     }
 
     // ---------------------- ROUND ----------------------
 
     js_ui_round::js_ui_round()
     {
-        round = RoundBorderElement::Create();
+        round = cjsrender_round::create();
         change_target();
     }
 
@@ -666,36 +666,35 @@ namespace clib {
     void js_ui_round::render()
     {
         auto bounds = CRect(left, top, left + width, top + height);
-        round->SetRenderRect(bounds);
-        round->GetRenderer()->Render(bounds, GLOBAL_STATE.renderTarget);
+        round->get_renderer()->render(bounds, GLOBAL_STATE.renderTarget);
     }
 
     void js_ui_round::clear()
     {
-        round->GetRenderer()->Finalize();
+        round->get_renderer()->destroy2();
     }
 
     void js_ui_round::change_target()
     {
-        round->GetRenderer()->SetRenderTarget(GLOBAL_STATE.canvas.lock());
+        round->get_renderer()->on_changed();
     }
 
     void js_ui_round::add(const std::string& s, const js_value::ref& obj)
     {
         if (s == "color") {
             if (obj->get_type() == r_string)
-                round->SetColor(CColor::Parse(CStringA(JS_STR(obj).c_str())));
+                round->set_color(CColor::Parse(CStringA(JS_STR(obj).c_str())));
             else
                 return;
         }
         else if (s == "fill") {
             if (obj->get_type() == r_boolean)
-                round->SetFill(JS_BOOL(obj));
+                round->set_fill(JS_BOOL(obj));
             else
                 return;
         }
         else if (s == "radius") {
-            round->SetRadius(obj2float(obj));
+            round->set_radius(obj2float(obj));
         }
         else
             return;
@@ -705,13 +704,13 @@ namespace clib {
     void js_ui_round::remove(const std::string& s)
     {
         if (s == "color") {
-            round->SetColor(CColor());
+            round->set_color(CColor());
         }
         else if (s == "fill") {
-            round->SetFill(true);
+            round->set_fill(true);
         }
         else if (s == "radius") {
-            round->SetRadius(0);
+            round->set_radius(0);
         }
         else
             return;
@@ -720,6 +719,7 @@ namespace clib {
 
     bool js_ui_round::hit(int x, int y) const
     {
-        return round->GetRenderRect().PtInRect(CPoint(x, y));
+        auto bounds = CRect(left, top, left + width, top + height);
+        return bounds.PtInRect(CPoint(x, y));
     }
 }

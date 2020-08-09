@@ -634,6 +634,9 @@
     <ClInclude Include="base\restclient-cpp\version.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="base\clibjs\cjsrender.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -1123,6 +1126,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="base\clibjs\util\cjsext_puzzle_Klotski_1.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\clibjs\cjsrender.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

@@ -12,9 +12,9 @@
 #include <map>
 #include "cjsparser.h"
 #include "cjsgen.h"
+#include "cjsrender.h"
 #include <restclient-cpp\restclient.h>
 #include <restclient-cpp\connection.h>
-#include <render\Direct2DRender.h>
 
 #define ROOT_DIR "script/js/"
 
@@ -277,7 +277,7 @@ namespace clib {
         void remove(const std::string&) override;
         bool hit(int, int) const override;
     private:
-        std::shared_ptr<SolidLabelElement> label;
+        cjsrender_label::ref label;
     };
 
     class js_ui_rect : public js_ui_base {
@@ -294,7 +294,7 @@ namespace clib {
         void remove(const std::string&) override;
         bool hit(int, int) const override;
     private:
-        std::shared_ptr<SolidBackgroundElement> rect;
+        cjsrender_rect::ref rect;
     };
 
     class js_ui_round: public js_ui_base {
@@ -311,7 +311,7 @@ namespace clib {
         void remove(const std::string&) override;
         bool hit(int, int) const override;
     private:
-        std::shared_ptr<RoundBorderElement> round;
+        cjsrender_round::ref round;
     };
 
     class jsv_ui : public jsv_object {

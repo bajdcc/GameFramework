@@ -235,6 +235,7 @@ xcopy /r /y /e /d "$(ProjectDir)img" "$(TargetDir)img"</Command>
     <ClInclude Include="base\clibjs\cjslexer.h" />
     <ClInclude Include="base\clibjs\cjsmem.h" />
     <ClInclude Include="base\clibjs\cjsparser.h" />
+    <ClInclude Include="base\clibjs\cjsrender.h" />
     <ClInclude Include="base\clibjs\cjsruntime.h" />
     <ClInclude Include="base\clibjs\cjstypes.h" />
     <ClInclude Include="base\clibjs\cjsunit.h" />
@@ -446,6 +447,7 @@ xcopy /r /y /e /d "$(ProjectDir)img" "$(TargetDir)img"</Command>
     <ClCompile Include="base\clibjs\cjslexer.cpp" />
     <ClCompile Include="base\clibjs\cjsmem.cpp" />
     <ClCompile Include="base\clibjs\cjsparser.cpp" />
+    <ClCompile Include="base\clibjs\cjsrender.cpp" />
     <ClCompile Include="base\clibjs\cjsruntime.cpp" />
     <ClCompile Include="base\clibjs\cjsruntime_base.cpp" />
     <ClCompile Include="base\clibjs\cjsruntime_http.cpp" />

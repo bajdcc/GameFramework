@@ -11,6 +11,7 @@
 #include <cmath>
 #include <iterator>
 #include <fstream>
+#include "utils.h"
 #include "cjsruntime.h"
 #include "cjsast.h"
 #include "cjsgui.h"
