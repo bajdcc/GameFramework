@@ -76,7 +76,7 @@ namespace clib {
         virtual std::shared_ptr<jsv_regexp> new_regexp() = 0;
         virtual std::shared_ptr<jsv_object> new_buffer() = 0;
         virtual std::shared_ptr<jsv_object> new_error(int) = 0;
-        virtual int exec(const std::string &, const std::string &, bool error = false, bool stat = true) = 0;
+        virtual int exec(const std::string &, const std::string &, bool error = false, bool stat = true, std::shared_ptr<js_value> arg = nullptr) = 0;
         virtual std::string get_stacktrace() const = 0;
         virtual bool set_builtin(const std::shared_ptr<jsv_object> &obj) = 0;
         virtual bool get_file(std::string &filename, std::string &content) const = 0;
@@ -501,7 +501,7 @@ namespace clib {
         void destroy();
         int run_internal(int cycle, int& cycles);
 
-        int eval(cjs_code_result::ref code, const std::string &_path);
+        int eval(cjs_code_result::ref code, const std::string &_path, js_value::ref arg = nullptr);
         void set_readonly(bool);
 
         jsv_number::ref new_number(double n) override;
@@ -519,7 +519,7 @@ namespace clib {
         jsv_object::ref new_buffer() override;
         jsv_regexp::ref new_regexp() override;
         jsv_object::ref new_error(int) override;
-        int exec(const std::string &, const std::string &, bool error = false, bool stat = true) override;
+        int exec(const std::string &, const std::string &, bool error = false, bool stat = true, js_value::ref arg = nullptr) override;
         std::string get_stacktrace() const override;
         bool set_builtin(const std::shared_ptr<jsv_object> &obj) override;
         bool get_file(std::string &filename, std::string &content) const override;

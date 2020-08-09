@@ -1,8 +1,11 @@
 setTimeout(function() {
+    console.log('Please input JavaScript code: ');
+}, 4000);
+setTimeout(function() {
     sys.event.on('input', function(text) {
         if (text) {
             try {
-                console.log(eval(atob(text)));
+                console.log(eval(text));
             } catch (e) {
                 console.error(e);
             }
@@ -13,10 +16,9 @@ setTimeout(function() {
             }
         });
     });
-    console.log('Please input JavaScript code: ');
     sys.config({
         'input': {
             'enable': true
         }
     });
-}, 4000);
+}, 100);

@@ -126,7 +126,7 @@ namespace clib {
         return ceil(d);
     }
 
-    int cjsruntime::eval(cjs_code_result::ref code, const std::string& _path) {
+    int cjsruntime::eval(cjs_code_result::ref code, const std::string& _path, js_value::ref arg) {
         if (code->code->codes.empty()) {
             return exec(jsv_string::convert(_path), "throw new SyntaxError('Compile error')", true);
         }
@@ -157,14 +157,30 @@ namespace clib {
             current_stack = stack.back();
             current_stack->exec = _path;
             current_stack->envs = permanents.global_env;
-            current_stack->_this = permanents.global_env;
+            if (arg) {
+                auto a = new_object();
+                a->add("arguments", arg);
+                a->add("env", current_stack->envs);
+                current_stack->_this = a;
+            }
+            else {
+                current_stack->_this = permanents.global_env;
+            }
             current_stack->trys.push_back(std::make_shared<sym_try_t>(sym_try_t{}));
         }
         else {
             auto exec_stack = new_stack(code->code);
             exec_stack->exec = _path;
             exec_stack->envs = new_object();
-            exec_stack->_this = stack.front()->envs;
+            if (arg) {
+                auto a = new_object();
+                a->add("arguments", arg);
+                a->add("env", exec_stack->envs);
+                exec_stack->_this = a;
+            }
+            else {
+                exec_stack->_this = stack.front()->envs;
+            }
             stack.push_back(exec_stack);
             current_stack = stack.back();
         }
@@ -446,10 +462,14 @@ namespace clib {
         GLOBAL_STATE.input_s->input_success = false;
         auto input = GLOBAL_STATE.input_s->input_content;
         GLOBAL_STATE.input_s->input_content.clear();
-        std::stringstream ss;
-        auto b = js_base64_encode(input);
-        ss << "sys.event.emit('input', null, '" << b << "');";
-        exec("<input>", ss.str(), true);
+        std::string str(input.begin(), input.end());
+        auto arg = new_string(str);
+        if (is_cached("<input>")) {
+            exec("<input>", "", false, true, arg);
+        }
+        else {
+            exec("<input>", "sys.event.emit('input', null, this.arguments);", false, true, arg);
+        }
     }
 
     void cjsruntime::eval_timeout() {
@@ -1778,7 +1798,7 @@ namespace clib {
         return err;
     }
 
-    int cjsruntime::exec(const std::string& filename, const std::string& input, bool error, bool is_stat) {
+    int cjsruntime::exec(const std::string& filename, const std::string& input, bool error, bool is_stat, js_value::ref arg) {
         std::chrono::system_clock::time_point last;
         if (is_stat) {
             last = std::chrono::system_clock::now();
@@ -1796,7 +1816,7 @@ namespace clib {
                     cjsgui::singleton().add_stat(stat);
                 }
                 caches.insert({ filename, code });
-                return eval(f->second, filename);
+                return eval(f->second, filename, arg);
             }
         }
         auto needCache = false;
@@ -1811,7 +1831,7 @@ namespace clib {
                 needCache = true;
                 if (code) {
                     caches.insert({ filename, code });
-                    return eval(std::move(code), filename);
+                    return eval(std::move(code), filename, arg);
                 }
             }
             code_name = "(" + filename + ":1:1) <entry>";
@@ -1858,7 +1878,7 @@ namespace clib {
             stat.Format(L"编译：%S，耗时：%lldms", filename.c_str(), duration.count());
             cjsgui::singleton().add_stat(stat);
         }
-        return eval(std::move(code), filename);
+        return eval(std::move(code), filename, arg);
     }
 
     std::string cjsruntime::get_stacktrace() const {
