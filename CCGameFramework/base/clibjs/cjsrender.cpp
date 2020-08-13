@@ -7,6 +7,7 @@
 #include "cjsrender.h"
 #include "cjsgui.h"
 #include <render\Direct2D.h>
+#include <libqrencode\qrencode.h>
 
 namespace clib {
 
@@ -15,6 +16,7 @@ namespace clib {
         cjsrender_rect_renderer::register_element();
         cjsrender_round_renderer::register_element();
         cjsrender_label_renderer::register_element();
+        cjsrender_qr_renderer::register_element();
     }
 
     bool cjsrender::register_element_factory(cjsrender_element_factory::ref factory)
@@ -32,6 +34,7 @@ namespace clib {
         if (elementFactories.empty())
             init_renderer();
         auto found = elementFactories.find(elementTypeName);
+        assert(found != elementFactories.end());
         return found == elementFactories.end() ? nullptr : found->second;
     }
 
@@ -40,6 +43,7 @@ namespace clib {
         if (rendererFactories.empty())
             init_renderer();
         auto found = rendererFactories.find(elementTypeName);
+        assert(found != rendererFactories.end());
         return found == rendererFactories.end() ? nullptr : found->second;
     }
 
@@ -535,5 +539,142 @@ namespace clib {
     }
 
 #pragma endregion label
+
+#pragma region qr
+
+    cjsrender_qr::~cjsrender_qr()
+    {
+        renderer->destroy2();
+    }
+
+    std::string cjsrender_qr::get_name()
+    {
+        return "qr";
+    }
+
+    int cjsrender_qr::get_type()
+    {
+        return r_qr;
+    }
+
+    CColor cjsrender_qr::get_color() const
+    {
+        return color;
+    }
+
+    void cjsrender_qr::set_color(CColor value)
+    {
+        if (color != value)
+        {
+            color = value;
+            if (renderer)
+            {
+                renderer->on_changed();
+            }
+        }
+    }
+
+    std::string cjsrender_qr::get_text() const
+    {
+        return text;
+    }
+
+    void cjsrender_qr::set_text(const std::string& value)
+    {
+        if (text != value)
+        {
+            text = value;
+            if (renderer)
+            {
+                renderer->destroy2();
+                if (!text.empty())
+                    renderer->on_changed();
+            }
+        }
+    }
+
+    CColor cjsrender_qr::get_background() const
+    {
+        return background;
+    }
+
+    void cjsrender_qr::set_background(CColor value)
+    {
+        if (background != value)
+        {
+            background = value;
+            if (renderer)
+            {
+                renderer->on_changed();
+            }
+        }
+    }
+
+    void cjsrender_qr_renderer::render(CRect bounds, CComPtr<ID2D1RenderTarget> r)
+    {
+        auto e = element.lock();
+        if (!bitmap && !e->get_text().empty()) {
+            init2();
+        }
+        if (bitmap) {
+            r->DrawBitmap(
+                bitmap,
+                D2D1::RectF((FLOAT)bounds.left, (FLOAT)bounds.top, (FLOAT)bounds.right, (FLOAT)bounds.bottom),
+                1.0f,
+                D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR
+            );
+        }
+    }
+
+    void cjsrender_qr_renderer::init2()
+    {
+        if (!bitmap && GLOBAL_STATE.canvas.lock()) {
+            auto e = element.lock();
+            if (e->get_text().empty())
+                return;
+            auto qrcode = QRcode_encodeString(
+                e->get_text().c_str(),
+                0,
+                QR_ECLEVEL_H,
+                QR_MODE_8,
+                1
+            );
+            auto rt = GLOBAL_STATE.canvas.lock();
+            auto WICBitmap = rt->CreateBitmap(qrcode->width, qrcode->width);
+            bitmap = rt->GetBitmapFromWIC(WICBitmap);
+            WICRect rect;
+            rect.X = 0;
+            rect.Y = 0;
+            rect.Width = bitmap->GetPixelSize().width;
+            rect.Height = bitmap->GetPixelSize().height;
+            std::vector<BYTE> buffer(rect.Width * rect.Height * 4);
+            auto count = rect.Width * rect.Height;
+            DWORD* read = (DWORD*)buffer.data();
+            auto color = e->get_color();
+            auto background = e->get_background();
+            for (auto i = 0; i < count; i++)
+            {
+                if ((qrcode->data[i] & 1) == 0)
+                {
+                    *reinterpret_cast<DWORD*>(read) = background.value;
+                }
+                else
+                {
+                    *reinterpret_cast<DWORD*>(read) = color.value;
+                }
+                read++;
+            }
+            QRcode_free(qrcode);
+            D2D1_RECT_U d2dRect = D2D1::RectU(0, 0, rect.Width, rect.Height);
+            bitmap->CopyFromMemory(&d2dRect, buffer.data(), rect.Width * 4);
+        }
+    }
+
+    void cjsrender_qr_renderer::destroy2()
+    {
+        bitmap = nullptr;
+    }
+
+#pragma endregion qr
 }
 

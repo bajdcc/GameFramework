@@ -25,7 +25,7 @@ cint CColor::Compare(CColor color) const
 CColor CColor::Parse(const CStringA& value)
 {
     if (value.Left(4).CompareNoCase("rgba") == 0) {
-        static std::regex re(R"(rgba\((\d{1,3}),(\d{1,3}),(\d{1,3},(\d{1,3})\))", std::regex::ECMAScript | std::regex::icase);
+        static std::regex re(R"(rgba\((\d{1,3}),(\d{1,3}),(\d{1,3}),(\d{1,3})\))", std::regex::ECMAScript | std::regex::icase);
         std::smatch m;
         auto s = std::string(value.GetString());
         CColor c;

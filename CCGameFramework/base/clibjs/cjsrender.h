@@ -28,6 +28,7 @@ namespace clib {
         r_rect,
         r_round,
         r_label,
+        r_qr,
     };
 
     class cjsrender_element_base : public std::enable_shared_from_this<cjsrender_element_base>
@@ -322,6 +323,45 @@ namespace clib {
         cint oldMaxWidth{ -1 };
     };
 #pragma endregion label
+
+#pragma region qr
+    class cjsrender_qr : public cjsrender_element<cjsrender_qr>
+    {
+    public:
+        using ref = std::shared_ptr<cjsrender_qr>;
+        using weak_ref = std::weak_ptr<cjsrender_qr>;
+
+        cjsrender_qr() = default;
+        ~cjsrender_qr();
+
+        static std::string get_name();
+
+        int get_type()override;
+
+        CColor get_color() const;
+        void set_color(CColor value);
+        std::string get_text() const;
+        void set_text(const std::string& value);
+        CColor get_background() const;
+        void set_background(CColor value);
+
+    protected:
+        CColor color;
+        CColor background{ 255,255,255 };
+        bool fill{ true };
+        std::string text;
+    };
+
+    class cjsrender_qr_renderer : public cjsrender_renderer<cjsrender_qr, cjsrender_qr_renderer, Direct2DRenderTarget>
+    {
+    public:
+        void render(CRect bounds, CComPtr<ID2D1RenderTarget>)override;
+        void init2()override;
+        void destroy2()override;
+    private:
+        CComPtr<ID2D1Bitmap> bitmap;
+    };
+#pragma endregion qr
 }
 
 #endif

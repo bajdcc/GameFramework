@@ -45,4 +45,15 @@
             setTimeout(m, 200);
         }
     }, 200);
+    var qr = new UI({
+        type: 'qr',
+        color: 'rgb(0,122,204)',
+        background: 'rgba(0,0,0,0)',
+        left: 120,
+        top: 100,
+        width: 100,
+        height: 100,
+        text: "https://github.com/bajdcc"
+    });
+    UI.root.push(qr);
 })();

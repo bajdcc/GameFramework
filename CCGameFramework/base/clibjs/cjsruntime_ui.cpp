@@ -90,6 +90,14 @@ namespace clib {
                     add2("radius", obj, n);
                     break;
                 }
+                if (type == "qr") {
+                    element = std::make_shared<js_ui_qr>();
+                    set_location(element, JS_O(shared_from_this()), obj, n);
+                    add2("color", obj, n);
+                    add2("text", obj, n);
+                    add2("background", obj, n);
+                    break;
+                }
                 if (type == "root") {
                     break;
                 }
@@ -718,6 +726,87 @@ namespace clib {
     }
 
     bool js_ui_round::hit(int x, int y) const
+    {
+        auto bounds = CRect(left, top, left + width, top + height);
+        return bounds.PtInRect(CPoint(x, y));
+    }
+
+    // ---------------------- QR ----------------------
+
+    js_ui_qr::js_ui_qr()
+    {
+        qr = cjsrender_qr::create();
+        change_target();
+    }
+
+    int js_ui_qr::get_type()
+    {
+        return js_ui_base::qr;
+    }
+
+    const char* js_ui_qr::get_type_str() const
+    {
+        return "qr";
+    }
+
+    void js_ui_qr::render()
+    {
+        auto bounds = CRect(left, top, left + width, top + height);
+        qr->get_renderer()->render(bounds, GLOBAL_STATE.renderTarget);
+    }
+
+    void js_ui_qr::clear()
+    {
+        qr->get_renderer()->destroy2();
+    }
+
+    void js_ui_qr::change_target()
+    {
+        qr->get_renderer()->on_changed();
+    }
+
+    void js_ui_qr::add(const std::string& s, const js_value::ref& obj)
+    {
+        if (s == "color") {
+            if (obj->get_type() == r_string)
+                qr->set_color(CColor::Parse(CStringA(JS_STR(obj).c_str())));
+            else
+                return;
+        }
+        else if (s == "text") {
+            if (obj->get_type() == r_string)
+                qr->set_text(JS_STR(obj));
+            else
+                return;
+        }
+        else if (s == "background") {
+            if (obj->get_type() == r_string)
+                qr->set_background(CColor::Parse(CStringA(JS_STR(obj).c_str())));
+            else
+                return;
+        }
+        else
+            return;
+        cjsgui::singleton().trigger_render();
+    }
+
+    void js_ui_qr::remove(const std::string& s)
+    {
+        if (s == "color") {
+            qr->set_color(CColor());
+        }
+        else if (s == "text") {
+            qr->set_text("");
+        }
+        else if (s == "background") {
+            qr->set_background(CColor(255, 255, 255));
+        }
+        else
+            return;
+        cjsgui::singleton().trigger_render();
+    }
+
+    bool js_ui_qr::hit(int x, int y) const
     {
         auto bounds = CRect(left, top, left + width, top + height);
         return bounds.PtInRect(CPoint(x, y));
