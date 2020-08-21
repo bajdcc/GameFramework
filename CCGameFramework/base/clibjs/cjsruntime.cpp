@@ -2028,7 +2028,7 @@ namespace clib {
         return caches.find(s) != caches.end();
     }
 
-    backtrace_direction cjsruntime::check(js_pda_edge_t edge, js_ast_node* node) {
+    js_backtrace_direction cjsruntime::check(js_pda_edge_t edge, js_ast_node* node) {
         return b_next;
     }
 
@@ -2224,8 +2224,8 @@ namespace clib {
                 ui->clear();
                 global_ui.elements.erase(ui);
             }
-;        }
-            break;
+            ;        }
+                     break;
         case r_function:
             reuse.reuse_functions.push_back(
                 std::dynamic_pointer_cast<jsv_function>(v)->clear2());
@@ -2846,7 +2846,7 @@ namespace clib {
             auto n = std::dynamic_pointer_cast<jsv_regexp>(value);
             os << "regex: " << n->str_origin << std::endl;
         }
-                   break;
+                    break;
         case r_undefined: {
             os << "undefined" << std::endl;
         }

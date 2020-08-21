@@ -29,7 +29,7 @@ namespace clib {
 
     std::unique_ptr<cjsunit> cjsparser::unit;
 
-    bool cjsparser::parse(const std::string &str, std::string &error_string, csemantic *s) {
+    bool cjsparser::parse(const std::string& str, std::string& error_string, csemantic* s) {
         semantic = s;
         lexer = std::make_unique<cjslexer>();
         lexer->input(str, error_string);
@@ -54,7 +54,7 @@ namespace clib {
         return r;
     }
 
-    js_ast_node *cjsparser::root() const {
+    js_ast_node* cjsparser::root() const {
         return ast->get_root();
     }
 
@@ -81,230 +81,230 @@ namespace clib {
 #define DEF_LEXER_RULE(name) DEF_LEXER(name)
 #define DEF_LEXER_RULE_LA(name) auto &_##name = unit->token(name, true);
         DEF_LEXER(NUMBER)
-        DEF_LEXER(ID)
-        DEF_LEXER(REGEX)
-        DEF_LEXER(STRING)
-        // ---
-        DEF_LEXER_RULE_LA(RULE_NO_LINE)
-        DEF_LEXER_RULE(RULE_LINE)
-        DEF_LEXER_RULE(RULE_RBRACE)
-        DEF_LEXER_RULE(RULE_EOF)
-        // ---  LEXER
-        DEF_LEXER(K_NEW)
-        DEF_LEXER(K_VAR)
-        DEF_LEXER(K_LET)
-        DEF_LEXER(K_CONST)
-        DEF_LEXER(K_FUNCTION)
-        DEF_LEXER(K_IF)
-        DEF_LEXER(K_ELSE)
-        DEF_LEXER(K_FOR)
-        DEF_LEXER(K_WHILE)
-        DEF_LEXER(K_IN)
-        DEF_LEXER(K_DO)
-        DEF_LEXER(K_BREAK)
-        DEF_LEXER(K_CONTINUE)
-        DEF_LEXER(K_RETURN)
-        DEF_LEXER(K_SWITCH)
-        DEF_LEXER(K_DEFAULT)
-        DEF_LEXER(K_CASE)
-        DEF_LEXER(K_NULL)
-        DEF_LEXER(K_UNDEFINED)
-        DEF_LEXER(K_TRUE)
-        DEF_LEXER(K_FALSE)
-        DEF_LEXER(K_INSTANCEOF)
-        DEF_LEXER(K_TYPEOF)
-        DEF_LEXER(K_VOID)
-        DEF_LEXER(K_DELETE)
-        DEF_LEXER(K_CLASS)
-        DEF_LEXER(K_THIS)
-        DEF_LEXER(K_SUPER)
-        DEF_LEXER(K_WITH)
-        DEF_LEXER(K_TRY)
-        DEF_LEXER(K_THROW)
-        DEF_LEXER(K_CATCH)
-        DEF_LEXER(K_FINALLY)
-        DEF_LEXER(K_DEBUGGER)
-        // ---
-        DEF_LEXER(T_ADD)
-        DEF_LEXER(T_SUB)
-        DEF_LEXER(T_MUL)
-        DEF_LEXER(T_DIV)
-        DEF_LEXER(T_MOD)
-        DEF_LEXER(T_POWER)
-        DEF_LEXER(T_INC)
-        DEF_LEXER(T_DEC)
-        DEF_LEXER(T_ASSIGN)
-        DEF_LEXER(T_ASSIGN_ADD)
-        DEF_LEXER(T_ASSIGN_SUB)
-        DEF_LEXER(T_ASSIGN_MUL)
-        DEF_LEXER(T_ASSIGN_DIV)
-        DEF_LEXER(T_ASSIGN_MOD)
-        DEF_LEXER(T_ASSIGN_LSHIFT)
-        DEF_LEXER(T_ASSIGN_RSHIFT)
-        DEF_LEXER(T_ASSIGN_URSHIFT)
-        DEF_LEXER(T_ASSIGN_AND)
-        DEF_LEXER(T_ASSIGN_OR)
-        DEF_LEXER(T_ASSIGN_XOR)
-        DEF_LEXER(T_ASSIGN_POWER)
-        DEF_LEXER(T_LESS)
-        DEF_LEXER(T_LESS_EQUAL)
-        DEF_LEXER(T_GREATER)
-        DEF_LEXER(T_GREATER_EQUAL)
-        DEF_LEXER(T_EQUAL)
-        DEF_LEXER(T_FEQUAL)
-        DEF_LEXER(T_NOT_EQUAL)
-        DEF_LEXER(T_FNOT_EQUAL)
-        DEF_LEXER(T_LOG_NOT)
-        DEF_LEXER(T_LOG_AND)
-        DEF_LEXER(T_LOG_OR)
-        DEF_LEXER(T_BIT_NOT)
-        DEF_LEXER(T_BIT_AND)
-        DEF_LEXER(T_BIT_OR)
-        DEF_LEXER(T_BIT_XOR)
-        DEF_LEXER(T_DOT)
-        DEF_LEXER(T_COMMA)
-        DEF_LEXER(T_SEMI)
-        DEF_LEXER(T_COLON)
-        DEF_LEXER(T_QUERY)
-        DEF_LEXER(T_LSHIFT)
-        DEF_LEXER(T_RSHIFT)
-        DEF_LEXER(T_URSHIFT)
-        DEF_LEXER(T_LPARAN)
-        DEF_LEXER(T_RPARAN)
-        DEF_LEXER(T_LSQUARE)
-        DEF_LEXER(T_RSQUARE)
-        DEF_LEXER(T_LBRACE)
-        DEF_LEXER(T_RBRACE)
-        DEF_LEXER(T_COALESCE)
-        DEF_LEXER(T_SHARP)
-        DEF_LEXER(T_ELLIPSIS)
-        DEF_LEXER(T_ARROW)
+            DEF_LEXER(ID)
+            DEF_LEXER(REGEX)
+            DEF_LEXER(STRING)
+            // ---
+            DEF_LEXER_RULE_LA(RULE_NO_LINE)
+            DEF_LEXER_RULE(RULE_LINE)
+            DEF_LEXER_RULE(RULE_RBRACE)
+            DEF_LEXER_RULE(RULE_EOF)
+            // ---  LEXER
+            DEF_LEXER(K_NEW)
+            DEF_LEXER(K_VAR)
+            DEF_LEXER(K_LET)
+            DEF_LEXER(K_CONST)
+            DEF_LEXER(K_FUNCTION)
+            DEF_LEXER(K_IF)
+            DEF_LEXER(K_ELSE)
+            DEF_LEXER(K_FOR)
+            DEF_LEXER(K_WHILE)
+            DEF_LEXER(K_IN)
+            DEF_LEXER(K_DO)
+            DEF_LEXER(K_BREAK)
+            DEF_LEXER(K_CONTINUE)
+            DEF_LEXER(K_RETURN)
+            DEF_LEXER(K_SWITCH)
+            DEF_LEXER(K_DEFAULT)
+            DEF_LEXER(K_CASE)
+            DEF_LEXER(K_NULL)
+            DEF_LEXER(K_UNDEFINED)
+            DEF_LEXER(K_TRUE)
+            DEF_LEXER(K_FALSE)
+            DEF_LEXER(K_INSTANCEOF)
+            DEF_LEXER(K_TYPEOF)
+            DEF_LEXER(K_VOID)
+            DEF_LEXER(K_DELETE)
+            DEF_LEXER(K_CLASS)
+            DEF_LEXER(K_THIS)
+            DEF_LEXER(K_SUPER)
+            DEF_LEXER(K_WITH)
+            DEF_LEXER(K_TRY)
+            DEF_LEXER(K_THROW)
+            DEF_LEXER(K_CATCH)
+            DEF_LEXER(K_FINALLY)
+            DEF_LEXER(K_DEBUGGER)
+            // ---
+            DEF_LEXER(T_ADD)
+            DEF_LEXER(T_SUB)
+            DEF_LEXER(T_MUL)
+            DEF_LEXER(T_DIV)
+            DEF_LEXER(T_MOD)
+            DEF_LEXER(T_POWER)
+            DEF_LEXER(T_INC)
+            DEF_LEXER(T_DEC)
+            DEF_LEXER(T_ASSIGN)
+            DEF_LEXER(T_ASSIGN_ADD)
+            DEF_LEXER(T_ASSIGN_SUB)
+            DEF_LEXER(T_ASSIGN_MUL)
+            DEF_LEXER(T_ASSIGN_DIV)
+            DEF_LEXER(T_ASSIGN_MOD)
+            DEF_LEXER(T_ASSIGN_LSHIFT)
+            DEF_LEXER(T_ASSIGN_RSHIFT)
+            DEF_LEXER(T_ASSIGN_URSHIFT)
+            DEF_LEXER(T_ASSIGN_AND)
+            DEF_LEXER(T_ASSIGN_OR)
+            DEF_LEXER(T_ASSIGN_XOR)
+            DEF_LEXER(T_ASSIGN_POWER)
+            DEF_LEXER(T_LESS)
+            DEF_LEXER(T_LESS_EQUAL)
+            DEF_LEXER(T_GREATER)
+            DEF_LEXER(T_GREATER_EQUAL)
+            DEF_LEXER(T_EQUAL)
+            DEF_LEXER(T_FEQUAL)
+            DEF_LEXER(T_NOT_EQUAL)
+            DEF_LEXER(T_FNOT_EQUAL)
+            DEF_LEXER(T_LOG_NOT)
+            DEF_LEXER(T_LOG_AND)
+            DEF_LEXER(T_LOG_OR)
+            DEF_LEXER(T_BIT_NOT)
+            DEF_LEXER(T_BIT_AND)
+            DEF_LEXER(T_BIT_OR)
+            DEF_LEXER(T_BIT_XOR)
+            DEF_LEXER(T_DOT)
+            DEF_LEXER(T_COMMA)
+            DEF_LEXER(T_SEMI)
+            DEF_LEXER(T_COLON)
+            DEF_LEXER(T_QUERY)
+            DEF_LEXER(T_LSHIFT)
+            DEF_LEXER(T_RSHIFT)
+            DEF_LEXER(T_URSHIFT)
+            DEF_LEXER(T_LPARAN)
+            DEF_LEXER(T_RPARAN)
+            DEF_LEXER(T_LSQUARE)
+            DEF_LEXER(T_RSQUARE)
+            DEF_LEXER(T_LBRACE)
+            DEF_LEXER(T_RBRACE)
+            DEF_LEXER(T_COALESCE)
+            DEF_LEXER(T_SHARP)
+            DEF_LEXER(T_ELLIPSIS)
+            DEF_LEXER(T_ARROW)
 #undef DEF_LEXER
 #define DEF_RULE(name) auto &name = unit->rule(#name, c_##name);
 #define DEF_RULE_ATTR(name, attr) auto &name = unit->rule(#name, c_##name, attr);
 #define DEF_RULE_NOT_GREED(name) DEF_RULE_ATTR(name, r_not_greed)
 #define DEF_RULE_EXP(name) DEF_RULE_ATTR(name, r_exp)
-        DEF_RULE(program)
-        DEF_RULE(sourceElement)
-        DEF_RULE(statement)
-        DEF_RULE(block)
-        DEF_RULE(statementList)
-        DEF_RULE(variableStatement)
-        DEF_RULE(variableDeclarationList)
-        DEF_RULE(variableDeclaration)
-        DEF_RULE(emptyStatement)
-        DEF_RULE(expressionStatement)
-        DEF_RULE(ifStatement)
-        DEF_RULE(iterationStatement)
-        DEF_RULE(doStatement)
-        DEF_RULE(whileStatement)
-        DEF_RULE(forStatement)
-        DEF_RULE(forInStatement)
-        DEF_RULE(continueStatement)
-        DEF_RULE(breakStatement)
-        DEF_RULE(returnStatement)
-        DEF_RULE(withStatement)
-        DEF_RULE(switchStatement)
-        DEF_RULE(functionStatement)
-        DEF_RULE(caseBlock)
-        DEF_RULE(caseClauses)
-        DEF_RULE(caseClause)
-        DEF_RULE(defaultClause)
-        DEF_RULE(labelledStatement)
-        DEF_RULE(throwStatement)
-        DEF_RULE(tryStatement)
-        DEF_RULE(catchProduction)
-        DEF_RULE(finallyProduction)
-        DEF_RULE(debuggerStatement)
-        DEF_RULE(functionDeclaration)
-        DEF_RULE(classDeclaration)
-        DEF_RULE(classTail)
-        DEF_RULE(classElement)
-        DEF_RULE(classElements)
-        DEF_RULE(methodDefinition)
-        DEF_RULE(formalParameterList)
-        DEF_RULE(formalParameterArg)
-        DEF_RULE(lastFormalParameterArg)
-        DEF_RULE(functionBody)
-        DEF_RULE(sourceElements)
-        DEF_RULE(arrayLiteral)
-        DEF_RULE(elementList)
-        DEF_RULE(arrayElement)
-        DEF_RULE(commaList)
-        DEF_RULE(objectLiteral)
-        DEF_RULE(propertyAssignment)
-        DEF_RULE(propertyAssignments)
-        DEF_RULE(propertyName)
-        DEF_RULE(arguments)
-        DEF_RULE(argument)
-        DEF_RULE(expressionSequence)
-        DEF_RULE_EXP(singleExpression)
-        DEF_RULE(assignable)
-        DEF_RULE(anonymousFunction)
-        DEF_RULE(arrowFunctionParameters)
-        DEF_RULE(arrowFunctionBody)
-        DEF_RULE(literal)
-        DEF_RULE(numericLiteral)
-        DEF_RULE(identifierName)
-        DEF_RULE(reservedWord)
-        DEF_RULE(keyword)
-        DEF_RULE(eos)
-        DEF_RULE(propertyExpressionAssignment)
-        DEF_RULE(computedPropertyExpressionAssignment)
-        DEF_RULE(propertyShorthand)
-        DEF_RULE(functionDecl)
-        DEF_RULE(anonymousFunctionDecl)
-        DEF_RULE(arrowFunction)
-        DEF_RULE_EXP(functionExpression)
-        DEF_RULE_EXP(classExpression)
-        DEF_RULE(memberIndexExpression)
-        DEF_RULE(memberDotExpression)
-        DEF_RULE(argumentsExpression)
-        DEF_RULE(newExpression)
-        DEF_RULE_EXP(newExpressionArgument)
-        DEF_RULE_EXP(primaryExpression)
-        DEF_RULE(prefixExpression)
-        DEF_RULE(prefixExpressionList)
-        DEF_RULE(postIncrementExpression)
-        DEF_RULE(postDecreaseExpression)
-        DEF_RULE(postfixExpression)
-        DEF_RULE(deleteExpression)
-        DEF_RULE(voidExpression)
-        DEF_RULE(typeofExpression)
-        DEF_RULE(preIncrementExpression)
-        DEF_RULE(preDecreaseExpression)
-        DEF_RULE(unaryPlusExpression)
-        DEF_RULE(unaryMinusExpression)
-        DEF_RULE(bitNotExpression)
-        DEF_RULE(notExpression)
-        DEF_RULE_EXP(powerExpression)
-        DEF_RULE_EXP(multiplicativeExpression)
-        DEF_RULE_EXP(additiveExpression)
-        DEF_RULE_EXP(coalesceExpression)
-        DEF_RULE_EXP(bitShiftExpression)
-        DEF_RULE_EXP(relationalExpression)
-        DEF_RULE_EXP(instanceofExpression)
-        DEF_RULE_EXP(inExpression)
-        DEF_RULE_EXP(equalityExpression)
-        DEF_RULE_EXP(bitAndExpression)
-        DEF_RULE_EXP(bitXOrExpression)
-        DEF_RULE_EXP(bitOrExpression)
-        DEF_RULE_EXP(logicalAndExpression)
-        DEF_RULE_EXP(logicalOrExpression)
-        DEF_RULE_EXP(ternaryExpression)
-        DEF_RULE_EXP(assignmentExpression)
-        DEF_RULE_EXP(assignmentOperatorExpression)
-        DEF_RULE_EXP(thisExpression)
-        DEF_RULE_EXP(identifierExpression)
-        DEF_RULE_EXP(superExpression)
-        DEF_RULE_EXP(literalExpression)
-        DEF_RULE_EXP(arrayLiteralExpression)
-        DEF_RULE_EXP(objectLiteralExpression)
-        DEF_RULE_EXP(parenthesizedExpression)
+            DEF_RULE(program)
+            DEF_RULE(sourceElement)
+            DEF_RULE(statement)
+            DEF_RULE(block)
+            DEF_RULE(statementList)
+            DEF_RULE(variableStatement)
+            DEF_RULE(variableDeclarationList)
+            DEF_RULE(variableDeclaration)
+            DEF_RULE(emptyStatement)
+            DEF_RULE(expressionStatement)
+            DEF_RULE(ifStatement)
+            DEF_RULE(iterationStatement)
+            DEF_RULE(doStatement)
+            DEF_RULE(whileStatement)
+            DEF_RULE(forStatement)
+            DEF_RULE(forInStatement)
+            DEF_RULE(continueStatement)
+            DEF_RULE(breakStatement)
+            DEF_RULE(returnStatement)
+            DEF_RULE(withStatement)
+            DEF_RULE(switchStatement)
+            DEF_RULE(functionStatement)
+            DEF_RULE(caseBlock)
+            DEF_RULE(caseClauses)
+            DEF_RULE(caseClause)
+            DEF_RULE(defaultClause)
+            DEF_RULE(labelledStatement)
+            DEF_RULE(throwStatement)
+            DEF_RULE(tryStatement)
+            DEF_RULE(catchProduction)
+            DEF_RULE(finallyProduction)
+            DEF_RULE(debuggerStatement)
+            DEF_RULE(functionDeclaration)
+            DEF_RULE(classDeclaration)
+            DEF_RULE(classTail)
+            DEF_RULE(classElement)
+            DEF_RULE(classElements)
+            DEF_RULE(methodDefinition)
+            DEF_RULE(formalParameterList)
+            DEF_RULE(formalParameterArg)
+            DEF_RULE(lastFormalParameterArg)
+            DEF_RULE(functionBody)
+            DEF_RULE(sourceElements)
+            DEF_RULE(arrayLiteral)
+            DEF_RULE(elementList)
+            DEF_RULE(arrayElement)
+            DEF_RULE(commaList)
+            DEF_RULE(objectLiteral)
+            DEF_RULE(propertyAssignment)
+            DEF_RULE(propertyAssignments)
+            DEF_RULE(propertyName)
+            DEF_RULE(arguments)
+            DEF_RULE(argument)
+            DEF_RULE(expressionSequence)
+            DEF_RULE_EXP(singleExpression)
+            DEF_RULE(assignable)
+            DEF_RULE(anonymousFunction)
+            DEF_RULE(arrowFunctionParameters)
+            DEF_RULE(arrowFunctionBody)
+            DEF_RULE(literal)
+            DEF_RULE(numericLiteral)
+            DEF_RULE(identifierName)
+            DEF_RULE(reservedWord)
+            DEF_RULE(keyword)
+            DEF_RULE(eos)
+            DEF_RULE(propertyExpressionAssignment)
+            DEF_RULE(computedPropertyExpressionAssignment)
+            DEF_RULE(propertyShorthand)
+            DEF_RULE(functionDecl)
+            DEF_RULE(anonymousFunctionDecl)
+            DEF_RULE(arrowFunction)
+            DEF_RULE_EXP(functionExpression)
+            DEF_RULE_EXP(classExpression)
+            DEF_RULE(memberIndexExpression)
+            DEF_RULE(memberDotExpression)
+            DEF_RULE(argumentsExpression)
+            DEF_RULE(newExpression)
+            DEF_RULE_EXP(newExpressionArgument)
+            DEF_RULE_EXP(primaryExpression)
+            DEF_RULE(prefixExpression)
+            DEF_RULE(prefixExpressionList)
+            DEF_RULE(postIncrementExpression)
+            DEF_RULE(postDecreaseExpression)
+            DEF_RULE(postfixExpression)
+            DEF_RULE(deleteExpression)
+            DEF_RULE(voidExpression)
+            DEF_RULE(typeofExpression)
+            DEF_RULE(preIncrementExpression)
+            DEF_RULE(preDecreaseExpression)
+            DEF_RULE(unaryPlusExpression)
+            DEF_RULE(unaryMinusExpression)
+            DEF_RULE(bitNotExpression)
+            DEF_RULE(notExpression)
+            DEF_RULE_EXP(powerExpression)
+            DEF_RULE_EXP(multiplicativeExpression)
+            DEF_RULE_EXP(additiveExpression)
+            DEF_RULE_EXP(coalesceExpression)
+            DEF_RULE_EXP(bitShiftExpression)
+            DEF_RULE_EXP(relationalExpression)
+            DEF_RULE_EXP(instanceofExpression)
+            DEF_RULE_EXP(inExpression)
+            DEF_RULE_EXP(equalityExpression)
+            DEF_RULE_EXP(bitAndExpression)
+            DEF_RULE_EXP(bitXOrExpression)
+            DEF_RULE_EXP(bitOrExpression)
+            DEF_RULE_EXP(logicalAndExpression)
+            DEF_RULE_EXP(logicalOrExpression)
+            DEF_RULE_EXP(ternaryExpression)
+            DEF_RULE_EXP(assignmentExpression)
+            DEF_RULE_EXP(assignmentOperatorExpression)
+            DEF_RULE_EXP(thisExpression)
+            DEF_RULE_EXP(identifierExpression)
+            DEF_RULE_EXP(superExpression)
+            DEF_RULE_EXP(literalExpression)
+            DEF_RULE_EXP(arrayLiteralExpression)
+            DEF_RULE_EXP(objectLiteralExpression)
+            DEF_RULE_EXP(parenthesizedExpression)
 #undef DEF_RULE
 #undef DEF_RULE_NOT_GREED
 #undef DEF_RULE_EXP
-        program = sourceElements;
+            program = sourceElements;
         variableStatement = (_K_VAR | _K_LET | _K_CONST) + variableDeclarationList + eos;
         variableDeclarationList = *(variableDeclarationList + ~_T_COMMA) + variableDeclaration;
         variableDeclaration = assignable + *(~_T_ASSIGN + singleExpression);
@@ -315,9 +315,9 @@ namespace clib {
         doStatement = _K_DO + statement + ~_K_WHILE + ~_T_LPARAN + expressionSequence + ~_T_RPARAN + eos;
         whileStatement = _K_WHILE + ~_T_LPARAN + expressionSequence + ~_T_RPARAN + statement;
         forStatement = _K_FOR + ~_T_LPARAN + *(expressionSequence | ((_K_VAR | _K_LET | _K_CONST) + variableDeclarationList)) +
-                       _T_SEMI + *expressionSequence + _T_SEMI + *expressionSequence + ~_T_RPARAN + statement;
+            _T_SEMI + *expressionSequence + _T_SEMI + *expressionSequence + ~_T_RPARAN + statement;
         forInStatement = _K_FOR + ~_T_LPARAN + (singleExpression | ((_K_VAR | _K_LET | _K_CONST) + variableDeclarationList)) +
-                         ~_K_IN + expressionSequence + ~_T_RPARAN + statement;
+            ~_K_IN + expressionSequence + ~_T_RPARAN + statement;
         continueStatement = _K_CONTINUE + *(_RULE_NO_LINE + _ID) + eos;
         breakStatement = _K_BREAK + *(_RULE_NO_LINE + _ID) + eos;
         returnStatement = _K_RETURN + *(_RULE_NO_LINE + expressionSequence) + eos;
@@ -337,34 +337,34 @@ namespace clib {
         classTail = ~_T_LBRACE + classElements + ~_T_RBRACE;
         classElements = *(classElements + ~_T_COMMA) + classElement;
         classElement = methodDefinition
-                       | emptyStatement
-                       | (*_T_SHARP + propertyName + _T_ASSIGN + singleExpression);
+            | emptyStatement
+            | (*_T_SHARP + propertyName + _T_ASSIGN + singleExpression);
         methodDefinition = *_T_SHARP + propertyName + ~_T_LPARAN + *formalParameterList + ~_T_RPARAN +
-                           ~_T_LBRACE + *functionBody + ~_T_RBRACE;
+            ~_T_LBRACE + *functionBody + ~_T_RBRACE;
         formalParameterList = (formalParameterArg + *(~_T_COMMA + lastFormalParameterArg)) |
-                              lastFormalParameterArg;
+            lastFormalParameterArg;
         formalParameterArg = *(formalParameterArg + ~_T_COMMA) + assignable;
         lastFormalParameterArg = _T_ELLIPSIS + assignable;
         functionBody = *functionBody + sourceElements;
         sourceElements = *sourceElements + statement;
         sourceElement = statement;
         statement = block
-                    | variableStatement
-                    | emptyStatement
-                    | classDeclaration
-                    | expressionStatement
-                    | ifStatement
-                    | iterationStatement
-                    | continueStatement
-                    | breakStatement
-                    | returnStatement
-                    | withStatement
-                    | labelledStatement
-                    | switchStatement
-                    | throwStatement
-                    | tryStatement
-                    | debuggerStatement
-                    | functionStatement;
+            | variableStatement
+            | emptyStatement
+            | classDeclaration
+            | expressionStatement
+            | ifStatement
+            | iterationStatement
+            | continueStatement
+            | breakStatement
+            | returnStatement
+            | withStatement
+            | labelledStatement
+            | switchStatement
+            | throwStatement
+            | tryStatement
+            | debuggerStatement
+            | functionStatement;
         block = _T_LBRACE + *statementList + _T_RBRACE;
         statementList = *statementList + statement;
         expressionStatement = expressionSequence + eos;
@@ -379,15 +379,15 @@ namespace clib {
         newExpression = _K_NEW + newExpressionArgument;
         newExpressionArgument = identifierExpression + *arguments;
         functionExpression = anonymousFunction
-                             | classExpression
-                             | thisExpression
-                             | identifierExpression
-                             | superExpression
-                             | literalExpression
-                             | arrayLiteralExpression
-                             | objectLiteralExpression
-                             | parenthesizedExpression
-                             | newExpression;
+            | classExpression
+            | thisExpression
+            | identifierExpression
+            | superExpression
+            | literalExpression
+            | arrayLiteralExpression
+            | objectLiteralExpression
+            | parenthesizedExpression
+            | newExpression;
         classExpression = _K_CLASS + ~_ID + classTail;
         memberIndexExpression = _T_LSQUARE + expressionSequence + _T_RSQUARE;
         memberDotExpression = *_T_QUERY + ~_T_DOT + *_T_SHARP + identifierName;
@@ -395,11 +395,11 @@ namespace clib {
         postIncrementExpression = _T_INC;
         postDecreaseExpression = _T_DEC;
         postfixExpression = *postfixExpression +
-                            ((_RULE_NO_LINE + memberIndexExpression)
-                             | memberDotExpression
-                             | argumentsExpression
-                             | (_RULE_NO_LINE + postIncrementExpression)
-                             | (_RULE_NO_LINE + postDecreaseExpression));
+            ((_RULE_NO_LINE + memberIndexExpression)
+                | memberDotExpression
+                | argumentsExpression
+                | (_RULE_NO_LINE + postIncrementExpression)
+                | (_RULE_NO_LINE + postDecreaseExpression));
         deleteExpression = _K_DELETE;
         voidExpression = _K_VOID;
         typeofExpression = _K_TYPEOF;
@@ -411,15 +411,15 @@ namespace clib {
         notExpression = _T_LOG_NOT;
         primaryExpression = functionExpression + *postfixExpression;
         prefixExpressionList = *prefixExpressionList +
-                               (deleteExpression
-                                | voidExpression
-                                | typeofExpression
-                                | preIncrementExpression
-                                | preDecreaseExpression
-                                | unaryPlusExpression
-                                | unaryMinusExpression
-                                | bitNotExpression
-                                | notExpression);
+            (deleteExpression
+                | voidExpression
+                | typeofExpression
+                | preIncrementExpression
+                | preDecreaseExpression
+                | unaryPlusExpression
+                | unaryMinusExpression
+                | bitNotExpression
+                | notExpression);
         prefixExpression = *prefixExpressionList + primaryExpression;
         powerExpression = *(powerExpression + _T_POWER) + prefixExpression;
         multiplicativeExpression = *(multiplicativeExpression + (_T_MUL | _T_DIV | _T_MOD)) + powerExpression;
@@ -427,11 +427,11 @@ namespace clib {
         coalesceExpression = *(coalesceExpression + (_T_COALESCE)) + additiveExpression;
         bitShiftExpression = *(bitShiftExpression + (_T_LSHIFT | _T_RSHIFT | _T_URSHIFT)) + coalesceExpression;
         relationalExpression = *(relationalExpression + (_T_LESS | _T_LESS_EQUAL | _T_GREATER | _T_GREATER_EQUAL)) +
-                               bitShiftExpression;
+            bitShiftExpression;
         instanceofExpression = *(instanceofExpression + _K_INSTANCEOF) + relationalExpression;
         inExpression = *(inExpression + _K_IN) + instanceofExpression;
         equalityExpression = *(equalityExpression + (_T_EQUAL | _T_NOT_EQUAL | _T_FEQUAL | _T_FNOT_EQUAL)) +
-                             inExpression;
+            inExpression;
         bitAndExpression = *(bitAndExpression + _T_BIT_AND) + equalityExpression;
         bitXOrExpression = *(bitXOrExpression + _T_BIT_XOR) + bitAndExpression;
         bitOrExpression = *(bitOrExpression + _T_BIT_OR) + bitXOrExpression;
@@ -439,16 +439,16 @@ namespace clib {
         logicalOrExpression = *(logicalOrExpression + _T_LOG_OR) + logicalAndExpression;
         ternaryExpression = logicalOrExpression + *(_T_QUERY + singleExpression + _T_COLON + singleExpression);
         assignmentOperatorExpression = *(assignmentOperatorExpression +
-                                         (_T_ASSIGN_ADD | _T_ASSIGN_SUB | _T_ASSIGN_MUL | _T_ASSIGN_DIV |
-                                          _T_ASSIGN_MOD | _T_ASSIGN_LSHIFT | _T_ASSIGN_RSHIFT | _T_ASSIGN_URSHIFT |
-                                          _T_ASSIGN_AND | _T_ASSIGN_OR | _T_ASSIGN_XOR | _T_ASSIGN_POWER)) +
-                                       ternaryExpression;
+            (_T_ASSIGN_ADD | _T_ASSIGN_SUB | _T_ASSIGN_MUL | _T_ASSIGN_DIV |
+                _T_ASSIGN_MOD | _T_ASSIGN_LSHIFT | _T_ASSIGN_RSHIFT | _T_ASSIGN_URSHIFT |
+                _T_ASSIGN_AND | _T_ASSIGN_OR | _T_ASSIGN_XOR | _T_ASSIGN_POWER)) +
+            ternaryExpression;
         assignmentExpression = *(assignmentExpression + _T_ASSIGN) + assignmentOperatorExpression;
         singleExpression = assignmentExpression;
         literal = _K_NULL | _K_UNDEFINED | _K_TRUE | _K_FALSE | _STRING | _REGEX | _NUMBER;
         commaList = *commaList + _T_COMMA;
         arrayLiteral = _T_LSQUARE + *elementList + _T_RSQUARE;
-        elementList = *(elementList) + *commaList + arrayElement + *commaList;
+        elementList = *(elementList)+*commaList + arrayElement + *commaList;
         arrayElement = *_T_ELLIPSIS + singleExpression;
         objectLiteral = _T_LBRACE + *propertyAssignments + *~_T_COMMA + _T_RBRACE;
         identifierName = _ID | reservedWord;
@@ -459,64 +459,64 @@ namespace clib {
         argument = *(argument + ~_T_COMMA) + *_T_ELLIPSIS + singleExpression;
         propertyAssignments = *(propertyAssignments + ~_T_COMMA) + propertyAssignment;
         propertyAssignment = propertyExpressionAssignment
-                             | computedPropertyExpressionAssignment
-                             | propertyShorthand;
+            | computedPropertyExpressionAssignment
+            | propertyShorthand;
         propertyExpressionAssignment = propertyName + *(~_T_COLON + singleExpression);
         computedPropertyExpressionAssignment = ~_T_LPARAN + singleExpression + ~_T_RPARAN +
-                                               ~_T_COLON + singleExpression;
+            ~_T_COLON + singleExpression;
         propertyShorthand = _T_ELLIPSIS + singleExpression;
         propertyName = identifierName
-                       | _STRING
-                       | numericLiteral
-                       | (_T_LSQUARE + singleExpression + _T_RSQUARE);
+            | _STRING
+            | numericLiteral
+            | (_T_LSQUARE + singleExpression + _T_RSQUARE);
         functionStatement = anonymousFunction;
         anonymousFunction = functionDecl
-                            | anonymousFunctionDecl
-                            | arrowFunction;
+            | anonymousFunctionDecl
+            | arrowFunction;
         functionDecl = functionDeclaration;
         functionDeclaration = _K_FUNCTION + _ID + ~_T_LPARAN + *formalParameterList + ~_T_RPARAN +
-                              ~_T_LBRACE + *functionBody + _T_RBRACE;
+            ~_T_LBRACE + *functionBody + _T_RBRACE;
         anonymousFunctionDecl = _K_FUNCTION + ~_T_LPARAN + *formalParameterList + ~_T_RPARAN +
-                                ~_T_LBRACE + *functionBody + _T_RBRACE;
+            ~_T_LBRACE + *functionBody + _T_RBRACE;
         arrowFunction = arrowFunctionParameters + ~_T_ARROW + arrowFunctionBody;
         arrowFunctionParameters = _ID | (_T_LPARAN + *formalParameterList + _T_RPARAN);
         arrowFunctionBody = singleExpression | (~_T_LBRACE + *functionBody + _T_RBRACE);
         eos = ~_T_SEMI | _RULE_EOF | _RULE_LINE | _RULE_RBRACE;
         keyword = _K_BREAK
-                  | _K_DO
-                  | _K_INSTANCEOF
-                  | _K_TYPEOF
-                  | _K_CASE
-                  | _K_ELSE
-                  | _K_NEW
-                  | _K_VAR
-                  | _K_CATCH
-                  | _K_FINALLY
-                  | _K_RETURN
-                  | _K_VOID
-                  | _K_CONTINUE
-                  | _K_FOR
-                  | _K_SWITCH
-                  | _K_WHILE
-                  | _K_DEBUGGER
-                  | _K_FUNCTION
-                  | _K_THIS
-                  | _K_WITH
-                  | _K_DEFAULT
-                  | _K_IF
-                  | _K_THROW
-                  | _K_DELETE
-                  | _K_IN
-                  | _K_TRY
-                  | _K_CLASS
-                  | _K_SUPER
-                  | _K_LET;
+            | _K_DO
+            | _K_INSTANCEOF
+            | _K_TYPEOF
+            | _K_CASE
+            | _K_ELSE
+            | _K_NEW
+            | _K_VAR
+            | _K_CATCH
+            | _K_FINALLY
+            | _K_RETURN
+            | _K_VOID
+            | _K_CONTINUE
+            | _K_FOR
+            | _K_SWITCH
+            | _K_WHILE
+            | _K_DEBUGGER
+            | _K_FUNCTION
+            | _K_THIS
+            | _K_WITH
+            | _K_DEFAULT
+            | _K_IF
+            | _K_THROW
+            | _K_DELETE
+            | _K_IN
+            | _K_TRY
+            | _K_CLASS
+            | _K_SUPER
+            | _K_LET;
         unit->adjust(&functionExpression, &anonymousFunction, e_shift, 1);
         unit->adjust(&iterationStatement, &forInStatement, e_shift, -1);
         unit->adjust(&statement, &expressionStatement, e_shift, 1);
-        unit->adjust(&iterationStatement, &forStatement, e_shift, 0, (void *) &pred_for);
+        unit->adjust(&iterationStatement, &forStatement, e_shift, 0, (void*)&pred_for);
         unit->adjust(&newExpression, &newExpressionArgument, e_shift, 1);
-        unit->adjust(&inExpression, &inExpression, e_left_recursion, 0, (void *) &pred_in);
+        unit->adjust(&inExpression, &inExpression, e_left_recursion, 0, (void*)&pred_in);
         unit->gen(&program);
 #if DUMP_PDA
         std::ofstream of(DUMP_PDA_FILE);
@@ -524,10 +524,10 @@ namespace clib {
 #endif
     }
 
-    static void check_ast(js_ast_node *node) {
+    static void check_ast(js_ast_node* node) {
 #if CHECK_AST
         if (node->child) {
-            auto &c = node->child;
+            auto& c = node->child;
             auto i = c;
             assert(i->parent == node);
             check_ast(i);
@@ -542,7 +542,8 @@ namespace clib {
                     check_ast(i);
                     i = i->next;
                 } while (i != c);
-            } else {
+            }
+            else {
                 assert(i->prev == i);
             }
         }
@@ -556,13 +557,13 @@ namespace clib {
         std::ofstream log(REPORT_ERROR_FILE, std::ios::app | std::ios::out);
 #endif
         next();
-        auto &pdas = unit->get_pda();
+        auto& pdas = unit->get_pda();
         auto root = ast->new_node(a_collection);
         root->line = root->column = 0;
         root->data._coll = pdas[0].coll;
-        std::vector<std::shared_ptr<backtrace_t>> bks;
+        std::vector<std::shared_ptr<js_backtrace_t>> bks;
         {
-            auto bk_tmp = std::make_shared<backtrace_t>();
+            auto bk_tmp = std::make_shared<js_backtrace_t>();
             bk_tmp->lexer_index = 0;
             bk_tmp->state_stack.push_back(0);
             bk_tmp->ast_stack.push_back(root);
@@ -674,7 +675,7 @@ namespace clib {
                     if (trans_ids.size() > 1) {
                         auto parent = (int)bks.size() - 1;
                         for (const auto& i : trans_ids) {
-                            auto bk_tmp = std::make_shared<backtrace_t>();
+                            auto bk_tmp = std::make_shared<js_backtrace_t>();
                             bk_tmp->current_state = bk->current_state;
                             bk_tmp->parent = parent;
                             bk_tmp->reduced_rule = trans[trans_ids.back()].reduced_rule;
@@ -787,7 +788,7 @@ namespace clib {
         return false;
     }
 
-    void cjsparser::print_bk(std::vector<std::shared_ptr<backtrace_t>>& bks) const
+    void cjsparser::print_bk(std::vector<std::shared_ptr<js_backtrace_t>>& bks) const
     {
         const auto& pdas = unit->get_pda();
         for (size_t i = 0; i < bks.size(); ++i) {
@@ -816,7 +817,7 @@ namespace clib {
         }
     }
 
-    void cjsparser::copy_bk(backtrace_t& bk, backtrace_t& p)
+    void cjsparser::copy_bk(js_backtrace_t& bk, js_backtrace_t& p)
     {
         bk.lexer_index = p.lexer_index;
         bk.state_stack = p.state_stack;
@@ -859,14 +860,14 @@ namespace clib {
         }
     }
 
-    void cjsparser::del_bk(backtrace_t& bk)
+    void cjsparser::del_bk(js_backtrace_t& bk)
     {
         for (const auto& c : bk.cache) {
             ast->remove_force(c);
         }
     }
 
-    js_ast_node *cjsparser::terminal() {
+    js_ast_node* cjsparser::terminal() {
         if (current->t == END) { // 结尾
             error("unexpected token EOF of expression");
         }
@@ -909,7 +910,7 @@ namespace clib {
             node->column = current->column;
             node->start = current->start;
             node->end = current->end;
-            node->data._number = *(double *) lexer->get_data(current->idx);
+            node->data._number = *(double*)lexer->get_data(current->idx);
             node->idx = lexer->get_index() - 1;
             match_type(current->t);
             return node;
@@ -950,7 +951,7 @@ namespace clib {
         return nullptr;
     }
 
-    bool cjsparser::valid_trans(backtrace_t& bk, js_pda_trans& trans, js_unit_token** out) {
+    bool cjsparser::valid_trans(js_backtrace_t& bk, js_pda_trans& trans, js_unit_token** out) {
         auto& la = trans.LA;
         if (!la.empty()) {
             auto success = false;
@@ -980,77 +981,77 @@ namespace clib {
         return true;
     }
 
-    void cjsparser::do_trans(backtrace_t &bk, const js_pda_trans &trans) {
+    void cjsparser::do_trans(js_backtrace_t& bk, const js_pda_trans& trans) {
         switch (trans.type) {
-            case e_shift: {
-                bk.state_stack.push_back(bk.current_state);
-                auto new_node = ast->new_node(a_collection);
-                new_node->line = new_node->column = 0;
-                auto &pdas = unit->get_pda();
-                new_node->data._coll = pdas[trans.jump].coll;
+        case e_shift: {
+            bk.state_stack.push_back(bk.current_state);
+            auto new_node = ast->new_node(a_collection);
+            new_node->line = new_node->column = 0;
+            auto& pdas = unit->get_pda();
+            new_node->data._coll = pdas[trans.jump].coll;
 #if DEBUG_AST
-                fprintf(stdout, "[DEBUG] Shift: top=%p, new=%p, CS=%d\n", ast_stack.back(), new_node,
-                        cjsast::children_size(ast_stack.back()));
+            fprintf(stdout, "[DEBUG] Shift: top=%p, new=%p, CS=%d\n", ast_stack.back(), new_node,
+                cjsast::children_size(ast_stack.back()));
 #endif
-                bk.ast_stack.push_back(new_node);
-                bk.cache.push_back(new_node);
+            bk.ast_stack.push_back(new_node);
+            bk.cache.push_back(new_node);
+        }
+                    break;
+        case e_pass: {
+            if (current->t == END) {
+                error("unexpected token EOF of expression");
             }
-                break;
-            case e_pass: {
-                if (current->t == END) {
-                    error("unexpected token EOF of expression");
-                }
-                next();
-                bk.lexer_index++;
-            }
-                break;
-            case e_move: {
-                auto t = terminal();
-                bk.lexer_index++;
+            next();
+            bk.lexer_index++;
+        }
+                   break;
+        case e_move: {
+            auto t = terminal();
+            bk.lexer_index++;
 #if CHECK_AST
-                check_ast(t);
+            check_ast(t);
 #endif
 #if DEBUG_AST
-                fprintf(stdout, "[DEBUG] Move: parent=%p, child=%p, CS=%d\n", ast_stack.back(), t,
-                        cjsast::children_size(ast_stack.back()));
+            fprintf(stdout, "[DEBUG] Move: parent=%p, child=%p, CS=%d\n", ast_stack.back(), t,
+                cjsast::children_size(ast_stack.back()));
 #endif
-                cjsast::set_child(bk.ast_stack.back(), t);
-                bk.cache.push_back(t);
-            }
-                break;
-            case e_left_recursion:
-                break;
-            case e_left_recursion_not_greed:
-                break;
-            case e_reduce:
-            case e_reduce_exp: {
-                auto new_ast = bk.ast_stack.back();
-                check_ast(new_ast);
-                bk.state_stack.pop_back();
-                bk.ast_stack.pop_back();
-                assert(!bk.ast_stack.empty());
+            cjsast::set_child(bk.ast_stack.back(), t);
+            bk.cache.push_back(t);
+        }
+                   break;
+        case e_left_recursion:
+            break;
+        case e_left_recursion_not_greed:
+            break;
+        case e_reduce:
+        case e_reduce_exp: {
+            auto new_ast = bk.ast_stack.back();
+            check_ast(new_ast);
+            bk.state_stack.pop_back();
+            bk.ast_stack.pop_back();
+            assert(!bk.ast_stack.empty());
 #if DEBUG_AST
-                fprintf(stdout, "[DEBUG] Reduce: parent=%p, child=%p, CS=%d, AS=%d, RI=%d\n",
-                        ast_stack.back(), new_ast, cjsast::children_size(ast_stack.back()),
-                        ast_stack.size(), ast_reduce_cache.size());
+            fprintf(stdout, "[DEBUG] Reduce: parent=%p, child=%p, CS=%d, AS=%d, RI=%d\n",
+                ast_stack.back(), new_ast, cjsast::children_size(ast_stack.back()),
+                ast_stack.size(), ast_reduce_cache.size());
 #endif
-                if (trans.type == e_reduce_exp)
-                    bk.ast_stack.back()->attr |= a_exp;
-                if (new_ast->flag != a_collection || new_ast->child != nullptr) {
-                    cjsast::set_child(bk.ast_stack.back(), new_ast);
-                    check_ast(bk.ast_stack.back());
-                }
+            if (trans.type == e_reduce_exp)
+                bk.ast_stack.back()->attr |= a_exp;
+            if (new_ast->flag != a_collection || new_ast->child != nullptr) {
+                cjsast::set_child(bk.ast_stack.back(), new_ast);
+                check_ast(bk.ast_stack.back());
             }
-                break;
-            case e_finish:
-                bk.state_stack.pop_back();
-                break;
-            default:
-                break;
+        }
+                         break;
+        case e_finish:
+            bk.state_stack.pop_back();
+            break;
+        default:
+            break;
         }
     }
 
-    bool cjsparser::LA(backtrace_t& bk, struct js_unit* u, js_pda_trans& trans, js_unit_token** out) {
+    bool cjsparser::LA(js_backtrace_t& bk, struct js_unit* u, js_pda_trans& trans, js_unit_token** out) {
         if (u->t != u_token)
             return false;
         auto token = js_to_token(u);
@@ -1094,7 +1095,7 @@ namespace clib {
         return current->t == token->type;
     }
 
-    void cjsparser::expect(bool flag, const std::string &info) {
+    void cjsparser::expect(bool flag, const std::string& info) {
         if (!flag) {
             error(info);
         }
@@ -1105,7 +1106,7 @@ namespace clib {
         next();
     }
 
-    void cjsparser::error(const std::string &info) {
+    void cjsparser::error(const std::string& info) {
         std::stringstream ss;
         ss << '[' << std::setfill('0') << std::setw(4) << current->line;
         ss << ':' << std::setfill('0') << std::setw(3) << current->column;
@@ -1113,11 +1114,11 @@ namespace clib {
         throw cjs_exception(ss.str());
     }
 
-    js_pda_coll_pred cjsparser::pred_for(const cjslexer *lexer, int idx) {
+    js_pda_coll_pred cjsparser::pred_for(const cjslexer* lexer, int idx) {
         auto end = lexer->get_unit_size();
         auto find_in = false;
         for (auto i = idx + 1; i < end; i++) {
-            const auto &U = lexer->get_unit(i);
+            const auto& U = lexer->get_unit(i);
             if (U.t == T_SEMI) {
                 break;
             }
@@ -1129,10 +1130,10 @@ namespace clib {
         return find_in ? p_DELAY : p_ALLOW;
     }
 
-    js_pda_coll_pred cjsparser::pred_in(const cjslexer *lexer, int idx) {
+    js_pda_coll_pred cjsparser::pred_in(const cjslexer* lexer, int idx) {
         auto find_for = false;
         for (auto i = idx - 1; i >= 0; i--) {
-            const auto &U = lexer->get_unit(i);
+            const auto& U = lexer->get_unit(i);
             if (U.t == T_LPARAN) {
                 if (i > 0 && lexer->get_unit(i - 1).t == K_FOR) {
                     find_for = true;
